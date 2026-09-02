@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Geradores PCPR — Central Integrada</title>
+<style>
+:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--red:#8f3037;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
+.module-nav{position:sticky;top:0;z-index:1000;background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);border-bottom:5px solid var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.nav-inner{max-width:1500px;margin:auto;padding:10px 18px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;gap:9px;align-items:center;margin-right:2px}
+.brand-mark{width:35px;height:35px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);border-radius:8px;color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.05em;background:rgba(255,255,255,.05)}
+.nav-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#f1ede2;margin-right:4px;white-space:nowrap}
+.module-tab{appearance:none;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:white;border-radius:9px;min-height:42px;padding:0 16px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s ease}
+.module-tab:hover{background:rgba(255,255,255,.14)}
+.module-tab.active{background:var(--gold);border-color:#e2cf9d;color:var(--ink)}
+.module-tab:focus-visible{outline:3px solid rgba(197,162,83,.42);outline-offset:2px}
+.module-main{position:relative;min-height:calc(100vh - 67px);overflow:hidden;background:var(--bg)}
+.module-frame{width:100%;border:0;display:none;min-height:calc(100vh - 67px);background:#fff}
+.module-frame.active{display:block}
+.loading{position:absolute;inset:18px auto auto 50%;transform:translateX(-50%);z-index:20;width:min(900px,calc(100% - 36px));padding:14px 16px;border:1px solid var(--line);background:#fff;border-radius:10px;color:var(--muted);font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.loading.hide{display:none}
+@media(max-width:900px){
+  .nav-inner{padding:8px 10px;gap:7px}
+  .brand{width:100%}
+  .module-tab{flex:1 1 30%;padding:0 9px;font-size:12px}
+}
+</style>
+
+<!-- Google Analytics 4 — Central PCPR -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M32VDH5JY0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-M32VDH5JY0', { anonymize_ip: true, page_location: location.origin + location.pathname, page_path: location.pathname });
+</script>
+
+</head>
+<body>
+<nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
+  <div class="nav-inner">
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span></div>
+    <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
+    <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
+    <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
+    <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
+    <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
+    <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+  </div>
+</nav>
+
+<main class="module-main">
+  <div id="loading" class="loading">Carregando Ofícios…</div>
+  <iframe id="frameOficios" class="module-frame active" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
+  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html"></iframe>
+  <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
+  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
+  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html"></iframe>
+  <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* Armazenamento compartilhado do modelo ODT usado pelo módulo de laudo. */
+const DB='pcprCentralIntegradaV3', STORE='modelos', KEY='laudoOdt';
+function openDb(){return new Promise((resolve,reject)=>{if(!indexedDB)return reject(new Error('IndexedDB indisponível'));const q=indexedDB.open(DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(STORE))q.result.createObjectStore(STORE)};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
+window.PCPR_MODEL_STORE={
+  async get(){try{const db=await openDb();return await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).get(KEY);q.onsuccess=()=>{res(q.result||null);db.close()};q.onerror=()=>{rej(q.error);db.close()}})}catch(e){return null}},
+  async put(v){try{const db=await openDb();await new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,KEY);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close();return {ok:true,method:'IndexedDB da Central'}}catch(e){return {ok:false,method:'indisponível'}}},
+  async delete(){try{const db=await openDb();await new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(KEY);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}return {ok:true}}
+};
+
+/* Mantém compatibilidade com a opção do Laudo que incorpora um ODT personalizado. */
+window.PCPR_DOWNLOAD_CENTRAL_WITH_MODEL=async function(bytes,meta){
+  try{
+    const frame=document.getElementById('frameLesoes');
+    if(!frame || !frame.contentDocument) throw new Error('Módulo de Laudo não disponível.');
+    let child='<!DOCTYPE html>\n'+frame.contentDocument.documentElement.outerHTML;
+    const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+    let bin='',step=0x6000; for(let i=0;i<a.length;i+=step)bin+=String.fromCharCode(...a.subarray(i,i+step));
+    const b64=btoa(bin);
+    const rx=/const\s+ODT_TEMPLATE_B64\s*=\s*'[^']*'\s*;/;
+    if(!rx.test(child)) throw new Error('Modelo ODT interno não localizado.');
+    child=child.replace(rx,"const ODT_TEMPLATE_B64='"+b64+"';");
+    const blob=new Blob([child],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),lnk=document.createElement('a');
+    lnk.href=url;lnk.download='laudo-lesoes-MODELO_ATUALIZADO.html';document.body.appendChild(lnk);lnk.click();lnk.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    return {ok:true};
+  }catch(e){console.error(e);return {ok:false,error:String(e&&e.message||e)}}
+};
+
+const modules={
+  oficios:{frame:document.getElementById('frameOficios'),tab:document.querySelector('[data-key="oficios"]'),min:820},
+  lesoes:{frame:document.getElementById('frameLesoes'),tab:document.querySelector('[data-key="lesoes"]'),min:900},
+  imei:{frame:document.getElementById('frameImei'),tab:document.querySelector('[data-key="imei"]'),min:900},
+  operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
+  erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
+  filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900}
+};
+const loading=document.getElementById('loading');
+
+function trackModule(key){
+  try{
+    if(typeof window.gtag !== 'function') return;
+    const nomes = {
+      oficios:'oficios',
+      lesoes:'laudo_lesoes',
+      imei:'consulta_imei',
+      operadora:'consulta_operadora',
+      erb:'erb_antenas',
+      filtroip:'filtro_ip'
+    };
+    window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
+  }catch(e){}
+}
+
+
+function fit(key){
+  const m=modules[key];
+  try{
+    const d=m.frame.contentDocument;
+    const viewport=Math.max(700,window.innerHeight-68);
+    if(key==='erb'){m.frame.style.height=viewport+'px';return}
+    const h=Math.max(d?.documentElement?.scrollHeight||0,d?.body?.scrollHeight||0,m.min);
+    m.frame.style.height=(h+10)+'px';
+  }catch(e){m.frame.style.height=Math.max(m.min,window.innerHeight-68)+'px'}
+}
+function load(key){
+  const m=modules[key];
+  if(m.loaded||m.loading)return;
+  m.loading=true;
+  loading.textContent='Carregando '+m.tab.textContent.trim()+'…';
+  loading.classList.remove('hide');
+  m.frame.addEventListener('load',()=>{
+    m.loaded=true;m.loading=false;
+    if(m.frame.classList.contains('active'))loading.classList.add('hide');
+    fit(key);
+    try{
+      const d=m.frame.contentDocument;
+      if('ResizeObserver' in window && d?.documentElement){
+        const ro=new ResizeObserver(()=>fit(key));ro.observe(d.documentElement);if(d.body)ro.observe(d.body)
+      }
+      d?.addEventListener('click',()=>setTimeout(()=>fit(key),80),true);
+      d?.addEventListener('change',()=>setTimeout(()=>fit(key),80),true);
+    }catch(e){}
+    if(key==='erb'){
+      const pulse=()=>{try{if(typeof m.frame.contentWindow.__pcprErbResize==='function')m.frame.contentWindow.__pcprErbResize();else m.frame.contentWindow.dispatchEvent(new Event('resize'))}catch(e){}};
+      setTimeout(pulse,100);setTimeout(pulse,350);setTimeout(pulse,900);
+    }
+  },{once:true});
+  let src=m.frame.dataset.src;if(key==='erb'){const pid=new URLSearchParams(location.search).get('erbProject');if(pid)src += '?project='+encodeURIComponent(pid)}m.frame.src=src;
+}
+function show(key,hash=true){
+  if(!modules[key])key='oficios';
+  Object.entries(modules).forEach(([k,m])=>{
+    const active=k===key;
+    m.frame.classList.toggle('active',active);
+    m.tab.classList.toggle('active',active);
+    m.tab.setAttribute('aria-selected',String(active));
+  });
+  const m=modules[key];
+  if(!m.loaded)load(key); else {loading.classList.add('hide');fit(key)}
+  if(hash){
+    history.replaceState(null,'','#'+key);
+    trackModule(key);
+  }
+  window.scrollTo(0,0);
+}
+Object.entries(modules).forEach(([k,m])=>{m.loaded=false;m.loading=false;m.tab.addEventListener('click',()=>show(k))});
+const first=location.hash.toLowerCase().replace('#','');
+const requestedErbProject=new URLSearchParams(location.search).get('erbProject');
+const initialKey=requestedErbProject?'erb':(modules[first]?first:'oficios');
+show(initialKey,false);
+setTimeout(()=>trackModule(initialKey),700);
+window.addEventListener('resize',()=>{const k=Object.keys(modules).find(k=>modules[k].frame.classList.contains('active'))||'oficios';fit(k)});
+})();
+</script>
+</body>
+</html>
