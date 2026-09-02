@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ERB Mapper Pro v6.2</title>
+<title>ERB Mapper Pro v6.3</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
@@ -31,7 +31,7 @@ html,body{width:100%!important;height:100%!important;min-height:100%!important;o
 }
 </style>
 </head><body>
-<div class="app"><aside class="sidebar"><div class="brand"><div class="brandrow"><div class="seal">ERB</div><div><h1>ERB Mapper Pro <small style="font-size:10px;opacity:.75">v6.2</small></h1><p>Análise cartográfica, temporal e relatório técnico de ERBs · <b style="color:#c5a253">PROJETOS + SCROLL + RELATÓRIO CORRIGIDO</b></p></div></div></div><div class="content">
+<div class="app"><aside class="sidebar"><div class="brand"><div class="brandrow"><div class="seal">ERB</div><div><h1>ERB Mapper Pro <small style="font-size:10px;opacity:.75">v6.3</small></h1><p>Análise cartográfica, temporal e relatório técnico de ERBs · <b style="color:#c5a253">PROJETOS + SCROLL + RELATÓRIO A4</b></p></div></div></div><div class="content">
 <div class="tabs"><button class="tab active" data-tab="erb">ERBs</button><button class="tab" data-tab="poi">Locais</button><button class="tab" data-tab="time">Timeline</button><button class="tab" data-tab="import">Importar</button><button class="tab" data-tab="projects">Projetos</button><button class="tab" data-tab="report">Relatório</button><button class="tab" data-tab="config">Config.</button></div>
 <section class="pane active" id="pane-erb"><div class="card"><div class="title" id="erbTitle">Adicionar ERB / setor</div><form id="erbForm"><input type="hidden" id="editIndex"><div class="field"><label class="req">Nome do registro</label><input id="nome" required placeholder="Ex.: ERB Centro - Setor 2"></div><div class="grid2"><div class="field"><label>Estação / grupo</label><input id="estacao" placeholder="Ex.: MAMBORÊ CENTRO"></div><div class="field"><label>Setor</label><input id="setor" placeholder="1 / A / 120°"></div></div><div class="grid2"><div class="field"><label class="req">Latitude</label><input id="lat" required placeholder="-24.318000 ou 24°19'05\"S"></div><div class="field"><label class="req">Longitude</label><input id="lng" required placeholder="-52.530000 ou 52°31'48\"W"></div></div><div class="grid3"><div class="field"><label class="req">Azimute (°)</label><input id="az" required placeholder="0–360"></div><div class="field"><label>Distância (km)</label><input id="dist" placeholder="padrão"></div><div class="field"><label>Margem (±°)</label><input id="margem" placeholder="padrão"></div></div><details><summary>Dados técnicos e probatórios</summary><div class="grid2"><div class="field"><label>Operadora</label><input id="operadora" placeholder="Vivo / TIM / Claro"></div><div class="field"><label>Tecnologia</label><input id="tech" placeholder="2G / 3G / 4G / 5G"></div></div><div class="grid3"><div class="field"><label>Cell ID / CID</label><input id="cellid"></div><div class="field"><label>eNodeB / gNodeB</label><input id="enodeb"></div><div class="field"><label>LAC / TAC</label><input id="lactac"></div></div><div class="grid2"><div class="field"><label>PCI</label><input id="pci"></div><div class="field"><label>Banda / frequência</label><input id="banda"></div></div><div class="field"><label>Endereço informado da ERB</label><input id="endereco"></div><div class="field"><label>Data/hora do registro</label><input id="datahora" placeholder="31/08/2026 21:14:32"></div><div class="grid2"><div class="field"><label>Fonte / resposta</label><input id="fonte" placeholder="Resposta VIVO / Ofício nº..."></div><div class="field"><label>Arquivo / página</label><input id="pagina" placeholder="arquivo.pdf, pág. 17"></div></div><div class="field"><label>Observação</label><textarea id="obs"></textarea></div></details><div class="btnrow"><button class="btn primary" type="submit" id="saveErb">Adicionar</button><button class="btn secondary" type="button" id="clearErb">Limpar</button><button class="btn outline" type="button" id="useCenter">Usar centro do mapa</button></div></form></div>
 <div class="card"><div class="title">ERBs adicionadas <span id="countErb" class="badge">0</span></div><div class="btnrow" style="margin-bottom:8px"><button class="btn secondary small" id="fitAll">Enquadrar</button><button class="btn danger small" id="clearAll">Apagar todas</button></div><div id="erbList"></div></div></section>
@@ -127,14 +127,140 @@ $('openSavedProject').onclick=()=>{const id=$('savedProjects').value;if(!id)retu
 $('deleteSavedProject').onclick=()=>{const id=$('savedProjects').value;if(!id)return status('Selecione um projeto.',true);const p=savedProjects().find(x=>x.id===id);if(!confirm('Excluir o projeto salvo "'+(p?.name||id)+'" deste navegador?'))return;try{localStorage.removeItem(PROJECT_PREFIX+id)}catch(_){}if(currentProjectId===id){currentProjectId=null;updateParentUrl(null);updateProjectStatus()}renderSavedProjects();status('Projeto salvo excluído.')};
 ['projectName','rTitulo','rUnidade','rProcedimento','rTerminal','rAnalista','rDescricao','defaultDist','defaultMargin','overlapMode','onlyOverlap','showLabels','showPois','showPath','showSeq','timelineVisible','baseSelect'].forEach(id=>$(id)?.addEventListener(['projectName','rTitulo','rUnidade','rProcedimento','rTerminal','rAnalista','rDescricao','defaultDist','defaultMargin'].includes(id)?'input':'change',scheduleAutosave));
 renderSavedProjects();updateProjectStatus();setTimeout(()=>{const requested=getRequestedProjectId();if(requested)openProjectById(requested,true)},220);
-function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(projectSnapshot(),null,2)],{type:'application/json'}),'projeto_erb.json');$('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());currentProjectId=null;applyProject(o);$('projectName').value=o.name||$('projectName').value||'';updateParentUrl(null);updateProjectStatus();status('Projeto .json carregado. Clique em \"Salvar como link\" para criar um vínculo permanente neste navegador.')}catch(_){status('Arquivo inválido.',true)}e.target.value=''};const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function capture(){document.body.classList.add('capture');try{window.__pcprErbResize();map.invalidateSize({animate:false});}catch(_){}await sleep(650);const c=await html2canvas($('mapWrap'),{useCORS:true,backgroundColor:'#ffffff',scale:1.6,logging:false,width:$('mapWrap').clientWidth,height:$('mapWrap').clientHeight,scrollX:0,scrollY:0});document.body.classList.remove('capture');return c.toDataURL('image/jpeg',.92)}async function overall(){const f=state.focus;state.focus=null;redraw(true);await sleep(700);const x=await capture();state.focus=f;redraw();return x}async function individual(i){const f=state.focus;state.focus=i;redraw(true);await sleep(650);const x=await capture();state.focus=f;redraw();return x}function dataBlob(u){const[a,b]=u.split(','),m=a.match(/:(.*?);/)[1],s=atob(b),v=new Uint8Array(s.length);for(let i=0;i<s.length;i++)v[i]=s.charCodeAt(i);return new Blob([v],{type:m})}async function downloadIndividual(i){status('Gerando imagem...');saveBlob(dataBlob(await individual(i)),`ERB_${i+1}_${state.erbs[i].name.replace(/[^\w-]+/g,'_')}.jpg`)}$('png').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando imagem geral...');saveBlob(dataBlob(await overall()),'mapa_geral_ERBs.jpg')};
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(projectSnapshot(),null,2)],{type:'application/json'}),'projeto_erb.json');$('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());currentProjectId=null;applyProject(o);$('projectName').value=o.name||$('projectName').value||'';updateParentUrl(null);updateProjectStatus();status('Projeto .json carregado. Clique em \"Salvar como link\" para criar um vínculo permanente neste navegador.')}catch(_){status('Arquivo inválido.',true)}e.target.value=''};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function glMap(){
+  try{
+    return activeBase&&(
+      activeBase._glMap ||
+      activeBase._maplibreMap ||
+      activeBase._maplibre ||
+      null
+    );
+  }catch(_){return null}
+}
+
+async function waitGlReady(gl){
+  if(!gl)return;
+  try{gl.resize();}catch(_){}
+  try{gl.triggerRepaint();}catch(_){}
+  await new Promise(resolve=>{
+    let done=false;
+    const finish=()=>{if(done)return;done=true;resolve()};
+    try{
+      gl.once('idle',finish);
+      setTimeout(finish,1400);
+    }catch(_){
+      setTimeout(finish,500);
+    }
+  });
+  try{gl.resize();gl.triggerRepaint();}catch(_){}
+  await sleep(180);
+}
+
+async function capture(){
+  document.body.classList.add('capture');
+
+  const wrap=$('mapWrap');
+  const mapEl=$('map');
+  const oldWrapBg=wrap.style.background;
+  const oldMapBg=mapEl.style.background;
+
+  try{
+    window.__pcprErbResize();
+    map.invalidateSize({animate:false,pan:false});
+  }catch(_){}
+
+  const gl=glMap();
+  await waitGlReady(gl);
+
+  const cssW=Math.max(1,wrap.clientWidth);
+  const cssH=Math.max(1,wrap.clientHeight);
+  const SCALE=1.7;
+
+  let baseCanvas=null;
+  let baseContainer=null;
+
+  try{
+    if(gl && typeof gl.getCanvas==='function'){
+      baseCanvas=gl.getCanvas();
+      baseContainer=
+        baseCanvas.closest('.maplibregl-map') ||
+        baseCanvas.closest('.mapboxgl-map') ||
+        baseCanvas.parentElement;
+    }
+  }catch(_){}
+
+  try{
+    // Se houver MapLibre, capturamos base e overlays separadamente.
+    if(baseCanvas){
+      const out=document.createElement('canvas');
+      out.width=Math.round(cssW*SCALE);
+      out.height=Math.round(cssH*SCALE);
+      const ctx=out.getContext('2d');
+
+      // Fundo cartográfico diretamente do canvas WebGL.
+      ctx.fillStyle='#ffffff';
+      ctx.fillRect(0,0,out.width,out.height);
+      ctx.drawImage(baseCanvas,0,0,out.width,out.height);
+
+      // Evita que o html2canvas recapture o MapLibre deslocado.
+      wrap.style.background='transparent';
+      mapEl.style.background='transparent';
+
+      const overlay=await html2canvas(wrap,{
+        useCORS:true,
+        allowTaint:false,
+        backgroundColor:null,
+        scale:SCALE,
+        logging:false,
+        width:cssW,
+        height:cssH,
+        scrollX:0,
+        scrollY:0,
+        ignoreElements:el=>{
+          try{
+            return !!(
+              (baseContainer && (el===baseContainer || baseContainer.contains(el))) ||
+              el.classList?.contains('maplibregl-map') ||
+              el.classList?.contains('mapboxgl-map')
+            );
+          }catch(_){return false}
+        }
+      });
+
+      ctx.drawImage(overlay,0,0,out.width,out.height);
+      return out.toDataURL('image/jpeg',.94);
+    }
+
+    // Fallback caso esteja usando mapa em branco ou sem MapLibre.
+    const c=await html2canvas(wrap,{
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      scale:SCALE,
+      logging:false,
+      width:cssW,
+      height:cssH,
+      scrollX:0,
+      scrollY:0
+    });
+    return c.toDataURL('image/jpeg',.94);
+
+  }finally{
+    wrap.style.background=oldWrapBg;
+    mapEl.style.background=oldMapBg;
+    document.body.classList.remove('capture');
+  }
+}
+
+async function overall(){const f=state.focus;state.focus=null;redraw(true);await sleep(700);const x=await capture();state.focus=f;redraw();return x}async function individual(i){const f=state.focus;state.focus=i;redraw(true);await sleep(650);const x=await capture();state.focus=f;redraw();return x}function dataBlob(u){const[a,b]=u.split(','),m=a.match(/:(.*?);/)[1],s=atob(b),v=new Uint8Array(s.length);for(let i=0;i<s.length;i++)v[i]=s.charCodeAt(i);return new Blob([v],{type:m})}async function downloadIndividual(i){status('Gerando imagem...');saveBlob(dataBlob(await individual(i)),`ERB_${i+1}_${state.erbs[i].name.replace(/[^\w-]+/g,'_')}.jpg`)}$('png').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando imagem geral...');saveBlob(dataBlob(await overall()),'mapa_geral_ERBs.jpg')};
 function caveat(){return 'A representação cartográfica dos setores de Estação Rádio Base possui caráter técnico-ilustrativo e foi elaborada a partir das coordenadas, azimutes e parâmetros informados. A área representada não corresponde, por si só, à localização exata do terminal. A cobertura efetiva pode sofrer influência de relevo, potência de transmissão, características da antena, obstáculos físicos, condições da rede, carga da célula, handover e outros fatores de propagação radioelétrica. A interpretação deve ser confrontada com os dados originais fornecidos pela operadora e com os demais elementos da investigação.'}
 function narrative(){const t=timeline();if(!t.length)return 'Não foram informados registros com data/hora suficientes para análise cronológica.';return t.map((x,j)=>`No dia ${esc(x.r.datahora)}, o terminal analisado apresentou registro vinculado à ${esc(x.r.name)}${x.r.operadora?', operada pela '+esc(x.r.operadora):''}, localizada nas coordenadas ${fmt(x.r.lat)} / ${fmt(x.r.lng)}, no setor de azimute ${fmt(x.r.az,1)}°${x.r.cellid?', Cell ID '+esc(x.r.cellid):''}.`).join(' ')}
 function poiText(){if(!state.pois.length)return'';return state.pois.map(p=>{const arr=state.erbs.map(r=>({r,d:hav(p.lat,p.lng,r.lat,r.lng),inside:turf.booleanPointInPolygon(turf.point([p.lng,p.lat]),sector(r).geo)})).sort((a,b)=>a.d-b.d);return `<p><b>${esc(p.name)}</b> (${esc(p.tipo)}), coordenadas ${fmt(p.lat)} / ${fmt(p.lng)}.${arr.length?` A ERB mais próxima é ${esc(arr[0].r.name)}, a aproximadamente ${fmt(arr[0].d,2)} km.${arr.filter(x=>x.inside).length?' O ponto encontra-se dentro da representação gráfica de '+arr.filter(x=>x.inside).length+' setor(es).':''}`:''}</p>`}).join('')}
 function tableHtml(){return `<table><thead><tr><th>#</th><th>ERB / setor</th><th>Coord.</th><th>Az.</th><th>Data/hora</th><th>Operadora</th><th>Dados técnicos</th><th>Fonte</th></tr></thead><tbody>${state.erbs.filter(r=>r.visible!==false).map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.name)}${r.estacao?'<br>'+esc(r.estacao):''}</td><td>${fmt(r.lat)}<br>${fmt(r.lng)}</td><td>${fmt(r.az,1)}°</td><td>${esc(r.datahora||'—')}</td><td>${esc(r.operadora||'—')}<br>${esc(r.tech||'')}</td><td>${r.cellid?'CID '+esc(r.cellid)+'<br>':''}${r.enodeb?'e/gNodeB '+esc(r.enodeb)+'<br>':''}${r.lactac?'LAC/TAC '+esc(r.lactac)+'<br>':''}${r.pci?'PCI '+esc(r.pci)+'<br>':''}${r.banda?esc(r.banda):''}</td><td>${esc(r.fonte||'—')}${r.pagina?'<br>'+esc(r.pagina):''}</td></tr>`).join('')}</tbody></table>`}
 async function getImgs(){const x={overall:null,individual:[]};if($('repOverall').checked)x.overall=await overall();if($('repIndividual').checked)for(let i=0;i<state.erbs.length;i++)if(state.erbs[i].visible!==false)x.individual.push({i,img:await individual(i)});return x}
-async function preview(){if(!state.erbs.some(r=>r.visible!==false))return status('Adicione ao menos uma ERB.',true);const w=window.open('','_blank');if(!w)return status('Pop-up bloqueado.',true);w.document.write('Gerando relatório...');try{const imgs=await getImgs(),m=metadata();const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(m.title)}</title><style>@page{size:A4;margin:14mm}html,body{height:auto!important;min-height:0!important;overflow:visible!important}body{font-family:Arial;color:#111;font-size:10.5pt;line-height:1.45;margin:0}h1{font-size:16pt;border-bottom:3px solid #8e1b22;padding-bottom:7px}h2{font-size:12pt;border-bottom:1px solid #bbb;padding-bottom:4px;margin-top:18px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}.note{background:#f5f5f5;border-left:4px solid #555;padding:9px}.map{display:block;width:100%;height:auto;max-height:150mm;object-fit:contain;border:1px solid #aaa;margin:4mm auto 0}.page{page-break-before:always;break-before:page;page-break-inside:avoid;break-inside:avoid}.page h2{margin-top:0}.page p{page-break-inside:avoid;break-inside:avoid}.page .map{page-break-inside:avoid;break-inside:avoid}table{width:100%;border-collapse:collapse;font-size:8pt}th,td{border:1px solid #bbb;padding:4px;vertical-align:top}th{background:#eee}tr{page-break-inside:avoid;break-inside:avoid}@media print{button{display:none}.page{page-break-before:always;break-before:page}}</style>
-</head><body><h1>${esc(m.title)}</h1><div class="meta"><div><b>Unidade:</b> ${esc(m.unit||'—')}</div><div><b>Procedimento:</b> ${esc(m.procedure||'—')}</div><div><b>Terminal:</b> ${esc(m.terminal||'—')}</div><div><b>Responsável:</b> ${esc(m.analyst||'—')}</div></div>${m.description?'<h2>1. Objeto da análise</h2><p>'+esc(m.description).replace(/\n/g,'<br>')+'</p>':''}<h2>2. Considerações técnicas</h2><div class="note">${caveat()}</div>${imgs.overall?'<h2>3. Representação cartográfica geral</h2><img class="map" src="'+imgs.overall+'">':''}<h2>4. Relação das ERBs</h2>${tableHtml()}${$('repTimeline').checked?'<h2>5. Análise cronológica</h2><p>'+narrative()+'</p>':''}${$('repPois').checked&&state.pois.length?'<h2>6. Locais de interesse</h2>'+poiText():''}${imgs.individual.map(x=>{const r=state.erbs[x.i];return `<section class="page"><h2>Detalhamento individual — ${esc(r.name)}</h2><p><b>Coordenadas:</b> ${fmt(r.lat)} / ${fmt(r.lng)} &nbsp; <b>Azimute:</b> ${fmt(r.az,1)}° &nbsp; <b>Distância:</b> ${fmt(r.dist,2)} km &nbsp; <b>Margem:</b> ±${fmt(r.margin,1)}°</p><p><b>Operadora:</b> ${esc(r.operadora||'—')} &nbsp; <b>Tecnologia:</b> ${esc(r.tech||'—')} &nbsp; <b>Cell ID:</b> ${esc(r.cellid||'—')}</p>${r.fonte?'<p><b>Fonte:</b> '+esc(r.fonte)+(r.pagina?' — '+esc(r.pagina):'')+'</p>':''}<img class="map" src="${x.img}"></section>`}).join('')}<h2>Conclusão técnica</h2><p>As representações acima sintetizam os parâmetros de ERBs cadastrados e, quando existente, a sequência temporal dos registros. A interpretação deve observar as limitações técnicas descritas neste relatório e ser cotejada com os dados originais da operadora e demais elementos probatórios.</p><button onclick="print()">Imprimir / Salvar PDF</button></body></html>`;w.document.open();w.document.write(html);w.document.close();status('Relatório preparado.')}catch(e){console.error(e);w.close();status('Falha ao gerar relatório.',true)}}$('preview').onclick=preview;
-$('pdf').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando PDF...');try{const imgs=await getImgs(),m=metadata(),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;let y=15;doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text(m.title||'RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,y);y+=8;doc.setFontSize(8.5);doc.setFont('helvetica','normal');[`Unidade: ${m.unit||'—'}`,`Procedimento: ${m.procedure||'—'}`,`Terminal: ${m.terminal||'—'}`,`Responsável: ${m.analyst||'—'}`].forEach(t=>{doc.text(t,M,y);y+=4.5});y+=3;const addText=(title,text)=>{if(y>250){doc.addPage();y=15}doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(title,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);const l=doc.splitTextToSize(text,W-2*M);doc.text(l,M,y);y+=l.length*4+5};if(m.description)addText('1. Objeto da análise',m.description);addText('2. Considerações técnicas',caveat());if(imgs.overall){if(y>145){doc.addPage();y=15}doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('3. Representação cartográfica geral',M,y);y+=6;const p=doc.getImageProperties(imgs.overall),r=Math.min((W-2*M)/p.width,120/p.height);doc.addImage(imgs.overall,'JPEG',M,y,p.width*r,p.height*r);y+=p.height*r+6}doc.addPage();doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('4. Relação das ERBs',M,15);doc.autoTable({startY:21,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.4},head:[['#','Nome','Lat.','Long.','Az.','Data/hora','Operadora','Cell ID / eNodeB','Fonte']],body:state.erbs.filter(r=>r.visible!==false).map((r,i)=>[i+1,r.name,fmt(r.lat),fmt(r.lng),fmt(r.az,1)+'°',r.datahora||'—',r.operadora||'—',[r.cellid,r.enodeb].filter(Boolean).join(' / ')||'—',[r.fonte,r.pagina].filter(Boolean).join(' / ')||'—'])});if($('repTimeline').checked){doc.addPage();y=15;addText('5. Análise cronológica',narrative().replace(/<[^>]+>/g,''))}for(const x of imgs.individual){const r=state.erbs[x.i];doc.addPage();y=15;doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(`Detalhamento individual — ${r.name}`,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(doc.splitTextToSize(`Coordenadas: ${fmt(r.lat)} / ${fmt(r.lng)} | Azimute: ${fmt(r.az,1)}° | Distância: ${fmt(r.dist,2)} km | Margem: ±${fmt(r.margin,1)}°\nOperadora: ${r.operadora||'—'} | Tecnologia: ${r.tech||'—'} | Cell ID: ${r.cellid||'—'}\nFonte: ${r.fonte||'—'} ${r.pagina||''}`,W-2*M),M,y);y+=18;const p=doc.getImageProperties(x.img),rr=Math.min((W-2*M)/p.width,190/p.height);doc.addImage(x.img,'JPEG',M,y,p.width*rr,p.height*rr)}doc.save('relatorio_analise_ERBs.pdf');status('PDF gerado.')}catch(e){console.error(e);status('Falha ao gerar PDF.',true)}};
+async function preview(){if(!state.erbs.some(r=>r.visible!==false))return status('Adicione ao menos uma ERB.',true);const w=window.open('','_blank');if(!w)return status('Pop-up bloqueado.',true);w.document.write('Gerando relatório...');try{const imgs=await getImgs(),m=metadata();const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(m.title)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}html,body{height:auto!important;min-height:0!important;overflow:visible!important}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:10.5pt;line-height:1.45;margin:0;background:#e8e8e8;overflow-wrap:anywhere;word-break:normal}.report{width:182mm;max-width:calc(100vw - 28px);margin:12mm auto;background:#fff;padding:14mm;box-shadow:0 2px 18px rgba(0,0,0,.18)}h1{font-size:16pt;border-bottom:3px solid #8e1b22;padding-bottom:7px}h2{font-size:12pt;border-bottom:1px solid #bbb;padding-bottom:4px;margin-top:18px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}.note{background:#f5f5f5;border-left:4px solid #555;padding:9px;white-space:normal;overflow-wrap:break-word;text-align:justify}.map{display:block;width:100%;height:auto;max-height:132mm;object-fit:contain;border:1px solid #aaa;margin:4mm auto 0;background:#fff}.page{page-break-before:always;break-before:page;page-break-inside:avoid;break-inside:avoid;padding-top:1mm}.page h2{margin-top:0}.page p{page-break-inside:avoid;break-inside:avoid}.page .map{page-break-inside:avoid;break-inside:avoid}table{width:100%;border-collapse:collapse;font-size:8pt}th,td{border:1px solid #bbb;padding:4px;vertical-align:top}th{background:#eee}tr{page-break-inside:avoid;break-inside:avoid}@media print{body{background:#fff}.report{width:auto;max-width:none;margin:0;padding:0;box-shadow:none}button,.printbar{display:none!important}.page{page-break-before:always;break-before:page}}</style>
+</head><body><main class="report"><h1>${esc(m.title)}</h1><div class="meta"><div><b>Unidade:</b> ${esc(m.unit||'—')}</div><div><b>Procedimento:</b> ${esc(m.procedure||'—')}</div><div><b>Terminal:</b> ${esc(m.terminal||'—')}</div><div><b>Responsável:</b> ${esc(m.analyst||'—')}</div></div>${m.description?'<h2>1. Objeto da análise</h2><p>'+esc(m.description).replace(/\n/g,'<br>')+'</p>':''}<h2>2. Considerações técnicas</h2><div class="note">${caveat()}</div>${imgs.overall?'<h2>3. Representação cartográfica geral</h2><img class="map" src="'+imgs.overall+'">':''}<h2>4. Relação das ERBs</h2>${tableHtml()}${$('repTimeline').checked?'<h2>5. Análise cronológica</h2><p>'+narrative()+'</p>':''}${$('repPois').checked&&state.pois.length?'<h2>6. Locais de interesse</h2>'+poiText():''}${imgs.individual.map(x=>{const r=state.erbs[x.i];return `<section class="page"><h2>Detalhamento individual — ${esc(r.name)}</h2><p><b>Coordenadas:</b> ${fmt(r.lat)} / ${fmt(r.lng)} &nbsp; <b>Azimute:</b> ${fmt(r.az,1)}° &nbsp; <b>Distância:</b> ${fmt(r.dist,2)} km &nbsp; <b>Margem:</b> ±${fmt(r.margin,1)}°</p><p><b>Operadora:</b> ${esc(r.operadora||'—')} &nbsp; <b>Tecnologia:</b> ${esc(r.tech||'—')} &nbsp; <b>Cell ID:</b> ${esc(r.cellid||'—')}</p>${r.fonte?'<p><b>Fonte:</b> '+esc(r.fonte)+(r.pagina?' — '+esc(r.pagina):'')+'</p>':''}<img class="map" src="${x.img}"></section>`}).join('')}<h2>Conclusão técnica</h2><p>As representações acima sintetizam os parâmetros de ERBs cadastrados e, quando existente, a sequência temporal dos registros. A interpretação deve observar as limitações técnicas descritas neste relatório e ser cotejada com os dados originais da operadora e demais elementos probatórios.</p></main><div class="printbar" style="width:182mm;max-width:calc(100vw - 28px);margin:0 auto 12mm;text-align:right"><button onclick="print()" style="padding:10px 16px;cursor:pointer">Imprimir / Salvar PDF</button></div></body></html>`;w.document.open();w.document.write(html);w.document.close();status('Relatório preparado.')}catch(e){console.error(e);w.close();status('Falha ao gerar relatório.',true)}}$('preview').onclick=preview;
+$('pdf').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando PDF...');try{const imgs=await getImgs(),m=metadata(),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;let y=15;doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text(m.title||'RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,y);y+=8;doc.setFontSize(8.5);doc.setFont('helvetica','normal');[`Unidade: ${m.unit||'—'}`,`Procedimento: ${m.procedure||'—'}`,`Terminal: ${m.terminal||'—'}`,`Responsável: ${m.analyst||'—'}`].forEach(t=>{doc.text(t,M,y);y+=4.5});y+=3;const addText=(title,text)=>{if(y>250){doc.addPage();y=15}doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(title,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);const l=doc.splitTextToSize(text,W-2*M);doc.text(l,M,y);y+=l.length*4+5};if(m.description)addText('1. Objeto da análise',m.description);addText('2. Considerações técnicas',caveat());if(imgs.overall){if(y>145){doc.addPage();y=15}doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('3. Representação cartográfica geral',M,y);y+=6;const p=doc.getImageProperties(imgs.overall),r=Math.min((W-2*M)/p.width,120/p.height);doc.addImage(imgs.overall,'JPEG',M,y,p.width*r,p.height*r);y+=p.height*r+6}doc.addPage();doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('4. Relação das ERBs',M,15);doc.autoTable({startY:21,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.4},head:[['#','Nome','Lat.','Long.','Az.','Data/hora','Operadora','Cell ID / eNodeB','Fonte']],body:state.erbs.filter(r=>r.visible!==false).map((r,i)=>[i+1,r.name,fmt(r.lat),fmt(r.lng),fmt(r.az,1)+'°',r.datahora||'—',r.operadora||'—',[r.cellid,r.enodeb].filter(Boolean).join(' / ')||'—',[r.fonte,r.pagina].filter(Boolean).join(' / ')||'—'])});if($('repTimeline').checked){doc.addPage();y=15;addText('5. Análise cronológica',narrative().replace(/<[^>]+>/g,''))}for(const x of imgs.individual){const r=state.erbs[x.i];doc.addPage();y=15;doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(`Detalhamento individual — ${r.name}`,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(doc.splitTextToSize(`Coordenadas: ${fmt(r.lat)} / ${fmt(r.lng)} | Azimute: ${fmt(r.az,1)}° | Distância: ${fmt(r.dist,2)} km | Margem: ±${fmt(r.margin,1)}°\nOperadora: ${r.operadora||'—'} | Tecnologia: ${r.tech||'—'} | Cell ID: ${r.cellid||'—'}\nFonte: ${r.fonte||'—'} ${r.pagina||''}`,W-2*M),M,y);y+=18;const p=doc.getImageProperties(x.img),availH=265-y,rr=Math.min((W-2*M)/p.width,availH/p.height);doc.addImage(x.img,'JPEG',M,y,p.width*rr,p.height*rr)}doc.save('relatorio_analise_ERBs.pdf');status('PDF gerado.')}catch(e){console.error(e);status('Falha ao gerar PDF.',true)}};
 window.addEventListener('resize',()=>window.__pcprErbResize());setTimeout(()=>window.__pcprErbResize(),120);setTimeout(()=>window.__pcprErbResize(),450);redraw();})();
 </script></body></html>
