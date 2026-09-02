@@ -12,6 +12,12 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 .nav-inner{max-width:1500px;margin:auto;padding:10px 18px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .brand{display:flex;gap:9px;align-items:center;margin-right:2px}
 .version-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.08);color:#f4e7bd;font-size:10.5px;font-weight:800;letter-spacing:.45px;white-space:nowrap}
+.nav-clock{margin-left:auto;display:flex;align-items:center;gap:10px;padding:5px 10px 5px 12px;border-left:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap}
+.clock-icon{width:30px;height:30px;border:1px solid rgba(197,162,83,.58);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:14px;background:rgba(255,255,255,.04)}
+.clock-text{text-align:right;line-height:1.08}
+.clock-time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;letter-spacing:.7px;color:#fff}
+.clock-date{margin-top:3px;font-size:9.5px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;color:#e7d9b3}
+
 .brand-mark{width:35px;height:35px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);border-radius:8px;color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.05em;background:rgba(255,255,255,.05)}
 .nav-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#f1ede2;margin-right:4px;white-space:nowrap}
 .credit-line{width:100%;text-align:center;color:#e6d8b2;font-size:10.5px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;padding-top:1px;opacity:.96}
@@ -28,6 +34,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   .nav-inner{padding:8px 10px;gap:7px}
   .credit-line{font-size:9.5px}
   .version-badge{font-size:9.5px;min-height:26px;padding:0 7px}
+  .nav-clock{margin-left:0;margin-right:0;border-left:0;border-top:1px solid rgba(255,255,255,.12);width:100%;justify-content:center;padding:6px 4px}
+  .clock-text{text-align:center}
+  .clock-time{font-size:16px}
+  .clock-date{font-size:9px}
+
   .brand{width:100%}
   .module-tab{flex:1 1 30%;padding:0 9px;font-size:12px}
 }
@@ -46,7 +57,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <body>
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.3 · 02/09/2026</span></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.5 · 02/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
     <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
@@ -63,7 +74,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <main class="module-main">
   <div id="loading" class="loading">Carregando Ofícios…</div>
   <iframe id="frameOficios" class="module-frame active" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
-  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.1"></iframe>
+  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.2"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
@@ -76,8 +87,28 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.3';
+const CENTRAL_VERSION='1.5';
 const CENTRAL_VERSION_DATE='02/09/2026';
+
+function updateCentralClock(){
+  const now=new Date();
+  const timeEl=document.getElementById('liveClock');
+  const dateEl=document.getElementById('liveDate');
+  if(timeEl){
+    timeEl.textContent=new Intl.DateTimeFormat('pt-BR',{
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+    }).format(now);
+  }
+  if(dateEl){
+    const date=new Intl.DateTimeFormat('pt-BR',{
+      weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'
+    }).format(now);
+    dateEl.textContent=date;
+  }
+}
+updateCentralClock();
+setInterval(updateCentralClock,1000);
+
 
 /* Armazenamento compartilhado do modelo ODT usado pelo módulo de laudo. */
 const DB='pcprCentralIntegradaV3', STORE='modelos', KEY='laudoOdt';
