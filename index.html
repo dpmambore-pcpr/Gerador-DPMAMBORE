@@ -46,7 +46,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <body>
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.1 · 02/09/2026</span></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.2 · 02/09/2026</span></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
     <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
@@ -55,6 +55,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
     <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
     <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
     <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+    <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
     <button class="module-tab" data-key="contatos" type="button">Contatos</button>
   </div>
 </nav>
@@ -68,13 +69,14 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
   <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.3"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
+  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.1"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.1';
+const CENTRAL_VERSION='1.2';
 const CENTRAL_VERSION_DATE='02/09/2026';
 
 /* Armazenamento compartilhado do modelo ODT usado pelo módulo de laudo. */
@@ -113,6 +115,7 @@ const modules={
   operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
   erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
   filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900},
+  contatodppr:{frame:document.getElementById('frameContatoDpPr'),tab:document.querySelector('[data-key="contatodppr"]'),min:900},
   contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850}
 };
 const loading=document.getElementById('loading');
@@ -128,6 +131,7 @@ function trackModule(key){
       operadora:'consulta_operadora',
       erb:'erb_antenas',
       filtroip:'filtro_ip',
+      contatodppr:'contato_dp_pr',
       contatos:'diretorio_contatos'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
