@@ -46,7 +46,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <body>
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.2 · 02/09/2026</span></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.3 · 02/09/2026</span></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
     <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
@@ -63,7 +63,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <main class="module-main">
   <div id="loading" class="loading">Carregando Ofícios…</div>
   <iframe id="frameOficios" class="module-frame active" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
-  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.0"></iframe>
+  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.1"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
@@ -76,7 +76,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.2';
+const CENTRAL_VERSION='1.3';
 const CENTRAL_VERSION_DATE='02/09/2026';
 
 /* Armazenamento compartilhado do modelo ODT usado pelo módulo de laudo. */
