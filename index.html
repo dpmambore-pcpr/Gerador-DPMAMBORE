@@ -49,6 +49,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
     <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
     <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
     <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+    <button class="module-tab" data-key="contatos" type="button">Contatos</button>
   </div>
 </nav>
 
@@ -60,6 +61,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
   <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.3"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
+  <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.0"></iframe>
 </main>
 
 <script>
@@ -100,7 +102,8 @@ const modules={
   imei:{frame:document.getElementById('frameImei'),tab:document.querySelector('[data-key="imei"]'),min:900},
   operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
   erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
-  filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900}
+  filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900},
+  contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850}
 };
 const loading=document.getElementById('loading');
 
@@ -113,7 +116,8 @@ function trackModule(key){
       imei:'consulta_imei',
       operadora:'consulta_operadora',
       erb:'erb_antenas',
-      filtroip:'filtro_ip'
+      filtroip:'filtro_ip',
+      contatos:'diretorio_contatos'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
   }catch(e){}

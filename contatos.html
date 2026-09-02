@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diretório de Contatos — PCPR</title>
+<style>
+:root{
+  --ink:#111820;--green:#285748;--green-dark:#183a31;--gold:#c5a253;--red:#8f3037;
+  --bg:#f4f2ec;--card:#fff;--line:#d8d3c8;--muted:#626b70;--soft:#f7f4ed;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
+header{
+  background:linear-gradient(115deg,var(--ink) 0%,var(--green-dark) 72%,#20473c 100%);
+  color:#fff;border-bottom:5px solid var(--gold);padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.12)
+}
+header h1{margin:0;font-size:22px;letter-spacing:.2px}
+header p{margin:5px 0 0;color:#f1ede2;font-size:12.5px}
+main{max-width:1450px;margin:0 auto;padding:20px 22px 50px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 0 rgba(197,162,83,.12)}
+.toolbar{display:grid;grid-template-columns:minmax(260px,1.5fr) minmax(190px,.6fr) auto auto;gap:10px;align-items:end}
+label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:700}
+input,select,textarea{width:100%;border:1px solid #bac5d1;border-radius:8px;background:#fff;color:#17202a;padding:9px 10px;font:inherit;font-size:13px}
+textarea{min-height:92px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px rgba(40,87,72,.14)}
+button,.btn{
+  appearance:none;border:1px solid var(--green-dark);background:linear-gradient(180deg,#326b58,var(--green));
+  color:#fff;border-radius:9px;min-height:40px;padding:0 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer
+}
+button:hover,.btn:hover{filter:brightness(.96)}
+button.secondary{background:#f5f1e7;color:var(--ink);border-color:#cdbf9c}
+button.danger{background:#fff;color:var(--red);border-color:#d7a9ad}
+button.icon{min-height:32px;height:32px;padding:0 9px;font-size:12px}
+button.star{background:transparent;border:0;color:#9c8350;font-size:21px;padding:0;min-height:28px;width:30px}
+.stats{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0 16px}
+.pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:12px;color:var(--muted)}
+.pill b{color:var(--green-dark)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(335px,1fr));gap:12px}
+.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:190px}
+.item:hover{border-color:#bfae83;box-shadow:0 3px 14px rgba(0,0,0,.055)}
+.item-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.item h3{margin:0;font-size:15px;color:var(--ink);line-height:1.25}
+.cat{display:inline-block;margin-top:5px;font-size:10.5px;font-weight:800;letter-spacing:.35px;text-transform:uppercase;color:var(--green-dark);background:#edf3ef;border:1px solid #ccdcd3;border-radius:999px;padding:3px 7px}
+.note{font-size:12px;color:var(--muted);line-height:1.42}
+.email-row,.link-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.email{font-family:Consolas,monospace;font-size:12px;word-break:break-all;flex:1 1 175px;color:#183a31}
+.linktext{font-size:11.5px;word-break:break-all;flex:1 1 190px;color:#385d50}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:4px;border-top:1px solid #eee9df}
+.empty{grid-column:1/-1;text-align:center;background:#fff;border:1px dashed var(--line);border-radius:12px;padding:38px;color:var(--muted)}
+.top-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.notice{margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.5;background:#fbf7ec;border-left:4px solid var(--gold);padding:9px 11px;border-radius:7px}
+dialog{border:0;border-radius:14px;padding:0;width:min(650px,calc(100vw - 28px));box-shadow:0 20px 70px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(11,24,22,.48)}
+.modal-head{background:linear-gradient(115deg,var(--ink),var(--green-dark));color:#fff;padding:15px 18px;border-bottom:4px solid var(--gold)}
+.modal-head h2{margin:0;font-size:17px}
+.modal-body{padding:16px 18px;background:#fff}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .full{grid-column:1/-1}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.chk{display:flex;flex-direction:row;align-items:center;gap:8px;color:#17202a;font-weight:400}
+.chk input{width:auto}
+footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font-size:11px;color:var(--muted)}
+@media(max-width:850px){
+  .toolbar{grid-template-columns:1fr 1fr}
+  .form{grid-template-columns:1fr}
+  .form .full{grid-column:auto}
+}
+@media(max-width:540px){.toolbar{grid-template-columns:1fr}main{padding:15px 12px 40px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Diretório de Contatos</h1>
+  <p>Bancos, operadoras, plataformas, órgãos e ferramentas · dados personalizados salvos somente neste navegador</p>
+</header>
+
+<main>
+  <section class="card">
+    <div class="toolbar">
+      <label>Pesquisar
+        <input id="search" type="search" placeholder="Instituição, e-mail, observação...">
+      </label>
+      <label>Categoria
+        <select id="category"><option value="">Todas as categorias</option></select>
+      </label>
+      <button class="secondary" id="favoritesOnly" type="button">☆ Favoritos</button>
+      <button id="addBtn" type="button">+ Adicionar contato</button>
+    </div>
+    <div class="top-actions">
+      <button class="secondary" id="exportBtn" type="button">Exportar backup (.json)</button>
+      <label class="btn secondary" style="display:inline-flex;align-items:center;justify-content:center;min-height:40px;cursor:pointer">
+        Importar backup
+        <input id="importFile" type="file" accept=".json,application/json" hidden>
+      </label>
+      <button class="secondary" id="resetBtn" type="button">Restaurar lista inicial</button>
+    </div>
+    <div class="notice"><b>Observação:</b> os endereços desta lista inicial foram inseridos conforme os dados fornecidos à Central. Como contatos institucionais podem mudar, o módulo permite edição imediata. Dados adicionados por você não são enviados ao Google Analytics.</div>
+  </section>
+
+  <div class="stats" id="stats"></div>
+  <section class="grid" id="grid"></section>
+</main>
+
+<footer>Diretório local PCPR · use “Exportar backup” para transferir suas alterações para outro computador ou navegador.</footer>
+
+<dialog id="editor">
+  <div class="modal-head"><h2 id="editorTitle">Adicionar contato</h2></div>
+  <form class="modal-body" id="form">
+    <input type="hidden" id="editId">
+    <div class="form">
+      <label>Instituição / serviço
+        <input id="name" required placeholder="Ex.: Banco X">
+      </label>
+      <label>Categoria
+        <input id="catInput" list="categoriesList" required placeholder="Ex.: Bancos / Fintechs">
+        <datalist id="categoriesList"></datalist>
+      </label>
+      <label class="full">E-mails — um por linha
+        <textarea id="emails" placeholder="oficios@exemplo.com.br&#10;judicial@exemplo.com.br"></textarea>
+      </label>
+      <label class="full">Link / portal
+        <input id="url" type="url" placeholder="https://...">
+      </label>
+      <label class="full">Observação
+        <textarea id="notes" placeholder="Finalidade do contato, setor, instruções..."></textarea>
+      </label>
+      <label class="chk full"><input id="favorite" type="checkbox"> Marcar como favorito</label>
+    </div>
+    <div class="modal-actions">
+      <button class="secondary" type="button" id="cancelBtn">Cancelar</button>
+      <button type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+const STORAGE='pcpr.diretorioContatos.v1';
+const DEFAULTS=[{"id":"whatsapp-records","name":"WhatsApp — Records","category":"Plataformas","emails":[],"url":"https://www.whatsapp.com/records/login/?locale=pt_BR&lang=pt","notes":"Portal para requisições/records do WhatsApp.","favorite":true},{"id":"facebook-records","name":"Facebook / Meta — Records","category":"Plataformas","emails":[],"url":"https://www.facebook.com/records/login/","notes":"Portal para requisições/records da Meta/Facebook.","favorite":true},{"id":"claro","name":"Claro","category":"Operadoras","emails":["oficios.doc@claro.com.br"],"url":"","notes":"Ofícios para operadora Claro.","favorite":true},{"id":"vivo","name":"Vivo / Telefônica","category":"Operadoras","emails":["cpr.br@telefonica.com","ordens.sigilo.br@telefonica.com"],"url":"","notes":"Contatos informados para ofícios e ordens de sigilo.","favorite":true},{"id":"tim","name":"TIM","category":"Operadoras","emails":["graop_oficios@timbrasil.com.br"],"url":"","notes":"Ofícios para TIM.","favorite":true},{"id":"surf","name":"Surf Telecom","category":"Operadoras","emails":["interceptacao@surf.com.br","contato@surf.com.br"],"url":"","notes":"Contatos informados para interceptação/ofícios e atendimento.","favorite":true},{"id":"turboscribe","name":"TurboScribe","category":"Ferramentas","emails":[],"url":"https://turboscribe.ai/pt/dashboard","notes":"Ferramenta para transcrição de vídeos e áudios.","favorite":false},{"id":"c6","name":"Banco C6","category":"Bancos / Fintechs","emails":["oficiosbacen@c6bank.com.br"],"url":"","notes":"","favorite":false},{"id":"bb","name":"Banco do Brasil","category":"Bancos / Fintechs","emails":["cenopserv.oficioscwb@bb.com.br","cenopserv.bloq.jud@bb.com.br"],"url":"","notes":"Ofícios e bloqueios judiciais.","favorite":false},{"id":"banrisul","name":"Banrisul","category":"Bancos / Fintechs","emails":["oficiosjudiciais@banrisul.com.br"],"url":"","notes":"","favorite":false},{"id":"bradesco","name":"Bradesco","category":"Bancos / Fintechs","emails":["oficiosjudiciais@bradesco.com.br"],"url":"","notes":"","favorite":false},{"id":"caixa","name":"Caixa Econômica Federal","category":"Bancos / Fintechs","emails":["bacenjud@caixa.gov.br","sisbajud@caixa.gov.br"],"url":"","notes":"Contatos informados para BacenJud/Sisbajud.","favorite":false},{"id":"maxialfa","name":"CCLA Maxi Alfa","category":"Bancos / Fintechs","emails":["juridico@maxicredito.coop.br"],"url":"","notes":"","favorite":false},{"id":"fenseg","name":"Federação Nacional de Seguros Gerais — FENSEG","category":"Órgãos / Entidades","emails":["sjur@cnseg.org.br"],"url":"","notes":"","favorite":false},{"id":"itau","name":"Itaú Unibanco","category":"Bancos / Fintechs","emails":["itaujudicial@itau-unibanco.com.br","atendimento.sisbajud@itau-unibanco.com.br"],"url":"","notes":"Ofícios judiciais e atendimento relacionado ao Sisbajud.","favorite":false},{"id":"jucerja","name":"JUCERJA","category":"Órgãos / Entidades","emails":["centraldeoficios@jucerja.rj.gov.br"],"url":"","notes":"","favorite":false},{"id":"mercadopago","name":"Mercado Pago","category":"Bancos / Fintechs","emails":["REGULATORIO@mercadopago.com.br"],"url":"","notes":"","favorite":false},{"id":"nuinvest","name":"Nu Invest Corretora de Valores S.A.","category":"Bancos / Fintechs","emails":[],"url":"https://www.nubank.com.br/transparencia/praja","notes":"Portal informado para atendimento/requisições.","favorite":false},{"id":"nupagamentos","name":"Nu Pagamentos / Nubank","category":"Bancos / Fintechs","emails":["jud.ops@nubank.com.br"],"url":"","notes":"","favorite":false},{"id":"paypal","name":"PayPal","category":"Bancos / Fintechs","emails":["eedoc@paypal.com"],"url":"","notes":"","favorite":false},{"id":"recargapay","name":"RecargaPay","category":"Bancos / Fintechs","emails":["lia.endringer@recargapay.com"],"url":"","notes":"","favorite":false},{"id":"santander","name":"Santander","category":"Bancos / Fintechs","emails":["gerenciaoficios@santander.com.br","corgreguladores@santander.com.br"],"url":"","notes":"","favorite":false},{"id":"sicredi","name":"Sicredi","category":"Bancos / Fintechs","emails":["jud_oficios@sicredi.com.br"],"url":"","notes":"","favorite":false},{"id":"sofisa","name":"Sofisa","category":"Bancos / Fintechs","emails":["institucionalsofisabcb@sofisa.com.br"],"url":"","notes":"","favorite":false},{"id":"stone","name":"Stone","category":"Bancos / Fintechs","emails":["oficios@stone.com.br"],"url":"","notes":"","favorite":false},{"id":"ailos","name":"Viacredi / AILOS","category":"Bancos / Fintechs","emails":["juridico@ailos.coop.br"],"url":"","notes":"","favorite":false}];
+const $=id=>document.getElementById(id);
+let data=[];
+let favoritesOnly=false;
+
+function cloneDefaults(){return JSON.parse(JSON.stringify(DEFAULTS))}
+function load(){
+  try{
+    const raw=localStorage.getItem(STORAGE);
+    data=raw?JSON.parse(raw):cloneDefaults();
+    if(!Array.isArray(data))throw new Error('invalid');
+  }catch(_){
+    data=cloneDefaults();
+  }
+}
+function save(){
+  try{localStorage.setItem(STORAGE,JSON.stringify(data))}catch(e){console.error(e)}
+}
+function uid(){
+  try{return crypto.randomUUID()}catch(_){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+}
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
+function categories(){return [...new Set(data.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function validUrl(u){
+  if(!u)return '';
+  try{return new URL(u).href}catch(_){
+    try{return new URL('https://'+u).href}catch(__){return ''}
+  }
+}
+function escText(s){return String(s??'')}
+function copyText(txt){
+  if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(txt);
+  return new Promise((res,rej)=>{
+    try{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();res()}catch(e){rej(e)}
+  })
+}
+function toast(msg){
+  const old=document.getElementById('toast');if(old)old.remove();
+  const el=document.createElement('div');el.id='toast';el.textContent=msg;
+  Object.assign(el.style,{position:'fixed',right:'18px',bottom:'18px',zIndex:'9999',background:'#183a31',color:'#fff',padding:'10px 14px',borderRadius:'9px',boxShadow:'0 5px 20px rgba(0,0,0,.25)',fontSize:'12.5px'});
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1800);
+}
+function rebuildFilters(){
+  const sel=$('category'), current=sel.value;
+  sel.innerHTML='<option value="">Todas as categorias</option>';
+  const dl=$('categoriesList');dl.innerHTML='';
+  categories().forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+    const d=document.createElement('option');d.value=c;dl.appendChild(d);
+  });
+  if([...sel.options].some(o=>o.value===current))sel.value=current;
+}
+function renderStats(list){
+  const total=data.length, fav=data.filter(x=>x.favorite).length;
+  const cats=categories();
+  $('stats').innerHTML='';
+  const vals=[['Total',total],['Exibidos',list.length],['Favoritos',fav],['Categorias',cats.length]];
+  vals.forEach(([l,v])=>{
+    const s=document.createElement('span');s.className='pill';
+    const b=document.createElement('b');b.textContent=v;s.append(b,document.createTextNode(' '+l));$('stats').appendChild(s);
+  });
+}
+function addEmailRow(parent,email,item){
+  const row=document.createElement('div');row.className='email-row';
+  const text=document.createElement('div');text.className='email';text.textContent=email;
+  const cp=document.createElement('button');cp.className='secondary icon';cp.type='button';cp.textContent='Copiar';
+  cp.onclick=()=>copyText(email).then(()=>toast('E-mail copiado'));
+  const mail=document.createElement('button');mail.className='icon';mail.type='button';mail.textContent='E-mail';
+  mail.onclick=()=>location.href='mailto:'+encodeURIComponent(email);
+  row.append(text,cp,mail);parent.appendChild(row);
+}
+function render(){
+  rebuildFilters();
+  const q=norm($('search').value), cat=$('category').value;
+  let list=data.filter(x=>{
+    if(cat && x.category!==cat)return false;
+    if(favoritesOnly && !x.favorite)return false;
+    if(!q)return true;
+    const hay=norm([x.name,x.category,(x.emails||[]).join(' '),x.url,x.notes].join(' '));
+    return hay.includes(q);
+  }).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'pt-BR'));
+  renderStats(list);
+  const grid=$('grid');grid.innerHTML='';
+  if(!list.length){
+    const e=document.createElement('div');e.className='empty';e.textContent='Nenhum contato encontrado com os filtros atuais.';grid.appendChild(e);return;
+  }
+  list.forEach(item=>{
+    const card=document.createElement('article');card.className='item';
+    const head=document.createElement('div');head.className='item-head';
+    const wrap=document.createElement('div');
+    const h=document.createElement('h3');h.textContent=item.name;
+    const c=document.createElement('span');c.className='cat';c.textContent=item.category||'Sem categoria';
+    wrap.append(h,c);
+    const star=document.createElement('button');star.className='star';star.type='button';star.title='Favorito';
+    star.textContent=item.favorite?'★':'☆';
+    star.onclick=()=>{item.favorite=!item.favorite;save();render()};
+    head.append(wrap,star);card.appendChild(head);
+
+    if(item.notes){const n=document.createElement('div');n.className='note';n.textContent=item.notes;card.appendChild(n)}
+    (item.emails||[]).forEach(e=>addEmailRow(card,e,item));
+
+    const u=validUrl(item.url);
+    if(u){
+      const row=document.createElement('div');row.className='link-row';
+      const tx=document.createElement('div');tx.className='linktext';tx.textContent=u;
+      const op=document.createElement('button');op.className='secondary icon';op.type='button';op.textContent='Abrir portal';
+      op.onclick=()=>window.open(u,'_blank','noopener,noreferrer');
+      const cp=document.createElement('button');cp.className='secondary icon';cp.type='button';cp.textContent='Copiar link';
+      cp.onclick=()=>copyText(u).then(()=>toast('Link copiado'));
+      row.append(tx,op,cp);card.appendChild(row);
+    }
+
+    const actions=document.createElement('div');actions.className='actions';
+    if((item.emails||[]).length>1){
+      const all=document.createElement('button');all.className='secondary icon';all.type='button';all.textContent='Copiar todos os e-mails';
+      all.onclick=()=>copyText(item.emails.join('; ')).then(()=>toast('E-mails copiados'));
+      actions.appendChild(all);
+    }
+    const ed=document.createElement('button');ed.className='secondary icon';ed.type='button';ed.textContent='Editar';ed.onclick=()=>openEditor(item.id);
+    const del=document.createElement('button');del.className='danger icon';del.type='button';del.textContent='Excluir';
+    del.onclick=()=>{if(confirm('Excluir "'+item.name+'"?')){data=data.filter(x=>x.id!==item.id);save();render()}};
+    actions.append(ed,del);card.appendChild(actions);
+    grid.appendChild(card);
+  });
+}
+function openEditor(id=''){
+  const item=id?data.find(x=>x.id===id):null;
+  $('editorTitle').textContent=item?'Editar contato':'Adicionar contato';
+  $('editId').value=item?.id||'';
+  $('name').value=item?.name||'';
+  $('catInput').value=item?.category||'';
+  $('emails').value=(item?.emails||[]).join('\n');
+  $('url').value=item?.url||'';
+  $('notes').value=item?.notes||'';
+  $('favorite').checked=!!item?.favorite;
+  $('editor').showModal();
+  setTimeout(()=>$('name').focus(),50);
+}
+function closeEditor(){$('editor').close()}
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const id=$('editId').value||uid();
+  const item={
+    id,
+    name:$('name').value.trim(),
+    category:$('catInput').value.trim()||'Outros',
+    emails:$('emails').value.split(/\r?\n|;/).map(x=>x.trim()).filter(Boolean),
+    url:$('url').value.trim(),
+    notes:$('notes').value.trim(),
+    favorite:$('favorite').checked
+  };
+  if(!item.name)return;
+  const pos=data.findIndex(x=>x.id===id);
+  if(pos>=0)data[pos]=item;else data.push(item);
+  save();closeEditor();render();toast('Contato salvo');
+});
+$('addBtn').onclick=()=>openEditor();
+$('cancelBtn').onclick=closeEditor;
+$('search').addEventListener('input',render);
+$('category').addEventListener('change',render);
+$('favoritesOnly').onclick=()=>{
+  favoritesOnly=!favoritesOnly;
+  $('favoritesOnly').textContent=(favoritesOnly?'★':'☆')+' Favoritos';
+  render();
+};
+$('exportBtn').onclick=()=>{
+  const payload={version:1,exportedAt:new Date().toISOString(),items:data};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download='contatos-pcpr-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+};
+$('importFile').onchange=async e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  try{
+    const o=JSON.parse(await f.text()),items=Array.isArray(o)?o:o.items;
+    if(!Array.isArray(items))throw new Error();
+    data=items.map(x=>({
+      id:x.id||uid(),name:String(x.name||'').trim(),category:String(x.category||'Outros').trim(),
+      emails:Array.isArray(x.emails)?x.emails.map(String):[],url:String(x.url||''),notes:String(x.notes||''),favorite:!!x.favorite
+    })).filter(x=>x.name);
+    save();render();toast('Backup importado');
+  }catch(_){alert('Arquivo de backup inválido.')}
+  e.target.value='';
+};
+$('resetBtn').onclick=()=>{
+  if(!confirm('Restaurar a lista inicial? Seus contatos adicionados e alterações atuais serão substituídos.'))return;
+  data=cloneDefaults();save();render();toast('Lista inicial restaurada');
+};
+$('editor').addEventListener('click',e=>{
+  if(e.target===$('editor'))closeEditor();
+});
+load();render();
+})();
+</script>
+</body>
+</html>
