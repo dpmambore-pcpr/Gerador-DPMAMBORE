@@ -57,7 +57,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <body>
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.17 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.18 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
     <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
@@ -76,14 +76,14 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <main class="module-main">
   <div id="loading" class="loading">Carregando Ofícios…</div>
   <iframe id="frameOficios" class="module-frame active" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
-  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.4"></iframe>
-  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html"></iframe>
+  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.5"></iframe>
+  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.1"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
   <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.3"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.0"></iframe>
-  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.8"></iframe>
+  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.9"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.1"></iframe>
 </main>
@@ -91,7 +91,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.17';
+const CENTRAL_VERSION='1.18';
 const CENTRAL_VERSION_DATE='03/09/2026';
 
 function updateCentralClock(){
