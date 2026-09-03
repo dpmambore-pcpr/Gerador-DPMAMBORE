@@ -57,7 +57,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <body>
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.8 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.16 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
     <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
@@ -67,6 +67,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
     <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
     <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
     <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
+    <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
     <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
     <button class="module-tab" data-key="contatos" type="button">Contatos</button>
   </div>
@@ -82,6 +83,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.3"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.0"></iframe>
+  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.7"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.1"></iframe>
 </main>
@@ -89,7 +91,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.8';
+const CENTRAL_VERSION='1.16';
 const CENTRAL_VERSION_DATE='03/09/2026';
 
 function updateCentralClock(){
@@ -149,6 +151,7 @@ const modules={
   erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
   filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900},
   qrcode:{frame:document.getElementById('frameQrCode'),tab:document.querySelector('[data-key="qrcode"]'),min:820},
+  envelopebusca:{frame:document.getElementById('frameEnvelopeBusca'),tab:document.querySelector('[data-key="envelopebusca"]'),min:1180},
   contatodppr:{frame:document.getElementById('frameContatoDpPr'),tab:document.querySelector('[data-key="contatodppr"]'),min:900},
   contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850}
 };
@@ -166,6 +169,7 @@ function trackModule(key){
       erb:'erb_antenas',
       filtroip:'filtro_ip',
       qrcode:'gerador_qrcode',
+      envelopebusca:'envelope_busca',
       contatodppr:'contato_dp_pr',
       contatos:'diretorio_contatos'
     };
