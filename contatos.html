@@ -82,13 +82,14 @@ footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font
 <header>
   <h1>Diretório de Contatos</h1>
   <p>Bancos, operadoras, plataformas, órgãos e ferramentas · dados personalizados salvos somente neste navegador</p>
+  <div style="margin-top:10px"><span style="display:inline-block;background:#eaf3ee;color:#183a31;border:1px solid #a9c6b7;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800">🟢 Dados personalizados: armazenamento local</span></div>
 </header>
 
 <main>
   <section class="card">
     <div class="toolbar">
       <label>Pesquisar
-        <input id="search" type="search" placeholder="Instituição, e-mail, observação...">
+        <input id="search" type="search" placeholder="Instituição, e-mail, telefone, portal ou observação...">
       </label>
       <label>Categoria
         <select id="category"><option value="">Todas as categorias</option></select>
@@ -104,7 +105,7 @@ footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font
       </label>
       <button class="secondary" id="resetBtn" type="button">Restaurar lista inicial</button>
     </div>
-    <div class="notice"><b>Observação:</b> a lista inicial foi ampliada com os contatos do documento enviado e agora exibe logotipos/ícones ao lado das instituições para localização mais rápida. Como contatos institucionais podem mudar, o módulo permite edição imediata. Dados adicionados por você não são enviados ao Google Analytics.</div>
+    <div class="notice"><b>🔎 Pesquisa instantânea:</b> procure por instituição, categoria, telefone, e-mail, portal ou observação. Favoritos aparecem primeiro. <br><b>🛡️ Privacidade:</b> contatos adicionados, favoritos e alterações ficam no armazenamento local deste navegador. <br><b>Observação:</b> a lista inicial foi ampliada com os contatos do documento enviado e agora exibe logotipos/ícones ao lado das instituições para localização mais rápida. Como contatos institucionais podem mudar, o módulo permite edição imediata. Dados adicionados por você não são enviados ao Google Analytics.</div>
   </section>
 
   <div class="stats" id="stats"></div>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gerador de QR Code — PCPR</title>
+<style>
+:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--danger:#8f3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px}
+.hero{background:linear-gradient(115deg,var(--ink),var(--accent-dark));color:#fff;border-bottom:4px solid var(--gold);padding:20px 22px;border-radius:12px 12px 0 0}
+.hero h1{margin:0 0 5px;font-size:24px}.hero p{margin:0;color:#e7d9b3;font-size:13px}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:18px;background:#fff;border:1px solid var(--line);border-top:0;padding:20px;border-radius:0 0 12px 12px}
+.card{border:1px solid var(--line);border-radius:10px;padding:18px;background:#fff}
+label{display:block;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.35px;margin:0 0 6px;color:#39434a}
+input,select,textarea{width:100%;border:1px solid #bbb7ae;border-radius:8px;padding:11px 12px;font:inherit;background:#fff;color:#17202a;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(40,87,72,.12)}
+textarea{min-height:105px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:14px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+button{border:0;border-radius:8px;min-height:42px;padding:0 15px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}
+button.secondary{background:#ece9e1;color:var(--ink);border:1px solid var(--line)}
+button.gold{background:var(--gold);color:var(--ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.preview{text-align:center;display:flex;flex-direction:column;align-items:center}
+.qrbox{width:min(100%,360px);aspect-ratio:1/1;border:1px dashed #aaa69d;border-radius:10px;background:#fff;display:grid;place-items:center;padding:18px;margin:8px auto 12px}
+#qrCanvas{max-width:100%;height:auto;display:none;image-rendering:auto}
+.placeholder{color:var(--muted);font-size:13px;line-height:1.5}
+.outTitle{font-weight:900;font-size:18px;margin:5px 0}.outDesc{font-size:13px;color:var(--muted);margin:0 0 8px;white-space:pre-wrap}
+.raw{font-size:11px;color:#59636a;word-break:break-all;max-width:390px;margin:4px auto 0}
+.msg{min-height:20px;margin-top:8px;font-size:12px;font-weight:700}.msg.error{color:var(--danger)}.msg.ok{color:var(--accent)}
+.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:14px}
+@media(max-width:780px){.wrap{padding:12px}.grid{grid-template-columns:1fr;padding:12px}.row{grid-template-columns:1fr}.hero h1{font-size:20px}}
+@media print{
+ body{background:#fff}.wrap{padding:0}.hero,.formcard,.actions,.note,.msg{display:none!important}.grid{display:block;border:0;padding:0}.card{border:0}.preview{padding-top:25mm}
+ .qrbox{width:85mm;border:0;padding:5mm}.outTitle{font-size:20pt}.outDesc{font-size:12pt}.raw{font-size:9pt}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero"><h1>Gerador de QR Code</h1><p>Geração local no navegador — o conteúdo não é armazenado pelo módulo.</p></header>
+  <main class="grid">
+    <section class="card formcard">
+      <div class="field"><label for="type">Tipo de QR Code</label>
+        <select id="type">
+          <option value="link">Link / URL</option><option value="text">Texto</option>
+          <option value="phone">Telefone</option><option value="email">E-mail</option>
+          <option value="whatsapp">WhatsApp</option><option value="location">Localização</option>
+        </select>
+      </div>
+      <div id="dynamic"></div>
+      <div class="field"><label for="title">Título opcional</label><input id="title" maxlength="90" placeholder="Ex.: Consulta de documento"></div>
+      <div class="field"><label for="desc">Descrição opcional</label><textarea id="desc" maxlength="250" placeholder="Ex.: Aponte a câmera do celular para acessar."></textarea></div>
+      <div class="row">
+        <div class="field"><label for="size">Tamanho</label><select id="size"><option value="260">Pequeno</option><option value="360" selected>Médio</option><option value="520">Grande</option></select></div>
+        <div class="field"><label for="margin">Margem</label><select id="margin"><option value="2">Compacta</option><option value="4" selected>Padrão</option><option value="6">Ampla</option></select></div>
+      </div>
+      <div class="actions"><button id="generate" type="button">Gerar QR Code</button><button id="clear" type="button" class="secondary">Limpar</button></div>
+      <div id="msg" class="msg" aria-live="polite"></div>
+      <div class="note">Para links, prefira endereços completos iniciados por <b>https://</b>. O QR Code é criado no próprio navegador.</div>
+    </section>
+
+    <section class="card preview">
+      <div id="outTitle" class="outTitle">QR Code</div>
+      <div id="outDesc" class="outDesc">Aponte a câmera do celular para acessar.</div>
+      <div class="qrbox"><canvas id="qrCanvas"></canvas><div id="placeholder" class="placeholder">Preencha os dados e clique em<br><b>Gerar QR Code</b></div></div>
+      <div id="raw" class="raw"></div>
+      <div class="actions">
+        <button id="png" type="button" disabled>Baixar PNG</button>
+        <button id="pdf" type="button" class="gold" disabled>Salvar PDF</button>
+        <button id="print" type="button" class="secondary" disabled>Imprimir</button>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+let current='';
+const fields={
+ link:'<div class="field"><label for="mainValue">Link</label><input id="mainValue" type="url" placeholder="https://exemplo.com"></div>',
+ text:'<div class="field"><label for="mainValue">Texto</label><textarea id="mainValue" placeholder="Digite o texto que será codificado"></textarea></div>',
+ phone:'<div class="field"><label for="mainValue">Telefone</label><input id="mainValue" inputmode="tel" placeholder="+55 44 99999-9999"></div>',
+ email:'<div class="field"><label for="mainValue">E-mail</label><input id="mainValue" type="email" placeholder="exemplo@dominio.com"></div>',
+ whatsapp:'<div class="field"><label for="mainValue">Número com DDD</label><input id="mainValue" inputmode="tel" placeholder="44 99999-9999"></div><div class="field"><label for="extraValue">Mensagem opcional</label><textarea id="extraValue" placeholder="Mensagem que aparecerá pronta no WhatsApp"></textarea></div>',
+ location:'<div class="row"><div class="field"><label for="lat">Latitude</label><input id="lat" inputmode="decimal" placeholder="-24.3170"></div><div class="field"><label for="lon">Longitude</label><input id="lon" inputmode="decimal" placeholder="-52.5271"></div></div>'
+};
+function renderFields(){ $('dynamic').innerHTML=fields[$('type').value]; }
+function cleanPhone(v){return v.replace(/\D/g,'')}
+function build(){
+ const t=$('type').value;
+ if(t==='location'){
+   const lat=parseFloat(($('lat').value||'').replace(',','.')),lon=parseFloat(($('lon').value||'').replace(',','.'));
+   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -90||lat > 90||lon < -180||lon > 180) throw new Error('Informe latitude e longitude válidas.');
+   return `geo:${lat},${lon}`;
+ }
+ const v=($('mainValue').value||'').trim(); if(!v) throw new Error('Preencha o conteúdo do QR Code.');
+ if(t==='link'){
+   let u=v;if(!/^https?:\/\//i.test(u))u='https://'+u;
+   try{new URL(u)}catch(e){throw new Error('Informe um link válido.');} return u;
+ }
+ if(t==='text')return v;
+ if(t==='phone'){const n=cleanPhone(v);if(n.length<8)throw new Error('Informe um telefone válido.');return 'tel:+'+n.replace(/^00/,'');}
+ if(t==='email'){if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))throw new Error('Informe um e-mail válido.');return 'mailto:'+v;}
+ if(t==='whatsapp'){let n=cleanPhone(v);if(n.length<=11&&!n.startsWith('55'))n='55'+n;if(n.length<12)throw new Error('Informe um número de WhatsApp com DDD.');const m=($('extraValue')?.value||'').trim();return 'https://wa.me/'+n+(m?'?text='+encodeURIComponent(m):'');}
+ return v;
+}
+function safeName(v){return (v||'qrcode').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,70)||'qrcode'}
+async function generate(){
+ const msg=$('msg');msg.className='msg';msg.textContent='';
+ if(typeof QRCode==='undefined'){msg.className='msg error';msg.textContent='Não foi possível iniciar o mecanismo de QR Code.';return}
+ try{
+   current=build(); const s=Number($('size').value),m=Number($('margin').value);
+   await QRCode.toCanvas($('qrCanvas'),current,{width:s,margin:m,errorCorrectionLevel:'M',color:{dark:'#000000',light:'#ffffff'}});
+   $('qrCanvas').style.display='block';$('placeholder').style.display='none';
+   $('outTitle').textContent=$('title').value.trim()||'QR Code';
+   $('outDesc').textContent=$('desc').value.trim()||'Aponte a câmera do celular para acessar.';
+   $('raw').textContent=current;
+   ['png','pdf','print'].forEach(x=>$(x).disabled=false);
+   msg.className='msg ok';msg.textContent='QR Code gerado com sucesso.';
+ }catch(e){current='';msg.className='msg error';msg.textContent=e.message||'Não foi possível gerar o QR Code.';}
+}
+$('type').addEventListener('change',renderFields);
+$('generate').addEventListener('click',generate);
+$('clear').addEventListener('click',()=>{renderFields();$('title').value='';$('desc').value='';$('qrCanvas').style.display='none';$('placeholder').style.display='block';$('raw').textContent='';$('outTitle').textContent='QR Code';$('outDesc').textContent='Aponte a câmera do celular para acessar.';$('msg').textContent='';current='';['png','pdf','print'].forEach(x=>$(x).disabled=true)});
+$('png').addEventListener('click',()=>{if(!current)return;const a=document.createElement('a');a.download=safeName($('title').value||'qrcode')+'.png';a.href=$('qrCanvas').toDataURL('image/png');a.click()});
+$('print').addEventListener('click',()=>{if(current)window.print()});
+$('pdf').addEventListener('click',()=>{if(!current)return;const old=document.title;document.title=safeName($('title').value||'qrcode');const restore=()=>{document.title=old;window.removeEventListener('afterprint',restore)};window.addEventListener('afterprint',restore);window.print();setTimeout(()=>document.title=old,3000)});
+renderFields();
+})();
+</script>
+</body>
+</html>
