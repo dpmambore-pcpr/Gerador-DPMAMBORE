@@ -42,6 +42,52 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   .brand{width:100%}
   .module-tab{flex:1 1 30%;padding:0 9px;font-size:12px}
 }
+
+.tabs-row{width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.home-screen{display:none;min-height:calc(100vh - 100px);padding:34px 22px 46px;background:
+  radial-gradient(circle at 12% 0%,rgba(197,162,83,.12),transparent 30%),
+  linear-gradient(180deg,#f7f5ef 0%,#f1eee6 100%)}
+.home-screen.active{display:block}
+.home-wrap{max-width:1380px;margin:0 auto}
+.home-heading{text-align:center;margin:4px auto 28px}
+.home-kicker{font-size:11px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent)}
+.home-title{margin:7px 0 5px;font-family:Georgia,"Times New Roman",serif;font-size:clamp(27px,3.5vw,44px);line-height:1.05;color:var(--ink)}
+.home-subtitle{margin:0;color:var(--muted);font-size:14px}
+.module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.module-card{
+  position:relative;appearance:none;width:100%;min-height:145px;text-align:left;
+  border:1px solid #d8d2c5;border-radius:14px;background:#fff;color:var(--ink);
+  padding:18px 18px 16px;cursor:pointer;box-shadow:0 4px 16px rgba(16,31,26,.055);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease
+}
+.module-card:hover{transform:translateY(-3px);box-shadow:0 9px 24px rgba(16,31,26,.11);border-color:#bda76f}
+.module-card:focus-visible{outline:3px solid rgba(197,162,83,.42);outline-offset:3px}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card-icon{
+  width:43px;height:43px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--accent-dark),var(--accent));color:#f4e7bd;
+  font-size:18px;font-weight:900;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)
+}
+.card-arrow{font-size:20px;color:#a18d5a;line-height:1}
+.card-title{margin:15px 0 5px;font-size:15px;font-weight:900;color:#17221f}
+.card-desc{font-size:11.5px;line-height:1.42;color:#65706d}
+.module-card.update-card{border-color:#cdb673;background:linear-gradient(145deg,#fff 0%,#fbf6e8 100%)}
+.card-badge{position:absolute;right:14px;top:14px;border-radius:999px;background:#8f3037;color:#fff;padding:3px 7px;font-size:8.5px;font-weight:900;letter-spacing:.55px}
+body.home-mode .module-tab:not(.home-tab){display:none}
+body.home-mode .tabs-row{justify-content:flex-start}
+body.home-mode .module-main{overflow:visible}
+@media(max-width:1120px){.module-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:780px){
+  .module-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .home-screen{padding:24px 12px 34px}
+  .module-card{min-height:132px;padding:14px}
+  .card-title{margin-top:12px}
+}
+@media(max-width:500px){
+  .module-grid{grid-template-columns:1fr}
+  .module-card{min-height:112px}
+}
+
 </style>
 
 <!-- Google Analytics 4 — Central PCPR -->
@@ -54,30 +100,112 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 </script>
 
 </head>
-<body>
+<body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.20 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.21 · 03/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
-    <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
-    <button class="module-tab active" data-key="oficios" type="button">Ofícios</button>
-    <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
-    <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
-    <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
-    <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
-    <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
-    <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
-    <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
-    <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
-    <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
-    <button class="module-tab" data-key="contatos" type="button">Contatos</button>
+    <div class="tabs-row">
+      <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
+      <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
+      <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
+      <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
+      <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
+      <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
+      <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
+      <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
+      <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+      <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
+      <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
+      <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
+      <button class="module-tab" data-key="contatos" type="button">Contatos</button>
+      <button class="module-tab" data-key="atualizacoes" type="button">Sobre as atualizações</button>
+    </div>
   </div>
 </nav>
 
 <main class="module-main">
-  <div id="loading" class="loading">Carregando Ofícios…</div>
+
+  <section id="homeScreen" class="home-screen active" aria-label="Tela inicial da Central">
+    <div class="home-wrap">
+      <div class="home-heading">
+        <div class="home-kicker">Central Integrada PCPR</div>
+        <h1 class="home-title">Selecione um módulo</h1>
+        <p class="home-subtitle">Ferramentas operacionais reunidas em um único ambiente.</p>
+      </div>
+      <div class="module-grid">
+      <button class="module-card" type="button" data-open-module="configuracoes">
+        <div class="card-top"><div class="card-icon">⚙</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Configurações</div>
+        <div class="card-desc">Dados da unidade, Delegados, APJs e preferências compartilhadas.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="oficios">
+        <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Ofícios</div>
+        <div class="card-desc">Gerador institucional de ofícios e expedientes.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="oitivapenal">
+        <div class="card-top"><div class="card-icon">OP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Oitiva em Penitenciária</div>
+        <div class="card-desc">Geração de ofício para realização de oitiva em unidade penal.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="lesoes">
+        <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Laudo de Lesões</div>
+        <div class="card-desc">Gerador de laudo com responsáveis e configuração da unidade.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="imei">
+        <div class="card-top"><div class="card-icon">IM</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Consulta IMEI</div>
+        <div class="card-desc">Identificação e consulta local de informações de aparelhos.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="operadora">
+        <div class="card-top"><div class="card-icon">TEL</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Consulta Operadora</div>
+        <div class="card-desc">Identificação da operadora vinculada ao número informado.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="erb">
+        <div class="card-top"><div class="card-icon">ERB</div><div class="card-arrow">›</div></div>
+        <div class="card-title">ERB / Antenas</div>
+        <div class="card-desc">Mapeamento de ERBs, azimute, distância e relatório.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="filtroip">
+        <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Filtro IP</div>
+        <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="qrcode">
+        <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
+        <div class="card-title">QR Code</div>
+        <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="envelopebusca">
+        <div class="card-top"><div class="card-icon">EB</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Envelope de Busca</div>
+        <div class="card-desc">Alvos, autos de arrecadação, kit da busca e alvos salvos.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="contatodppr">
+        <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Contato DP PR</div>
+        <div class="card-desc">Diretório pesquisável das Delegacias do Paraná.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="contatos">
+        <div class="card-top"><div class="card-icon">@</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Contatos</div>
+        <div class="card-desc">Diretório operacional de instituições, bancos, empresas e serviços.</div>
+      </button>
+      <button class="module-card update-card" type="button" data-open-module="atualizacoes">
+        <span class="card-badge">NOVO</span><div class="card-top"><div class="card-icon">↻</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Sobre as atualizações</div>
+        <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
+      </button>
+      </div>
+    </div>
+  </section>
+
+  <div id="loading" class="loading hide">Carregando…</div>
   <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=1.0"></iframe>
-  <iframe id="frameOficios" class="module-frame active" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
   <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.6"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.2"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
@@ -88,12 +216,13 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.9"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.1"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=1.0"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.20';
+const CENTRAL_VERSION='1.21';
 const CENTRAL_VERSION_DATE='03/09/2026';
 
 function updateCentralClock(){
@@ -156,7 +285,8 @@ const modules={
   qrcode:{frame:document.getElementById('frameQrCode'),tab:document.querySelector('[data-key="qrcode"]'),min:820},
   envelopebusca:{frame:document.getElementById('frameEnvelopeBusca'),tab:document.querySelector('[data-key="envelopebusca"]'),min:1180},
   contatodppr:{frame:document.getElementById('frameContatoDpPr'),tab:document.querySelector('[data-key="contatodppr"]'),min:900},
-  contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850}
+  contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850},
+  atualizacoes:{frame:document.getElementById('frameAtualizacoes'),tab:document.querySelector('[data-key="atualizacoes"]'),min:900}
 };
 const loading=document.getElementById('loading');
 
@@ -175,7 +305,8 @@ function trackModule(key){
       qrcode:'gerador_qrcode',
       envelopebusca:'envelope_busca',
       contatodppr:'contato_dp_pr',
-      contatos:'diretorio_contatos'
+      contatos:'diretorio_contatos',
+      atualizacoes:'sobre_atualizacoes'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
   }catch(e){}
@@ -217,8 +348,28 @@ function load(key){
   },{once:true});
   let src=m.frame.dataset.src;if(key==='erb'){const pid=new URLSearchParams(location.search).get('erbProject');if(pid)src += (src.includes('?')?'&':'?')+'project='+encodeURIComponent(pid)}m.frame.src=src;
 }
+const homeScreen=document.getElementById('homeScreen');
+const homeBtn=document.getElementById('homeBtn');
+
+function showHome(hash=true){
+  document.body.classList.add('home-mode');
+  homeScreen.classList.add('active');
+  loading.classList.add('hide');
+  Object.values(modules).forEach(m=>{
+    m.frame.classList.remove('active');
+    m.tab.classList.remove('active');
+    m.tab.setAttribute('aria-selected','false');
+  });
+  homeBtn.classList.add('active');
+  if(hash)history.replaceState(null,'','#inicio');
+  window.scrollTo(0,0);
+}
+
 function show(key,hash=true){
-  if(!modules[key])key='oficios';
+  if(!modules[key])return showHome(hash);
+  document.body.classList.remove('home-mode');
+  homeScreen.classList.remove('active');
+  homeBtn.classList.remove('active');
   Object.entries(modules).forEach(([k,m])=>{
     const active=k===key;
     m.frame.classList.toggle('active',active);
@@ -233,13 +384,31 @@ function show(key,hash=true){
   }
   window.scrollTo(0,0);
 }
-Object.entries(modules).forEach(([k,m])=>{m.loaded=false;m.loading=false;m.tab.addEventListener('click',()=>show(k))});
+
+Object.entries(modules).forEach(([k,m])=>{
+  m.loaded=false;m.loading=false;
+  m.tab.addEventListener('click',()=>show(k));
+});
+homeBtn.addEventListener('click',()=>showHome());
+document.querySelectorAll('[data-open-module]').forEach(card=>{
+  card.addEventListener('click',()=>show(card.dataset.openModule));
+});
+
 const first=location.hash.toLowerCase().replace('#','');
 const requestedErbProject=new URLSearchParams(location.search).get('erbProject');
-const initialKey=requestedErbProject?'erb':(modules[first]?first:'oficios');
-show(initialKey,false);
-setTimeout(()=>trackModule(initialKey),700);
-window.addEventListener('resize',()=>{const k=Object.keys(modules).find(k=>modules[k].frame.classList.contains('active'))||'oficios';fit(k)});
+if(requestedErbProject){
+  show('erb',false);
+  setTimeout(()=>trackModule('erb'),700);
+}else if(modules[first]){
+  show(first,false);
+  setTimeout(()=>trackModule(first),700);
+}else{
+  showHome(false);
+}
+window.addEventListener('resize',()=>{
+  const k=Object.keys(modules).find(k=>modules[k].frame.classList.contains('active'));
+  if(k)fit(k);
+});
 })();
 </script>
 </body>

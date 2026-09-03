@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sobre as atualizações — Central PCPR</title>
+<style>
+:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#8f3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 18px 54px}
+.hero{background:linear-gradient(120deg,var(--ink),var(--green2));border-bottom:5px solid var(--gold);border-radius:16px;padding:24px;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.12)}
+.kicker{font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#e7d9b3}
+h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
+.hero p{margin:0;color:#dce4e0;font-size:13px;line-height:1.5}
+.current{margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.version{display:inline-flex;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900;color:#f4e7bd}
+.note{font-size:11px;color:#cbd6d1}
+.section{margin-top:24px}
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.section-title h2{margin:0;font-size:17px;color:var(--green2)}
+.section-title:after{content:"";height:1px;background:var(--line);flex:1}
+.timeline{display:grid;gap:11px}
+.item{position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 17px 15px 19px;box-shadow:0 3px 12px rgba(0,0,0,.035)}
+.item.latest{border-color:#cdb673;background:linear-gradient(145deg,#fff,#fbf6e8)}
+.item-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.item-ver{font-weight:900;color:var(--green2);font-size:14px}
+.item-date{font-size:10px;color:var(--muted);font-weight:700}
+.badge{margin-left:auto;background:var(--red);color:#fff;border-radius:999px;padding:3px 7px;font-size:8px;font-weight:900;letter-spacing:.5px}
+.item h3{margin:9px 0 6px;font-size:14px;color:#1e2b27}
+.item ul{margin:0;padding-left:18px;color:#53605c;font-size:12px;line-height:1.55}
+.footer{margin-top:30px;text-align:center;color:#737c79;font-size:10px}
+@media(max-width:600px){.wrap{padding:14px 10px 36px}.hero{padding:19px 16px}h1{font-size:27px}.badge{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="kicker">Central Integrada PCPR</div>
+    <h1>Sobre as atualizações</h1>
+    <p>Registro das principais melhorias implementadas na Central, mantendo um histórico simples para identificar o que mudou em cada versão.</p>
+    <div class="current">
+      <span class="version">VERSÃO ATUAL · v1.21</span>
+      <span class="note">03/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>Histórico recente</h2></div>
+    <div class="timeline">
+      <article class="item latest">
+        <div class="item-head"><span class="item-ver">v1.21</span><span class="item-date">03/09/2026</span><span class="badge">ATUAL</span></div>
+        <h3>Nova tela inicial e histórico de atualizações</h3>
+        <ul>
+          <li>A Central passa a abrir em uma Home limpa, exibindo somente os cartões dos módulos.</li>
+          <li>Novo botão Início para retornar à Home a qualquer momento.</li>
+          <li>A navegação completa entre módulos continua disponível depois que um módulo é aberto.</li>
+          <li>Criação da aba “Sobre as atualizações” com o histórico das versões.</li>
+        </ul>
+      </article>
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.20</span><span class="item-date">03/09/2026</span></div>
+        <h3>Operações, alvos salvos e Kit da Busca</h3>
+        <ul>
+          <li>Configuração Geral da Unidade.</li>
+          <li>Alvos salvos com seus respectivos Autos de Arrecadação.</li>
+          <li>Geração do Kit da Busca em ZIP.</li>
+          <li>Duplicação de alvo, validação de campos e status de completude.</li>
+          <li>Integração de retorno e acompanhamento do Auto de Arrecadação.</li>
+        </ul>
+      </article>
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.19</span><span class="item-date">03/09/2026</span></div>
+        <h3>Configuração do Auto de Arrecadação</h3>
+        <ul>
+          <li>Configuração própria do cabeçalho institucional.</li>
+          <li>Configuração do rodapé compartilhada com o Envelope de Busca.</li>
+          <li>Aplicação das configurações na prévia, impressão/PDF e ODT.</li>
+        </ul>
+      </article>
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.18</span><span class="item-date">03/09/2026</span></div>
+        <h3>Configurações por unidade</h3>
+        <ul>
+          <li>Oitiva com cabeçalho institucional configurável.</li>
+          <li>Laudo de Lesões com configuração institucional e administração de APJs.</li>
+          <li>Envelope de Busca com rodapé configurável e compartilhado.</li>
+        </ul>
+      </article>
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.17</span><span class="item-date">03/09/2026</span></div>
+        <h3>Auto de Arrecadação integrado ao alvo</h3>
+        <ul>
+          <li>Botão “Auto de Arrecadação” em cada alvo.</li>
+          <li>Endereço do alvo enviado automaticamente para o documento.</li>
+          <li>Geração separada para alvos com endereços diferentes.</li>
+        </ul>
+      </article>
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.16</span><span class="item-date">03/09/2026</span></div>
+        <h3>Reestruturação visual do Envelope de Busca</h3>
+        <ul>
+          <li>Grade fixa na tabela superior para garantir as linhas no PDF.</li>
+          <li>Divisões de Foto, Campo e Valor estabilizadas.</li>
+          <li>Observações centralizadas e impressão com um alvo por página.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <div class="footer">DESENVOLVIDO E ATUALIZADO PELA DELEGACIA DE MAMBORÊ - PR</div>
+</div>
+</body>
+</html>
