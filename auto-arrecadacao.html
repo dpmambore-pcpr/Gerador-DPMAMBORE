@@ -234,8 +234,13 @@ function certText(){const autos=document.getElementById('autos').value.trim()||'
 function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function updatePreview(){ensureAutoHeaders();ensureAutoFooters();const cert=document.getElementById('cert');cert.style.fontSize='11pt';cert.innerHTML=certText();let size=11;while(cert.scrollHeight>cert.clientHeight&&size>9.2){size-=0.2;cert.style.fontSize=size+'pt';}}
 function params(){return new URLSearchParams(location.search)}
-const q=params();document.getElementById('endereco').value=q.get('endereco')||'';const alvo=q.get('alvo')||'';const nome=q.get('nome')||'';document.getElementById('targetContext').textContent=(alvo||nome)?`Vinculado ao ${alvo?'ALVO Nº '+alvo:''}${alvo&&nome?' — ':''}${nome||''}`:'Auto aberto a partir do Envelope de Busca.';
-document.getElementById('autos').addEventListener('input',e=>{e.target.value=maskCNJ(e.target.value);updatePreview()});document.getElementById('endereco').addEventListener('input',updatePreview);
+
+const AUTO_TARGET_MAP_KEY='pcpr.envelopeBusca.autos.v1';
+function readAutoTargetMap(){try{return JSON.parse(localStorage.getItem(AUTO_TARGET_MAP_KEY)||'{}')||{}}catch(e){return {}}}
+function saveAutoTargetState(extra={}){const tid=q.get('targetId')||'';if(!tid)return;const map=readAutoTargetMap(),old=map[tid]||{};map[tid]={...old,targetId:tid,nome:q.get('nome')||old.nome||'',endereco:document.getElementById('endereco').value.trim(),autos:document.getElementById('autos').value.trim(),updatedAt:new Date().toISOString(),...extra};localStorage.setItem(AUTO_TARGET_MAP_KEY,JSON.stringify(map));}
+
+const q=params();document.getElementById('endereco').value=q.get('endereco')||'';const alvo=q.get('alvo')||'';const nome=q.get('nome')||'';const tid=q.get('targetId')||'';const savedAuto=tid?(readAutoTargetMap()[tid]||{}):{};document.getElementById('autos').value=maskCNJ(q.get('autos')||savedAuto.autos||'');document.getElementById('targetContext').textContent=(alvo||nome)?`Vinculado ao ${alvo?'ALVO Nº '+alvo:''}${alvo&&nome?' — ':''}${nome||''}`:'Auto aberto a partir do Envelope de Busca.';
+document.getElementById('autos').addEventListener('input',e=>{e.target.value=maskCNJ(e.target.value);saveAutoTargetState({status:'preenchido'});updatePreview()});document.getElementById('endereco').addEventListener('input',()=>{saveAutoTargetState();updatePreview()});
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
 document.getElementById('downloadOdt').addEventListener('click',()=>{const autos=document.getElementById('autos').value.trim();const end=document.getElementById('endereco').value.trim();if(!autos)return alert('Informe o nº dos autos.');if(!end)return alert('Informe o endereço.');try{const entries=parseStored(bytesB64(ODT_TEMPLATE_B64)).map(e=>{if(e.name==='content.xml'){let s=ODT_DEC.decode(e.data);s=s.replace('@@AUTOS@@',xmlEscape(autos)).replace('@@ENDERECO@@',xmlEscape(end.toUpperCase()));return{name:e.name,data:ODT_ENC.encode(s)}}if(e.name==='styles.xml'){
   let s=ODT_DEC.decode(e.data)
@@ -247,7 +252,7 @@ document.getElementById('downloadOdt').addEventListener('click',()=>{const autos
     .replaceAll('@@RODAPE1@@',xmlEscape(footerLine1()))
     .replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));
   return{name:e.name,data:ODT_ENC.encode(s)}
-}return e;});download(new Blob([buildZip(entries)],{type:'application/vnd.oasis.opendocument.text'}),'AUTO_ARRECADACAO_'+autos.replace(/[^0-9A-Za-z]+/g,'_')+'.odt')}catch(err){console.error(err);alert('Não foi possível gerar o ODT: '+(err.message||err))}});
+}return e;});saveAutoTargetState({odtGerado:true,status:'odt_gerado'});download(new Blob([buildZip(entries)],{type:'application/vnd.oasis.opendocument.text'}),'AUTO_ARRECADACAO_'+autos.replace(/[^0-9A-Za-z]+/g,'_')+'.odt')}catch(err){console.error(err);alert('Não foi possível gerar o ODT: '+(err.message||err))}});
 function printOnly(){const source=document.getElementById('pages'),iframe=document.createElement('iframe');iframe.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(iframe);const doc=iframe.contentDocument||iframe.contentWindow.document;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}.pages{display:block}.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.page>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.autoHeader{position:absolute;left:16mm;right:16mm;top:22mm;height:38mm;background:#fff;z-index:5;text-align:center;color:#000;font-family:Arial,sans-serif;padding-top:1.5mm;border-bottom:.55pt solid #444;overflow:hidden}.autoHeader .ahLine{font-size:8.4pt;line-height:1.18}.autoHeader .ahStrong{font-weight:700}.cert{position:absolute;left:22.54mm;top:97.27mm;width:169.1mm;height:46.5mm;font-family:Arial,sans-serif;font-size:'+document.getElementById('cert').style.fontSize+';line-height:1.5;text-align:justify;color:#000;z-index:2}.cert strong{font-weight:700}.autoFooter{position:absolute;left:18mm;right:18mm;bottom:4.8mm;height:13mm;background:#fff;z-index:4;border-top:.55pt solid #555;text-align:center;font-family:Arial,sans-serif;font-size:7.5pt;line-height:1.35;padding-top:1.4mm}</style></head><body>'+source.outerHTML+'</body></html>');doc.close();setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print()},250);iframe.contentWindow.addEventListener('afterprint',()=>setTimeout(()=>iframe.remove(),300),{once:true});setTimeout(()=>iframe.remove(),120000)}
 
 fillAutoHeaderConfig();
@@ -271,7 +276,8 @@ window.addEventListener('storage',e=>{
   }
 });
 
-document.getElementById('printBtn').addEventListener('click',printOnly);document.getElementById('closeBtn').addEventListener('click',()=>window.close());updatePreview();
+saveAutoTargetState();
+document.getElementById('printBtn').addEventListener('click',()=>{saveAutoTargetState({pdfAberto:true,status:'impressao'});printOnly();});document.getElementById('backTargetBtn').addEventListener('click',()=>{saveAutoTargetState();try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}window.close();});document.getElementById('closeBtn').addEventListener('click',()=>window.close());updatePreview();
 })();
 </script>
 </body></html>
