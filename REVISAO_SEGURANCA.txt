@@ -1,0 +1,35 @@
+REVISÃO DE SEGURANÇA DO REPOSITÓRIO
+Data: 04/09/2026
+Versão preparada: v1.22
+
+ESCOPO
+Foram revisados 15 arquivos HTML do ZIP enviado pelo usuário.
+
+ALTERAÇÕES EXECUTADAS
+1. Cadastro Vivo/Telefônica:
+   - nome e ícone mantidos;
+   - e-mails removidos;
+   - telefone removido;
+   - URL/portal removido;
+   - senha/referência a senha removida;
+   - observação exibida: "Retirado por determinação da operadora."
+
+2. Senhas de abertura de arquivos:
+   - removida a senha escrita no cadastro OI;
+   - removido o padrão/exemplo de senha escrito no cadastro TIM;
+   - removida a senha que constava no cadastro Vivo.
+
+3. Armazenamento local:
+   - contatos antigos salvos no navegador são saneados ao abrir a nova versão;
+   - backups antigos importados pelo módulo também são saneados.
+
+4. Demais referências legítimas:
+   - o nome Vivo foi mantido onde representa apenas uma operadora/marca (ex.: lista de operadoras, exemplo técnico ou identificação);
+   - menções genéricas a "senha" em textos jurídicos, recursos de PDF ou instruções que não revelam credenciais foram preservadas;
+   - contatos das demais empresas foram preservados, retirando apenas senhas de arquivos.
+
+RESULTADO
+Os dados específicos de contato/portal e as senhas de arquivos identificadas não permanecem no código público revisado.
+
+OBSERVAÇÃO
+Esta revisão trata o conteúdo atual dos arquivos. Versões antigas já publicadas podem continuar no histórico do GitHub até que o histórico seja limpo.
