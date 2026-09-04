@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -36,6 +46,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
  body{background:#fff}.wrap{padding:0}.hero,.formcard,.actions,.note,.msg{display:none!important}.grid{display:block;border:0;padding:0}.card{border:0}.preview{padding-top:25mm}
  .qrbox{width:85mm;border:0;padding:5mm}.outTitle{font-size:20pt}.outDesc{font-size:12pt}.raw{font-size:9pt}
 }
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 
 <script>
@@ -78,6 +96,7 @@ g.QRCode={toCanvas,createMatrix:matrix};
 <body>
 <div class="wrap">
   <header class="hero"><h1>Gerador de QR Code</h1><p>Geração 100% local no navegador — sem CDN e sem envio do conteúdo para servidores externos.</p></header>
+<div class="security-note"><b>Processamento local:</b> o conteúdo informado para gerar o QR Code é processado neste navegador e não é armazenado em banco remoto pela Central.</div>
   <main class="grid">
     <section class="card formcard">
       <div class="field"><label for="type">Tipo de QR Code</label>

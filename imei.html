@@ -1,4 +1,14 @@
 <!doctype html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -169,6 +179,14 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
   body.print-summary-mode .print-summary-inner{margin:0;max-width:none;padding:0;border-radius:0}
   body.print-summary-mode .summary-actions{display:none!important}
 }
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -181,6 +199,7 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
     </div>
   </div>
 </header>
+<div class="security-note"><b>Consulta técnica:</b> o histórico fica somente neste navegador. A ferramenta pode carregar uma base TAC pública e consultar a Wikipédia para complementar fabricante/modelo; não há senha, token ou chave de API incorporada ao código.</div>
 
 <main>
   <section class="panel search">

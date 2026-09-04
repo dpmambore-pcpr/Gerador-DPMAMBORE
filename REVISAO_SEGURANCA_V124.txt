@@ -1,0 +1,20 @@
+REVISÃO DE SEGURANÇA — CENTRAL PCPR
+Versão: v1.24
+Data: 04/09/2026
+
+RESULTADO
+Nenhuma senha de arquivo anteriormente identificada, contato específico removido da operadora
+ou chave fixa de consulta externa permanece incorporada nos HTMLs revisados.
+
+AJUSTES PRINCIPAIS
+- IndexedDB identificado explicitamente como armazenamento LOCAL do navegador.
+- Consulta externa que continha chave fixa no JavaScript foi desativada e a chave removida.
+- Token opcional do ipinfo continua permitido apenas como valor digitado pelo usuário;
+  o campo agora informa que o token não é salvo e é exibido como senha.
+- Observações de contatos não exibem senhas ou padrões de abertura de arquivos.
+- Referências jurídicas a "sigilo", "senha", "token" ou autenticação em modelos de ofício
+  foram mantidas quando fazem parte do texto do documento e não constituem credenciais.
+
+IMPORTANTE
+Esta revisão trata os arquivos atuais. Se versões antigas com dados sensíveis já foram
+publicadas no GitHub, elas podem permanecer no histórico de commits até a limpeza do histórico.

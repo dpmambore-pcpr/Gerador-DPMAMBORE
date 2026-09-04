@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -33,9 +43,18 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 .cfgList{margin-top:8px;display:flex;flex-direction:column;gap:6px}.cfgItem{display:flex;gap:7px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 8px}.cfgItem span{flex:1;font-size:12px}
 @media(max-width:1200px){main{grid-template-columns:1fr}.previewWrap{position:static;overflow:auto}}
 @page{size:A4 portrait;margin:0}@media print{html,body{margin:0!important;padding:0!important;width:210mm!important;height:297mm!important;background:#fff!important;overflow:hidden!important}header,.leftcol,.previewbar{display:none!important}main{display:block!important;margin:0!important;padding:0!important;max-width:none!important;width:210mm!important;height:297mm!important}.previewWrap{position:static!important;margin:0!important;padding:0!important;width:210mm!important;height:297mm!important;overflow:hidden!important}.paper{box-shadow:none!important;margin:0!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important;page-break-after:avoid!important}}
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style></head>
 <body>
 <header><h1>Gerador de Ofício — Oitiva em Unidade Penal</h1><p>Agendamento de oitiva por videoconferência · Novo modelo institucional · cidade configurável</p></header>
+<div class="security-note"><b>Armazenamento local:</b> cabeçalho, cidades e responsáveis configurados são gravados somente neste navegador. O módulo não possui banco de dados remoto, login, senha ou credencial embutida.</div>
 <main>
 <section class="leftcol">
 <div class="card"><h2>Dados do ofício</h2><div class="form">

@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -105,6 +115,13 @@ body.home-mode .module-main{overflow:visible}
   background:#315f4c;
 }
 
+
+.security-summary{
+  max-width:1120px;margin:14px auto 24px;padding:11px 13px;border:1px solid #d5ddd8;
+  border-radius:10px;background:rgba(255,255,255,.74);color:#52615c;font-size:11.5px;line-height:1.5
+}
+.security-summary b{color:#23483c}
+
 </style>
 
 <!-- Google Analytics 4 — Central PCPR -->
@@ -120,7 +137,7 @@ body.home-mode .module-main{overflow:visible}
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.23 · 04/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.25 · 04/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <div class="tabs-row">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
@@ -150,6 +167,7 @@ body.home-mode .module-main{overflow:visible}
         <div class="home-kicker">Central Integrada PCPR</div>
         <h1 class="home-title">Selecione um módulo</h1>
         <p class="home-subtitle">Ferramentas operacionais reunidas em um único ambiente.</p>
+<div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências e trabalhos salvos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
       </div>
       <div class="module-grid">
       <button class="module-card" type="button" data-open-module="configuracoes">
@@ -228,25 +246,25 @@ body.home-mode .module-main{overflow:visible}
   </section>
 
   <div id="loading" class="loading hide">Carregando…</div>
-  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=1.0"></iframe>
-  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html"></iframe>
-  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.6"></iframe>
-  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.2"></iframe>
-  <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html"></iframe>
-  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html"></iframe>
-  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.3"></iframe>
-  <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html"></iframe>
-  <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.0"></iframe>
+  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=1.1"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=1.1"></iframe>
+  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.7"></iframe>
+  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.4"></iframe>
+  <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html?v=1.2"></iframe>
+  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.3"></iframe>
+  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.5"></iframe>
+  <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=1.2"></iframe>
+  <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.1"></iframe>
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.9"></iframe>
-  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.0"></iframe>
-  <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.2"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=1.2"></iframe>
+  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.1"></iframe>
+  <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.4"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=1.4"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.23';
+const CENTRAL_VERSION='1.25';
 const CENTRAL_VERSION_DATE='04/09/2026';
 
 function updateCentralClock(){
@@ -269,7 +287,7 @@ updateCentralClock();
 setInterval(updateCentralClock,1000);
 
 
-/* Armazenamento compartilhado do modelo ODT usado pelo módulo de laudo. */
+/* IndexedDB LOCAL do navegador: guarda somente o modelo ODT do laudo neste dispositivo. Não existe conexão com banco remoto, backend, servidor institucional, usuário, senha, token ou credencial. */
 const DB='pcprCentralIntegradaV3', STORE='modelos', KEY='laudoOdt';
 function openDb(){return new Promise((resolve,reject)=>{if(!indexedDB)return reject(new Error('IndexedDB indisponível'));const q=indexedDB.open(DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(STORE))q.result.createObjectStore(STORE)};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
 window.PCPR_MODEL_STORE={

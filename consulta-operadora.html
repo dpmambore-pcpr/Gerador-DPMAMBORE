@@ -1,4 +1,14 @@
 <!doctype html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -178,6 +188,14 @@ input::placeholder{color:#63798d}
   .k{color:#666}.v,.operator-name h3{color:#111}
   .operator-name p{color:#555}
 }
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 
 <style id="pcpr-central-theme">
@@ -235,6 +253,7 @@ input::placeholder{color:#70877c!important}
     </div>
   </div>
 </header>
+<div class="security-note"><b>Segurança:</b> a consulta automática externa está desativada e nenhuma chave ou credencial fica no HTML público. O histórico exibido, quando existente, permanece somente neste navegador/dispositivo.</div>
 
 <main>
   <section class="card search">
@@ -384,10 +403,8 @@ input::placeholder{color:#70877c!important}
   }
 
   async function queryTelein(n){
-    const url='https://free.telein.com.br/sistema/consulta_json.php?chave=senhasite&numero='+encodeURIComponent(n);
-    const r=await fetch(url,{method:'GET',cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return await r.json();
+    // Consulta automática externa desativada: nenhuma chave/credencial fica incorporada ao HTML público.
+    throw new Error('consulta automática externa desativada por segurança');
   }
 
   function render(n,data){
@@ -439,7 +456,7 @@ input::placeholder{color:#70877c!important}
     }
 
     input.value=formatPhone(n);
-    showState('Consultando operadora e portabilidade...','loading',true);
+    showState('Consulta automática externa desativada. Abrindo orientação para a fonte oficial...','warn');
     $('consultBtn').disabled=true;
 
     try{
@@ -453,7 +470,7 @@ input::placeholder{color:#70877c!important}
     }catch(e){
       $('result').classList.remove('show');
       showState(
-        'A consulta automática foi bloqueada ou a fonte gratuita não respondeu. Use o botão abaixo para consultar diretamente na ABR Telecom, que é a fonte oficial da portabilidade.',
+        'A consulta automática externa foi desativada para que nenhuma chave ou credencial fique incorporada ao código público. Use o botão abaixo para consultar diretamente na ABR Telecom.',
         'bad'
       );
       const link=document.createElement('a');

@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -63,6 +73,14 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
 .form{display:grid;grid-template-columns:1fr 1fr;gap:11px}.full{grid-column:1/-1}
 .modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
 @media(max-width:800px){.toolbar{grid-template-columns:1fr}.form{grid-template-columns:1fr}.full{grid-column:auto}.grid{grid-template-columns:1fr}}
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -70,6 +88,7 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
   <h1>Contato DP PR</h1>
   <p>Diretório pesquisável de delegacias e unidades da Polícia Civil do Paraná</p>
 </header>
+<div class="security-note"><b>Alterações locais:</b> favoritos e contatos adicionados/editados nesta tela ficam somente neste navegador. Não há sincronização com banco remoto, login ou credencial da PCPR.</div>
 
 <main>
 <section class="card">
@@ -96,7 +115,7 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
   <div class="notice">
     <b>Base inicial:</b> 286 registros consolidados em 02/09/2026. Quando o documento original informa contato incompleto,
     ausência de e-mail ou necessidade de confirmação, a observação é mantida neste diretório.
-    Alterações feitas nesta tela ficam salvas somente neste navegador.
+    Alterações feitas nesta tela ficam salvas somente neste navegador/dispositivo, sem sincronização com banco de dados remoto.
   </div>
 </section>
 

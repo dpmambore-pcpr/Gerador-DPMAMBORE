@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -40,7 +50,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Sobre as atualizações</h1>
     <p>Registro das principais melhorias implementadas na Central, mantendo um histórico simples para identificar o que mudou em cada versão.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v1.23</span>
+      <span class="version">VERSÃO ATUAL · v1.25</span>
       <span class="note">04/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -50,7 +60,31 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <div class="timeline">
 
       <article class="item latest">
-        <div class="item-head"><span class="item-ver">v1.23</span><span class="item-date">04/09/2026</span><span class="badge">ATUAL</span></div>
+        <div class="item-head"><span class="item-ver">v1.25</span><span class="item-date">04/09/2026</span><span class="badge">ATUAL</span></div>
+        <h3>Padronização de transparência sobre segurança e armazenamento</h3>
+        <ul>
+          <li>Todos os HTMLs passaram a informar no código que a Central é uma aplicação estática, sem backend próprio ou banco de dados remoto.</li>
+          <li>Módulos que salvam preferências, históricos, modelos, projetos ou alvos agora deixam explícito que o armazenamento ocorre apenas neste navegador/dispositivo.</li>
+          <li>Consultas externas passaram a indicar claramente qual dado é enviado e somente quando o usuário aciona a função.</li>
+          <li>Foi reforçado que não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público.</li>
+        </ul>
+      </article>
+
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.24</span><span class="item-date">04/09/2026</span></div>
+        <h3>Revisão adicional de segurança e clareza do código</h3>
+        <ul>
+          <li>Comentários sobre IndexedDB foram reescritos para deixar claro que se trata apenas de armazenamento local do navegador, sem acesso a banco externo.</li>
+          <li>Chave fixa encontrada em uma consulta externa foi removida do JavaScript público e a consulta automática foi desativada.</li>
+          <li>Campos de token opcionais passaram a indicar expressamente que o valor é informado pelo usuário e não é salvo pela Central.</li>
+          <li>Observações de contatos foram ajustadas para não manter senhas, credenciais ou informações de abertura de arquivos no código público.</li>
+        </ul>
+      </article>
+
+
+      <article class="item">
+        <div class="item-head"><span class="item-ver">v1.23</span><span class="item-date">04/09/2026</span></div>
         <h3>Canal de sugestões integrado à Central</h3>
         <ul>
           <li>Novo cartão “Sugestões” disponível diretamente na tela inicial.</li>
@@ -68,7 +102,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
           <li>Dados de contato da operadora foram retirados da versão pública por determinação da empresa.</li>
           <li>O cadastro permanece visível apenas para identificação da operadora, sem e-mail, telefone ou portal.</li>
           <li>Senhas de abertura de arquivos foram removidas do código público.</li>
-          <li>Dados antigos armazenados no navegador e backups importados passam por saneamento automático.</li>
+          <li>Dados personalizados já gravados localmente neste navegador e backups importados passam por saneamento automático.</li>
         </ul>
       </article>
 

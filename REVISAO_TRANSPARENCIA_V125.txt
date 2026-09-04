@@ -1,0 +1,26 @@
+REVISÃO DE TRANSPARÊNCIA E SEGURANÇA — CENTRAL PCPR
+Versão: v1.25
+Data: 04/09/2026
+
+DECLARAÇÃO TÉCNICA PADRONIZADA
+- A Central é uma aplicação estática executada no navegador.
+- Não possui backend próprio, banco de dados remoto ou servidor institucional conectado.
+- localStorage e IndexedDB, quando usados, são armazenamento LOCAL do navegador/dispositivo.
+- Não existem senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público revisado.
+- Consultas externas somente transmitem o dado necessário quando o usuário aciona a função.
+- O Google Analytics da página principal registra métricas técnicas/de navegação, não o conteúdo dos campos dos geradores.
+
+EXEMPLOS
+- Envelope: alvos salvos permanecem no navegador deste dispositivo.
+- Laudo: modelo ODT fica no IndexedDB local do navegador.
+- Configurações/Oitiva/Auto: preferências ficam no localStorage local.
+- ERB: projetos salvos são locais; exportação JSON é necessária para levar a outro computador.
+- Filtro IP: PDF e filtros são locais; IPs só são enviados ao ipinfo na consulta online opcional.
+- IMEI: histórico é local; a ferramenta pode consultar fontes públicas para base TAC/modelo.
+- QR Code: geração ocorre localmente.
+- Consulta Operadora: consulta automática externa está desativada e não há chave no código público.
+
+AUDITORIA
+- Segredos fixos remanescentes: nenhum.
+- URLs contendo senha/chave/token fixo: nenhuma.
+- Todos os HTMLs possuem comentário técnico padronizado de segurança e armazenamento.

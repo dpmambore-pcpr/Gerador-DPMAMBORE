@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -38,10 +48,19 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 .autoHeader .ahStrong{font-weight:700}
 @media(max-width:700px){.cfgGrid{grid-template-columns:1fr}.cfgGrid .full{grid-column:auto}}
 
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 </head>
 <body>
 <header><h1>Auto de Arrecadação e Exibição</h1><p>Documento vinculado ao endereço de um alvo do Envelope de Busca</p></header>
+<div class="security-note"><b>Privacidade:</b> o vínculo com o alvo e as configurações do documento são mantidos apenas localmente neste navegador. Não existe envio para banco remoto ou servidor próprio da Central.</div>
 <main>
 <section>
   <div class="card">

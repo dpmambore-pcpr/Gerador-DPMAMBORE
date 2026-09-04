@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -10,8 +20,17 @@ header{background:linear-gradient(115deg,var(--ink),var(--green2) 72%,#20473c);c
 main{max-width:1200px;margin:0 auto;padding:18px 20px 45px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:13px}h2{font-size:13px;margin:0 0 12px;text-transform:uppercase;color:var(--green2);letter-spacing:.4px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted)}input{width:100%;border:1px solid #bbc5cf;border-radius:8px;padding:9px 10px;font:inherit;font-size:13px}button{border:1px solid var(--green2);border-radius:8px;min-height:38px;padding:0 12px;background:linear-gradient(#326b58,var(--green));color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button.danger{background:#fff;color:var(--red);border-color:#d9a9ae}.actions{display:flex;gap:8px;flex-wrap:wrap}.list{margin-top:9px;display:flex;flex-direction:column;gap:6px}.item{display:flex;gap:7px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 8px}.item span{flex:1;font-size:12px}.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:7px}.status{margin-top:10px;padding:9px 11px;border-radius:8px;background:#edf4ef;color:#204b3e;font-size:12px;display:none}.status.show{display:block}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style></head>
 <body><header><h1>Configuração Geral da Unidade</h1><p>Configure uma vez os dados institucionais para reutilização nos geradores da Central.</p></header>
+<div class="security-note"><b>Armazenamento:</b> as configurações desta página ficam somente no navegador deste dispositivo. Não são enviadas para banco remoto ou servidor da Central e não incluem senha, token ou credencial.</div>
 <main>
 <div class="card"><h2>Cabeçalho institucional</h2><div class="grid">
 <label class="full">Estado<input id="estadoHeader"></label><label class="full">Secretaria / órgão superior<input id="secretaria"></label><label class="full">Departamento / instituição<input id="departamento"></label><label class="full">Subdivisão / regional<input id="subdivisao"></label><label class="full">Unidade policial<input id="unidade"></label>

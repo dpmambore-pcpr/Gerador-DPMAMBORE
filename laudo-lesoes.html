@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
+projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
+localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
+ao código público. Funções que consultam serviços externos somente enviam o dado necessário
+quando o usuário executa a consulta, e isso é informado na própria tela.
+-->
+
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -82,10 +92,19 @@
   .model-actions button{min-height:38px;padding:0 12px;font-size:13px}
   .model-badge{display:inline-block;margin-top:7px;padding:4px 8px;border-radius:999px;background:#e8f1eb;color:#285748;border:1px solid #bdd2c4;font-size:11px;font-weight:700}
   .model-badge.custom{background:#f4ecd6;color:#73591e;border-color:#d9c384}
+
+.security-note{
+  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+@media print{.security-note{display:none!important}}
+
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap top-row"><div><h1>Gerador de Laudo de Exame de Lesões Corporais</h1><p id="headerUnit">Delegacia de Polícia de Mamborê - PCPR</p></div><button id="abrirConfig" class="config-top" type="button">Configurações</button></div></header>
+<div class="security-note"><b>Modelo e configurações:</b> quando salvos, permanecem somente no navegador deste dispositivo (IndexedDB/localStorage). Não há conexão com banco externo, servidor institucional, usuário, senha ou token.</div>
 <main class="wrap">
 
   <section id="configPanel" class="card config-panel" aria-live="polite">
@@ -278,6 +297,7 @@ function dosDateTime(){const d=new Date(),y=Math.max(1980,d.getFullYear());retur
 function u16(v){const a=new Uint8Array(2);new DataView(a.buffer).setUint16(0,v,true);return a}function u32(v){const a=new Uint8Array(4);new DataView(a.buffer).setUint32(0,v>>>0,true);return a}
 function concat(parts){let n=0;for(const p of parts)n+=p.length;const out=new Uint8Array(n);let o=0;for(const p of parts){out.set(p,o);o+=p.length;}return out;}
 function buildStoredZip(entries){const dt=dosDateTime(),locals=[],centrals=[];let offset=0;for(const e of entries){const nb=enc.encode(e.name),data=e.data,crc=crc32(data);const lh=concat([u32(0x04034b50),u16(20),u16(0x0800),u16(0),u16(dt.time),u16(dt.date),u32(crc),u32(data.length),u32(data.length),u16(nb.length),u16(0),nb,data]);locals.push(lh);const ch=concat([u32(0x02014b50),u16(20),u16(20),u16(0x0800),u16(0),u16(dt.time),u16(dt.date),u32(crc),u32(data.length),u32(data.length),u16(nb.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),nb]);centrals.push(ch);offset+=lh.length;}const central=concat(centrals),body=concat(locals);const eocd=concat([u32(0x06054b50),u16(0),u16(0),u16(entries.length),u16(entries.length),u32(central.length),u32(body.length),u16(0)]);return concat([body,central,eocd]);}
+/* IndexedDB LOCAL do navegador. Guarda apenas o modelo ODT neste dispositivo; não possui conexão com banco remoto, backend, servidor institucional, usuário, senha, token ou credencial. */
 const ODT_DB_NAME='pcprLaudoLesoesModelosV2',ODT_DB_STORE='modelos',ODT_DB_KEY='modeloOdtAtivo';
 
 function parentModelStore(){
