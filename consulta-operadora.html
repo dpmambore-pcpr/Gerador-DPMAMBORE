@@ -4,10 +4,10 @@ SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
 Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
 ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
 projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
-localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
-ao código público. Funções que consultam serviços externos somente enviam o dado necessário
-quando o usuário executa a consulta, e isso é informado na própria tela. Este módulo usa a
-interface web pública de consulta e não incorpora senha, token ou chave de integração.
+localStorage ou IndexedDB. Não há senhas particulares, tokens institucionais ou credenciais privadas incorporadas ao código.
+A consulta de operadora utiliza exclusivamente a chave pública gratuita documentada pela própria
+Telein para o serviço gratuito/limitado. Somente o número informado é enviado quando o usuário
+aciona CONSULTAR. O histórico local permanece neste navegador/dispositivo.
 -->
 
 <html lang="pt-BR">
@@ -179,24 +179,6 @@ input::placeholder{color:#63798d}
   input{font-size:18px}
   .history-item{grid-template-columns:1fr}
 }
-
-.public-result{display:none;max-width:850px;margin:22px auto 0}
-.public-result.show{display:block}
-.public-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #263c33}
-.public-head h2{margin:0;font-size:15px;letter-spacing:.05em}
-.public-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
-.public-kpi{border:1px solid #30473d;background:#0e1915;border-radius:10px;padding:9px}
-.public-kpi span{display:block;color:#93a69c;font-size:9px;text-transform:uppercase;font-weight:850;letter-spacing:.05em}
-.public-kpi b{display:block;margin-top:4px;font-size:12px;color:#fff}
-.public-frame-wrap{border:1px solid #30473d;border-radius:12px;overflow:hidden;background:#fff;min-height:470px}
-.public-frame{display:block;width:100%;height:520px;border:0;background:#fff}
-.public-help{margin-top:10px;color:#93a69c;font-size:11px;line-height:1.45}
-.public-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.public-actions button,.public-actions a{border:1px solid #355244;background:#172a22;color:#e8f0ec;border-radius:10px;min-height:40px;padding:0 13px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
-.public-actions .primary{background:#c5a253;border-color:#c5a253;color:#111820}
-@media(max-width:700px){.public-summary{grid-template-columns:1fr 1fr}.public-frame{height:600px}}
-@media(max-width:500px){.public-summary{grid-template-columns:1fr}}
-
 @media print{
   body{background:#fff;color:#111}
   header,.search,.actions,.history,.note{display:none!important}
@@ -272,7 +254,7 @@ input::placeholder{color:#70877c!important}
     </div>
   </div>
 </header>
-<div class="security-note"><b>Consulta pública:</b> este módulo não incorpora senha, token ou chave de API. Ao clicar em CONSULTAR, somente o número informado é encaminhado ao módulo web público de consulta de operadora. O histórico local, quando utilizado, permanece somente neste navegador/dispositivo.</div>
+<div class="security-note"><b>Consulta automática:</b> utiliza a chave pública gratuita disponibilizada pela própria Telein para o módulo de consulta, sujeita aos limites do serviço. Nenhuma senha particular, token institucional ou credencial privada da unidade é armazenada neste HTML. O histórico permanece somente neste navegador/dispositivo.</div>
 
 <main>
   <section class="card search">
@@ -286,50 +268,9 @@ input::placeholder{color:#70877c!important}
       <button class="mainbtn" id="consultBtn" type="button">CONSULTAR</button>
     </div>
     <div class="hint">
-      Aceita número com ou sem formatação. A consulta considera portabilidade quando a fonte disponibiliza essa informação.
+      Aceita número com ou sem formatação. A consulta considera portabilidade quando a fonte disponibiliza essa informação. A fonte gratuita pode aplicar limite temporário de consultas.
     </div>
     <div class="state" id="state"></div>
-  </section>
-
-
-  <section class="card public-result" id="publicResult">
-    <div class="public-head">
-      <h2>CONSULTA PÚBLICA DE OPERADORA</h2>
-      <span class="badge ok">SEM CREDENCIAL NO HTML</span>
-    </div>
-
-    <div class="public-summary">
-      <div class="public-kpi"><span>Número</span><b id="pubNumber">—</b></div>
-      <div class="public-kpi"><span>DDD</span><b id="pubDDD">—</b></div>
-      <div class="public-kpi"><span>Região</span><b id="pubRegion">—</b></div>
-      <div class="public-kpi"><span>Tipo provável</span><b id="pubType">—</b></div>
-    </div>
-
-    <div class="public-frame-wrap">
-      <iframe
-        id="teleinFrame"
-        name="teleinFrame"
-        class="public-frame"
-        title="Consulta pública de operadora"
-        referrerpolicy="no-referrer"
-        src="about:blank"></iframe>
-    </div>
-
-    <form id="teleinForm" action="https://www.telein.com.br/form_consulta.php" method="get" target="teleinFrame" style="display:none">
-      <input type="hidden" name="numero" id="teleinNumero">
-    </form>
-
-    <div class="public-help">
-      A área acima utiliza o módulo web público da Telein. Nenhuma senha ou chave de integração é gravada neste arquivo.
-      Se o provedor impedir a exibição dentro da Central, use “ABRIR CONSULTA EM NOVA ABA”; o número consultado é copiado para facilitar a pesquisa.
-    </div>
-
-    <div class="public-actions">
-      <button class="primary" id="openTeleinBtn" type="button">ABRIR CONSULTA EM NOVA ABA</button>
-      <a href="https://consultanumero.abrtelecom.com.br/" target="_blank" rel="noopener">CONFIRMAR NA ABR TELECOM</a>
-      <button id="publicHistoryBtn" type="button">CONSULTAS RECENTES</button>
-      <button id="newPublicBtn" type="button">NOVA CONSULTA</button>
-    </div>
   </section>
 
   <section class="card result" id="result">
@@ -354,7 +295,7 @@ input::placeholder{color:#70877c!important}
       <div class="row"><div class="k">Tipo provável</div><div class="v" id="fType">—</div></div>
       <div class="row"><div class="k">Código da operadora</div><div class="v" id="fCode">—</div></div>
       <div class="row"><div class="k">Portabilidade</div><div class="v" id="fPorted">—</div></div>
-      <div class="row"><div class="k">Fonte</div><div class="v">Telein — módulo web público</div></div>
+      <div class="row"><div class="k">Fonte automática</div><div class="v">Telein — consulta pública gratuita</div></div>
       <div class="row"><div class="k">Confirmação oficial</div><div class="v">ABR Telecom / BDR</div></div>
     </div>
 
@@ -462,31 +403,68 @@ input::placeholder{color:#70877c!important}
     return {name:'Operadora '+code,group:'Código retornado pela fonte',initials:'OP'};
   }
 
-  function fillPublicSummary(n){
-    const ddd=n.slice(0,2);
-    $('pubNumber').textContent=formatPhone(n);
-    $('pubDDD').textContent=ddd;
-    $('pubRegion').textContent=dddMap[ddd] || 'DDD válido';
-    $('pubType').textContent=probableType(n);
-  }
+  /*
+    A chave abaixo é a chave PÚBLICA GRATUITA documentada pela própria Telein
+    para consultas limitadas. Não é senha da Delegacia, token institucional,
+    credencial de usuário ou segredo privado.
+  */
+  const TELEIN_PUBLIC_FREE_KEY='senhasite';
 
-  function submitPublicModule(n,target='teleinFrame'){
-    const form=$('teleinForm');
-    $('teleinNumero').value=n;
-    form.target=target;
-    try{ form.requestSubmit ? form.requestSubmit() : form.submit(); }
-    catch(_){ form.submit(); }
-  }
+  const TELEIN_ENDPOINTS=[
+    'https://consultaoperadora1.telein.com.br/sistema/consulta_json.php',
+    'https://consultaoperadora2.telein.com.br/sistema/consulta_json.php',
+    'https://consultaoperadora3.telein.com.br/sistema/consulta_json.php',
+    'https://free.telein.com.br/sistema/consulta_json.php'
+  ];
 
-  async function copyNumber(n){
-    try{ await navigator.clipboard.writeText(n); return true; }
-    catch(_){
-      try{
-        const ta=document.createElement('textarea');
-        ta.value=n;ta.style.position='fixed';ta.style.left='-9999px';
-        document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return true;
-      }catch(__){return false}
+  async function fetchWithTimeout(url,ms=6500){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),ms);
+    try{
+      const r=await fetch(url,{
+        method:'GET',
+        cache:'no-store',
+        mode:'cors',
+        credentials:'omit',
+        signal:controller.signal,
+        headers:{'Accept':'application/json,text/plain,*/*'}
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const txt=(await r.text()).trim();
+      if(!txt) throw new Error('resposta vazia');
+
+      let data;
+      try{ data=JSON.parse(txt); }
+      catch(_){
+        // Alguns servidores podem devolver pequenos ruídos antes/depois do JSON.
+        const m=txt.match(/\{[\s\S]*\}/);
+        if(!m) throw new Error('resposta não reconhecida');
+        data=JSON.parse(m[0]);
+      }
+      return data;
+    }finally{
+      clearTimeout(timer);
     }
+  }
+
+  async function queryTelein(n){
+    const errors=[];
+    for(const endpoint of TELEIN_ENDPOINTS){
+      const url=endpoint+
+        '?chave='+encodeURIComponent(TELEIN_PUBLIC_FREE_KEY)+
+        '&numero='+encodeURIComponent(n);
+      try{
+        const data=await fetchWithTimeout(url);
+        if(data && (data.operadora || data.id)){
+          if(!data.operadora && data.id) data.operadora=data.id;
+          return data;
+        }
+        errors.push('resposta sem operadora');
+      }catch(e){
+        errors.push(String(e && e.message || e));
+      }
+    }
+    throw new Error(errors.join(' | ') || 'fontes indisponíveis');
   }
 
   function render(n,data){
@@ -526,49 +504,55 @@ input::placeholder{color:#70877c!important}
 
   async function consult(){
     const n=normalizeNumber(input.value);
+
     if(n.length!==10 && n.length!==11){
       $('result').classList.remove('show');
-      $('publicResult').classList.remove('show');
       showState('Informe um número brasileiro válido com DDD: 10 dígitos para fixo ou 11 dígitos para móvel.','warn');
       return;
     }
 
     const ddd=n.slice(0,2);
     if(!dddMap[ddd]){
+      $('result').classList.remove('show');
       showState('O DDD '+ddd+' não foi reconhecido como DDD brasileiro válido. Confira a digitação.','warn');
       return;
     }
 
     input.value=formatPhone(n);
     $('result').classList.remove('show');
-    fillPublicSummary(n);
-    $('publicResult').classList.add('show');
-
-    showState('Abrindo consulta pública de operadora...','loading',true);
+    showState('Consultando operadora atual e portabilidade...','loading',true);
     $('consultBtn').disabled=true;
 
     try{
-      submitPublicModule(n,'teleinFrame');
+      const data=await queryTelein(n);
 
-      current={
-        number:n,
-        formatted:formatPhone(n),
-        ddd,
-        region:dddMap[ddd]||'',
-        type:probableType(n),
-        code:'',
-        operator:'Consulta pública',
-        detail:'Telein — módulo web',
-        ported:null,
-        ts:Date.now()
-      };
-      saveHistory(current);
+      const code=String(data.operadora||data.id||'').trim();
+      if(!code || code==='99' || code==='55999'){
+        throw new Error('operadora não localizada');
+      }
 
-      showState('Consulta enviada ao módulo público.','ok');
-      setTimeout(hideState,1800);
+      data.operadora=code;
+      render(n,data);
+      showState('Consulta concluída.','ok');
+      setTimeout(hideState,1400);
+
     }catch(e){
-      console.error(e);
-      showState('Não foi possível carregar o módulo público dentro da Central. Use “ABRIR CONSULTA EM NOVA ABA”.','warn');
+      console.error('Consulta Telein:',e);
+      $('result').classList.remove('show');
+
+      showState(
+        'A fonte gratuita não respondeu neste navegador ou o limite temporário de consultas foi atingido. Você pode tentar novamente ou confirmar diretamente na ABR Telecom.',
+        'warn'
+      );
+
+      const link=document.createElement('a');
+      link.href='https://consultanumero.abrtelecom.com.br/';
+      link.target='_blank';
+      link.rel='noopener';
+      link.textContent='ABRIR CONSULTA OFICIAL DA ABR TELECOM';
+      link.style.cssText='display:inline-block;margin-top:10px;color:#e6ca82;font-weight:800;';
+      state.appendChild(document.createElement('br'));
+      state.appendChild(link);
     }finally{
       $('consultBtn').disabled=false;
     }
@@ -599,7 +583,7 @@ input::placeholder{color:#70877c!important}
       const dt=new Date(x.ts).toLocaleString('pt-BR');
       return '<div class="history-item">'+
         '<div class="muted">'+dt+'</div>'+
-        '<div><b>'+(x.operator||'Consulta')+'</b><br><span class="muted">'+x.formatted+(x.ported===true?' · Portado':x.ported===false?' · Sem indicação de portabilidade':' · Resultado consultado no serviço público')+'</span></div>'+
+        '<div><b>'+x.operator+'</b><br><span class="muted">'+x.formatted+' · '+(x.ported?'Portado':'Sem indicação de portabilidade')+'</span></div>'+
         '<button type="button" data-i="'+i+'">ABRIR</button>'+
       '</div>';
     }).join('');
@@ -633,39 +617,8 @@ input::placeholder{color:#70877c!important}
   $('newBtn').addEventListener('click',()=>{
     input.value='';
     $('result').classList.remove('show');
-    $('publicResult').classList.remove('show');
     hideState();
     input.focus();
-  });
-
-  $('newPublicBtn').addEventListener('click',()=>{
-    input.value='';
-    $('publicResult').classList.remove('show');
-    $('teleinFrame').src='about:blank';
-    hideState();
-    input.focus();
-  });
-
-  $('publicHistoryBtn').addEventListener('click',()=>{
-    $('history').classList.toggle('show');
-  });
-
-  $('openTeleinBtn').addEventListener('click',async()=>{
-    const n=normalizeNumber(input.value);
-    if(n.length!==10 && n.length!==11){
-      showState('Informe primeiro um número válido com DDD.','warn');
-      return;
-    }
-    await copyNumber(n);
-    const target='teleinConsulta_'+Date.now();
-    const w=window.open('about:blank',target);
-    if(!w){
-      showState('O navegador bloqueou a nova aba. Libere pop-ups e tente novamente.','warn');
-      return;
-    }
-    submitPublicModule(n,target);
-    showState('Consulta pública aberta em nova aba. O número também foi copiado.','ok');
-    setTimeout(hideState,1800);
   });
 
   renderHistory();
