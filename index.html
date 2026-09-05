@@ -23,10 +23,10 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 .brand{display:flex;gap:9px;align-items:center;margin-right:2px}
 .version-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.08);color:#f4e7bd;font-size:10.5px;font-weight:800;letter-spacing:.45px;white-space:nowrap}
 .nav-clock{margin-left:auto;display:flex;align-items:center;gap:10px;padding:5px 10px 5px 12px;border-left:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap}
-.clock-icon{width:30px;height:30px;border:1px solid rgba(197,162,83,.58);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:14px;background:rgba(255,255,255,.04)}
-.clock-text{text-align:right;line-height:1.08}
-.clock-time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;letter-spacing:.7px;color:#fff}
-.clock-date{margin-top:3px;font-size:9.5px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;color:#e7d9b3}
+.clock-icon{width:34px;height:34px;border:1px solid rgba(197,162,83,.58);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:16px;background:rgba(255,255,255,.04)}
+.clock-text{width:172px;text-align:center;line-height:1;display:flex;flex-direction:column;align-items:stretch}
+.clock-time{font-family:"Courier New",monospace;font-variant-numeric:tabular-nums;font-size:25px;font-weight:800;letter-spacing:1.8px;color:#fff;text-align:center;white-space:nowrap}
+.clock-date{margin-top:5px;font-size:10px;font-weight:800;letter-spacing:.72px;text-transform:uppercase;color:#e7d9b3;text-align:center;white-space:nowrap}
 
 .brand-mark{width:35px;height:35px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);border-radius:8px;color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.05em;background:rgba(255,255,255,.05)}
 .nav-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#f1ede2;margin-right:4px;white-space:nowrap}
@@ -45,9 +45,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   .credit-line{font-size:9.5px}
   .version-badge{font-size:9.5px;min-height:26px;padding:0 7px}
   .nav-clock{margin-left:0;margin-right:0;border-left:0;border-top:1px solid rgba(255,255,255,.12);width:100%;justify-content:center;padding:6px 4px}
-  .clock-text{text-align:center}
-  .clock-time{font-size:16px}
-  .clock-date{font-size:9px}
+  .clock-text{width:156px;text-align:center}
+  .clock-time{font-size:22px;letter-spacing:1.5px}
+  .clock-date{font-size:9px;letter-spacing:.58px}
 
   .brand{width:100%}
   .module-tab{flex:1 1 30%;padding:0 9px;font-size:12px}
@@ -277,10 +277,12 @@ function updateCentralClock(){
     }).format(now);
   }
   if(dateEl){
-    const date=new Intl.DateTimeFormat('pt-BR',{
-      weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'
-    }).format(now);
-    dateEl.textContent=date;
+    const weekday=new Intl.DateTimeFormat('pt-BR',{weekday:'long'}).format(now)
+      .replace('-feira','').toUpperCase();
+    const day=String(now.getDate()).padStart(2,'0');
+    const month=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][now.getMonth()];
+    const year=now.getFullYear();
+    dateEl.textContent=`${weekday} ${day} ${month} ${year}`;
   }
 }
 updateCentralClock();
