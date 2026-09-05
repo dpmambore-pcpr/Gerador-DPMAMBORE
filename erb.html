@@ -2,17 +2,19 @@
 <!--
 SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
 Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
-ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
-projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
-localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
-ao código público. Funções que consultam serviços externos somente enviam o dado necessário
-quando o usuário executa a consulta, e isso é informado na própria tela.
+ou servidor institucional conectado à Central. Projetos e preferências salvos ficam somente
+neste navegador/dispositivo por localStorage. Não há senhas, tokens, chaves de API ou
+credenciais fixas incorporadas ao código público. Arquivos XLSX/PDF/CSV/TXT selecionados são
+processados no próprio navegador. Serviços cartográficos públicos são carregados apenas para
+exibição do mapa. A busca opcional de endereço usa Nominatim/OpenStreetMap somente quando o
+usuário aciona essa função.
 -->
-
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ERB Mapper Pro v6.3</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ERB Mapper Pro v7.0 — Clean</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
@@ -22,263 +24,672 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
 <style>
-:root{--bg:#0c1512;--panel:#111e19;--panel2:#17251f;--text:#edf3ef;--muted:#9aa8a0;--line:#30473d;--accent:#285748;--accent2:#326b58;--blue:#31577d;--green:#285748;--warn:#c5a253;--shadow:0 14px 35px rgba(0,0,0,.32)}
-*{box-sizing:border-box}html,body{height:100%;margin:0;font:13px Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,select,textarea{font:inherit}.app{height:100%;display:grid;grid-template-columns:455px 1fr;overflow:hidden}.sidebar{background:var(--panel);border-right:1px solid var(--line);overflow:auto;z-index:1200}.brand{padding:16px 18px;background:linear-gradient(135deg,#080c11,#1a222b);border-bottom:4px solid #c5a253}.brandrow{display:flex;gap:12px;align-items:center}.seal{width:44px;height:44px;border:1px solid #607080;border-radius:10px;display:grid;place-items:center;font-weight:900}.brand h1{margin:0;font-size:19px}.brand p{margin:4px 0 0;color:#a8b4c0;font-size:11px}.content{padding:12px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;position:sticky;top:0;background:var(--panel);padding-bottom:10px;z-index:10}.tab{background:#18232e;color:#bec9d4;border:1px solid var(--line);padding:8px 4px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:800}.tab.active{background:#080c11;color:#fff;border-color:#4b5967}.pane{display:none}.pane.active{display:block}.card{background:#141d26;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:11px}.title{font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;margin:0 0 10px;color:#dce5ed}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.field{margin-bottom:8px}.field:last-child{margin-bottom:0}label{display:block;font-size:10.8px;font-weight:800;color:#c6d0da;margin-bottom:4px}.req:after{content:' *';color:#ff6570}input,select,textarea{width:100%;background:#0c141c;color:#f4f7fa;border:1px solid #354555;border-radius:8px;padding:8px 9px;outline:none}textarea{min-height:80px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#71869a;box-shadow:0 0 0 3px rgba(113,134,154,.15)}.help{font-size:10.2px;line-height:1.4;color:var(--muted)}details summary{cursor:pointer;font-weight:800;font-size:11px;color:#cbd5df;margin:4px 0 9px}.btnrow{display:flex;gap:6px;flex-wrap:wrap}.btn{border:0;border-radius:8px;padding:8px 10px;font-weight:850;font-size:11px;cursor:pointer}.primary{background:var(--accent);color:#fff}.secondary{background:#283541;color:#e6edf3}.outline{background:#141d26;color:#e6edf3;border:1px solid #435263}.danger{background:#43171c;color:#ffbdc3}.blue{background:#13345d;color:#b8d9ff}.green{background:#123a21;color:#a7e3b7}.small{padding:5px 7px;font-size:10px}.switch{display:flex;align-items:center;gap:7px;font-size:10.8px;margin:6px 0}.switch input{width:auto}.record{border:1px solid var(--line);border-radius:9px;background:#0f171f;padding:8px;margin-bottom:7px}.rtop{display:grid;grid-template-columns:8px 1fr auto;gap:7px;align-items:center}.dot{width:8px;height:34px;border-radius:5px}.rname{font-weight:900;font-size:11.5px}.rmeta{color:#95a4b3;font-size:10px;line-height:1.45;margin:5px 0}.badge{display:inline-block;background:#26333f;color:#d1dae3;border-radius:999px;padding:2px 6px;font-size:9px;font-weight:800;margin:1px 3px 1px 0}.mapwrap{position:relative;min-width:0;background:#071018}#map{height:100%;width:100%;background:#0b1118}.toolbar{position:absolute;z-index:900;top:12px;left:52px;right:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.cluster{display:flex;gap:6px;flex-wrap:wrap;pointer-events:auto}.mapbtn{background:rgba(12,18,24,.94);color:#eef3f7;border:1px solid #435263;border-radius:7px;padding:7px 9px;font-size:10.5px;font-weight:850;cursor:pointer;box-shadow:0 2px 9px rgba(0,0,0,.35)}.coordbar{position:absolute;z-index:900;bottom:8px;left:52px;background:rgba(8,12,17,.92);border:1px solid #40505f;border-radius:6px;padding:6px 8px;font:10.5px monospace;cursor:pointer}.timelinebar{position:absolute;z-index:880;left:50%;transform:translateX(-50%);bottom:42px;width:min(760px,75%);background:rgba(10,15,21,.95);border:1px solid #435263;border-radius:10px;padding:8px;display:none;box-shadow:var(--shadow)}.timelinebar.show{display:block}.timeitems{display:flex;overflow:auto;gap:7px;padding:2px}.timeitem{min-width:130px;border:1px solid #394958;border-radius:7px;padding:6px;background:#101820;cursor:pointer}.timeitem.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.12)}.legend{background:rgba(9,14,20,.94);color:#e7edf3;padding:8px 9px;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.45);font-size:9.8px;max-width:250px}.erb-label{background:#0d151d!important;color:#fff!important;border:1px solid #667789!important;border-radius:4px!important;font-size:10px!important;font-weight:900!important;padding:2px 5px!important}.erb-label:before{display:none!important}.seqicon{background:#fff;color:#111;border:2px solid #111;border-radius:50%;font-weight:900;text-align:center;line-height:22px;width:26px!important;height:26px!important}.poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:24px!important;height:24px!important}.north{position:absolute;right:14px;bottom:50px;z-index:850;font-weight:900;font-size:18px;background:rgba(8,12,17,.85);border:1px solid #435263;border-radius:7px;padding:5px 8px}.capture .toolbar,.capture .leaflet-control,.capture .coordbar,.capture .timelinebar{display:none!important}.status{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:5000;padding:10px 14px;border-radius:9px;background:#166534;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#991b1b}.privacy{background:#2a230d;border:1px solid #66591d;color:#e6d38a;border-radius:8px;padding:9px;font-size:10.2px;line-height:1.4}.presentation .sidebar{display:none}.presentation .app{grid-template-columns:1fr}.presentation .toolbar{left:12px}.presentation .coordbar{left:12px}@media(max-width:950px){.app{grid-template-columns:1fr;grid-template-rows:58vh auto;overflow:auto}.sidebar{grid-row:2;overflow:visible}.mapwrap{grid-row:1;position:sticky;top:0;z-index:20}#map{height:58vh}.toolbar{left:48px}.timelinebar{width:90%}}
-
-.security-note{
-  margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;
-  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+:root{
+  --bg:#0a120f;--panel:#0d1a15;--panel2:#12241c;--panel3:#172c23;--text:#eef5f1;--muted:#91a59c;
+  --line:#2a483b;--accent:#2d6b55;--accent2:#3a8066;--gold:#c5a253;--danger:#8c2c34;--shadow:0 18px 45px rgba(0,0,0,.34)
 }
-.security-note b{color:#244b3e}
-@media print{.security-note{display:none!important}}
-
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font:13px Inter,Arial,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{height:100vh;display:grid;grid-template-columns:320px 1fr;overflow:hidden}
+.sidebar{background:linear-gradient(180deg,#0c1713,#0e1c17);border-right:1px solid var(--line);overflow:auto;z-index:1100}
+.brand{padding:15px 16px 13px;border-bottom:1px solid var(--line)}
+.brandrow{display:flex;gap:10px;align-items:center}.seal{width:42px;height:42px;border:1px solid #5d776c;border-radius:11px;display:grid;place-items:center;font-weight:950;color:#e8d9aa}
+.brand h1{margin:0;font-size:17px;line-height:1.1}.brand small{font-size:9px;color:#b9c8c1}.brand p{margin:4px 0 0;color:#94a99f;font-size:9.8px;line-height:1.35}
+.sec{margin:10px 12px;padding:8px 9px;border:1px solid #2f5142;border-radius:9px;background:#10261d;color:#a8c0b5;font-size:9.4px;line-height:1.38}
+.sidecontent{padding:0 12px 14px}
+.block{background:#11211a;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:9px}
+.blocktitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.badge{display:inline-flex;align-items:center;gap:4px;background:#223a30;border:1px solid #315646;border-radius:999px;padding:2px 6px;font-size:8.5px;font-weight:850;color:#dce9e3}
+.muted{color:var(--muted);font-size:9.6px;line-height:1.4}
+label{display:block;font-size:9.8px;font-weight:800;color:#c7d6cf;margin-bottom:4px}
+input,select,textarea{width:100%;background:#08120e;color:#f4f8f6;border:1px solid #345646;border-radius:7px;padding:7px 8px;outline:none}
+textarea{resize:vertical;min-height:78px}
+input:focus,select:focus,textarea:focus{border-color:#6a9a84;box-shadow:0 0 0 3px rgba(106,154,132,.12)}
+.row{display:flex;gap:6px;align-items:center}.row>*{min-width:0}.grow{flex:1}
+.btn{border:0;border-radius:7px;padding:7px 9px;font-size:9.8px;font-weight:850;background:#293b34;color:#edf4f0}
+.btn.primary{background:var(--accent)}.btn.gold{background:#5b481f;color:#f3dfa4}.btn.danger{background:#471a20;color:#ffc5ca}.btn.outline{background:transparent;border:1px solid #3f6253}.btn.small{padding:5px 7px;font-size:8.8px}
+.lot{border:1px solid #294a3b;border-radius:9px;padding:8px;background:#0c1813;margin-bottom:7px}
+.lotline{display:grid;grid-template-columns:7px 1fr auto;gap:7px;align-items:center}.lotcolor{width:7px;height:37px;border-radius:5px}.lotname{font-weight:900;font-size:10.7px}.lotmeta{font-size:8.8px;color:#8ea298;margin-top:3px}.lotactions{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.side-tabs{display:flex;gap:5px;margin-bottom:9px}.sidetab{flex:1;border:1px solid #2c4b3d;background:#12231c;color:#b7c9c0;padding:6px;border-radius:7px;font-size:9px;font-weight:850}.sidetab.active{background:#07110d;color:#fff;border-color:#547564}
+.sidepane{display:none}.sidepane.active{display:block}
+.item{border:1px solid #274438;border-radius:8px;padding:7px;margin-bottom:6px;background:#0b1612}.itemname{font-size:10.2px;font-weight:850}.itemmeta{font-size:8.8px;color:#90a39a;line-height:1.35;margin-top:3px}
+.mapwrap{position:relative;min-width:0;background:#07100c;overflow:hidden}#map{position:absolute;inset:0;width:100%;height:100%}
+.topbar{position:absolute;z-index:950;left:50px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.toolbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;pointer-events:auto}
+.toolbtn{height:34px;padding:0 10px;border:1px solid #3e6152;background:rgba(8,17,13,.95);color:#edf4f0;border-radius:8px;font-size:9.6px;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.26)}
+.toolbtn.active{background:#5a471e;border-color:#7a6127;color:#f5e0a3}
+.menu{position:relative;pointer-events:auto}.menu>.toolbtn:after{content:' ▾';opacity:.65}.dropdown{position:absolute;top:38px;left:0;min-width:205px;padding:6px;background:#0d1c16;border:1px solid #365847;border-radius:9px;box-shadow:var(--shadow);display:none}
+.menu.right .dropdown{left:auto;right:0}.menu:hover .dropdown,.menu.open .dropdown{display:block}
+.dropitem{width:100%;border:0;background:transparent;color:#e7efeb;padding:8px;border-radius:6px;text-align:left;font-size:9.6px;font-weight:750}.dropitem:hover{background:#183128}.dropsep{height:1px;background:#29483b;margin:5px 0}
+.filterpill{display:none;align-items:center;gap:5px;background:#604d21;color:#f9e3a2;border:1px solid #80672b;border-radius:999px;padding:5px 8px;font-size:8.7px;font-weight:900;pointer-events:auto}.filterpill.show{display:flex}
+.coordbar{position:absolute;z-index:920;left:50px;bottom:8px;background:rgba(7,15,12,.92);border:1px solid #3b5c4e;border-radius:7px;padding:6px 8px;font:9.7px monospace;cursor:pointer}
+.timelinebar{position:absolute;z-index:910;left:50%;transform:translateX(-50%);bottom:42px;width:min(820px,78%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px;display:none;box-shadow:var(--shadow)}.timelinebar.show{display:block}
+.timelinehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.timeitems{display:flex;gap:6px;overflow:auto}.timeitem{min-width:150px;border:1px solid #335244;background:#102019;border-radius:7px;padding:6px;cursor:pointer;font-size:8.9px}.timeitem.active{border-color:#fff}
+.drawerback{position:fixed;inset:0;z-index:1600;background:rgba(0,0,0,.42);display:none}.drawerback.show{display:block}.drawer{position:absolute;top:0;right:0;width:min(440px,94vw);height:100%;background:#0e1b16;border-left:1px solid #36594a;box-shadow:-10px 0 35px rgba(0,0,0,.35);overflow:auto;padding:14px}
+.drawerhead{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #29483b;padding-bottom:10px;margin-bottom:12px}.drawerhead h2{margin:0;font-size:15px}.close{width:32px;height:32px;border-radius:8px;border:1px solid #3f6253;background:#172820;color:#fff;font-size:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.field{margin-bottom:8px}
+details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;background:#0b1712}details summary{cursor:pointer;font-size:9.8px;font-weight:850;color:#cad8d1}
+.drawerfoot{position:sticky;bottom:0;background:#0e1b16;border-top:1px solid #29483b;padding:10px 0 0;margin-top:12px;display:flex;gap:6px;justify-content:flex-end}
+.geo{position:absolute;z-index:930;right:10px;bottom:50px;width:300px;background:rgba(7,15,12,.97);border:1px solid #456858;border-radius:10px;padding:10px;box-shadow:var(--shadow);display:none}.geo.show{display:block}.geo h3{font-size:10.5px;margin:0 0 8px}.geogrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.geokpi{background:#11251c;border:1px solid #2c4d3e;border-radius:7px;padding:7px;font-size:8.7px}.geokpi b{display:block;font-size:13px;color:#f0d890;margin-top:2px}
+.legend{background:rgba(7,14,12,.95);color:#e7efeb;padding:8px 9px;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.4);font-size:9px;max-width:280px}
+.erb-label{background:#0d1814!important;color:#fff!important;border:1px solid #557466!important;border-radius:4px!important;font-size:9px!important;font-weight:900!important;padding:2px 5px!important}.erb-label:before{display:none!important}
+.seqicon{background:#fff;color:#111;border:2px solid #111;border-radius:50%;font-weight:900;text-align:center;line-height:22px;width:26px!important;height:26px!important}
+.poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
+.status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
+.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo{display:none!important}
+.presentation .sidebar{display:none}.presentation .app{grid-template-columns:1fr}.presentation .topbar{left:10px}.presentation .coordbar{left:10px}
+@media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar{width:92%}}
+@media print{.sec{display:none!important}}
 </style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brandrow">
+      <div class="seal">ERB</div>
+      <div><h1>ERB Mapper Pro <small>v7.0</small></h1><p>Lotes · Voz/Dados · Timeline · Geospatial · Relatório</p></div>
+    </div>
+  </div>
+  <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. Não há login, senha ou banco remoto.</div>
+  <div class="sidecontent">
+    <div class="block">
+      <div class="blocktitle"><span>Investigação</span><span id="projectState" class="badge">não salva</span></div>
+      <input id="projectName" placeholder="Ex.: IP 123456/2026 — ERBs">
+      <div class="row" style="margin-top:6px">
+        <select id="activeLot" class="grow"><option value="">— lote ativo —</option></select>
+        <button class="btn primary" id="quickNewLot" title="Novo lote">＋</button>
+      </div>
+    </div>
 
-<style id="pcpr-erb-layout-fix">
-html,body{width:100%!important;height:100%!important;min-height:100%!important;overflow:hidden!important}
-.app{width:100%!important;height:100vh!important;min-height:620px!important}
-.mapwrap{position:relative!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important}
-#map{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important}
-.leaflet-container{width:100%!important;height:100%!important}
-@media(max-width:950px){
-  html,body{overflow:auto!important}
-  .app{height:auto!important;min-height:100vh!important;grid-template-rows:58vh auto!important}
-  .mapwrap{height:58vh!important;min-height:58vh!important}
-  #map{height:58vh!important;min-height:58vh!important}
-}
-</style>
-</head><body>
-<div class="app"><aside class="sidebar"><div class="brand"><div class="brandrow"><div class="seal">ERB</div><div><h1>ERB Mapper Pro <small style="font-size:10px;opacity:.75">v6.3</small></h1><p>Análise cartográfica, temporal e relatório técnico de ERBs · <b style="color:#c5a253">PROJETOS + SCROLL + RELATÓRIO A4</b></p></div></div></div><div class="content">
-<div class="tabs"><button class="tab active" data-tab="erb">ERBs</button><button class="tab" data-tab="poi">Locais</button><button class="tab" data-tab="time">Timeline</button><button class="tab" data-tab="import">Importar</button><button class="tab" data-tab="projects">Projetos</button><button class="tab" data-tab="report">Relatório</button><button class="tab" data-tab="config">Config.</button></div>
-<section class="pane active" id="pane-erb"><div class="card"><div class="title" id="erbTitle">Adicionar ERB / setor</div><form id="erbForm"><input type="hidden" id="editIndex"><div class="field"><label class="req">Nome do registro</label><input id="nome" required placeholder="Ex.: ERB Centro - Setor 2"></div><div class="grid2"><div class="field"><label>Estação / grupo</label><input id="estacao" placeholder="Ex.: MAMBORÊ CENTRO"></div><div class="field"><label>Setor</label><input id="setor" placeholder="1 / A / 120°"></div></div><div class="grid2"><div class="field"><label class="req">Latitude</label><input id="lat" required placeholder="-24.318000 ou 24°19'05\"S"></div><div class="field"><label class="req">Longitude</label><input id="lng" required placeholder="-52.530000 ou 52°31'48\"W"></div></div><div class="grid3"><div class="field"><label class="req">Azimute (°)</label><input id="az" required placeholder="0–360"></div><div class="field"><label>Distância (km)</label><input id="dist" placeholder="padrão"></div><div class="field"><label>Margem (±°)</label><input id="margem" placeholder="padrão"></div></div><details><summary>Dados técnicos e probatórios</summary><div class="grid2"><div class="field"><label>Operadora</label><input id="operadora" placeholder="Vivo / TIM / Claro"></div><div class="field"><label>Tecnologia</label><input id="tech" placeholder="2G / 3G / 4G / 5G"></div></div><div class="grid3"><div class="field"><label>Cell ID / CID</label><input id="cellid"></div><div class="field"><label>eNodeB / gNodeB</label><input id="enodeb"></div><div class="field"><label>LAC / TAC</label><input id="lactac"></div></div><div class="grid2"><div class="field"><label>PCI</label><input id="pci"></div><div class="field"><label>Banda / frequência</label><input id="banda"></div></div><div class="field"><label>Endereço informado da ERB</label><input id="endereco"></div><div class="field"><label>Data/hora do registro</label><input id="datahora" placeholder="31/08/2026 21:14:32"></div><div class="grid2"><div class="field"><label>Fonte / resposta</label><input id="fonte" placeholder="Resposta VIVO / Ofício nº..."></div><div class="field"><label>Arquivo / página</label><input id="pagina" placeholder="arquivo.pdf, pág. 17"></div></div><div class="field"><label>Observação</label><textarea id="obs"></textarea></div></details><div class="btnrow"><button class="btn primary" type="submit" id="saveErb">Adicionar</button><button class="btn secondary" type="button" id="clearErb">Limpar</button><button class="btn outline" type="button" id="useCenter">Usar centro do mapa</button></div></form></div>
-<div class="card"><div class="title">ERBs adicionadas <span id="countErb" class="badge">0</span></div><div class="btnrow" style="margin-bottom:8px"><button class="btn secondary small" id="fitAll">Enquadrar</button><button class="btn danger small" id="clearAll">Apagar todas</button></div><div id="erbList"></div></div></section>
-<section class="pane" id="pane-poi"><div class="card"><div class="title">Adicionar local de interesse</div><form id="poiForm"><input type="hidden" id="poiEdit"><div class="field"><label class="req">Nome</label><input id="poiNome" required placeholder="Local do fato / residência / câmera"></div><div class="grid2"><div class="field"><label class="req">Latitude</label><input id="poiLat" required></div><div class="field"><label class="req">Longitude</label><input id="poiLng" required></div></div><div class="field"><label>Tipo</label><select id="poiTipo"><option>Local do fato</option><option>Residência</option><option>Veículo / abordagem</option><option>Câmera</option><option>Outro</option></select></div><div class="field"><label>Observação</label><textarea id="poiObs"></textarea></div><div class="btnrow"><button class="btn primary" type="submit">Adicionar local</button><button class="btn secondary" type="button" id="poiCenter">Usar centro</button></div></form></div><div class="card"><div class="title">Locais cadastrados <span id="countPoi" class="badge">0</span></div><div id="poiList"></div></div></section>
-<section class="pane" id="pane-time"><div class="card"><div class="title">Análise temporal</div><div class="switch"><input id="showPath" type="checkbox" checked><label style="margin:0">Ligar registros cronologicamente</label></div><div class="switch"><input id="showSeq" type="checkbox" checked><label style="margin:0">Numerar sequência no mapa</label></div><div class="switch"><input id="timelineVisible" type="checkbox" checked><label style="margin:0">Exibir barra temporal no mapa</label></div><div class="btnrow"><button class="btn blue" id="playTimeline">▶ Reproduzir</button><button class="btn secondary" id="stopTimeline">■ Parar</button><button class="btn outline" id="showAllTime">Mostrar todos</button></div><p class="help">A linha representa a sequência cronológica de registros em ERBs, e não um trajeto geográfico exato do terminal.</p></div><div class="card"><div class="title">Sequência</div><div id="timelineList"></div></div></section>
-<section class="pane" id="pane-import"><div class="card"><div class="title">Importar texto / CSV</div><p class="help">Cole tabela da operadora. O sistema tenta reconhecer: nome, estação, setor, latitude, longitude, azimute, data/hora, operadora, tecnologia, Cell ID, eNodeB, LAC/TAC, PCI, banda, fonte, página e observação.</p><textarea id="batch" style="min-height:170px" placeholder="nome;latitude;longitude;azimute;datahora;operadora;cellid"></textarea><div class="btnrow" style="margin-top:8px"><button class="btn primary" id="importText">Analisar e importar</button><button class="btn secondary" id="sample">Exemplo</button></div><div id="importSummary" class="help" style="margin-top:8px"></div></div></section><section class="pane" id="pane-projects"><div class="card"><div class="title">Projeto permanente</div>
-<div class="field"><label>Nome do projeto</label><input id="projectName" placeholder="Ex.: IP 123456/2026 — análise ERBs"></div>
-<div class="btnrow"><button class="btn green" id="saveProjectLink">Salvar como link</button><button class="btn blue" id="copyProjectLink">Copiar link</button><button class="btn outline" id="newProject">Novo projeto</button></div>
-<div id="projectStatus" class="help" style="margin-top:8px">Ainda não há projeto local vinculado. Ao salvar, as alterações seguintes serão gravadas somente neste navegador/dispositivo, sem envio para banco remoto.</div>
-<div class="field" style="margin-top:10px"><label>Projetos salvos neste navegador</label><select id="savedProjects"><option value="">— selecione —</option></select></div>
-<div class="btnrow"><button class="btn secondary small" id="openSavedProject">Abrir selecionado</button><button class="btn danger small" id="deleteSavedProject">Excluir selecionado</button></div>
-<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
-<div class="btnrow"><button class="btn secondary" id="exportJson">Salvar cópia (.json)</button><label class="btn secondary" style="cursor:pointer">Abrir .json<input id="importJson" type="file" accept=".json" hidden></label></div>
-<p class="help" style="margin-top:8px"><b>Link permanente local:</b> funciona apenas neste mesmo navegador/perfil, pois o projeto fica armazenado localmente neste dispositivo e não em banco remoto. Para levar o projeto a outra máquina, use a cópia <b>.json</b>.</p></div></section><section class="pane" id="pane-report"><div class="card"><div class="title">Identificação</div><div class="field"><label>Título</label><input id="rTitulo" value="RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs"></div><div class="field"><label>Unidade</label><input id="rUnidade" value="Delegacia de Polícia de Mamborê/PR"></div><div class="grid2"><div class="field"><label>Procedimento</label><input id="rProcedimento" placeholder="IP nº / BO nº"></div><div class="field"><label>Terminal analisado</label><input id="rTerminal" placeholder="(xx) xxxxx-xxxx / IMEI / identificador"></div></div><div class="field"><label>Responsável pela análise</label><input id="rAnalista"></div><div class="field"><label>Contextualização</label><textarea id="rDescricao"></textarea></div></div><div class="card"><div class="title">Conteúdo</div><div class="switch"><input id="repOverall" type="checkbox" checked><label style="margin:0">Mapa geral</label></div><div class="switch"><input id="repIndividual" type="checkbox" checked><label style="margin:0">Mapas individuais</label></div><div class="switch"><input id="repTimeline" type="checkbox" checked><label style="margin:0">Sequência cronológica e narrativa automática</label></div><div class="switch"><input id="repPois" type="checkbox" checked><label style="margin:0">Locais de interesse e distâncias</label></div><div class="btnrow"><button class="btn primary" id="preview">Pré-visualizar</button><button class="btn blue" id="pdf">Gerar PDF</button><button class="btn secondary" id="png">PNG mapa geral</button></div></div></section>
-<section class="pane" id="pane-config"><div class="card"><div class="title">Parâmetros cartográficos</div><div class="grid2"><div class="field"><label>Distância padrão (km)</label><input id="defaultDist" value="5"></div><div class="field"><label>Margem padrão (±°)</label><input id="defaultMargin" value="45"></div></div><div class="field"><label>Sobreposição</label><select id="overlapMode"><option value="pair">Mostrar sobreposição entre pares + geral</option><option value="all">Somente interseção de todos os setores</option><option value="none">Não destacar</option></select></div><div class="switch"><input id="onlyOverlap" type="checkbox"><label style="margin:0">Exibir somente área de sobreposição</label></div><div class="switch"><input id="showLabels" type="checkbox" checked><label style="margin:0">Mostrar rótulos das ERBs</label></div><div class="switch"><input id="showPois" type="checkbox" checked><label style="margin:0">Mostrar locais de interesse</label></div></div><div class="card"><div class="title">Mapa-base</div><select id="baseSelect"><option value="clean">Limpo — OpenFreeMap</option><option value="street">Ruas — OpenFreeMap</option><option value="dark">Escuro — OpenFreeMap</option><option value="blank">Sem mapa-base</option></select><p class="help">Sem API key. Se a rede institucional bloquear a cartografia externa, use “Sem mapa-base”; os setores, pontos e cálculos continuam funcionando.</p></div><div class="privacy"><b>Nota técnica:</b> a representação dos setores é estimativa e não corresponde, por si só, à localização exata do terminal. A cobertura real depende de fatores de propagação, relevo, potência, obstáculos, carga da célula, handover e parâmetros da rede.</div></section>
-</div></aside><main class="mapwrap" id="mapWrap"><div id="map"></div><div class="toolbar"><div class="cluster"><button class="mapbtn" id="mapFit">Enquadrar</button><button class="mapbtn" id="centerMambore">Mamborê</button><button class="mapbtn" id="presentation">Apresentação</button></div><div class="cluster"><button class="mapbtn" id="toggleOverlap">Sobreposição</button></div></div><div class="coordbar" id="coordbar" title="Clique para copiar">Lat.: — | Long.: —</div><div class="timelinebar" id="timelinebar"><div class="timeitems" id="timeitems"></div></div><div class="north">N ↑</div></main></div><div class="status" id="status"></div>
+    <div class="side-tabs">
+      <button class="sidetab active" data-side="lots">Lotes</button>
+      <button class="sidetab" data-side="records">Registros</button>
+      <button class="sidetab" data-side="pois">Pontos</button>
+    </div>
+
+    <section class="sidepane active" id="side-lots">
+      <div id="lotList"></div>
+      <div class="muted" id="noLots">Nenhum lote. Use “Adicionar › Novo lote”.</div>
+    </section>
+
+    <section class="sidepane" id="side-records">
+      <div class="row" style="margin-bottom:7px">
+        <span class="badge" id="recordCount">0 registros</span>
+        <button class="btn outline small" id="fitAll">Enquadrar</button>
+      </div>
+      <div id="recordList"></div>
+    </section>
+
+    <section class="sidepane" id="side-pois">
+      <div class="row" style="margin-bottom:7px"><span class="badge" id="poiCount">0 pontos</span></div>
+      <div id="poiList"></div>
+    </section>
+  </div>
+</aside>
+
+<main class="mapwrap" id="mapWrap">
+  <div id="map"></div>
+
+  <div class="topbar">
+    <div class="toolbar">
+      <div class="menu">
+        <button class="toolbtn">＋ Adicionar</button>
+        <div class="dropdown">
+          <button class="dropitem" data-open="lot">Novo lote</button>
+          <button class="dropitem" data-open="erb">ERB / setor manual</button>
+          <button class="dropitem" data-open="block">ERBs em bloco</button>
+          <button class="dropitem" data-open="poi">Ponto no mapa</button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="toolbtn">⇧ Importar</button>
+        <div class="dropdown">
+          <button class="dropitem" data-import-kind="VOZ">Voz — XLSX / CSV / TXT / PDF</button>
+          <button class="dropitem" data-import-kind="DADOS">Dados/Conexão — XLSX / CSV / TXT / PDF</button>
+          <div class="dropsep"></div>
+          <button class="dropitem" data-open="import">Importação genérica</button>
+        </div>
+      </div>
+
+      <button class="toolbtn" id="filterBtn">Filtros</button>
+      <button class="toolbtn" id="timelineBtn">Timeline</button>
+      <button class="toolbtn" id="geoBtn">Geospatial</button>
+      <span class="filterpill" id="filterPill">FILTRO ATIVO</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="menu right">
+        <button class="toolbtn">Projeto</button>
+        <div class="dropdown">
+          <button class="dropitem" id="saveProject">Salvar neste navegador</button>
+          <button class="dropitem" id="openProjects">Abrir projeto salvo</button>
+          <div class="dropsep"></div>
+          <button class="dropitem" id="exportJson">Exportar .JSON</button>
+          <label class="dropitem" style="display:block;cursor:pointer">Importar .JSON<input id="importJson" type="file" accept=".json" hidden></label>
+        </div>
+      </div>
+
+      <div class="menu right">
+        <button class="toolbtn">Mapa</button>
+        <div class="dropdown">
+          <button class="dropitem" data-base="clean">Claro</button>
+          <button class="dropitem" data-base="street">Ruas</button>
+          <button class="dropitem" data-base="dark">Escuro</button>
+          <button class="dropitem" data-base="blank">Sem mapa-base</button>
+        </div>
+      </div>
+
+      <div class="menu right">
+        <button class="toolbtn">Exportar</button>
+        <div class="dropdown">
+          <button class="dropitem" id="pngMap">PNG do mapa</button>
+          <button class="dropitem" id="pdfReport">Relatório PDF</button>
+        </div>
+      </div>
+
+      <button class="toolbtn" id="fullBtn" title="Tela cheia">⛶</button>
+    </div>
+  </div>
+
+  <div class="coordbar" id="coordbar">Lat.: — | Long.: —</div>
+
+  <div class="timelinebar" id="timelinebar">
+    <div class="timelinehead">
+      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play</button><button class="btn outline small" id="stopTimeline">■</button><span class="muted" id="timelineInfo"></span></div>
+      <button class="btn outline small" id="closeTimeline">Fechar</button>
+    </div>
+    <div class="timeitems" id="timeitems"></div>
+  </div>
+
+  <div class="geo" id="geoPanel">
+    <h3>GEOSPATIAL — INTERSEÇÃO DOS SETORES VISÍVEIS</h3>
+    <div class="geogrid">
+      <div class="geokpi">Setores usados<b id="geoSectors">0</b></div>
+      <div class="geokpi">Área estimada<b id="geoArea">—</b></div>
+      <div class="geokpi">Centro aproximado<b id="geoCenter">—</b></div>
+      <div class="geokpi">Pontos na área<b id="geoPois">0</b></div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn gold small" id="geoOnly">Somente interseção</button><button class="btn outline small" id="geoClose">Fechar</button></div>
+  </div>
+</main>
+</div>
+
+<div class="drawerback" id="drawerBack">
+  <div class="drawer">
+    <div class="drawerhead"><h2 id="drawerTitle">Ferramenta</h2><button class="close" id="drawerClose">×</button></div>
+    <div id="drawerBody"></div>
+  </div>
+</div>
+
+<div class="status" id="status"></div>
+
 <script>
-(()=>{'use strict';const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),fmt=(n,d=6)=>Number(n).toFixed(d).replace('.',','),normAz=n=>((n%360)+360)%360,colors=['#2f81f7','#f85149','#a371f7','#3fb950','#d29922','#39c5cf','#f778ba','#7ee787','#ffa657','#79c0ff'];
-const state={erbs:[],pois:[],focus:null,playing:null};
-function parseNum(v){if(v==null||String(v).trim()==='')return NaN;return Number(String(v).trim().replace(/\s/g,'').replace(',','.'))}
-function parseCoord(v,isLat){let s=String(v??'').trim().toUpperCase();if(!s)return NaN;let direct=parseNum(s);if(Number.isFinite(direct))return direct;const sign=/[SW]/.test(s)?-1:1;s=s.replace(/[NSEW]/g,' ').replace(/[°º]/g,' ').replace(/[′’']/g,' ').replace(/[″”"]/g,' ').replace(/,/g,'.');const p=s.trim().split(/\s+/).map(Number).filter(Number.isFinite);if(!p.length)return NaN;let n=Math.abs(p[0])+(p[1]||0)/60+(p[2]||0)/3600;n*=sign;return isLat&&Math.abs(n)>90||!isLat&&Math.abs(n)>180?NaN:n}
-function parseDate(s){if(!s)return null;const t=String(s).trim();let m=t.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})[ T]?(\d{1,2})?:?(\d{2})?:?(\d{2})?/);if(m)return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));const d=new Date(t);return isNaN(d)?null:d}
-function status(msg,err=false){const s=$('status');s.textContent=msg;s.className='status show'+(err?' error':'');clearTimeout(status.t);status.t=setTimeout(()=>s.className='status',3500)}
-const map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:true,wheelDebounceTime:35,wheelPxPerZoomLevel:70,inertia:true}).setView([-24.317,-52.529],13);map.scrollWheelZoom.enable();map.attributionControl.setPrefix(false);
-function ofm(style){return L.maplibreGL({style:`https://tiles.openfreemap.org/styles/${style}`,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true}})}
-const bases={clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),blank:L.layerGroup()};let activeBase=bases.clean.addTo(map);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
-window.__pcprErbMap=map;
-window.__pcprErbResize=function(){
-  const run=()=>{
-    try{map.invalidateSize({animate:false,pan:false,debounceMoveend:false});}catch(_){}
-    try{
-      const gl=activeBase&&(
-        activeBase._glMap ||
-        activeBase._maplibreMap ||
-        activeBase._map ||
-        activeBase._maplibre
-      );
-      if(gl&&typeof gl.resize==='function')gl.resize();
-    }catch(_){}
-  };
-  try{requestAnimationFrame(()=>{run();setTimeout(run,80);});}catch(_){run();}
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const fmt=(n,d=6)=>Number(n).toFixed(d).replace('.',',');
+const uid=()=>{try{return crypto.randomUUID()}catch(_){return Date.now().toString(36)+Math.random().toString(36).slice(2)}};
+const COLORS=['#2f81f7','#f85149','#a371f7','#3fb950','#d29922','#39c5cf','#f778ba','#7ee787','#ffa657','#79c0ff'];
+
+const state={
+  lots:[],events:[],pois:[],
+  activeLotId:null,focusEventId:null,
+  filters:{start:'',end:'',type:'',operator:'',lotId:''},
+  onlyGeo:false,playing:false
 };
+const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean'};
+const PROJECT_PREFIX='pcpr.erb.v7.project.';
 
-const sectorG=L.layerGroup().addTo(map),markerG=L.layerGroup().addTo(map),overlapG=L.layerGroup().addTo(map),poiG=L.layerGroup().addTo(map),pathG=L.layerGroup().addTo(map),seqG=L.layerGroup().addTo(map);let legend=null;
-function destination(lat,lng,bearing,km){const R=6371.0088,d=km/R,t=bearing*Math.PI/180,p1=lat*Math.PI/180,l1=lng*Math.PI/180,p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(t)),l2=l1+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2));return[p2*180/Math.PI,((l2*180/Math.PI+540)%360)-180]}
-function sector(r){const ll=[[r.lat,r.lng]],steps=Math.max(28,Math.ceil(r.margin*2/2.5));for(let i=0;i<=steps;i++)ll.push(destination(r.lat,r.lng,r.az-r.margin+(2*r.margin*i/steps),r.dist));ll.push([r.lat,r.lng]);return{ll,geo:turf.polygon([ll.map(x=>[x[1],x[0]])])}}
-function hav(a,b,c,d){return turf.distance(turf.point([b,a]),turf.point([d,c]),{units:'kilometers'})}
-function popup(r){return `<b>${esc(r.name)}</b><br>Lat.: ${fmt(r.lat)}<br>Long.: ${fmt(r.lng)}<br>Az.: ${fmt(r.az,1)}° · ${fmt(r.dist,2)} km · ±${fmt(r.margin,1)}°${r.operadora?'<br>'+esc(r.operadora):''}${r.tech?' · '+esc(r.tech):''}${r.cellid?'<br>Cell ID: '+esc(r.cellid):''}${r.datahora?'<br>'+esc(r.datahora):''}${r.fonte?'<br>Fonte: '+esc(r.fonte):''}`}
-function visibleErbs(){return state.erbs.map((r,i)=>({r,i})).filter(x=>x.r.visible!==false&&(state.focus==null||state.focus===x.i))}
-function redraw(fit=false){sectorG.clearLayers();markerG.clearLayers();overlapG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();const vis=visibleErbs(),bounds=[],polys=[];const groups=new Map();vis.forEach(({r,i})=>{const c=r.color||colors[i%colors.length],s=sector(r);polys.push({geo:s.geo,i});if(!$('onlyOverlap').checked){L.polygon(s.ll,{color:c,weight:2.2,fillColor:c,fillOpacity:.18}).addTo(sectorG).bindPopup(popup(r));L.polyline([[r.lat,r.lng],destination(r.lat,r.lng,r.az,r.dist)],{color:c,weight:3}).addTo(sectorG)}s.ll.forEach(p=>bounds.push(p));const key=(r.estacao||'')+'|'+r.lat.toFixed(6)+'|'+r.lng.toFixed(6);if(!groups.has(key))groups.set(key,{lat:r.lat,lng:r.lng,name:r.estacao||r.name,idx:[]});groups.get(key).idx.push(i)});
- groups.forEach(g=>{const c=state.erbs[g.idx[0]].color||colors[g.idx[0]%colors.length],m=L.circleMarker([g.lat,g.lng],{radius:6,color:'#111',weight:1.5,fillColor:c,fillOpacity:1}).addTo(markerG);m.bindPopup(g.idx.map(i=>popup(state.erbs[i])).join('<hr>'));if($('showLabels').checked)m.bindTooltip(g.name,{permanent:true,direction:'top',offset:[0,-8],className:'erb-label'})});
- const mode=$('overlapMode').value;if(mode!=='none'&&polys.length>=2){if(mode==='pair'){for(let a=0;a<polys.length;a++)for(let b=a+1;b<polys.length;b++){try{const x=turf.intersect(polys[a].geo,polys[b].geo);if(x)L.geoJSON(x,{style:{color:'#fff',weight:1,fillColor:'#fff',fillOpacity:.10}}).addTo(overlapG)}catch(_){}}}try{let all=polys[0].geo;for(let i=1;i<polys.length&&all;i++)all=turf.intersect(all,polys[i].geo);if(all)L.geoJSON(all,{style:{color:'#fff',weight:2,dashArray:'5 4',fillColor:'#fff',fillOpacity:.30}}).addTo(overlapG)}catch(_){}}
- if($('showPois').checked)state.pois.forEach((p,i)=>{const ic=L.divIcon({className:'poiicon',html:'P',iconSize:[24,24],iconAnchor:[12,12]});L.marker([p.lat,p.lng],{icon:ic}).addTo(poiG).bindTooltip(p.name,{permanent:true,direction:'right',className:'erb-label'}).bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.tipo)}<br>${fmt(p.lat)} / ${fmt(p.lng)}`);bounds.push([p.lat,p.lng])});drawTimeline();renderLegend();renderLists();if(fit&&bounds.length)map.fitBounds(bounds,{padding:[40,40],maxZoom:16});scheduleAutosave()}
-function timeline(){return state.erbs.map((r,i)=>({r,i,d:parseDate(r.datahora)})).filter(x=>x.r.visible!==false&&x.d).sort((a,b)=>a.d-b.d)}
-function drawTimeline(){const t=timeline();if($('showPath').checked&&t.length>1){L.polyline(t.map(x=>[x.r.lat,x.r.lng]),{color:'#fff',weight:2.2,dashArray:'7 7',opacity:.85}).addTo(pathG)}if($('showSeq').checked)t.forEach((x,j)=>{const ic=L.divIcon({className:'seqicon',html:String(j+1),iconSize:[26,26],iconAnchor:[13,13]});L.marker([x.r.lat,x.r.lng],{icon:ic}).addTo(seqG)});const bar=$('timelinebar'),items=$('timeitems');bar.classList.toggle('show',$('timelineVisible').checked&&t.length>0);items.innerHTML=t.map((x,j)=>`<div class="timeitem" data-ti="${x.i}"><b>${j+1}. ${esc(x.r.name)}</b><br><span class="help">${esc(x.r.datahora)}</span></div>`).join('');items.querySelectorAll('[data-ti]').forEach(e=>e.onclick=()=>{state.focus=+e.dataset.ti;redraw(true);document.querySelectorAll('.timeitem').forEach(x=>x.classList.toggle('active',x===e))})}
-function renderLegend(){if(legend){map.removeControl(legend);legend=null}if(!state.erbs.length&&!state.pois.length)return;legend=L.control({position:'bottomleft'});legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.innerHTML='<b>Legenda</b><hr style="border:0;border-top:1px solid #44515d">'+state.erbs.map((r,i)=>r.visible===false?'':`<div><span style="display:inline-block;width:14px;height:6px;background:${r.color||colors[i%colors.length]}"></span> ${esc(r.name)} · Az. ${fmt(r.az,0)}°</div>`).join('')+(state.pois.length?'<hr style="border:0;border-top:1px solid #44515d"><div>● Local de interesse</div>':'');return d};legend.addTo(map)}
-function renderLists(){$('countErb').textContent=state.erbs.length;const el=$('erbList');el.innerHTML=state.erbs.length?'':'<div class="help">Nenhuma ERB.</div>';state.erbs.forEach((r,i)=>{const d=document.createElement('div');d.className='record';d.innerHTML=`<div class="rtop"><span class="dot" style="background:${r.color||colors[i%colors.length]}"></span><div class="rname">${esc(r.name)}</div><input type="checkbox" data-vis="${i}" ${r.visible===false?'':'checked'} style="width:auto"></div><div class="rmeta">${fmt(r.lat)} / ${fmt(r.lng)} · Az. ${fmt(r.az,1)}° · ${fmt(r.dist,2)} km · ±${fmt(r.margin,1)}°<br>${r.estacao?'<span class="badge">'+esc(r.estacao)+'</span>':''}${r.operadora?'<span class="badge">'+esc(r.operadora)+'</span>':''}${r.tech?'<span class="badge">'+esc(r.tech)+'</span>':''}${r.cellid?'<span class="badge">CID '+esc(r.cellid)+'</span>':''}${r.datahora?'<br>'+esc(r.datahora):''}</div><div class="btnrow"><button class="btn outline small" data-z="${i}">Localizar</button><button class="btn secondary small" data-e="${i}">Editar</button><button class="btn blue small" data-p="${i}">PNG</button><button class="btn danger small" data-d="${i}">Excluir</button></div>`;el.appendChild(d)});el.querySelectorAll('[data-vis]').forEach(x=>x.onchange=()=>{state.erbs[+x.dataset.vis].visible=x.checked;redraw()});el.querySelectorAll('[data-z]').forEach(x=>x.onclick=()=>{state.focus=null;map.fitBounds(sector(state.erbs[+x.dataset.z]).ll,{padding:[45,45],maxZoom:17})});el.querySelectorAll('[data-e]').forEach(x=>x.onclick=()=>editErb(+x.dataset.e));el.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>{if(confirm('Excluir registro?')){state.erbs.splice(+x.dataset.d,1);redraw(false)}});el.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>downloadIndividual(+x.dataset.p));
- $('countPoi').textContent=state.pois.length;const pl=$('poiList');pl.innerHTML=state.pois.length?'':'<div class="help">Nenhum local.</div>';state.pois.forEach((p,i)=>{let near='';if(state.erbs.length){let arr=state.erbs.map(r=>({r,d:hav(p.lat,p.lng,r.lat,r.lng),inside:turf.booleanPointInPolygon(turf.point([p.lng,p.lat]),sector(r).geo)})).sort((a,b)=>a.d-b.d);near=`<br>ERB mais próxima: ${esc(arr[0].r.name)} · ${fmt(arr[0].d,2)} km${arr.filter(x=>x.inside).length?' · dentro de '+arr.filter(x=>x.inside).length+' setor(es)':''}`}const d=document.createElement('div');d.className='record';d.innerHTML=`<div class="rname">${esc(p.name)}</div><div class="rmeta">${esc(p.tipo)} · ${fmt(p.lat)} / ${fmt(p.lng)}${near}</div><div class="btnrow"><button class="btn outline small" data-pz="${i}">Localizar</button><button class="btn danger small" data-pd="${i}">Excluir</button></div>`;pl.appendChild(d)});pl.querySelectorAll('[data-pz]').forEach(x=>x.onclick=()=>map.setView([state.pois[+x.dataset.pz].lat,state.pois[+x.dataset.pz].lng],16));pl.querySelectorAll('[data-pd]').forEach(x=>x.onclick=()=>{state.pois.splice(+x.dataset.pd,1);redraw()});
- const tl=$('timelineList'),t=timeline();tl.innerHTML=t.length?t.map((x,j)=>`<div class="record"><div class="rname">${j+1}. ${esc(x.r.name)}</div><div class="rmeta">${esc(x.r.datahora)} · ${esc(x.r.operadora||'—')} · Az. ${fmt(x.r.az,1)}°</div></div>`).join(''):'<div class="help">Preencha data/hora nos registros para montar a sequência.</div>'}
-function resetErb(){['editIndex','nome','estacao','setor','lat','lng','az','dist','margem','operadora','tech','cellid','enodeb','lactac','pci','banda','endereco','datahora','fonte','pagina','obs'].forEach(id=>$(id).value='');$('erbTitle').textContent='Adicionar ERB / setor';$('saveErb').textContent='Adicionar'}
-function editErb(i){const r=state.erbs[i];$('editIndex').value=i;const mapf={nome:'name',estacao:'estacao',setor:'setor',lat:'lat',lng:'lng',az:'az',dist:'dist',margem:'margin',operadora:'operadora',tech:'tech',cellid:'cellid',enodeb:'enodeb',lactac:'lactac',pci:'pci',banda:'banda',endereco:'endereco',datahora:'datahora',fonte:'fonte',pagina:'pagina',obs:'obs'};Object.entries(mapf).forEach(([id,k])=>$(id).value=r[k]??'');$('erbTitle').textContent='Editar ERB / setor';$('saveErb').textContent='Salvar alterações';document.querySelector('[data-tab="erb"]').click();$('nome').focus()}
-$('erbForm').onsubmit=e=>{e.preventDefault();const name=$('nome').value.trim(),lat=parseCoord($('lat').value,true),lng=parseCoord($('lng').value,false),az=parseNum($('az').value);let dist=parseNum($('dist').value),margin=parseNum($('margem').value);if(!name||!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))return status('Confira Nome, Latitude, Longitude e Azimute.',true);if(!Number.isFinite(dist))dist=parseNum($('defaultDist').value);if(!Number.isFinite(margin))margin=parseNum($('defaultMargin').value);if(!(dist>0)||!(margin>0&&margin<180))return status('Distância/margem inválidas.',true);const idx=$('editIndex').value===''?null:+$('editIndex').value,old=idx==null?null:state.erbs[idx],r={name,estacao:$('estacao').value.trim(),setor:$('setor').value.trim(),lat,lng,az:normAz(az),dist,margin,operadora:$('operadora').value.trim(),tech:$('tech').value.trim(),cellid:$('cellid').value.trim(),enodeb:$('enodeb').value.trim(),lactac:$('lactac').value.trim(),pci:$('pci').value.trim(),banda:$('banda').value.trim(),endereco:$('endereco').value.trim(),datahora:$('datahora').value.trim(),fonte:$('fonte').value.trim(),pagina:$('pagina').value.trim(),obs:$('obs').value.trim(),visible:old?old.visible:true,color:old?old.color:colors[state.erbs.length%colors.length]};if(idx==null)state.erbs.push(r);else state.erbs[idx]=r;resetErb();redraw(false);status(idx==null?'ERB adicionada.':'Registro atualizado.')};$('clearErb').onclick=resetErb;$('useCenter').onclick=()=>{const c=map.getCenter();$('lat').value=c.lat.toFixed(6);$('lng').value=c.lng.toFixed(6)};
-$('poiForm').onsubmit=e=>{e.preventDefault();const name=$('poiNome').value.trim(),lat=parseCoord($('poiLat').value,true),lng=parseCoord($('poiLng').value,false);if(!name||!Number.isFinite(lat)||!Number.isFinite(lng))return status('Confira nome e coordenadas do local.',true);state.pois.push({name,lat,lng,tipo:$('poiTipo').value,obs:$('poiObs').value.trim()});$('poiNome').value=$('poiLat').value=$('poiLng').value=$('poiObs').value='';redraw(false);status('Local adicionado.')};$('poiCenter').onclick=()=>{const c=map.getCenter();$('poiLat').value=c.lat.toFixed(6);$('poiLng').value=c.lng.toFixed(6)};
-function fitAll(){const pts=[];state.erbs.filter(r=>r.visible!==false).forEach(r=>sector(r).ll.forEach(x=>pts.push(x)));state.pois.forEach(p=>pts.push([p.lat,p.lng]));if(pts.length)map.fitBounds(pts,{padding:[40,40],maxZoom:16});else status('Não há dados para enquadrar.',true)}$('fitAll').onclick=$('mapFit').onclick=fitAll;$('centerMambore').onclick=()=>map.setView([-24.317,-52.529],13);$('clearAll').onclick=()=>{if(confirm('Apagar todas as ERBs?')){state.erbs=[];redraw()}};
-['overlapMode','onlyOverlap','showLabels','showPois','showPath','showSeq','timelineVisible'].forEach(id=>$(id).onchange=()=>redraw());$('toggleOverlap').onclick=()=>{$('onlyOverlap').checked=!$('onlyOverlap').checked;redraw()};$('showAllTime').onclick=()=>{state.focus=null;redraw(true)};
-let playTimer=null;$('playTimeline').onclick=()=>{const t=timeline();if(!t.length)return status('Não há registros com data/hora.',true);let j=0;clearInterval(playTimer);const go=()=>{state.focus=t[j].i;redraw(true);document.querySelectorAll('.timeitem').forEach(x=>x.classList.toggle('active',+x.dataset.ti===t[j].i));j++;if(j>=t.length)clearInterval(playTimer)};go();playTimer=setInterval(go,1500)};$('stopTimeline').onclick=()=>{clearInterval(playTimer);state.focus=null;redraw(true)};
-$('presentation').onclick=()=>{document.body.classList.toggle('presentation');setTimeout(()=>map.invalidateSize(),150)};map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);$('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));$('pane-'+b.dataset.tab).classList.add('active')});
-$('baseSelect').onchange=()=>{map.removeLayer(activeBase);activeBase=bases[$('baseSelect').value];activeBase.addTo(map)};
-function normHead(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
-function detectDelim(line){if(line.includes('\t'))return '\t';if((line.match(/;/g)||[]).length>2)return ';';return ','}function split(line,d){const a=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"')q=!q;else if(ch===d&&!q){a.push(c.trim());c=''}else c+=ch}a.push(c.trim());return a}
-const aliases={nome:['nome','erb','antena','estacaoerb'],estacao:['estacao','site','nomeerb'],setor:['setor','sector'],latitude:['latitude','lat'],longitude:['longitude','lng','lon','long'],azimute:['azimute','azimuth','az'],dist:['distancia','dist','alcance'],margem:['margem','abertura'],operadora:['operadora','carrier'],tech:['tecnologia','tech','rede'],cellid:['cellid','cid','cell'],enodeb:['enodeb','gnodeb','nodeb'],lactac:['lac','tac','lactac'],pci:['pci'],banda:['banda','frequencia','frequency'],datahora:['datahora','datetime','timestamp','dataehora'],fonte:['fonte','source'],pagina:['pagina','arquivo','page'],obs:['observacao','obs']};function canon(h){h=normHead(h);for(const[k,v]of Object.entries(aliases))if(v.includes(h))return k;return h}
-function importText(){const text=$('batch').value.trim();if(!text)return status('Cole os dados.',true);const lines=text.split(/\r?\n/).filter(x=>x.trim()),d=detectDelim(lines[0]),first=split(lines[0],d),headers=first.map(canon),hasHeader=headers.some(h=>Object.keys(aliases).includes(h));let added=0,bad=[];for(let n=hasHeader?1:0;n<lines.length;n++){const vals=split(lines[n],d),o={};(hasHeader?headers:['nome','latitude','longitude','azimute','datahora','operadora','cellid']).forEach((h,i)=>o[h]=vals[i]||'');const lat=parseCoord(o.latitude,true),lng=parseCoord(o.longitude,false),az=parseNum(o.azimute);let dist=parseNum(o.dist),margin=parseNum(o.margem);if(!Number.isFinite(dist))dist=parseNum($('defaultDist').value);if(!Number.isFinite(margin))margin=parseNum($('defaultMargin').value);if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az)){bad.push(n+1);continue}state.erbs.push({name:o.nome||o.estacao||`ERB ${state.erbs.length+1}`,estacao:o.estacao||'',setor:o.setor||'',lat,lng,az:normAz(az),dist,margin,operadora:o.operadora||'',tech:o.tech||'',cellid:o.cellid||'',enodeb:o.enodeb||'',lactac:o.lactac||'',pci:o.pci||'',banda:o.banda||'',datahora:o.datahora||'',fonte:o.fonte||'',pagina:o.pagina||'',obs:o.obs||'',endereco:'',visible:true,color:colors[state.erbs.length%colors.length]});added++}$('importSummary').textContent=`${added} registro(s) importado(s). ${bad.length?bad.length+' linha(s) exigem conferência: '+bad.join(', '):'Nenhum erro identificado.'}`;redraw(false);status(`Importados ${added} registro(s).`,bad.length>0)}$('importText').onclick=importText;$('sample').onclick=()=>{$('batch').value='nome;estacao;setor;latitude;longitude;azimute;datahora;operadora;tecnologia;cellid;fonte\nERB Centro S1;MAMBORÊ CENTRO;1;-24,318000;-52,530000;120;31/08/2026 21:14:32;Vivo;4G;12345;Resposta ao Ofício nº 123/2026\nERB Sul S2;MAMBORÊ SUL;2;-24,331000;-52,525000;315;31/08/2026 21:27:05;Vivo;4G;12346;Resposta ao Ofício nº 123/2026'};
-function metadata(){return{title:$('rTitulo').value,unit:$('rUnidade').value,procedure:$('rProcedimento').value,terminal:$('rTerminal').value,analyst:$('rAnalista').value,description:$('rDescricao').value}}
-const PROJECT_PREFIX='pcpr.erb.project.v1.';let currentProjectId=null,autosaveTimer=null,loadingProject=false;
-function uid(){try{return crypto.randomUUID().replace(/-/g,'').slice(0,20)}catch(_){return Date.now().toString(36)+Math.random().toString(36).slice(2,12)}}
-function projectConfig(){return{defaultDist:$('defaultDist').value,defaultMargin:$('defaultMargin').value,overlapMode:$('overlapMode').value,onlyOverlap:$('onlyOverlap').checked,showLabels:$('showLabels').checked,showPois:$('showPois').checked,showPath:$('showPath').checked,showSeq:$('showSeq').checked,timelineVisible:$('timelineVisible').checked,baseSelect:$('baseSelect').value}}
-function projectSnapshot(){return{version:6,id:currentProjectId,name:$('projectName').value.trim()||'Projeto ERB',updated:new Date().toISOString(),erbs:state.erbs,pois:state.pois,metadata:metadata(),config:projectConfig()}}
-function applyProject(o){loadingProject=true;state.erbs=Array.isArray(o.erbs)?o.erbs:[];state.pois=Array.isArray(o.pois)?o.pois:[];const m=o.metadata||{},c=o.config||{};$('projectName').value=o.name||'';$('rTitulo').value=m.title||'RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs';$('rUnidade').value=m.unit||'Delegacia de Polícia de Mamborê/PR';$('rProcedimento').value=m.procedure||'';$('rTerminal').value=m.terminal||'';$('rAnalista').value=m.analyst||'';$('rDescricao').value=m.description||'';if(c.defaultDist!=null)$('defaultDist').value=c.defaultDist;if(c.defaultMargin!=null)$('defaultMargin').value=c.defaultMargin;if(c.overlapMode)$('overlapMode').value=c.overlapMode;if(c.onlyOverlap!=null)$('onlyOverlap').checked=!!c.onlyOverlap;if(c.showLabels!=null)$('showLabels').checked=!!c.showLabels;if(c.showPois!=null)$('showPois').checked=!!c.showPois;if(c.showPath!=null)$('showPath').checked=!!c.showPath;if(c.showSeq!=null)$('showSeq').checked=!!c.showSeq;if(c.timelineVisible!=null)$('timelineVisible').checked=!!c.timelineVisible;if(c.baseSelect&&bases[c.baseSelect]){$('baseSelect').value=c.baseSelect;try{map.removeLayer(activeBase)}catch(_){}activeBase=bases[c.baseSelect];activeBase.addTo(map)}loadingProject=false;redraw(false)}
-function storeProject(silent=false){if(!currentProjectId)return false;try{localStorage.setItem(PROJECT_PREFIX+currentProjectId,JSON.stringify(projectSnapshot()));if(!silent)status('Projeto salvo neste navegador.');renderSavedProjects();updateProjectStatus();return true}catch(e){console.error(e);if(!silent)status('Não foi possível salvar o projeto neste navegador.',true);return false}}
-function scheduleAutosave(){if(loadingProject||!currentProjectId)return;clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>storeProject(true),350)}
-function savedProjects(){const out=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!k.startsWith(PROJECT_PREFIX))continue;try{const o=JSON.parse(localStorage.getItem(k)||'{}');out.push({id:k.slice(PROJECT_PREFIX.length),name:o.name||'Projeto ERB',updated:o.updated||''})}catch(_){}}}catch(_){}return out.sort((a,b)=>(b.updated||'').localeCompare(a.updated||''))}
-function renderSavedProjects(){const sel=$('savedProjects'),keep=sel.value;sel.innerHTML='<option value="">— selecione —</option>';savedProjects().forEach(p=>{const o=document.createElement('option');o.value=p.id;const dt=p.updated?new Date(p.updated).toLocaleString('pt-BR'):'';o.textContent=p.name+(dt?' — '+dt:'');sel.appendChild(o)});if([...sel.options].some(o=>o.value===keep))sel.value=keep}
-function projectCentralUrl(id){let u;try{if(window.parent&&window.parent!==window&&window.parent.location.origin===location.origin){u=new URL(window.parent.location.href);u.searchParams.set('erbProject',id);u.hash='erb';return u.href}}catch(_){}u=new URL(location.href);u.search='';u.hash='';const parts=u.pathname.split('/');parts[parts.length-1]='index.html';u.pathname=parts.join('/');u.searchParams.set('erbProject',id);u.hash='erb';return u.href}
-function updateParentUrl(id){try{if(window.parent&&window.parent!==window&&window.parent.location.origin===location.origin){const u=new URL(window.parent.location.href);if(id)u.searchParams.set('erbProject',id);else u.searchParams.delete('erbProject');u.hash='erb';window.parent.history.replaceState(null,'',u.pathname+u.search+u.hash)}}catch(_){}}
-function updateProjectStatus(){const el=$('projectStatus');if(!currentProjectId){el.innerHTML='Ainda não há projeto local vinculado. Ao salvar, as alterações seguintes serão gravadas somente neste navegador/dispositivo, sem envio para banco remoto.';return}el.innerHTML='<b>Projeto permanente ativo.</b> ID: <span class="mono">'+esc(currentProjectId)+'</span> · alterações salvas automaticamente.'}
-function openProjectById(id,fromStartup=false){try{const raw=localStorage.getItem(PROJECT_PREFIX+id);if(!raw){if(fromStartup){currentProjectId=null;updateProjectStatus();status('O link existe, mas o projeto não está salvo neste navegador. Use a cópia .json para transferir entre máquinas.',true)}else status('Projeto não encontrado neste navegador.',true);return false}const o=JSON.parse(raw);currentProjectId=id;applyProject(o);updateParentUrl(id);updateProjectStatus();renderSavedProjects();$('savedProjects').value=id;if(!fromStartup)status('Projeto aberto.');return true}catch(e){console.error(e);status('Falha ao abrir o projeto.',true);return false}}
-function getRequestedProjectId(){try{const own=new URLSearchParams(location.search).get('project');if(own)return own;if(window.parent&&window.parent!==window&&window.parent.location.origin===location.origin)return new URLSearchParams(window.parent.location.search).get('erbProject')}catch(_){}return null}
-$('saveProjectLink').onclick=()=>{if(!currentProjectId)currentProjectId=uid();if(!$('projectName').value.trim()){const proc=$('rProcedimento').value.trim();$('projectName').value=proc?'ERB — '+proc:'Projeto ERB '+new Date().toLocaleDateString('pt-BR')}if(storeProject(false)){updateParentUrl(currentProjectId);updateProjectStatus();renderSavedProjects()}};
-$('copyProjectLink').onclick=async()=>{if(!currentProjectId){$('saveProjectLink').click();if(!currentProjectId)return}else storeProject(true);const link=projectCentralUrl(currentProjectId);try{await navigator.clipboard.writeText(link);status('Link permanente copiado.')}catch(_){const ta=document.createElement('textarea');ta.value=link;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();status('Link permanente copiado.')}};
-$('newProject').onclick=()=>{if((state.erbs.length||state.pois.length)&&!confirm('Iniciar um novo projeto? O projeto atual continuará salvo, se já possuir link.'))return;currentProjectId=null;state.erbs=[];state.pois=[];state.focus=null;$('projectName').value='';$('rProcedimento').value='';$('rTerminal').value='';$('rAnalista').value='';$('rDescricao').value='';updateParentUrl(null);updateProjectStatus();redraw(false);status('Novo projeto iniciado.')};
-$('openSavedProject').onclick=()=>{const id=$('savedProjects').value;if(!id)return status('Selecione um projeto.',true);openProjectById(id)};
-$('deleteSavedProject').onclick=()=>{const id=$('savedProjects').value;if(!id)return status('Selecione um projeto.',true);const p=savedProjects().find(x=>x.id===id);if(!confirm('Excluir o projeto salvo "'+(p?.name||id)+'" deste navegador?'))return;try{localStorage.removeItem(PROJECT_PREFIX+id)}catch(_){}if(currentProjectId===id){currentProjectId=null;updateParentUrl(null);updateProjectStatus()}renderSavedProjects();status('Projeto salvo excluído.')};
-['projectName','rTitulo','rUnidade','rProcedimento','rTerminal','rAnalista','rDescricao','defaultDist','defaultMargin','overlapMode','onlyOverlap','showLabels','showPois','showPath','showSeq','timelineVisible','baseSelect'].forEach(id=>$(id)?.addEventListener(['projectName','rTitulo','rUnidade','rProcedimento','rTerminal','rAnalista','rDescricao','defaultDist','defaultMargin'].includes(id)?'input':'change',scheduleAutosave));
-renderSavedProjects();updateProjectStatus();setTimeout(()=>{const requested=getRequestedProjectId();if(requested)openProjectById(requested,true)},220);
-function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(projectSnapshot(),null,2)],{type:'application/json'}),'projeto_erb.json');$('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());currentProjectId=null;applyProject(o);$('projectName').value=o.name||$('projectName').value||'';updateParentUrl(null);updateProjectStatus();status('Projeto .json carregado. Clique em \"Salvar como link\" para criar um vínculo permanente neste navegador.')}catch(_){status('Arquivo inválido.',true)}e.target.value=''};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-
-function glMap(){
-  try{
-    return activeBase&&(
-      activeBase._glMap ||
-      activeBase._maplibreMap ||
-      activeBase._maplibre ||
-      null
-    );
-  }catch(_){return null}
+function status(msg,err=false){
+  const e=$('status');e.textContent=msg;e.className='status show'+(err?' error':'');
+  clearTimeout(status.t);status.t=setTimeout(()=>e.className='status',3200);
 }
+function parseNum(v){if(v==null||String(v).trim()==='')return NaN;return Number(String(v).trim().replace(/\s/g,'').replace(',','.'))}
+function parseCoord(v,isLat){
+  let s=String(v??'').trim().toUpperCase();if(!s)return NaN;
+  let n=parseNum(s);if(Number.isFinite(n))return n;
+  const sign=/[SW]/.test(s)?-1:1;
+  s=s.replace(/[NSEW]/g,' ').replace(/[°º]/g,' ').replace(/[′’']/g,' ').replace(/[″”"]/g,' ').replace(/,/g,'.');
+  const p=s.trim().split(/\s+/).map(Number).filter(Number.isFinite);if(!p.length)return NaN;
+  n=(Math.abs(p[0])+(p[1]||0)/60+(p[2]||0)/3600)*sign;
+  if(isLat&&Math.abs(n)>90||!isLat&&Math.abs(n)>180)return NaN;return n;
+}
+function parseDate(s){
+  if(!s)return null;const t=String(s).trim();
+  let m=t.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})[ T]?(\d{1,2})?:?(\d{2})?:?(\d{2})?/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  const d=new Date(t);return isNaN(d)?null:d;
+}
+function normAz(n){return((n%360)+360)%360}
+function destination(lat,lng,bearing,km){
+  const R=6371.0088,d=km/R,t=bearing*Math.PI/180,p1=lat*Math.PI/180,l1=lng*Math.PI/180;
+  const p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(t));
+  const l2=l1+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2));
+  return[p2*180/Math.PI,((l2*180/Math.PI+540)%360)-180]
+}
+function sector(ev){
+  const ll=[[ev.lat,ev.lng]],steps=Math.max(28,Math.ceil(ev.margin*2/2.5));
+  for(let i=0;i<=steps;i++)ll.push(destination(ev.lat,ev.lng,ev.az-ev.margin+(2*ev.margin*i/steps),ev.dist));
+  ll.push([ev.lat,ev.lng]);
+  return{ll,geo:turf.polygon([ll.map(x=>[x[1],x[0]])])}
+}
+function lotById(id){return state.lots.find(x=>x.id===id)}
+function activeLot(){return lotById(state.activeLotId)}
+function lotEvents(id){return state.events.filter(e=>e.lotId===id)}
+function currentOperator(ev){return ev.operator||lotById(ev.lotId)?.operator||''}
+function projectName(){return $('projectName').value.trim()||'Projeto ERB'}
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 
-async function waitGlReady(gl){
-  if(!gl)return;
-  try{gl.resize();}catch(_){}
-  try{gl.triggerRepaint();}catch(_){}
-  await new Promise(resolve=>{
-    let done=false;
-    const finish=()=>{if(done)return;done=true;resolve()};
-    try{
-      gl.once('idle',finish);
-      setTimeout(finish,1400);
-    }catch(_){
-      setTimeout(finish,500);
-    }
+const map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:true}).setView([-24.317,-52.529],13);
+map.attributionControl.setPrefix(false);
+function ofm(style){return L.maplibreGL({style:`https://tiles.openfreemap.org/styles/${style}`,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true}})}
+const bases={clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),blank:L.layerGroup()};
+let activeBase=bases.clean.addTo(map);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
+
+const sectorG=L.layerGroup().addTo(map),markerG=L.layerGroup().addTo(map),poiG=L.layerGroup().addTo(map),pathG=L.layerGroup().addTo(map),seqG=L.layerGroup().addTo(map),geoG=L.layerGroup().addTo(map);
+let legend=null,playTimer=null;
+
+function filteredEvents(){
+  const f=state.filters;
+  return state.events.filter(ev=>{
+    const lot=lotById(ev.lotId);
+    if(!lot||lot.visible===false||ev.visible===false)return false;
+    if(f.lotId&&ev.lotId!==f.lotId)return false;
+    if(f.type&&String(ev.eventType||lot.type||'').toUpperCase()!==f.type)return false;
+    if(f.operator&&currentOperator(ev)!==f.operator)return false;
+    const d=parseDate(ev.datetime);
+    if(f.start&&(!d||d<new Date(f.start)))return false;
+    if(f.end&&(!d||d>new Date(f.end)))return false;
+    return true;
   });
-  try{gl.resize();gl.triggerRepaint();}catch(_){}
-  await sleep(180);
 }
-
-async function capture(){
-  document.body.classList.add('capture');
-
-  const wrap=$('mapWrap');
-  const mapEl=$('map');
-  const oldWrapBg=wrap.style.background;
-  const oldMapBg=mapEl.style.background;
-
-  try{
-    window.__pcprErbResize();
-    map.invalidateSize({animate:false,pan:false});
-  }catch(_){}
-
-  const gl=glMap();
-  await waitGlReady(gl);
-
-  const cssW=Math.max(1,wrap.clientWidth);
-  const cssH=Math.max(1,wrap.clientHeight);
-  const SCALE=1.7;
-
-  let baseCanvas=null;
-  let baseContainer=null;
-
-  try{
-    if(gl && typeof gl.getCanvas==='function'){
-      baseCanvas=gl.getCanvas();
-      baseContainer=
-        baseCanvas.closest('.maplibregl-map') ||
-        baseCanvas.closest('.mapboxgl-map') ||
-        baseCanvas.parentElement;
-    }
-  }catch(_){}
-
-  try{
-    // Se houver MapLibre, capturamos base e overlays separadamente.
-    if(baseCanvas){
-      const out=document.createElement('canvas');
-      out.width=Math.round(cssW*SCALE);
-      out.height=Math.round(cssH*SCALE);
-      const ctx=out.getContext('2d');
-
-      // Fundo cartográfico diretamente do canvas WebGL.
-      ctx.fillStyle='#ffffff';
-      ctx.fillRect(0,0,out.width,out.height);
-      ctx.drawImage(baseCanvas,0,0,out.width,out.height);
-
-      // Evita que o html2canvas recapture o MapLibre deslocado.
-      wrap.style.background='transparent';
-      mapEl.style.background='transparent';
-
-      const overlay=await html2canvas(wrap,{
-        useCORS:true,
-        allowTaint:false,
-        backgroundColor:null,
-        scale:SCALE,
-        logging:false,
-        width:cssW,
-        height:cssH,
-        scrollX:0,
-        scrollY:0,
-        ignoreElements:el=>{
-          try{
-            return !!(
-              (baseContainer && (el===baseContainer || baseContainer.contains(el))) ||
-              el.classList?.contains('maplibregl-map') ||
-              el.classList?.contains('mapboxgl-map')
-            );
-          }catch(_){return false}
-        }
-      });
-
-      ctx.drawImage(overlay,0,0,out.width,out.height);
-      return out.toDataURL('image/jpeg',.94);
-    }
-
-    // Fallback caso esteja usando mapa em branco ou sem MapLibre.
-    const c=await html2canvas(wrap,{
-      useCORS:true,
-      backgroundColor:'#ffffff',
-      scale:SCALE,
-      logging:false,
-      width:cssW,
-      height:cssH,
-      scrollX:0,
-      scrollY:0
+function sectorGroups(){
+  const m=new Map();
+  filteredEvents().forEach(ev=>{
+    const k=[ev.lotId,ev.lat.toFixed(6),ev.lng.toFixed(6),ev.az.toFixed(1),ev.cellid||''].join('|');
+    if(!m.has(k))m.set(k,[]);
+    m.get(k).push(ev);
+  });
+  return [...m.values()];
+}
+function eventPopup(group){
+  const ev=group[0],lot=lotById(ev.lotId),op=currentOperator(ev),rows=group.slice(0,12).map(x=>
+    `<div style="margin-top:5px;padding-top:5px;border-top:1px solid #ddd">
+      ${x.datetime?'<b>'+esc(x.datetime)+'</b><br>':''}
+      ${x.origin?'Origem: '+esc(x.origin)+'<br>':''}${x.destination?'Destino: '+esc(x.destination)+'<br>':''}
+      ${x.imei?'IMEI: '+esc(x.imei)+'<br>':''}${x.tech?'Tecnologia: '+esc(x.tech):''}
+    </div>`).join('');
+  return `<div style="min-width:230px">
+    <b>${esc(ev.name||ev.station||'ERB')}</b><br>
+    <span>${esc(lot?.name||'Lote')} · ${esc(lot?.type||ev.eventType||'')}</span><br>
+    Lat.: ${fmt(ev.lat)} · Long.: ${fmt(ev.lng)}<br>
+    Az.: ${fmt(ev.az,1)}° · Raio: ${fmt(ev.dist,2)} km · ±${fmt(ev.margin,1)}°
+    ${op?'<br>Operadora: '+esc(op):''}
+    ${ev.cellid?'<br>Cell ID: '+esc(ev.cellid):''}
+    <br><b>${group.length} registro(s) neste setor</b>
+    ${rows}${group.length>12?'<br>… e mais '+(group.length-12):''}
+  </div>`;
+}
+function timelineData(){
+  return filteredEvents().map(ev=>({ev,d:parseDate(ev.datetime)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);
+}
+function redraw(fit=false){
+  sectorG.clearLayers();markerG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();geoG.clearLayers();
+  const groups=sectorGroups(),bounds=[];
+  if(!state.onlyGeo){
+    groups.forEach((group,gi)=>{
+      const ev=group[0],lot=lotById(ev.lotId),color=lot?.color||COLORS[gi%COLORS.length],s=sector(ev);
+      L.polygon(s.ll,{color,weight:2,fillColor:color,fillOpacity:.16}).addTo(sectorG).bindPopup(eventPopup(group));
+      L.polyline([[ev.lat,ev.lng],destination(ev.lat,ev.lng,ev.az,ev.dist)],{color,weight:2.5,opacity:.9}).addTo(sectorG);
+      const m=L.circleMarker([ev.lat,ev.lng],{radius:6,color:'#111',weight:1.4,fillColor:color,fillOpacity:1}).addTo(markerG).bindPopup(eventPopup(group));
+      if(cfg.showLabels)m.bindTooltip(`${ev.station||ev.name||'ERB'}${group.length>1?' ×'+group.length:''}`,{permanent:true,direction:'top',offset:[0,-8],className:'erb-label'});
+      s.ll.forEach(p=>bounds.push(p));
     });
-    return c.toDataURL('image/jpeg',.94);
-
-  }finally{
-    wrap.style.background=oldWrapBg;
-    mapEl.style.background=oldMapBg;
-    document.body.classList.remove('capture');
   }
+  state.pois.forEach(p=>{
+    const ic=L.divIcon({className:'poiicon',html:poiSymbol(p.type),iconSize:[25,25],iconAnchor:[12,12]});
+    L.marker([p.lat,p.lng],{icon:ic}).addTo(poiG).bindTooltip(p.name,{permanent:true,direction:'right',className:'erb-label'})
+      .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.type)}<br>${fmt(p.lat)} / ${fmt(p.lng)}${p.datetime?'<br>'+esc(p.datetime):''}${p.obs?'<br>'+esc(p.obs):''}`);
+    bounds.push([p.lat,p.lng]);
+  });
+  drawTimelineLayers();renderLegend();renderSidebar();updateGeo(false);
+  if(fit&&bounds.length)map.fitBounds(bounds,{padding:[38,38],maxZoom:16});
+  autosave();
+}
+function drawTimelineLayers(){
+  const t=timelineData();
+  if(cfg.showPath&&t.length>1)L.polyline(t.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:1.8,dashArray:'7 7',opacity:.72}).addTo(pathG);
+  if(cfg.showSeq)t.forEach((x,i)=>{
+    const ic=L.divIcon({className:'seqicon',html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
+    L.marker([x.ev.lat,x.ev.lng],{icon:ic}).addTo(seqG);
+  });
+  $('timelineInfo').textContent=t.length?`${t.length} evento(s)`:'sem eventos com data/hora';
+  $('timeitems').innerHTML=t.map((x,i)=>`<div class="timeitem" data-time="${x.ev.id}"><b>${i+1}. ${esc(x.ev.name||x.ev.station||'ERB')}</b><br>${esc(x.ev.datetime||'')}<br><span class="muted">${esc(lotById(x.ev.lotId)?.name||'')}</span></div>`).join('');
+  document.querySelectorAll('[data-time]').forEach(el=>el.onclick=()=>focusEvent(el.dataset.time));
+}
+function focusEvent(id){
+  const ev=state.events.find(e=>e.id===id);if(!ev)return;
+  state.focusEventId=id;map.setView([ev.lat,ev.lng],15);
+  document.querySelectorAll('[data-time]').forEach(x=>x.classList.toggle('active',x.dataset.time===id));
+}
+function poiSymbol(t){return({'Casa':'⌂','Carro':'C','Crime':'!','Interesse':'★','Moto':'M','Alcance':'A'}[t]||'P')}
+function renderLegend(){
+  if(legend){map.removeControl(legend);legend=null}
+  if(!state.lots.length)return;
+  legend=L.control({position:'bottomleft'});legend.onAdd=()=>{
+    const d=L.DomUtil.create('div','legend');
+    d.innerHTML='<b>Lotes</b><hr style="border:0;border-top:1px solid #345346">'+state.lots.filter(l=>l.visible!==false).map(l=>`<div><span style="display:inline-block;width:14px;height:6px;background:${l.color};margin-right:4px"></span>${esc(l.name)} · ${lotEvents(l.id).length}</div>`).join('');
+    return d
+  };legend.addTo(map)
+}
+function renderSidebar(){
+  $('activeLot').innerHTML='<option value="">— lote ativo —</option>'+state.lots.map(l=>`<option value="${l.id}" ${l.id===state.activeLotId?'selected':''}>${esc(l.name)}</option>`).join('');
+  $('noLots').style.display=state.lots.length?'none':'block';
+  $('lotList').innerHTML=state.lots.map(l=>{
+    const evs=lotEvents(l.id),active=l.id===state.activeLotId;
+    return `<div class="lot">
+      <div class="lotline"><span class="lotcolor" style="background:${l.color}"></span><div><div class="lotname">${esc(l.name)}</div><div class="lotmeta">${esc(l.type)} · ${evs.length} registro(s)${l.operator?' · '+esc(l.operator):''}</div></div>
+      <input type="checkbox" data-lotvis="${l.id}" ${l.visible===false?'':'checked'} style="width:auto"></div>
+      <div class="lotactions"><button class="btn ${active?'gold':'outline'} small" data-lotactive="${l.id}">${active?'ATIVO':'Usar'}</button><button class="btn outline small" data-lotfit="${l.id}">Enquadrar</button><button class="btn danger small" data-lotdel="${l.id}">Excluir</button></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('[data-lotvis]').forEach(x=>x.onchange=()=>{lotById(x.dataset.lotvis).visible=x.checked;redraw()});
+  document.querySelectorAll('[data-lotactive]').forEach(x=>x.onclick=()=>{state.activeLotId=x.dataset.lotactive;renderSidebar();status('Lote ativo alterado.')});
+  document.querySelectorAll('[data-lotfit]').forEach(x=>x.onclick=()=>fitLot(x.dataset.lotfit));
+  document.querySelectorAll('[data-lotdel]').forEach(x=>x.onclick=()=>deleteLot(x.dataset.lotdel));
+
+  const fe=filteredEvents();
+  $('recordCount').textContent=`${fe.length} registros`;
+  $('recordList').innerHTML=fe.slice(0,180).map(ev=>`<div class="item"><div class="itemname">${esc(ev.name||ev.station||'ERB')}</div><div class="itemmeta">${fmt(ev.lat)} / ${fmt(ev.lng)} · Az. ${fmt(ev.az,1)}°${ev.datetime?'<br>'+esc(ev.datetime):''}<br>${esc(lotById(ev.lotId)?.name||'')}</div></div>`).join('')+(fe.length>180?'<div class="muted">Mostrando os primeiros 180 registros.</div>':'');
+  $('poiCount').textContent=`${state.pois.length} pontos`;
+  $('poiList').innerHTML=state.pois.map(p=>`<div class="item"><div class="itemname">${poiSymbol(p.type)} ${esc(p.name)}</div><div class="itemmeta">${esc(p.type)} · ${fmt(p.lat)} / ${fmt(p.lng)}</div><div style="margin-top:5px"><button class="btn danger small" data-poidel="${p.id}">Excluir</button></div></div>`).join('');
+  document.querySelectorAll('[data-poidel]').forEach(x=>x.onclick=()=>{state.pois=state.pois.filter(p=>p.id!==x.dataset.poidel);redraw()});
+  updateFilterOptions();
+}
+function fitLot(id){
+  const pts=[];lotEvents(id).forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));
+  if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Lote sem registros.',true)
+}
+function deleteLot(id){
+  const l=lotById(id);if(!l||!confirm(`Excluir o lote "${l.name}" e seus registros?`))return;
+  state.lots=state.lots.filter(x=>x.id!==id);state.events=state.events.filter(e=>e.lotId!==id);
+  if(state.activeLotId===id)state.activeLotId=state.lots[0]?.id||null;redraw()
+}
+function updateFilterOptions(){
+  const operators=[...new Set(state.events.map(currentOperator).filter(Boolean))].sort();
+  const lots=state.lots;
+  const op=$('filterOperator');if(op)op.innerHTML='<option value="">Todas</option>'+operators.map(v=>`<option ${state.filters.operator===v?'selected':''}>${esc(v)}</option>`).join('');
+  const lo=$('filterLot');if(lo)lo.innerHTML='<option value="">Todos</option>'+lots.map(l=>`<option value="${l.id}" ${state.filters.lotId===l.id?'selected':''}>${esc(l.name)}</option>`).join('');
+}
+function openDrawer(kind,preset={}){
+  $('drawerBack').classList.add('show');
+  const body=$('drawerBody');
+  const title=$('drawerTitle');
+  if(kind==='lot'){
+    title.textContent='Novo lote';
+    body.innerHTML=`<div class="field"><label>Nome do lote</label><input id="fLotName" placeholder="Ex.: Alvo João — Dados"></div>
+      <div class="grid2"><div class="field"><label>Tipo</label><select id="fLotType"><option>VOZ</option><option>DADOS</option><option>MISTO</option><option>MANUAL</option></select></div><div class="field"><label>Cor</label><input id="fLotColor" type="color" value="${COLORS[state.lots.length%COLORS.length]}"></div></div>
+      <div class="field"><label>Operadora (opcional)</label><input id="fLotOperator" placeholder="Informe somente se necessário"></div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doCreateLot">Criar lote</button></div>`;
+    $('doCreateLot').onclick=createLotFromForm;
+  }else if(kind==='erb'){
+    title.textContent='ERB / setor manual';
+    body.innerHTML=erbFormHtml();
+    $('doSaveErb').onclick=saveManualErb;
+    $('useCenter').onclick=()=>{const c=map.getCenter();$('fLat').value=c.lat.toFixed(6);$('fLng').value=c.lng.toFixed(6)};
+  }else if(kind==='block'){
+    title.textContent='ERBs em bloco';
+    body.innerHTML=`<div class="muted">Formato simples por linha: <b>nome;latitude;longitude;azimute;datahora;operadora;cellid</b>. Também aceita cabeçalhos reconhecíveis.</div>
+      <div class="field" style="margin-top:8px"><label>Lote de destino</label>${lotSelectHtml('fBlockLot')}</div>
+      <div class="field"><label>Dados</label><textarea id="fBlockText" style="min-height:260px" placeholder="nome;latitude;longitude;azimute;datahora;operadora;cellid"></textarea></div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doBlock">Importar</button></div>`;
+    $('doBlock').onclick=()=>importDelimitedText($('fBlockText').value,$('fBlockLot').value,'');
+  }else if(kind==='poi'){
+    title.textContent='Ponto no mapa';
+    body.innerHTML=`<div class="field"><label>Nome</label><input id="fPoiName" placeholder="Ex.: Residência do alvo"></div>
+      <div class="grid2"><div class="field"><label>Tipo</label><select id="fPoiType"><option>Casa</option><option>Carro</option><option>Crime</option><option>Interesse</option><option>Moto</option><option>Alcance</option><option>Outro</option></select></div><div class="field"><label>Data/hora (opcional)</label><input id="fPoiDate" type="datetime-local"></div></div>
+      <div class="grid2"><div class="field"><label>Latitude</label><input id="fPoiLat"></div><div class="field"><label>Longitude</label><input id="fPoiLng"></div></div>
+      <div class="row"><button class="btn outline small" id="poiCenter">Usar centro do mapa</button><span class="muted">ou</span></div>
+      <div class="field" style="margin-top:8px"><label>Endereço (consulta opcional OpenStreetMap)</label><input id="fPoiAddr" placeholder="Rua, nº, cidade/UF"></div>
+      <button class="btn outline small" id="poiSearch">Localizar endereço</button>
+      <div class="field" style="margin-top:8px"><label>Observação</label><textarea id="fPoiObs"></textarea></div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doPoi">Adicionar ponto</button></div>`;
+    $('poiCenter').onclick=()=>{const c=map.getCenter();$('fPoiLat').value=c.lat.toFixed(6);$('fPoiLng').value=c.lng.toFixed(6)};
+    $('poiSearch').onclick=searchPoiAddress;$('doPoi').onclick=savePoi;
+  }else if(kind==='import'){
+    title.textContent='Importar arquivo';
+    body.innerHTML=`<div class="field"><label>Tipo do lote</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
+      <div class="field"><label>Lote de destino</label>${lotSelectHtml('fImportLot',true)}</div>
+      <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf"></div>
+      <div class="muted">XLSX/CSV/TXT/PDF são lidos no navegador. O importador tenta reconhecer latitude, longitude, azimute, data/hora, Cell ID, IMEI, origem, destino e outros campos.</div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doImport">Analisar e importar</button></div>`;
+    if(preset.type)$('fImportType').value=preset.type;
+    $('doImport').onclick=importSelectedFile;
+  }else if(kind==='filter'){
+    title.textContent='Filtros';
+    body.innerHTML=`<div class="grid2"><div class="field"><label>Data/hora inicial</label><input id="filterStart" type="datetime-local" value="${esc(state.filters.start)}"></div><div class="field"><label>Data/hora final</label><input id="filterEnd" type="datetime-local" value="${esc(state.filters.end)}"></div></div>
+      <div class="grid2"><div class="field"><label>Tipo</label><select id="filterType"><option value="">Todos</option><option value="VOZ">VOZ</option><option value="DADOS">DADOS</option><option value="MISTO">MISTO</option></select></div><div class="field"><label>Operadora</label><select id="filterOperator"></select></div></div>
+      <div class="field"><label>Lote</label><select id="filterLot"></select></div>
+      <div class="drawerfoot"><button class="btn danger" id="clearFilters">Limpar filtros</button><button class="btn primary" id="applyFilters">Aplicar</button></div>`;
+    $('filterType').value=state.filters.type;updateFilterOptions();
+    $('applyFilters').onclick=applyFilters;$('clearFilters').onclick=clearFilters;
+  }else if(kind==='projects'){
+    title.textContent='Projetos salvos';
+    const list=savedProjects();
+    body.innerHTML=`<div class="muted">Projetos salvos existem somente neste navegador/dispositivo.</div><div style="margin-top:9px">${list.length?list.map(p=>`<div class="item"><div class="itemname">${esc(p.name)}</div><div class="itemmeta">${esc(p.updated||'')}</div><div style="margin-top:6px"><button class="btn primary small" data-openproj="${p.id}">Abrir</button> <button class="btn danger small" data-delproj="${p.id}">Excluir</button></div></div>`).join(''):'<div class="muted">Nenhum projeto salvo.</div>'}</div>`;
+    document.querySelectorAll('[data-openproj]').forEach(x=>x.onclick=()=>openProject(x.dataset.openproj));
+    document.querySelectorAll('[data-delproj]').forEach(x=>x.onclick=()=>deleteProject(x.dataset.delproj));
+  }
+  body.querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
+}
+function closeDrawer(){$('drawerBack').classList.remove('show')}
+$('drawerClose').onclick=closeDrawer;$('drawerBack').onclick=e=>{if(e.target===$('drawerBack'))closeDrawer()};
+
+function lotSelectHtml(id,allowNew=false){
+  return `<select id="${id}">${allowNew?'<option value="__new">Criar novo lote automaticamente</option>':''}${state.lots.map(l=>`<option value="${l.id}" ${l.id===state.activeLotId?'selected':''}>${esc(l.name)}</option>`).join('')}</select>`
+}
+function erbFormHtml(){
+  return `<div class="field"><label>Lote</label>${lotSelectHtml('fErbLot')}</div>
+    <div class="field"><label>Nome / identificação</label><input id="fErbName" placeholder="Ex.: ERB Centro — Setor 2"></div>
+    <div class="grid2"><div class="field"><label>Latitude</label><input id="fLat" placeholder="-24.318000"></div><div class="field"><label>Longitude</label><input id="fLng" placeholder="-52.530000"></div></div>
+    <div class="grid3"><div class="field"><label>Azimute</label><input id="fAz" placeholder="0–360"></div><div class="field"><label>Raio (km)</label><input id="fDist" value="${cfg.defaultDist}"></div><div class="field"><label>Margem (±°)</label><input id="fMargin" value="${cfg.defaultMargin}"></div></div>
+    <div class="row"><button class="btn outline small" id="useCenter">Usar centro do mapa</button></div>
+    <div class="grid2" style="margin-top:8px"><div class="field"><label>Data/hora</label><input id="fDate" type="datetime-local"></div><div class="field"><label>Tipo do evento</label><select id="fEventType"><option value="">Herdar do lote</option><option>VOZ</option><option>DADOS</option></select></div></div>
+    <details><summary>Mais opções</summary>
+      <div class="grid2"><div class="field"><label>Estação / site</label><input id="fStation"></div><div class="field"><label>Setor</label><input id="fSector"></div></div>
+      <div class="grid2"><div class="field"><label>Operadora</label><input id="fOperator"></div><div class="field"><label>Tecnologia</label><input id="fTech" placeholder="4G / 5G"></div></div>
+      <div class="grid3"><div class="field"><label>Cell ID</label><input id="fCell"></div><div class="field"><label>eNodeB/gNodeB</label><input id="fNode"></div><div class="field"><label>LAC/TAC</label><input id="fTac"></div></div>
+      <div class="grid2"><div class="field"><label>Origem</label><input id="fOrigin"></div><div class="field"><label>Destino</label><input id="fDestination"></div></div>
+      <div class="field"><label>IMEI</label><input id="fImei"></div>
+      <div class="field"><label>Fonte / observação</label><textarea id="fObs"></textarea></div>
+    </details>
+    <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doSaveErb">Adicionar</button></div>`
+}
+function createLotFromForm(){
+  const name=$('fLotName').value.trim();if(!name)return status('Informe o nome do lote.',true);
+  const l={id:uid(),name,type:$('fLotType').value,color:$('fLotColor').value,operator:$('fLotOperator').value.trim(),visible:true};
+  state.lots.push(l);state.activeLotId=l.id;closeDrawer();redraw();status('Lote criado.')
+}
+function saveManualErb(){
+  const lotId=$('fErbLot').value||state.activeLotId;if(!lotId)return status('Crie ou selecione um lote.',true);
+  const lat=parseCoord($('fLat').value,true),lng=parseCoord($('fLng').value,false),az=parseNum($('fAz').value);
+  if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))return status('Confira latitude, longitude e azimute.',true);
+  const ev={id:uid(),lotId,name:$('fErbName').value.trim()||`ERB ${state.events.length+1}`,station:$('fStation').value.trim(),sector:$('fSector').value.trim(),
+    lat,lng,az:normAz(az),dist:parseNum($('fDist').value)||cfg.defaultDist,margin:parseNum($('fMargin').value)||cfg.defaultMargin,
+    datetime:$('fDate').value?new Date($('fDate').value).toLocaleString('pt-BR'):'',eventType:$('fEventType').value,
+    operator:$('fOperator').value.trim(),tech:$('fTech').value.trim(),cellid:$('fCell').value.trim(),enodeb:$('fNode').value.trim(),lactac:$('fTac').value.trim(),
+    origin:$('fOrigin').value.trim(),destination:$('fDestination').value.trim(),imei:$('fImei').value.trim(),obs:$('fObs').value.trim(),visible:true};
+  state.events.push(ev);closeDrawer();redraw(true);status('ERB adicionada.')
+}
+async function searchPoiAddress(){
+  const q=$('fPoiAddr').value.trim();if(!q)return status('Informe o endereço.',true);
+  try{
+    status('Consultando endereço...');
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q),{headers:{'Accept-Language':'pt-BR'}});
+    const a=await r.json();if(!a.length)return status('Endereço não localizado.',true);
+    $('fPoiLat').value=Number(a[0].lat).toFixed(6);$('fPoiLng').value=Number(a[0].lon).toFixed(6);status('Endereço localizado.')
+  }catch(e){console.error(e);status('Não foi possível consultar o endereço.',true)}
+}
+function savePoi(){
+  const name=$('fPoiName').value.trim(),lat=parseCoord($('fPoiLat').value,true),lng=parseCoord($('fPoiLng').value,false);
+  if(!name||!Number.isFinite(lat)||!Number.isFinite(lng))return status('Confira nome e coordenadas.',true);
+  state.pois.push({id:uid(),name,type:$('fPoiType').value,lat,lng,datetime:$('fPoiDate').value?new Date($('fPoiDate').value).toLocaleString('pt-BR'):'',obs:$('fPoiObs').value.trim()});
+  closeDrawer();redraw(true);status('Ponto adicionado.')
+}
+function applyFilters(){
+  state.filters={start:$('filterStart').value,end:$('filterEnd').value,type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value};
+  $('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));closeDrawer();redraw(true);status('Filtros aplicados.')
+}
+function clearFilters(){
+  state.filters={start:'',end:'',type:'',operator:'',lotId:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
 }
 
-async function overall(){const f=state.focus;state.focus=null;redraw(true);await sleep(700);const x=await capture();state.focus=f;redraw();return x}async function individual(i){const f=state.focus;state.focus=i;redraw(true);await sleep(650);const x=await capture();state.focus=f;redraw();return x}function dataBlob(u){const[a,b]=u.split(','),m=a.match(/:(.*?);/)[1],s=atob(b),v=new Uint8Array(s.length);for(let i=0;i<s.length;i++)v[i]=s.charCodeAt(i);return new Blob([v],{type:m})}async function downloadIndividual(i){status('Gerando imagem...');saveBlob(dataBlob(await individual(i)),`ERB_${i+1}_${state.erbs[i].name.replace(/[^\w-]+/g,'_')}.jpg`)}$('png').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando imagem geral...');saveBlob(dataBlob(await overall()),'mapa_geral_ERBs.jpg')};
-function caveat(){return 'A representação cartográfica dos setores de Estação Rádio Base possui caráter técnico-ilustrativo e foi elaborada a partir das coordenadas, azimutes e parâmetros informados. A área representada não corresponde, por si só, à localização exata do terminal. A cobertura efetiva pode sofrer influência de relevo, potência de transmissão, características da antena, obstáculos físicos, condições da rede, carga da célula, handover e outros fatores de propagação radioelétrica. A interpretação deve ser confrontada com os dados originais fornecidos pela operadora e com os demais elementos da investigação.'}
-function narrative(){const t=timeline();if(!t.length)return 'Não foram informados registros com data/hora suficientes para análise cronológica.';return t.map((x,j)=>`No dia ${esc(x.r.datahora)}, o terminal analisado apresentou registro vinculado à ${esc(x.r.name)}${x.r.operadora?', operada pela '+esc(x.r.operadora):''}, localizada nas coordenadas ${fmt(x.r.lat)} / ${fmt(x.r.lng)}, no setor de azimute ${fmt(x.r.az,1)}°${x.r.cellid?', Cell ID '+esc(x.r.cellid):''}.`).join(' ')}
-function poiText(){if(!state.pois.length)return'';return state.pois.map(p=>{const arr=state.erbs.map(r=>({r,d:hav(p.lat,p.lng,r.lat,r.lng),inside:turf.booleanPointInPolygon(turf.point([p.lng,p.lat]),sector(r).geo)})).sort((a,b)=>a.d-b.d);return `<p><b>${esc(p.name)}</b> (${esc(p.tipo)}), coordenadas ${fmt(p.lat)} / ${fmt(p.lng)}.${arr.length?` A ERB mais próxima é ${esc(arr[0].r.name)}, a aproximadamente ${fmt(arr[0].d,2)} km.${arr.filter(x=>x.inside).length?' O ponto encontra-se dentro da representação gráfica de '+arr.filter(x=>x.inside).length+' setor(es).':''}`:''}</p>`}).join('')}
-function tableHtml(){return `<table><thead><tr><th>#</th><th>ERB / setor</th><th>Coord.</th><th>Az.</th><th>Data/hora</th><th>Operadora</th><th>Dados técnicos</th><th>Fonte</th></tr></thead><tbody>${state.erbs.filter(r=>r.visible!==false).map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.name)}${r.estacao?'<br>'+esc(r.estacao):''}</td><td>${fmt(r.lat)}<br>${fmt(r.lng)}</td><td>${fmt(r.az,1)}°</td><td>${esc(r.datahora||'—')}</td><td>${esc(r.operadora||'—')}<br>${esc(r.tech||'')}</td><td>${r.cellid?'CID '+esc(r.cellid)+'<br>':''}${r.enodeb?'e/gNodeB '+esc(r.enodeb)+'<br>':''}${r.lactac?'LAC/TAC '+esc(r.lactac)+'<br>':''}${r.pci?'PCI '+esc(r.pci)+'<br>':''}${r.banda?esc(r.banda):''}</td><td>${esc(r.fonte||'—')}${r.pagina?'<br>'+esc(r.pagina):''}</td></tr>`).join('')}</tbody></table>`}
-async function getImgs(){const x={overall:null,individual:[]};if($('repOverall').checked)x.overall=await overall();if($('repIndividual').checked)for(let i=0;i<state.erbs.length;i++)if(state.erbs[i].visible!==false)x.individual.push({i,img:await individual(i)});return x}
-async function preview(){if(!state.erbs.some(r=>r.visible!==false))return status('Adicione ao menos uma ERB.',true);const w=window.open('','_blank');if(!w)return status('Pop-up bloqueado.',true);w.document.write('Gerando relatório...');try{const imgs=await getImgs(),m=metadata();const html=`<!doctype html><html><head><meta charset="utf-8"><title>${esc(m.title)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}html,body{height:auto!important;min-height:0!important;overflow:visible!important}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:10.5pt;line-height:1.45;margin:0;background:#e8e8e8;overflow-wrap:anywhere;word-break:normal}.report{width:182mm;max-width:calc(100vw - 28px);margin:12mm auto;background:#fff;padding:14mm;box-shadow:0 2px 18px rgba(0,0,0,.18)}h1{font-size:16pt;border-bottom:3px solid #8e1b22;padding-bottom:7px}h2{font-size:12pt;border-bottom:1px solid #bbb;padding-bottom:4px;margin-top:18px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}.note{background:#f5f5f5;border-left:4px solid #555;padding:9px;white-space:normal;overflow-wrap:break-word;text-align:justify}.map{display:block;width:100%;height:auto;max-height:132mm;object-fit:contain;border:1px solid #aaa;margin:4mm auto 0;background:#fff}.page{page-break-before:always;break-before:page;page-break-inside:avoid;break-inside:avoid;padding-top:1mm}.page h2{margin-top:0}.page p{page-break-inside:avoid;break-inside:avoid}.page .map{page-break-inside:avoid;break-inside:avoid}table{width:100%;border-collapse:collapse;font-size:8pt}th,td{border:1px solid #bbb;padding:4px;vertical-align:top}th{background:#eee}tr{page-break-inside:avoid;break-inside:avoid}@media print{body{background:#fff}.report{width:auto;max-width:none;margin:0;padding:0;box-shadow:none}button,.printbar{display:none!important}.page{page-break-before:always;break-before:page}}</style>
-</head><body><main class="report"><h1>${esc(m.title)}</h1><div class="meta"><div><b>Unidade:</b> ${esc(m.unit||'—')}</div><div><b>Procedimento:</b> ${esc(m.procedure||'—')}</div><div><b>Terminal:</b> ${esc(m.terminal||'—')}</div><div><b>Responsável:</b> ${esc(m.analyst||'—')}</div></div>${m.description?'<h2>1. Objeto da análise</h2><p>'+esc(m.description).replace(/\n/g,'<br>')+'</p>':''}<h2>2. Considerações técnicas</h2><div class="note">${caveat()}</div>${imgs.overall?'<h2>3. Representação cartográfica geral</h2><img class="map" src="'+imgs.overall+'">':''}<h2>4. Relação das ERBs</h2>${tableHtml()}${$('repTimeline').checked?'<h2>5. Análise cronológica</h2><p>'+narrative()+'</p>':''}${$('repPois').checked&&state.pois.length?'<h2>6. Locais de interesse</h2>'+poiText():''}${imgs.individual.map(x=>{const r=state.erbs[x.i];return `<section class="page"><h2>Detalhamento individual — ${esc(r.name)}</h2><p><b>Coordenadas:</b> ${fmt(r.lat)} / ${fmt(r.lng)} &nbsp; <b>Azimute:</b> ${fmt(r.az,1)}° &nbsp; <b>Distância:</b> ${fmt(r.dist,2)} km &nbsp; <b>Margem:</b> ±${fmt(r.margin,1)}°</p><p><b>Operadora:</b> ${esc(r.operadora||'—')} &nbsp; <b>Tecnologia:</b> ${esc(r.tech||'—')} &nbsp; <b>Cell ID:</b> ${esc(r.cellid||'—')}</p>${r.fonte?'<p><b>Fonte:</b> '+esc(r.fonte)+(r.pagina?' — '+esc(r.pagina):'')+'</p>':''}<img class="map" src="${x.img}"></section>`}).join('')}<h2>Conclusão técnica</h2><p>As representações acima sintetizam os parâmetros de ERBs cadastrados e, quando existente, a sequência temporal dos registros. A interpretação deve observar as limitações técnicas descritas neste relatório e ser cotejada com os dados originais da operadora e demais elementos probatórios.</p></main><div class="printbar" style="width:182mm;max-width:calc(100vw - 28px);margin:0 auto 12mm;text-align:right"><button onclick="print()" style="padding:10px 16px;cursor:pointer">Imprimir / Salvar PDF</button></div></body></html>`;w.document.open();w.document.write(html);w.document.close();status('Relatório preparado.')}catch(e){console.error(e);w.close();status('Falha ao gerar relatório.',true)}}$('preview').onclick=preview;
-$('pdf').onclick=async()=>{if(!state.erbs.length)return status('Adicione ERBs.',true);status('Gerando PDF...');try{const imgs=await getImgs(),m=metadata(),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;let y=15;doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text(m.title||'RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,y);y+=8;doc.setFontSize(8.5);doc.setFont('helvetica','normal');[`Unidade: ${m.unit||'—'}`,`Procedimento: ${m.procedure||'—'}`,`Terminal: ${m.terminal||'—'}`,`Responsável: ${m.analyst||'—'}`].forEach(t=>{doc.text(t,M,y);y+=4.5});y+=3;const addText=(title,text)=>{if(y>250){doc.addPage();y=15}doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(title,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);const l=doc.splitTextToSize(text,W-2*M);doc.text(l,M,y);y+=l.length*4+5};if(m.description)addText('1. Objeto da análise',m.description);addText('2. Considerações técnicas',caveat());if(imgs.overall){if(y>145){doc.addPage();y=15}doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('3. Representação cartográfica geral',M,y);y+=6;const p=doc.getImageProperties(imgs.overall),r=Math.min((W-2*M)/p.width,120/p.height);doc.addImage(imgs.overall,'JPEG',M,y,p.width*r,p.height*r);y+=p.height*r+6}doc.addPage();doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('4. Relação das ERBs',M,15);doc.autoTable({startY:21,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.4},head:[['#','Nome','Lat.','Long.','Az.','Data/hora','Operadora','Cell ID / eNodeB','Fonte']],body:state.erbs.filter(r=>r.visible!==false).map((r,i)=>[i+1,r.name,fmt(r.lat),fmt(r.lng),fmt(r.az,1)+'°',r.datahora||'—',r.operadora||'—',[r.cellid,r.enodeb].filter(Boolean).join(' / ')||'—',[r.fonte,r.pagina].filter(Boolean).join(' / ')||'—'])});if($('repTimeline').checked){doc.addPage();y=15;addText('5. Análise cronológica',narrative().replace(/<[^>]+>/g,''))}for(const x of imgs.individual){const r=state.erbs[x.i];doc.addPage();y=15;doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(`Detalhamento individual — ${r.name}`,M,y);y+=6;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(doc.splitTextToSize(`Coordenadas: ${fmt(r.lat)} / ${fmt(r.lng)} | Azimute: ${fmt(r.az,1)}° | Distância: ${fmt(r.dist,2)} km | Margem: ±${fmt(r.margin,1)}°\nOperadora: ${r.operadora||'—'} | Tecnologia: ${r.tech||'—'} | Cell ID: ${r.cellid||'—'}\nFonte: ${r.fonte||'—'} ${r.pagina||''}`,W-2*M),M,y);y+=18;const p=doc.getImageProperties(x.img),availH=265-y,rr=Math.min((W-2*M)/p.width,availH/p.height);doc.addImage(x.img,'JPEG',M,y,p.width*rr,p.height*rr)}doc.save('relatorio_analise_ERBs.pdf');status('PDF gerado.')}catch(e){console.error(e);status('Falha ao gerar PDF.',true)}};
-window.addEventListener('resize',()=>window.__pcprErbResize());setTimeout(()=>window.__pcprErbResize(),120);setTimeout(()=>window.__pcprErbResize(),450);redraw();})();
-</script></body></html>
+function normHead(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
+const ALIASES={
+  nome:['nome','erb','antena','estacaoerb','site'],estacao:['estacao','station','nomeerb'],setor:['setor','sector'],
+  latitude:['latitude','lat'],longitude:['longitude','lng','lon','long'],azimute:['azimute','azimuth','az'],
+  distancia:['distancia','dist','raio','alcance'],margem:['margem','abertura'],datahora:['datahora','datetime','timestamp','dataehora','datahorario'],
+  data:['data','date'],hora:['hora','time'],operadora:['operadora','carrier'],tecnologia:['tecnologia','tech','rede'],
+  cellid:['cellid','cid','cell','eci'],enodeb:['enodeb','gnodeb','nodeb'],lactac:['lac','tac','lactac'],imei:['imei'],
+  origem:['origem','origin','chamador','calling'],destino:['destino','destination','chamado','called'],tipo:['tipo','eventotype','servico'],
+  fonte:['fonte','source'],pagina:['pagina','arquivo','page'],obs:['observacao','obs']
+};
+function canon(h){h=normHead(h);for(const[k,v]of Object.entries(ALIASES))if(v.includes(h))return k;return h}
+function detectDelim(line){if(line.includes('\t'))return '\t';if((line.match(/;/g)||[]).length>2)return ';';return ','}
+function splitLine(line,d){const a=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"')q=!q;else if(ch===d&&!q){a.push(c.trim());c=''}else c+=ch}a.push(c.trim());return a}
+function ensureImportLot(type,requested){
+  if(requested&&requested!=='__new')return requested;
+  const l={id:uid(),name:`${type||'MISTO'} — ${new Date().toLocaleString('pt-BR')}`,type:type||'MISTO',color:COLORS[state.lots.length%COLORS.length],operator:'',visible:true};
+  state.lots.push(l);state.activeLotId=l.id;return l.id
+}
+function importRows(rows,lotId,type){
+  if(!rows.length)return{added:0,bad:0};
+  const headers=rows[0].map(canon),known=headers.some(h=>Object.keys(ALIASES).includes(h));let start=known?1:0,added=0,bad=0;
+  for(let i=start;i<rows.length;i++){
+    const vals=rows[i],o={};
+    (known?headers:['nome','latitude','longitude','azimute','datahora','operadora','cellid']).forEach((h,j)=>o[h]=vals[j]??'');
+    const lat=parseCoord(o.latitude,true),lng=parseCoord(o.longitude,false),az=parseNum(o.azimute);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az)){bad++;continue}
+    let dt=o.datahora||[o.data,o.hora].filter(Boolean).join(' ');
+    state.events.push({id:uid(),lotId,name:o.nome||o.estacao||`ERB ${state.events.length+1}`,station:o.estacao||'',sector:o.setor||'',lat,lng,az:normAz(az),
+      dist:parseNum(o.distancia)||cfg.defaultDist,margin:parseNum(o.margem)||cfg.defaultMargin,datetime:dt,eventType:(o.tipo||type||'').toUpperCase(),
+      operator:o.operadora||'',tech:o.tecnologia||'',cellid:o.cellid||'',enodeb:o.enodeb||'',lactac:o.lactac||'',imei:o.imei||'',origin:o.origem||'',destination:o.destino||'',
+      source:o.fonte||'',page:o.pagina||'',obs:o.obs||'',visible:true});added++
+  }
+  return{added,bad}
+}
+function importDelimitedText(text,lotId,type){
+  text=String(text||'').trim();if(!text)return status('Nenhum dado informado.',true);
+  const lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]),rows=lines.map(x=>splitLine(x,d));
+  const lid=ensureImportLot(type,lotId),r=importRows(rows,lid,type);closeDrawer();redraw(true);status(`${r.added} registro(s) importado(s)${r.bad?' · '+r.bad+' linha(s) ignorada(s)':''}.`,r.added===0)
+}
+async function importSelectedFile(){
+  const file=$('fImportFile').files[0];if(!file)return status('Selecione um arquivo.',true);
+  const type=$('fImportType').value,lotId=ensureImportLot(type,$('fImportLot').value),ext=file.name.split('.').pop().toLowerCase();
+  try{
+    status('Lendo arquivo...');
+    let rows=[];
+    if(['xlsx','xls'].includes(ext)){
+      const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});const ws=wb.Sheets[wb.SheetNames[0]];
+      rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    }else if(ext==='csv'||ext==='txt'){
+      const text=await file.text();const lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]);rows=lines.map(x=>splitLine(x,d));
+    }else if(ext==='pdf'){
+      const data=new Uint8Array(await file.arrayBuffer());const pdf=await pdfjsLib.getDocument({data}).promise;const lines=[];
+      for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p),tc=await page.getTextContent();lines.push(tc.items.map(x=>x.str).join(' '))}
+      const text=lines.join('\n');const ls=text.split(/\r?\n/).filter(Boolean),d=detectDelim(ls[0]);rows=ls.map(x=>splitLine(x,d));
+    }else return status('Formato não suportado.',true);
+    const r=importRows(rows,lotId,type);closeDrawer();redraw(true);status(`${r.added} registro(s) importado(s)${r.bad?' · '+r.bad+' linha(s) para conferência':''}.`,r.added===0)
+  }catch(e){console.error(e);status('Não foi possível interpretar o arquivo.',true)}
+}
+
+function updateGeo(openPanel=true){
+  geoG.clearLayers();const groups=sectorGroups();$('geoSectors').textContent=groups.length;
+  if(groups.length<2){$('geoArea').textContent='—';$('geoCenter').textContent='—';$('geoPois').textContent='0';if(openPanel)$('geoPanel').classList.add('show');return}
+  try{
+    let inter=sector(groups[0][0]).geo;
+    for(let i=1;i<groups.length&&inter;i++)inter=turf.intersect(inter,sector(groups[i][0]).geo);
+    if(!inter){$('geoArea').textContent='0 km²';$('geoCenter').textContent='sem interseção';$('geoPois').textContent='0';if(openPanel)$('geoPanel').classList.add('show');return}
+    L.geoJSON(inter,{style:{color:'#fff',weight:2,dashArray:'5 4',fillColor:'#ffd84d',fillOpacity:.28}}).addTo(geoG);
+    const area=turf.area(inter)/1e6,cent=turf.centroid(inter).geometry.coordinates;
+    const inside=state.pois.filter(p=>turf.booleanPointInPolygon(turf.point([p.lng,p.lat]),inter)).length;
+    $('geoArea').textContent=area<1?`${(area*1e6).toFixed(0)} m²`:`${area.toFixed(3)} km²`;
+    $('geoCenter').textContent=`${cent[1].toFixed(5)}, ${cent[0].toFixed(5)}`;$('geoPois').textContent=inside;
+    if(openPanel)$('geoPanel').classList.add('show')
+  }catch(e){console.error(e);$('geoArea').textContent='erro';if(openPanel)$('geoPanel').classList.add('show')}
+}
+function startTimeline(){
+  const t=timelineData();if(!t.length)return status('Não há eventos com data/hora.',true);
+  $('timelinebar').classList.add('show');clearInterval(playTimer);let i=0;
+  const step=()=>{focusEvent(t[i].ev.id);map.setView([t[i].ev.lat,t[i].ev.lng],15);i++;if(i>=t.length){clearInterval(playTimer);state.playing=false}};
+  step();state.playing=true;playTimer=setInterval(step,1500)
+}
+function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
+
+function snapshot(){return{version:7,name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function applySnapshot(o){
+  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.pois=Array.isArray(o.pois)?o.pois:[];state.filters=o.filters||{start:'',end:'',type:'',operator:'',lotId:''};
+  $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
+}
+function saveProject(){
+  const id=(state.currentProjectId||uid());state.currentProjectId=id;
+  try{localStorage.setItem(PROJECT_PREFIX+id,JSON.stringify(snapshot()));$('projectState').textContent='salvo';status('Projeto salvo neste navegador.')}catch(e){status('Não foi possível salvar.',true)}
+}
+function autosave(){
+  if(!state.currentProjectId)return;clearTimeout(autosave.t);autosave.t=setTimeout(()=>{try{localStorage.setItem(PROJECT_PREFIX+state.currentProjectId,JSON.stringify(snapshot()));$('projectState').textContent='salvo'}catch(_){}},350)
+}
+function savedProjects(){
+  const a=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k?.startsWith(PROJECT_PREFIX)){try{const o=JSON.parse(localStorage.getItem(k));a.push({id:k.slice(PROJECT_PREFIX.length),name:o.name||'Projeto ERB',updated:o.updated?new Date(o.updated).toLocaleString('pt-BR'):''})}catch(_){}}}
+  return a.sort((a,b)=>b.updated.localeCompare(a.updated))
+}
+function openProject(id){try{const o=JSON.parse(localStorage.getItem(PROJECT_PREFIX+id));state.currentProjectId=id;applySnapshot(o);$('projectState').textContent='salvo';closeDrawer();status('Projeto aberto.')}catch(e){status('Falha ao abrir projeto.',true)}}
+function deleteProject(id){if(!confirm('Excluir este projeto salvo neste navegador?'))return;localStorage.removeItem(PROJECT_PREFIX+id);openDrawer('projects')}
+function fitAll(){const pts=[];filteredEvents().forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));state.pois.forEach(p=>pts.push([p.lat,p.lng]));if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Não há dados para enquadrar.',true)}
+
+async function captureMap(){
+  document.body.classList.add('capture');await new Promise(r=>setTimeout(r,250));
+  try{return await html2canvas($('mapWrap'),{useCORS:true,backgroundColor:'#fff',scale:1.5,logging:false})}
+  finally{document.body.classList.remove('capture')}
+}
+async function exportPng(){try{status('Gerando PNG...');const c=await captureMap();c.toBlob(b=>saveBlob(b,'mapa_ERB.png'),'image/png');status('PNG gerado.')}catch(e){console.error(e);status('Falha ao gerar PNG.',true)}}
+async function exportPdf(){
+  if(!filteredEvents().length)return status('Não há registros visíveis.',true);
+  try{
+    status('Gerando relatório PDF...');const c=await captureMap(),img=c.toDataURL('image/jpeg',.92),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,16);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(`Projeto: ${projectName()}`,M,22);doc.text(`Lotes: ${state.lots.length} · Registros visíveis: ${filteredEvents().length}`,M,27);
+    const p=doc.getImageProperties(img),r=Math.min((W-2*M)/p.width,108/p.height);doc.addImage(img,'JPEG',M,34,p.width*r,p.height*r);
+    doc.addPage();doc.autoTable({startY:15,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.3},head:[['#','Lote','ERB','Lat.','Long.','Az.','Data/hora','Operadora','Cell ID','IMEI']],body:filteredEvents().map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',e.datetime||'',currentOperator(e),e.cellid||'',e.imei||''])});
+    doc.save('relatorio_ERB_v7.pdf');status('PDF gerado.')
+  }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
+}
+
+document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openDrawer(x.dataset.open));
+document.querySelectorAll('[data-import-kind]').forEach(x=>x.onclick=()=>openDrawer('import',{type:x.dataset.importKind}));
+document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLayer(activeBase);cfg.base=x.dataset.base;activeBase=bases[cfg.base];activeBase.addTo(map)});
+document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b===x));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-'+x.dataset.side).classList.add('active')});
+$('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
+$('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
+$('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
+$('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7.json');
+$('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
+$('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
+$('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
+$('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
+map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();$('geoPanel').classList.remove('show')}});
+window.addEventListener('resize',()=>setTimeout(()=>map.invalidateSize(),80));
+redraw();
+})();
+</script>
+</body>
+</html>
