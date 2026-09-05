@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ERB Mapper Pro v7.0 — Clean</title>
+<title>ERB Mapper Pro v7.0.1 — Clean</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -64,8 +64,8 @@ input:focus,select:focus,textarea:focus{border-color:#6a9a84;box-shadow:0 0 0 3p
 .toolbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;pointer-events:auto}
 .toolbtn{height:34px;padding:0 10px;border:1px solid #3e6152;background:rgba(8,17,13,.95);color:#edf4f0;border-radius:8px;font-size:9.6px;font-weight:850;box-shadow:0 2px 10px rgba(0,0,0,.26)}
 .toolbtn.active{background:#5a471e;border-color:#7a6127;color:#f5e0a3}
-.menu{position:relative;pointer-events:auto}.menu>.toolbtn:after{content:' ▾';opacity:.65}.dropdown{position:absolute;top:38px;left:0;min-width:205px;padding:6px;background:#0d1c16;border:1px solid #365847;border-radius:9px;box-shadow:var(--shadow);display:none}
-.menu.right .dropdown{left:auto;right:0}.menu:hover .dropdown,.menu.open .dropdown{display:block}
+.menu{position:relative;pointer-events:auto}.menu.open>.toolbtn{background:#193229;border-color:#5b816f}.menu>.toolbtn:after{content:' ▾';opacity:.65;display:inline-block;transition:transform .15s ease}.menu.open>.toolbtn:after{transform:rotate(180deg)}.dropdown{position:absolute;top:38px;left:0;min-width:205px;padding:6px;background:#0d1c16;border:1px solid #365847;border-radius:9px;box-shadow:var(--shadow);display:none}
+.menu.right .dropdown{left:auto;right:0}.menu.open .dropdown{display:block}
 .dropitem{width:100%;border:0;background:transparent;color:#e7efeb;padding:8px;border-radius:6px;text-align:left;font-size:9.6px;font-weight:750}.dropitem:hover{background:#183128}.dropsep{height:1px;background:#29483b;margin:5px 0}
 .filterpill{display:none;align-items:center;gap:5px;background:#604d21;color:#f9e3a2;border:1px solid #80672b;border-radius:999px;padding:5px 8px;font-size:8.7px;font-weight:900;pointer-events:auto}.filterpill.show{display:flex}
 .coordbar{position:absolute;z-index:920;left:50px;bottom:8px;background:rgba(7,15,12,.92);border:1px solid #3b5c4e;border-radius:7px;padding:6px 8px;font:9.7px monospace;cursor:pointer}
@@ -94,7 +94,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>ERB Mapper Pro <small>v7.0</small></h1><p>Lotes · Voz/Dados · Timeline · Geospatial · Relatório</p></div>
+      <div><h1>ERB Mapper Pro <small>v7.0.1</small></h1><p>Lotes · Voz/Dados · Timeline · Geospatial · Relatório</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. Não há login, senha ou banco remoto.</div>
@@ -430,6 +430,7 @@ function updateFilterOptions(){
   const lo=$('filterLot');if(lo)lo.innerHTML='<option value="">Todos</option>'+lots.map(l=>`<option value="${l.id}" ${state.filters.lotId===l.id?'selected':''}>${esc(l.name)}</option>`).join('');
 }
 function openDrawer(kind,preset={}){
+  closeAllMenus();
   $('drawerBack').classList.add('show');
   const body=$('drawerBody');
   const title=$('drawerTitle');
@@ -671,6 +672,34 @@ async function exportPdf(){
     doc.save('relatorio_ERB_v7.pdf');status('PDF gerado.')
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
+
+
+function closeAllMenus(except=null){
+  document.querySelectorAll('.menu.open').forEach(m=>{
+    if(m!==except)m.classList.remove('open');
+  });
+}
+document.querySelectorAll('.menu > .toolbtn').forEach(btn=>{
+  btn.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const menu=btn.closest('.menu');
+    const willOpen=!menu.classList.contains('open');
+    closeAllMenus(menu);
+    menu.classList.toggle('open',willOpen);
+  });
+});
+document.querySelectorAll('.dropdown').forEach(drop=>{
+  drop.addEventListener('click',e=>{
+    e.stopPropagation();
+    const item=e.target.closest('.dropitem');
+    if(item){
+      const menu=drop.closest('.menu');
+      if(menu)menu.classList.remove('open');
+    }
+  });
+});
+document.addEventListener('click',()=>closeAllMenus());
 
 document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openDrawer(x.dataset.open));
 document.querySelectorAll('[data-import-kind]').forEach(x=>x.onclick=()=>openDrawer('import',{type:x.dataset.importKind}));
