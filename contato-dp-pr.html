@@ -13,7 +13,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Contato DP PR — Diretório PCPR</title>
+<title>Contatos DP PR — Diretório PCPR</title>
 <style>
 :root{
   --ink:#111820;--green:#285748;--green-dark:#183a31;--gold:#c5a253;
@@ -29,7 +29,7 @@ header h1{margin:0;font-size:21px}
 header p{margin:5px 0 0;color:#efe8d9;font-size:12px}
 main{max-width:1550px;margin:auto;padding:18px 20px 48px}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:0 1px 0 rgba(197,162,83,.12)}
-.toolbar{display:grid;grid-template-columns:minmax(270px,1.6fr) minmax(210px,.7fr) auto;gap:10px;align-items:end}
+.toolbar{display:grid;grid-template-columns:minmax(270px,1.6fr) minmax(200px,.7fr) minmax(180px,.55fr) auto;gap:10px;align-items:end}
 label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:11.5px;font-weight:700}
 input,select,textarea{
   width:100%;border:1px solid #bbc5cf;border-radius:8px;padding:9px 10px;
@@ -58,6 +58,12 @@ button.star{border:0;background:transparent;color:#a98c43;min-height:28px;width:
 .title{min-width:0}
 .title h3{margin:0;font-size:14px;line-height:1.25;color:var(--ink)}
 .region{display:inline-block;margin-top:5px;background:#edf3ef;color:var(--green-dark);border:1px solid #ccdcd3;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.25px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.alert-badge{display:inline-flex;align-items:center;background:#fff2cf;color:#7a5610;border:1px solid #dfc16e;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;letter-spacing:.35px}
+.result-note{font-size:10.8px;color:var(--muted);margin-top:7px}
+.item.has-alert{border-color:#d7bf7a}
+.copy-phone,.copy-email{white-space:nowrap}
+
 .contact{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .value{flex:1 1 210px;word-break:break-word;font-size:12px}
 .value.mono{font-family:Consolas,monospace;color:var(--green-dark)}
@@ -85,7 +91,7 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
 </head>
 <body>
 <header>
-  <h1>Contato DP PR</h1>
+  <h1>Contatos DP PR</h1>
   <p>Diretório pesquisável de delegacias e unidades da Polícia Civil do Paraná</p>
 </header>
 <div class="security-note"><b>Alterações locais:</b> favoritos e contatos adicionados/editados nesta tela ficam somente neste navegador. Não há sincronização com banco remoto, login ou credencial da PCPR.</div>
@@ -98,6 +104,14 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
     </label>
     <label>Região / SDP
       <select id="region"><option value="">Todas as regiões</option></select>
+    </label>
+    <label>Filtro operacional
+      <select id="contactFilter">
+        <option value="">Todos os contatos</option>
+        <option value="email">Somente com e-mail</option>
+        <option value="phone">Somente com telefone</option>
+        <option value="alert">Com alerta / confirmar</option>
+      </select>
     </label>
     <button id="addBtn" type="button">+ Adicionar contato</button>
   </div>
@@ -113,10 +127,11 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
   </div>
 
   <div class="notice">
-    <b>Base inicial:</b> 286 registros consolidados em 02/09/2026. Quando o documento original informa contato incompleto,
-    ausência de e-mail ou necessidade de confirmação, a observação é mantida neste diretório.
+    <b>Base inicial:</b> 286 registros consolidados em 02/09/2026. Quando a fonte original indica contato incompleto,
+    ausência de e-mail ou necessidade de confirmação, o registro recebe destaque para conferência antes do uso.
     Alterações feitas nesta tela ficam salvas somente neste navegador/dispositivo, sem sincronização com banco de dados remoto.
   </div>
+  <div class="result-note" id="resultNote"></div>
 </section>
 
 <div class="stats" id="stats"></div>
@@ -171,6 +186,10 @@ function save(){try{localStorage.setItem(STORAGE,JSON.stringify(data))}catch(e){
 function uid(){try{return crypto.randomUUID()}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}}
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
 function hasEmail(v){return /[^\s@]+@[^\s@]+\.[^\s@]+/.test(String(v||''))}
+function isAlert(x){
+  const s=norm([x?.observacao,x?.email,x?.telefone].join(' '));
+  return /atencao|confirmar|confirmacao|incompleto|nao recuperado|nao publicado|ausencia de e-mail|sem e-mail|nao informado/.test(s);
+}
 function regions(){return [...new Set(data.map(x=>x.regiao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
 async function copy(txt){
   try{await navigator.clipboard.writeText(txt)}
@@ -188,16 +207,21 @@ function rebuildRegions(){
   if([...s.options].some(o=>o.value===keep))s.value=keep
 }
 function renderStats(list){
-  const vals=[['Total',data.length],['Exibidos',list.length],['Regiões',regions().length],['Favoritos',data.filter(x=>x.favorito).length]];
+  const alerts=data.filter(isAlert).length;
+  const vals=[['unidades',data.length],['resultados',list.length],['regiões',regions().length],['favoritos',data.filter(x=>x.favorito).length],['com alerta',alerts]];
   const box=$('stats');box.innerHTML='';
-  vals.forEach(([n,v])=>{const p=document.createElement('span');p.className='pill';const b=document.createElement('b');b.textContent=v;p.append(b,document.createTextNode(' '+n));box.appendChild(p)})
+  vals.forEach(([n,v])=>{const p=document.createElement('span');p.className='pill';const b=document.createElement('b');b.textContent=v;p.append(b,document.createTextNode(' '+n));box.appendChild(p)});
+  $('resultNote').textContent=list.length===data.length
+    ? data.length+' unidades cadastradas · '+data.filter(x=>x.favorito).length+' favoritas · '+alerts+' com alerta de conferência'
+    : list.length+' resultado'+(list.length===1?'':'s')+' encontrado'+(list.length===1?'':'s')+' nos filtros atuais';
 }
 function row(label,value,type,enabled=true){
   const r=document.createElement('div');r.className='contact';
   const v=document.createElement('div');v.className='value'+(type==='email'?' mono':'');v.textContent=(label?label+': ':'')+(value||'Não informado');
   r.appendChild(v);
   if(value && enabled){
-    const b=document.createElement('button');b.type='button';b.className='secondary icon';b.textContent='Copiar';
+    const b=document.createElement('button');b.type='button';b.className='secondary icon '+(type==='email'?'copy-email':'copy-phone');
+    b.textContent=type==='email'?'Copiar e-mail':'Copiar telefone';
     b.onclick=()=>copy(value).then(()=>toast((type==='email'?'E-mail':'Telefone')+' copiado'));
     r.appendChild(b)
   }
@@ -205,10 +229,13 @@ function row(label,value,type,enabled=true){
 }
 function render(){
   rebuildRegions();
-  const q=norm($('search').value),reg=$('region').value;
+  const q=norm($('search').value),reg=$('region').value,contactFilter=$('contactFilter').value;
   let list=data.filter(x=>{
     if(reg && x.regiao!==reg)return false;
     if(onlyFav && !x.favorito)return false;
+    if(contactFilter==='email' && !hasEmail(x.email))return false;
+    if(contactFilter==='phone' && !String(x.telefone||'').trim())return false;
+    if(contactFilter==='alert' && !isAlert(x))return false;
     if(!q)return true;
     return norm([x.regiao,x.unidade,x.telefone,x.email,x.observacao].join(' ')).includes(q)
   }).sort((a,b)=>(Number(b.favorito)-Number(a.favorito))||a.regiao.localeCompare(b.regiao,'pt-BR')||a.unidade.localeCompare(b.unidade,'pt-BR'));
@@ -218,12 +245,15 @@ function render(){
   if(!list.length){const e=document.createElement('div');e.className='empty';e.textContent='Nenhum contato encontrado.';grid.appendChild(e);return}
 
   list.forEach(item=>{
-    const card=document.createElement('article');card.className='item';
+    const alertFlag=isAlert(item);
+    const card=document.createElement('article');card.className='item'+(alertFlag?' has-alert':'');
     const head=document.createElement('div');head.className='head';
     const t=document.createElement('div');t.className='title';
     const h=document.createElement('h3');h.textContent=item.unidade;
-    const rg=document.createElement('span');rg.className='region';rg.textContent=item.regiao;
-    t.append(h,rg);
+    const badges=document.createElement('div');badges.className='badges';
+    const rg=document.createElement('span');rg.className='region';rg.textContent=item.regiao;badges.appendChild(rg);
+    if(alertFlag){const ab=document.createElement('span');ab.className='alert-badge';ab.textContent='CONFIRMAR';ab.title='Contato com observação que recomenda conferência antes do uso';badges.appendChild(ab);}
+    t.append(h,badges);
     const star=document.createElement('button');star.type='button';star.className='star';star.title='Favorito';star.textContent=item.favorito?'★':'☆';
     star.onclick=()=>{item.favorito=!item.favorito;save();render()};
     head.append(t,star);card.appendChild(head);
@@ -239,7 +269,7 @@ function render(){
 
     if(item.observacao){
       const o=document.createElement('div');o.className='obs';
-      if(/atenção|confirmar|incompleto|não recuperado|não publicado/i.test(item.observacao+' '+item.email+' '+item.telefone))o.classList.add('warn');
+      if(alertFlag)o.classList.add('warn');
       o.textContent=item.observacao;card.appendChild(o)
     }
 
@@ -282,9 +312,10 @@ $('form').addEventListener('submit',e=>{
 });
 $('search').addEventListener('input',render);
 $('region').addEventListener('change',render);
+$('contactFilter').addEventListener('change',render);
 $('addBtn').onclick=()=>openEditor();
 $('cancelBtn').onclick=closeEditor;
-$('favBtn').onclick=()=>{onlyFav=!onlyFav;$('favBtn').textContent=(onlyFav?'★':'☆')+' Mostrar favoritos';render()};
+$('favBtn').onclick=()=>{onlyFav=!onlyFav;$('favBtn').textContent=onlyFav?'★ Exibindo favoritos — mostrar todos':'☆ Mostrar favoritos';render()};
 $('resetBtn').onclick=()=>{
   if(!confirm('Restaurar os 286 registros originais? Alterações locais serão substituídas.'))return;
   data=cloneDefaults();save();render();toast('Lista original restaurada')

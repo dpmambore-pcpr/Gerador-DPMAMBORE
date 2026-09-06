@@ -162,7 +162,7 @@ body.home-mode .module-main{overflow:visible}
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
-      <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
+      <button class="module-tab" data-key="contatodppr" type="button">Contatos DP PR</button>
       <button class="module-tab" data-key="contatos" type="button">Contatos</button>
       <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
       <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
@@ -211,7 +211,7 @@ body.home-mode .module-main{overflow:visible}
       </button>
       <button class="module-card" type="button" data-open-module="contatodppr">
         <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Contato DP PR</div>
+        <div class="card-title">Contatos DP PR</div>
         <div class="card-desc">Diretório pesquisável das Delegacias do Paraná.</div>
       </button>
       <button class="module-card" type="button" data-open-module="contatos">
@@ -281,7 +281,7 @@ body.home-mode .module-main{overflow:visible}
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=1.2"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.1"></iframe>
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=2.0"></iframe>
-  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.1"></iframe>
+  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos DP PR — Delegacias e unidades do Paraná" data-src="contato-dp-pr.html?v=1.1"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.4"></iframe>
   <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=2.0"></iframe>
 </main>
@@ -421,7 +421,7 @@ const homeScreen=document.getElementById('homeScreen');
 const homeBtn=document.getElementById('homeBtn');
 
 const MODULE_LABELS={
-  atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contato DP PR', contatos:'Contatos',
+  atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas',
   filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
 };
