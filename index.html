@@ -116,11 +116,30 @@ body.home-mode .module-main{overflow:visible}
 }
 
 
-.security-summary{
-  max-width:1120px;margin:14px auto 24px;padding:11px 13px;border:1px solid #d5ddd8;
-  border-radius:10px;background:rgba(255,255,255,.74);color:#52615c;font-size:11.5px;line-height:1.5
-}
+.home-tools{max-width:1120px;margin:18px auto 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.module-search-wrap{position:relative}
+.module-search{width:100%;height:44px;border:1px solid #cfc8b9;border-radius:11px;background:#fff;padding:0 42px 0 14px;font:600 13px Arial,Helvetica,sans-serif;color:#17221f;box-shadow:0 3px 12px rgba(16,31,26,.05)}
+.module-search:focus{outline:3px solid rgba(197,162,83,.25);border-color:#b49b60}
+.module-search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#8b7a51;font-size:17px;pointer-events:none}
+.home-version{white-space:nowrap;border:1px solid #d4c79d;border-radius:999px;background:#fffaf0;color:#725f2d;padding:8px 11px;font-size:10px;font-weight:900;letter-spacing:.35px}
+.recent-wrap{max-width:1120px;margin:0 auto 14px;display:none;align-items:center;gap:8px;flex-wrap:wrap;text-align:left}
+.recent-wrap.show{display:flex}
+.recent-label{font-size:10px;font-weight:900;letter-spacing:.7px;text-transform:uppercase;color:#6c746f;margin-right:2px}
+.recent-btn{appearance:none;border:1px solid #d6d1c5;background:rgba(255,255,255,.82);color:#27463c;border-radius:999px;padding:6px 10px;font-size:10.5px;font-weight:800;cursor:pointer}
+.recent-btn:hover{border-color:#b89d5d;background:#fff}
+.security-details{max-width:1120px;margin:0 auto 22px;text-align:left}
+.security-details summary{list-style:none;cursor:pointer;border:1px solid #d5ddd8;border-radius:10px;background:rgba(255,255,255,.74);color:#456159;padding:10px 13px;font-size:11.5px;font-weight:800}
+.security-details summary::-webkit-details-marker{display:none}
+.security-details summary::after{content:'▾';float:right;color:#8d7949}
+.security-details[open] summary::after{content:'▴'}
+.security-summary{margin:7px 0 0;padding:11px 13px;border:1px solid #d5ddd8;border-radius:10px;background:rgba(255,255,255,.74);color:#52615c;font-size:11.5px;line-height:1.5}
 .security-summary b{color:#23483c}
+.card-subtags{margin-top:9px;display:flex;flex-wrap:wrap;gap:5px}
+.card-subtag{border:1px solid #d9d3c7;border-radius:999px;background:#f8f6f1;color:#6a665c;padding:3px 6px;font-size:8px;font-weight:900;letter-spacing:.35px}
+.module-card.search-hidden{display:none}
+.empty-search{display:none;grid-column:1/-1;text-align:center;border:1px dashed #c9c1b1;border-radius:12px;padding:24px;color:#6b716e;background:rgba(255,255,255,.6);font-size:12px}
+.empty-search.show{display:block}
+@media(max-width:780px){.home-tools{grid-template-columns:1fr}.home-version{justify-self:center}.recent-wrap{justify-content:center}}
 
 </style>
 
@@ -166,18 +185,29 @@ body.home-mode .module-main{overflow:visible}
         <div class="home-kicker">Central Integrada PCPR</div>
         <h1 class="home-title">Selecione um módulo</h1>
         <p class="home-subtitle">Ferramentas operacionais reunidas em um único ambiente.</p>
-<div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências e trabalhos salvos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
+        <div class="home-tools">
+          <div class="module-search-wrap">
+            <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
+            <span class="module-search-icon" aria-hidden="true">⌕</span>
+          </div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.0</div>
+        </div>
+        <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
+        <details class="security-details">
+          <summary>🔒 Segurança e privacidade — dados e preferências permanecem neste dispositivo</summary>
+          <div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências e trabalhos salvos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
+        </details>
       </div>
       <div class="module-grid">
       <button class="module-card update-card" type="button" data-open-module="atualizacoes">
-        <span class="card-badge">NOVO</span><div class="card-top"><div class="card-icon">↻</div><div class="card-arrow">›</div></div>
+        <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
         <div class="card-title">Atualizações</div>
         <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
       </button>
       <button class="module-card" type="button" data-open-module="configuracoes">
-        <div class="card-top"><div class="card-icon">⚙</div><div class="card-arrow">›</div></div>
+        <div class="card-top"><div class="card-icon">CF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Configurações</div>
-        <div class="card-desc">Dados da unidade, Delegados, APJs e preferências compartilhadas.</div>
+        <div class="card-desc">Dados da unidade, autoridades, cargo, APJs e preferências compartilhadas.</div>
       </button>
       <button class="module-card" type="button" data-open-module="contatodppr">
         <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
@@ -185,7 +215,7 @@ body.home-mode .module-main{overflow:visible}
         <div class="card-desc">Diretório pesquisável das Delegacias do Paraná.</div>
       </button>
       <button class="module-card" type="button" data-open-module="contatos">
-        <div class="card-top"><div class="card-icon">@</div><div class="card-arrow">›</div></div>
+        <div class="card-top"><div class="card-icon">CT</div><div class="card-arrow">›</div></div>
         <div class="card-title">Contatos</div>
         <div class="card-desc">Diretório operacional de instituições, bancos, empresas e serviços.</div>
       </button>
@@ -222,7 +252,8 @@ body.home-mode .module-main{overflow:visible}
       <button class="module-card" type="button" data-open-module="oficios">
         <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Ofícios</div>
-        <div class="card-desc">Gerador institucional de ofícios e expedientes.</div>
+        <div class="card-desc">Ofícios e expedientes institucionais, com Perícia e Oitiva integradas.</div>
+        <div class="card-subtags"><span class="card-subtag">OFÍCIOS</span><span class="card-subtag">PERÍCIA</span><span class="card-subtag">OITIVA</span></div>
       </button>
       <button class="module-card" type="button" data-open-module="qrcode">
         <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
@@ -231,10 +262,11 @@ body.home-mode .module-main{overflow:visible}
       </button>
       <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard">
         <span class="card-badge">ENVIE SUA IDEIA</span>
-        <div class="card-top"><div class="card-icon">💡</div><div class="card-arrow">↗</div></div>
+        <div class="card-top"><div class="card-icon">SG</div><div class="card-arrow">↗</div></div>
         <div class="card-title">Sugestões</div>
         <div class="card-desc">Envie ideias, melhorias, correções ou sugestões de novos módulos para a Central.</div>
       </a>
+      <div class="empty-search" id="emptySearch">Nenhuma ferramenta encontrada para esta pesquisa.</div>
       </div>
     </div>
   </section>
@@ -261,6 +293,8 @@ const CENTRAL_VERSION='2.0';
 const CENTRAL_VERSION_DATE='06/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
+const homeVersion=document.getElementById('homeVersion');
+if(homeVersion) homeVersion.textContent=`CENTRAL PCPR · v${CENTRAL_VERSION}`;
 
 function updateCentralClock(){
   const now=new Date();
@@ -386,6 +420,41 @@ function load(key){
 const homeScreen=document.getElementById('homeScreen');
 const homeBtn=document.getElementById('homeBtn');
 
+const MODULE_LABELS={
+  atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contato DP PR', contatos:'Contatos',
+  imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas',
+  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
+};
+const RECENT_KEY='pcprCentralRecentModulesV2';
+const UPDATE_SEEN_KEY='pcprCentralUpdatesSeenVersion';
+function readRecent(){try{const a=JSON.parse(localStorage.getItem(RECENT_KEY)||'[]');return Array.isArray(a)?a.filter(k=>modules[k]).slice(0,3):[]}catch(_){return []}}
+function saveRecent(key){
+  if(!modules[key] || key==='atualizacoes') return;
+  try{const a=[key,...readRecent().filter(k=>k!==key)].slice(0,3);localStorage.setItem(RECENT_KEY,JSON.stringify(a));renderRecent()}catch(_){}
+}
+function renderRecent(){
+  const wrap=document.getElementById('recentWrap'),list=document.getElementById('recentList'); if(!wrap||!list)return;
+  const a=readRecent(); wrap.classList.toggle('show',a.length>0);
+  list.replaceChildren(...a.map(k=>{const b=document.createElement('button');b.type='button';b.className='recent-btn';b.textContent=MODULE_LABELS[k]||k;b.addEventListener('click',()=>show(k));return b}))
+}
+function refreshUpdatesBadge(){
+  const badge=document.getElementById('updatesNewBadge');if(!badge)return;
+  let seen='';try{seen=localStorage.getItem(UPDATE_SEEN_KEY)||''}catch(_){}
+  badge.hidden=(seen===CENTRAL_VERSION);
+}
+function markUpdatesSeen(){try{localStorage.setItem(UPDATE_SEEN_KEY,CENTRAL_VERSION)}catch(_){}refreshUpdatesBadge()}
+function setupModuleSearch(){
+  const input=document.getElementById('moduleSearch'),empty=document.getElementById('emptySearch');if(!input)return;
+  const cards=[...document.querySelectorAll('.module-grid .module-card')];
+  const normalize=t=>(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  input.addEventListener('input',()=>{
+    const q=normalize(input.value.trim());let visible=0;
+    cards.forEach(c=>{const match=!q||normalize(c.textContent).includes(q);c.classList.toggle('search-hidden',!match);if(match)visible++});
+    empty?.classList.toggle('show',visible===0);
+  });
+}
+renderRecent();refreshUpdatesBadge();setupModuleSearch();
+
 function showHome(hash=true){
   document.body.classList.add('home-mode');
   homeScreen.classList.add('active');
@@ -417,6 +486,7 @@ function show(key,hash=true){
     history.replaceState(null,'','#'+key);
     trackModule(key);
   }
+  if(key==='atualizacoes') markUpdatesSeen(); else saveRecent(key);
   window.scrollTo(0,0);
 }
 
