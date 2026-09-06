@@ -137,7 +137,7 @@ body.home-mode .module-main{overflow:visible}
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v1.26 · 05/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v2.0 · 06/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <div class="tabs-row">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
@@ -169,50 +169,15 @@ body.home-mode .module-main{overflow:visible}
 <div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências e trabalhos salvos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
       </div>
       <div class="module-grid">
+      <button class="module-card update-card" type="button" data-open-module="atualizacoes">
+        <span class="card-badge">NOVO</span><div class="card-top"><div class="card-icon">↻</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Atualizações</div>
+        <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
+      </button>
       <button class="module-card" type="button" data-open-module="configuracoes">
         <div class="card-top"><div class="card-icon">⚙</div><div class="card-arrow">›</div></div>
         <div class="card-title">Configurações</div>
         <div class="card-desc">Dados da unidade, Delegados, APJs e preferências compartilhadas.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="oficios">
-        <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Ofícios</div>
-        <div class="card-desc">Gerador institucional de ofícios e expedientes.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="lesoes">
-        <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Laudo de Lesões</div>
-        <div class="card-desc">Gerador de laudo com responsáveis e configuração da unidade.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="imei">
-        <div class="card-top"><div class="card-icon">IM</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Consulta IMEI</div>
-        <div class="card-desc">Identificação e consulta local de informações de aparelhos.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="operadora">
-        <div class="card-top"><div class="card-icon">TEL</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Consulta Operadora</div>
-        <div class="card-desc">Identificação da operadora vinculada ao número informado.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="erb">
-        <div class="card-top"><div class="card-icon">ERB</div><div class="card-arrow">›</div></div>
-        <div class="card-title">ERB / Antenas</div>
-        <div class="card-desc">Mapeamento de ERBs, azimute, distância e relatório.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="filtroip">
-        <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Filtro IP</div>
-        <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="qrcode">
-        <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
-        <div class="card-title">QR Code</div>
-        <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="envelopebusca">
-        <div class="card-top"><div class="card-icon">EB</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Envelope de Busca</div>
-        <div class="card-desc">Alvos, autos de arrecadação, kit da busca e alvos salvos.</div>
       </button>
       <button class="module-card" type="button" data-open-module="contatodppr">
         <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
@@ -224,10 +189,45 @@ body.home-mode .module-main{overflow:visible}
         <div class="card-title">Contatos</div>
         <div class="card-desc">Diretório operacional de instituições, bancos, empresas e serviços.</div>
       </button>
-      <button class="module-card update-card" type="button" data-open-module="atualizacoes">
-        <span class="card-badge">NOVO</span><div class="card-top"><div class="card-icon">↻</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Sobre as atualizações</div>
-        <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
+      <button class="module-card" type="button" data-open-module="imei">
+        <div class="card-top"><div class="card-icon">IM</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Consulta IMEI</div>
+        <div class="card-desc">Identificação e consulta local de informações de aparelhos.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="operadora">
+        <div class="card-top"><div class="card-icon">TEL</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Consulta Operadora</div>
+        <div class="card-desc">Identificação da operadora vinculada ao número informado.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="envelopebusca">
+        <div class="card-top"><div class="card-icon">EB</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Envelope de Busca</div>
+        <div class="card-desc">Alvos, autos de arrecadação, kit da busca e alvos salvos.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="erb">
+        <div class="card-top"><div class="card-icon">ERB</div><div class="card-arrow">›</div></div>
+        <div class="card-title">ERB / Antenas</div>
+        <div class="card-desc">Mapeamento de ERBs, azimute, distância e relatório.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="filtroip">
+        <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Filtro IP</div>
+        <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="lesoes">
+        <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Laudo de Lesões</div>
+        <div class="card-desc">Gerador de laudo com responsáveis e configuração da unidade.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="oficios">
+        <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Ofícios</div>
+        <div class="card-desc">Gerador institucional de ofícios e expedientes.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="qrcode">
+        <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
+        <div class="card-title">QR Code</div>
+        <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
       </button>
       <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard">
         <span class="card-badge">ENVIE SUA IDEIA</span>
@@ -259,6 +259,8 @@ body.home-mode .module-main{overflow:visible}
 'use strict';
 const CENTRAL_VERSION='2.0';
 const CENTRAL_VERSION_DATE='06/09/2026';
+const versionBadge=document.getElementById('centralVersion');
+if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
 
 function updateCentralClock(){
   const now=new Date();
