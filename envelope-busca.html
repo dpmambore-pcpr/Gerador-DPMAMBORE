@@ -169,16 +169,46 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
 @media print{.security-note{display:none!important}}
 
 </style>
-<style id="v2EnvelopeStyle">.v2bar{position:sticky;top:0;z-index:9999;background:#fff;border-bottom:1px solid #d7dee8;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 1px 5px #0001}.v2bar b{color:#0b2a4a;margin-right:auto}.v2bar button{border:0;border-radius:6px;background:#0b2a4a;color:#fff;padding:8px 12px;font-weight:700;cursor:pointer}.v2bar button.alt{background:#fff;color:#0b2a4a;border:1px solid #b9c6d5}@media print{.v2bar{display:none!important}}</style></head>
-<body><div class="v2bar"><b>ENVELOPE DE BUSCA</b><button type="button" onclick="window.print()">Imprimir / Salvar PDF</button><button type="button" class="alt" onclick="v2SalvarODT()">Salvar ODT</button></div>
-<div class="wrap">
+<style id="v2EnvelopeStyle">.v2bar{position:sticky;top:0;z-index:9999;background:#fff;border-bottom:1px solid #d7dee8;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 1px 5px #0001}.v2bar b{color:#0b2a4a;margin-right:auto}.v2bar button{border:0;border-radius:6px;background:#0b2a4a;color:#fff;padding:8px 12px;font-weight:700;cursor:pointer}.v2bar button.alt{background:#fff;color:#0b2a4a;border:1px solid #b9c6d5}@media print{.v2bar{display:none!important}}
+.sticky-actions{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#0c2430;color:#fff;border-radius:12px;padding:9px 11px;margin-bottom:12px;box-shadow:0 5px 16px rgba(0,0,0,.12)}
+.sticky-actions .left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sticky-actions .label{font-size:11px;font-weight:900;letter-spacing:.06em}
+.sticky-actions button{min-height:34px;padding:0 10px;font-size:11.5px}
+.section-label{grid-column:1/-1;margin-top:4px;padding:7px 9px;border-radius:8px;background:#eef2ef;color:#24493c;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.status-pill.ok{background:#eef7f2;border-color:#b8d8c7;color:#22533f}
+.status-pill.qr{background:#edf4fb;border-color:#bed1e2;color:#315a78}
+.status-pill.photo{background:#f2f0fa;border-color:#cbc3e2;color:#574c78}
+.duplicate-warning{font-size:10.5px;color:#8a4e19;margin-top:5px;font-weight:800}
+.field-invalid{border-color:#b6565c!important;box-shadow:0 0 0 2px rgba(182,86,92,.10)}
+.field-help{font-size:10px;color:var(--muted);margin-top:3px}
+.location-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.location-actions button{min-height:34px;font-size:11px}
+.kit-preflight{border:1px solid #d9c98e;background:#fff8df;border-radius:11px;padding:10px 12px;margin:0 0 12px;font-size:11.5px;color:#5b4820;display:none}
+.kit-preflight.show{display:block}
+.unit-hint{font-size:11px;color:var(--muted);margin:4px 0 12px}
+@media(max-width:700px){.sticky-actions{position:static}.sticky-actions .left{width:100%}.sticky-actions button{flex:1}}
+
+</style></head>
+<body><div class="wrap">
+  <div class="sticky-actions hiddenprint">
+    <div class="left">
+      <span class="label">ENVELOPE DE BUSCA</span>
+      <button type="button" class="green" id="topSaveBtn">Salvar alvos</button>
+      <button type="button" class="gold" id="topKitBtn">Gerar Kit</button>
+      <button type="button" class="alt" id="topOdtBtn">Baixar ODT</button>
+      <button type="button" class="alt" id="topPdfBtn">Salvar PDF</button>
+    </div>
+    <button type="button" class="alt" id="topConfigBtn">Configurações da unidade</button>
+  </div>
   <div class="topbar hiddenprint">
-    <div class="titlebox"><h1>Envelope de Busca</h1><p>Gera a capa do envelope de busca com foto do alvo, residência, QR Code e suporte a vários alvos no mesmo documento.</p></div>
-    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">Versão 1.4</span></div>
+    <div class="titlebox"><h1>Envelope de Busca</h1><p>Alvos, fotos, localização, QR Code, Auto de Arrecadação e Kit da Busca em um único fluxo.</p></div>
+    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">Fluxo operacional v2.0</span></div>
   </div>
   <div class="grid">
-    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="gold" id="downloadOdtBtn">Baixar ODT</button><button type="button" class="alt" id="printBtn">Imprimir / Salvar PDF</button><button type="button" class="alt" id="openFooterConfig">Configurar rodapé</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Os campos principais são: <strong>imagem do alvo</strong>, <strong>imagem da residência</strong> e <strong>link do QR Code</strong>. O QR só será gerado depois de colar o link e clicar em <strong>Gerar QR Code</strong>.</div>
-<div id="footerConfigPanel" class="footer-config-panel">
+    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="openFooterConfig">Editar dados da unidade</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Preencha identificação, endereço, imagens e localização. O status de cada alvo mostra imediatamente o que ainda falta para o envelope e para o Kit da Busca.</div>
+<div class="unit-hint">Cabeçalho e rodapé são lidos da <strong>Configuração Geral da Unidade</strong>, evitando dados divergentes entre os módulos.</div>
+<div style="display:none"><button id="downloadOdtBtn" type="button">Baixar ODT</button><button id="printBtn" type="button">Imprimir / Salvar PDF</button></div>
+<div id="footerConfigPanel" class="footer-config-panel" hidden>
   <div class="target-head"><div><div class="target-title">Configuração do rodapé</div><div class="target-sub">Usada no Envelope de Busca e também no Auto de Arrecadação.</div></div></div>
   <div class="target-grid">
     <div class="field full"><label>Endereço completo</label><input id="footerCfgEndereco" type="text"></div>
@@ -187,7 +217,7 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
     <div class="field full"><label>Site</label><input id="footerCfgSite" type="text"></div>
   </div>
   <div class="small-actions"><button type="button" class="green" id="saveFooterConfig">Salvar rodapé</button><button type="button" class="alt" id="resetFooterConfig">Restaurar Mamborê</button><button type="button" class="alt" id="closeFooterConfig">Fechar</button></div>
-</div><div class="envTabs"><button type="button" class="envTab active" data-envtab="ativos">Alvos atuais</button><button type="button" class="envTab" data-envtab="salvos">Alvos salvos</button></div><div id="activeTargetsArea"><div class="saveBar"><input id="saveSetName" placeholder="Nome da operação / conjunto de alvos"><button type="button" class="green" id="saveSetBtn">Salvar alvos</button><button type="button" class="gold" id="kitBtn">Gerar Kit da Busca (.ZIP)</button></div><div id="targetsContainer"></div></div><div id="savedTargetsArea" style="display:none"><div id="savedList" class="saved-list"></div></div></div></section>
+</div><div class="envTabs"><button type="button" class="envTab active" data-envtab="ativos">Alvos atuais</button><button type="button" class="envTab" data-envtab="salvos">Alvos salvos</button></div><div id="activeTargetsArea"><div id="kitPreflight" class="kit-preflight"></div><div class="saveBar"><input id="saveSetName" placeholder="Nome da operação / conjunto de alvos"><button type="button" class="green" id="saveSetBtn">Salvar alvos</button><button type="button" class="gold" id="kitBtn">Gerar Kit da Busca (.ZIP)</button></div><div id="targetsContainer"></div></div><div id="savedTargetsArea" style="display:none"><div id="savedList" class="saved-list"></div></div></div></section>
     <section class="panel"><h2 class="hiddenprint">Pré-visualização</h2><div class="preview-wrap"><div class="preview-toolbar hiddenprint"><div class="counter" id="counter">1 alvo no documento</div><div class="small-actions"><button type="button" class="alt" id="expandAllBtn">Expandir tudo</button><button type="button" class="alt" id="collapseAllBtn">Recolher tudo</button></div></div><div class="pages" id="pages"></div><div class="credit hiddenprint">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div></div></section>
   </div>
 </div>
@@ -285,8 +315,184 @@ function maskRG(v){
   if(d.length<=8)return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5);
   return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'-'+d.slice(8);
 }
+function validCPF(v){
+  const cpf=onlyDigits(v);
+  if(cpf.length!==11 || /^(\d)\1{10}$/.test(cpf))return false;
+  function dv(len){
+    let sum=0;
+    for(let i=0;i<len;i++)sum+=Number(cpf[i])*(len+1-i);
+    const r=(sum*10)%11;
+    return r===10?0:r;
+  }
+  return dv(9)===Number(cpf[9]) && dv(10)===Number(cpf[10]);
+}
+function normalizeLocationUrl(v){
+  const s=String(v||'').trim();
+  if(!s)return '';
+  if(/^https?:\/\//i.test(s))return s;
+  if(/^www\./i.test(s))return 'https://'+s;
+  return s;
+}
+function targetDuplicateInfo(a,idx){
+  const cpf=onlyDigits(a.cpf), name=(a.nome||'').trim().toLowerCase();
+  for(let i=0;i<state.alvos.length;i++){
+    if(i===idx)continue;
+    const b=state.alvos[i];
+    if(cpf.length===11 && cpf===onlyDigits(b.cpf))return 'CPF também informado no ALVO Nº '+pad2(i+1);
+    if(name && name.length>=5 && name===(b.nome||'').trim().toLowerCase())return 'Nome também informado no ALVO Nº '+pad2(i+1);
+  }
+  return '';
+}
+function openUnitConfig(){
+  try{
+    if(window.parent && window.parent!==window && typeof window.parent.show==='function'){
+      window.parent.show('config');
+      return;
+    }
+  }catch(_){}
+  alert('Abra a aba “Configurações” da Central para editar os dados da unidade.');
+}
 
-function renderForm(){const container=document.getElementById('targetsContainer');container.innerHTML='';state.alvos.forEach((a,idx)=>{const card=document.createElement('div');card.className='target-card';card.innerHTML=`<div class="target-head"><div><div class="target-title">ALVO Nº ${pad2(idx+1)}</div><div class="target-sub">${escapeHtml((a.nome||'sem nome').trim())}</div></div><div class="small-actions"><button type="button" class="gold auto-arrecadacao">Auto de Arrecadação</button><button type="button" class="alt toggle-card">Recolher</button><button type="button" class="red remove-card" ${state.alvos.length===1?'disabled':''}>Remover</button></div></div><div class="card-content"><div class="target-grid"><div class="field full"><label>Nome</label><input type="text" data-k="nome" value="${escapeHtml(a.nome)}"></div><div class="field"><label>Nome da mãe</label><input type="text" data-k="mae" value="${escapeHtml(a.mae)}"></div><div class="field"><label>Nascimento</label><input type="text" inputmode="numeric" maxlength="10" data-k="nascimento" placeholder="DD/MM/AAAA" value="${escapeHtml(a.nascimento)}"></div><div class="field"><label>RG</label><input type="text" inputmode="numeric" maxlength="12" data-k="rg" placeholder="00.000.000-0" value="${escapeHtml(a.rg)}"></div><div class="field"><label>CPF</label><input type="text" inputmode="numeric" maxlength="14" data-k="cpf" placeholder="000.000.000-00" value="${escapeHtml(a.cpf)}"></div><div class="field"><label>Cônjuge/Convivente</label><input type="text" data-k="conjuge" value="${escapeHtml(a.conjuge)}"></div><div class="field"><label>MBA</label><select data-k="mba"><option value="SIM" ${a.mba==='SIM'?'selected':''}>SIM</option><option value="NAO" ${a.mba==='NAO'?'selected':''}>NÃO</option><option value="" ${!a.mba?'selected':''}>EM BRANCO</option></select></div><div class="field"><label>PRISÃO</label><select data-k="prisao"><option value="SIM" ${a.prisao==='SIM'?'selected':''}>SIM</option><option value="NAO" ${a.prisao==='NAO'?'selected':''}>NÃO</option><option value="" ${!a.prisao?'selected':''}>EM BRANCO</option></select></div><div class="field full"><label>Observações</label><textarea data-k="observacoes">${escapeHtml(a.observacoes)}</textarea></div><div class="field full"><label>Endereço</label><textarea data-k="endereco" placeholder="Ex.: RUA HIPIAUGUI, Nº 298 (CASA ÚNICA), PARQUE SANTA MADALENA, CEP 03.982-000, SÃO PAULO/SP">${escapeHtml(a.endereco)}</textarea></div><div class="field full"><label>Link para o QR Code</label><textarea data-k="qrConteudo" placeholder="Cole aqui o link da localização, Google Maps ou outro endereço web">${escapeHtml(a.qrConteudo)}</textarea><div class="small-actions"><button type="button" class="green generate-qr">Gerar QR Code</button><span class="form-note qr-status">${a.qrPreview?'QR Code gerado.':'Aguardando o link e o clique em Gerar QR Code.'}</span></div></div><div class="field"><label>Imagem do alvo</label><input type="file" accept="image/*" data-file="fotoAlvo"></div><div class="field"><label>Imagem da residência</label><input type="file" accept="image/*" data-file="fotoResidencia"></div><div class="field"><label>QR Code</label><div class="form-note">O QR só é criado após você informar o link e clicar em <strong>Gerar QR Code</strong>.</div></div></div><div class="thumbrow"><div class="thumb">${a.fotoAlvo ? '<img src="'+a.fotoAlvo+'" alt="Foto do alvo">' : '<span>Sem foto do alvo</span>'}</div><div class="thumb">${a.fotoResidencia ? '<img src="'+a.fotoResidencia+'" alt="Foto da residência">' : '<span>Sem foto da residência</span>'}</div><div class="thumb">${a.qrPreview ? '<img src="'+a.qrPreview+'" alt="QR Code">' : '<span>QR Code ainda não gerado</span>'}</div></div></div>`;container.appendChild(card);const autoBtn=card.querySelector('.auto-arrecadacao');if(autoBtn)autoBtn.addEventListener('click',()=>{const endereco=(a.endereco||'').trim();if(!endereco){alert('Preencha o endereço do alvo antes de abrir o Auto de Arrecadação.');return;}const qs=new URLSearchParams({endereco:endereco,alvo:pad2(idx+1),nome:a.nome||'',targetId:a.id||''});window.open('auto-arrecadacao.html?v=1.3&'+qs.toString(),'_blank');});card.querySelector('.remove-card').addEventListener('click',()=>{if(state.alvos.length===1)return;state.alvos.splice(idx,1);render();});card.querySelector('.toggle-card').addEventListener('click',ev=>{const cc=card.querySelector('.card-content');const collapsed=cc.style.display==='none';cc.style.display=collapsed?'':'none';ev.currentTarget.textContent=collapsed?'Recolher':'Expandir';});card.querySelectorAll('input[data-k], textarea[data-k], select[data-k]').forEach(el=>{const handler=()=>{const key=el.dataset.k;if(key==='nascimento')el.value=maskDate(el.value);else if(key==='cpf')el.value=maskCPF(el.value);else if(key==='rg')el.value=maskRG(el.value);a[key]=el.value;if(key==='qrConteudo'){a.qrPreview='';const qrThumb=card.querySelector('.thumbrow .thumb:nth-child(3)');if(qrThumb)qrThumb.innerHTML='<span>QR Code ainda não gerado</span>';const st=card.querySelector('.qr-status');if(st)st.textContent='Link alterado. Clique em Gerar QR Code.';}if(key==='nome'){const sub=card.querySelector('.target-sub');if(sub)sub.textContent=(a.nome||'sem nome').trim();}renderPreview();};el.addEventListener('input',handler);el.addEventListener('change',handler);});const generateQrBtn=card.querySelector('.generate-qr');if(generateQrBtn)generateQrBtn.addEventListener('click',()=>refreshQr(idx));card.querySelectorAll('input[type=file][data-file]').forEach(el=>{el.addEventListener('change',async()=>{const f=el.files&&el.files[0];if(!f)return;const data=await readFileAsDataURL(f);a[el.dataset.file]=data;render();});});});}
+
+function renderForm(){
+  const container=document.getElementById('targetsContainer');
+  container.innerHTML='';
+  state.alvos.forEach((a,idx)=>{
+    const card=document.createElement('div');
+    card.className='target-card';
+    const cpfInvalid=onlyDigits(a.cpf).length===11&&!validCPF(a.cpf);
+    const dup=targetDuplicateInfo(a,idx);
+    card.innerHTML=`
+      <div class="target-head">
+        <div>
+          <div class="target-title">ALVO Nº ${pad2(idx+1)}</div>
+          <div class="target-sub">${escapeHtml((a.nome||'sem nome').trim())}</div>
+        </div>
+        <div class="small-actions">
+          <button type="button" class="gold auto-arrecadacao">Auto de Arrecadação</button>
+          <button type="button" class="alt toggle-card">Recolher</button>
+          <button type="button" class="red remove-card" ${state.alvos.length===1?'disabled':''}>Remover</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="target-grid">
+          <div class="section-label">1. Identificação</div>
+          <div class="field full"><label>Nome</label><input type="text" data-k="nome" value="${escapeHtml(a.nome)}"></div>
+          <div class="field"><label>Nome da mãe</label><input type="text" data-k="mae" value="${escapeHtml(a.mae)}"></div>
+          <div class="field"><label>Nascimento</label><input type="text" inputmode="numeric" maxlength="10" data-k="nascimento" placeholder="DD/MM/AAAA" value="${escapeHtml(a.nascimento)}"></div>
+          <div class="field"><label>RG</label><input type="text" inputmode="numeric" maxlength="12" data-k="rg" placeholder="00.000.000-0" value="${escapeHtml(a.rg)}"></div>
+          <div class="field"><label>CPF</label><input class="${cpfInvalid?'field-invalid':''}" type="text" inputmode="numeric" maxlength="14" data-k="cpf" placeholder="000.000.000-00" value="${escapeHtml(a.cpf)}"><div class="field-help cpf-help">${cpfInvalid?'CPF com dígito verificador inválido.':''}</div></div>
+          <div class="field full"><label>Cônjuge/Convivente</label><input type="text" data-k="conjuge" value="${escapeHtml(a.conjuge)}"></div>
+
+          <div class="section-label">2. Medidas</div>
+          <div class="field"><label>MBA</label><select data-k="mba"><option value="SIM" ${a.mba==='SIM'?'selected':''}>SIM</option><option value="NAO" ${a.mba==='NAO'?'selected':''}>NÃO</option><option value="" ${!a.mba?'selected':''}>EM BRANCO</option></select></div>
+          <div class="field"><label>PRISÃO</label><select data-k="prisao"><option value="SIM" ${a.prisao==='SIM'?'selected':''}>SIM</option><option value="NAO" ${a.prisao==='NAO'?'selected':''}>NÃO</option><option value="" ${!a.prisao?'selected':''}>EM BRANCO</option></select></div>
+          <div class="field full"><label>Observações</label><textarea data-k="observacoes">${escapeHtml(a.observacoes)}</textarea></div>
+
+          <div class="section-label">3. Endereço e localização</div>
+          <div class="field full"><label>Endereço</label><textarea data-k="endereco" placeholder="Ex.: RUA HIPIAUGUI, Nº 298 (CASA ÚNICA), PARQUE SANTA MADALENA, CEP 03.982-000, SÃO PAULO/SP">${escapeHtml(a.endereco)}</textarea></div>
+          <div class="field full"><label>Link para o QR Code</label><textarea data-k="qrConteudo" placeholder="Cole aqui o link da localização, Google Maps ou outro endereço web">${escapeHtml(a.qrConteudo)}</textarea>
+            <div class="location-actions">
+              <button type="button" class="green generate-qr">Gerar QR Code</button>
+              <button type="button" class="alt open-location" ${ensureQrContent(a)?'':'disabled'}>Abrir localização</button>
+              <span class="form-note qr-status">${a.qrPreview?'QR Code gerado.':'Aguardando o link e o clique em Gerar QR Code.'}</span>
+            </div>
+          </div>
+
+          <div class="section-label">4. Imagens</div>
+          <div class="field"><label>Imagem do alvo</label><input type="file" accept="image/*" data-file="fotoAlvo"></div>
+          <div class="field"><label>Imagem da residência</label><input type="file" accept="image/*" data-file="fotoResidencia"></div>
+          <div class="field"><label>QR Code</label><div class="form-note">O QR é criado localmente depois que o link é informado.</div></div>
+        </div>
+
+        ${dup?`<div class="duplicate-warning">⚠ ${escapeHtml(dup)}. Verifique se é duplicidade intencional.</div>`:''}
+
+        <div class="thumbrow">
+          <div class="thumb">${a.fotoAlvo ? '<img src="'+a.fotoAlvo+'" alt="Foto do alvo">' : '<span>Sem foto do alvo</span>'}</div>
+          <div class="thumb">${a.fotoResidencia ? '<img src="'+a.fotoResidencia+'" alt="Foto da residência">' : '<span>Sem foto da residência</span>'}</div>
+          <div class="thumb">${a.qrPreview ? '<img src="'+a.qrPreview+'" alt="QR Code">' : '<span>QR Code ainda não gerado</span>'}</div>
+        </div>
+      </div>`;
+
+    container.appendChild(card);
+
+    const autoBtn=card.querySelector('.auto-arrecadacao');
+    if(autoBtn)autoBtn.addEventListener('click',()=>{
+      const endereco=(a.endereco||'').trim();
+      if(!endereco){alert('Preencha o endereço do alvo antes de abrir o Auto de Arrecadação.');return;}
+      const qs=new URLSearchParams({endereco:endereco,alvo:pad2(idx+1),nome:a.nome||'',targetId:a.id||''});
+      window.open('auto-arrecadacao.html?v=1.3&'+qs.toString(),'_blank');
+    });
+
+    card.querySelector('.remove-card').addEventListener('click',()=>{
+      if(state.alvos.length===1)return;
+      state.alvos.splice(idx,1);
+      render();
+    });
+
+    card.querySelector('.toggle-card').addEventListener('click',ev=>{
+      const cc=card.querySelector('.card-content');
+      const collapsed=cc.style.display==='none';
+      cc.style.display=collapsed?'':'none';
+      ev.currentTarget.textContent=collapsed?'Recolher':'Expandir';
+    });
+
+    card.querySelectorAll('input[data-k], textarea[data-k], select[data-k]').forEach(el=>{
+      const handler=()=>{
+        const key=el.dataset.k;
+        if(key==='nascimento')el.value=maskDate(el.value);
+        else if(key==='cpf')el.value=maskCPF(el.value);
+        else if(key==='rg')el.value=maskRG(el.value);
+        a[key]=el.value;
+
+        if(key==='cpf'){
+          const invalid=onlyDigits(el.value).length===11&&!validCPF(el.value);
+          el.classList.toggle('field-invalid',invalid);
+          const hp=card.querySelector('.cpf-help');
+          if(hp)hp.textContent=invalid?'CPF com dígito verificador inválido.':'';
+        }
+
+        if(key==='qrConteudo'){
+          a.qrPreview='';
+          const qrThumb=card.querySelector('.thumbrow .thumb:nth-child(3)');
+          if(qrThumb)qrThumb.innerHTML='<span>QR Code ainda não gerado</span>';
+          const st=card.querySelector('.qr-status');
+          if(st)st.textContent='Link alterado. Clique em Gerar QR Code.';
+          const op=card.querySelector('.open-location');
+          if(op)op.disabled=!ensureQrContent(a);
+        }
+
+        if(key==='nome'){
+          const sub=card.querySelector('.target-sub');
+          if(sub)sub.textContent=(a.nome||'sem nome').trim();
+        }
+
+        renderPreview();
+        decorateTargetCards();
+        updateKitPreflight();
+      };
+      el.addEventListener('input',handler);
+      el.addEventListener('change',handler);
+    });
+
+    card.querySelector('.generate-qr')?.addEventListener('click',()=>refreshQr(idx));
+    card.querySelector('.open-location')?.addEventListener('click',()=>{
+      const url=normalizeLocationUrl(a.qrConteudo);
+      if(!url)return;
+      if(!/^https?:\/\//i.test(url)){alert('O conteúdo informado não parece ser um endereço web válido.');return;}
+      window.open(url,'_blank','noopener');
+    });
+
+    card.querySelectorAll('input[type=file][data-file]').forEach(el=>{
+      el.addEventListener('change',async()=>{
+        const f=el.files&&el.files[0];
+        if(!f)return;
+        a[el.dataset.file]=await readFileAsDataURL(f);
+        render();
+      });
+    });
+  });
+}
 function renderPreview(){
   const pages=document.getElementById('pages');
   pages.innerHTML='';
@@ -355,10 +561,10 @@ function renderPreview(){
 function render(){renderForm();renderPreview();}
 async function buildEnvelopeOdt(){if(!state.alvos.length)throw new Error('Não há alvos para gerar.');const entries=getTemplateEntries();const contentEntry=entries.find(e=>e.name==='content.xml');const manifestEntry=entries.find(e=>e.name==='META-INF/manifest.xml');if(!contentEntry||!manifestEntry)throw new Error('Modelo ODT interno não encontrado.');let contentXml=ODT_DEC.decode(contentEntry.data);let manifestXml=ODT_DEC.decode(manifestEntry.data);const pictureEntries=[],manifestLines=[],sections=[];for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i];if(!a.fotoAlvo)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem do alvo.');if(!a.fotoResidencia)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem da residência.');const qrText=ensureQrContent(a);if(!qrText)throw new Error('Alvo nº '+pad2(i+1)+': informe o link do QR Code.');if(!a.qrPreview)throw new Error('Alvo nº '+pad2(i+1)+': clique em Gerar QR Code antes de baixar o ODT.');const qrDataUrl=a.qrPreview;const alvoFile=dataURLToBytes(a.fotoAlvo),resFile=dataURLToBytes(a.fotoResidencia),qrFile=dataURLToBytes(qrDataUrl);const alvoName='Pictures/alvo_'+pad2(i+1)+'.'+extFromMime(alvoFile.mime),resName='Pictures/residencia_'+pad2(i+1)+'.'+extFromMime(resFile.mime),qrName='Pictures/qr_'+pad2(i+1)+'.'+extFromMime(qrFile.mime);pictureEntries.push({name:alvoName,data:alvoFile.bytes},{name:resName,data:resFile.bytes},{name:qrName,data:qrFile.bytes});manifestLines.push('<manifest:file-entry manifest:media-type="'+alvoFile.mime+'" manifest:full-path="'+alvoName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+resFile.mime+'" manifest:full-path="'+resName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+qrFile.mime+'" manifest:full-path="'+qrName+'"/>');let s=SECTION_TEMPLATE;s=s.replaceAll('@@IDX@@',String(i+1)).replaceAll('@@NUM@@',pad2(i+1)).replaceAll('@@TITLE_STYLE@@',i>0?'P48PB':'P48').replaceAll('@@NOME@@',xmlEscape((a.nome||'').toUpperCase())).replaceAll('@@MAE@@',xmlEscape((a.mae||'').toUpperCase())).replaceAll('@@NASCIMENTO@@',xmlEscape(a.nascimento)).replaceAll('@@RG@@',xmlEscape(a.rg)).replaceAll('@@CPF@@',xmlEscape(a.cpf)).replaceAll('@@CONJUGE@@',xmlEscape((a.conjuge||'').toUpperCase())).replaceAll('@@MBA@@',xmlEscape(markText(a.mba))).replaceAll('@@PRISAO@@',xmlEscape(markText(a.prisao))).replaceAll('@@OBS@@',xmlEscapeMultiline((a.observacoes||'').toUpperCase())).replaceAll('@@ENDERECO@@',xmlEscape((a.endereco||'').toUpperCase())).replaceAll('@@FOTO_ALVO_XML@@',pictureParagraph(alvoName,53,70,'P18')).replaceAll('@@FOTO_RESID_XML@@',pictureParagraph(resName,101,76,'P70')).replaceAll('@@QR_XML@@',pictureParagraph(qrName,48,48,'P44')); sections.push(s);} contentXml=contentXml.replace('@@SECTIONS@@',sections.join('')); manifestXml=manifestXml.replace('</manifest:manifest>',manifestLines.join('')+'</manifest:manifest>'); const outEntries=entries.filter(e=>!/^Pictures\//.test(e.name)).map(e=>{if(e.name==='content.xml')return{name:e.name,data:ODT_ENC.encode(contentXml)}; if(e.name==='META-INF/manifest.xml')return{name:e.name,data:ODT_ENC.encode(manifestXml)}; if(e.name==='styles.xml'){let sx=ODT_DEC.decode(e.data).replaceAll('@@RODAPE1@@',xmlEscape(footerLine1())).replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));return{name:e.name,data:ODT_ENC.encode(sx)}} return e;}); for(const pic of pictureEntries)outEntries.push(pic); return odtBuild(outEntries); }
 function docFileBaseName(){if(state.alvos.length===1){const nome=(state.alvos[0].nome||'ALVO').trim().toUpperCase().replace(/[^A-Z0-9À-ÿ]+/g,'_'); return 'ENVELOPE_BUSCA_'+(nome||'ALVO');} return 'ENVELOPE_BUSCA_'+state.alvos.length+'_ALVOS';}
-document.getElementById('openFooterConfig').addEventListener('click',()=>{fillFooterConfig();document.getElementById('footerConfigPanel').classList.add('open');document.getElementById('footerConfigPanel').scrollIntoView({behavior:'smooth',block:'nearest'});});
-document.getElementById('closeFooterConfig').addEventListener('click',()=>document.getElementById('footerConfigPanel').classList.remove('open'));
-document.getElementById('saveFooterConfig').addEventListener('click',saveFooterConfig);
-document.getElementById('resetFooterConfig').addEventListener('click',resetFooterConfig);
+document.getElementById('openFooterConfig').addEventListener('click',openUnitConfig);
+document.getElementById('closeFooterConfig')?.addEventListener('click',()=>document.getElementById('footerConfigPanel').classList.remove('open'));
+document.getElementById('saveFooterConfig')?.addEventListener('click',saveFooterConfig);
+document.getElementById('resetFooterConfig')?.addEventListener('click',resetFooterConfig);
 document.getElementById('addTargetBtn').addEventListener('click',()=>{state.alvos.push(novoAlvo());render();});
 document.getElementById('clearBtn').addEventListener('click',()=>{if(!confirm('Limpar todos os dados e reiniciar o gerador?'))return; state.alvos=[novoAlvo()]; render();});
 function printTargetsOnly(){
@@ -485,15 +691,17 @@ async function idbAll(){const db=await openSavedDB();return new Promise((res,rej
 async function idbGet(id){const db=await openSavedDB();return new Promise((res,rej)=>{const r=db.transaction(SAVED_STORE).objectStore(SAVED_STORE).get(id);r.onsuccess=()=>{db.close();res(r.result)};r.onerror=()=>rej(r.error)})}
 async function idbDelete(id){const db=await openSavedDB();return new Promise((res,rej)=>{const t=db.transaction(SAVED_STORE,'readwrite');t.objectStore(SAVED_STORE).delete(id);t.oncomplete=()=>{db.close();res()};t.onerror=()=>rej(t.error)})}
 function essentialMissing(a){const x=[];if(!(a.nome||'').trim())x.push('nome');if(!(a.nascimento||'').trim())x.push('nascimento');if(!(a.rg||'').trim())x.push('RG');if(!(a.cpf||'').trim())x.push('CPF');if(!(a.endereco||'').trim())x.push('endereço');if(!a.fotoAlvo)x.push('foto do alvo');if(!a.fotoResidencia)x.push('foto da residência');if(!a.qrPreview)x.push('QR Code');return x}
-function decorateTargetCards(){const autoMap=getAutoMap();document.querySelectorAll('#targetsContainer .target-card').forEach((card,idx)=>{const a=state.alvos[idx];if(!a)return;if(!a.id)a.id=uidTarget();const sub=card.querySelector('.target-sub');if(sub&&!card.querySelector('.target-status')){const miss=essentialMissing(a),auto=autoMap[a.id];const box=document.createElement('div');box.className='target-status';box.innerHTML='<span class="status-pill '+(miss.length?'warn':'')+'">'+(miss.length?'FALTAM '+miss.length:'COMPLETO ✓')+'</span><span class="status-pill auto">'+(auto&&auto.autos?'AUTO: '+escapeHtml(auto.autos):'AUTO NÃO PREENCHIDO')+'</span>';sub.insertAdjacentElement('afterend',box);if(miss.length){const ml=document.createElement('div');ml.className='missing-line';ml.textContent='Faltando: '+miss.join(', ');box.insertAdjacentElement('afterend',ml)}}const actions=card.querySelector('.small-actions');if(actions&&!card.querySelector('.duplicate-target')){const bt=document.createElement('button');bt.type='button';bt.className='alt duplicate-target';bt.textContent='Duplicar alvo';bt.onclick=()=>{const n=novoAlvo();n.endereco=a.endereco||'';n.fotoResidencia=a.fotoResidencia||'';n.qrConteudo=a.qrConteudo||'';n.qrPreview=a.qrPreview||'';state.alvos.splice(idx+1,0,n);render();};actions.insertBefore(bt,actions.querySelector('.auto-arrecadacao')||actions.firstChild)}})}
+function decorateTargetCards(){const autoMap=getAutoMap();document.querySelectorAll('#targetsContainer .target-card').forEach((card,idx)=>{const a=state.alvos[idx];if(!a)return;if(!a.id)a.id=uidTarget();card.querySelector('.target-status')?.remove();card.querySelector('.missing-line')?.remove();const sub=card.querySelector('.target-sub');if(sub){const miss=essentialMissing(a),auto=autoMap[a.id],photos=Boolean(a.fotoAlvo&&a.fotoResidencia),qr=Boolean(a.qrPreview);const box=document.createElement('div');box.className='target-status';box.innerHTML='<span class="status-pill '+(miss.length?'warn':'ok')+'">'+(miss.length?'ENVELOPE: FALTAM '+miss.length:'ENVELOPE ✓')+'</span><span class="status-pill auto '+(auto&&auto.autos?'ok':'warn')+'">'+(auto&&auto.autos?'AUTO ✓ '+escapeHtml(auto.autos):'AUTO PENDENTE')+'</span><span class="status-pill qr '+(qr?'ok':'warn')+'">'+(qr?'QR ✓':'QR PENDENTE')+'</span><span class="status-pill photo '+(photos?'ok':'warn')+'">'+(photos?'FOTOS ✓':'FOTOS PENDENTES')+'</span>';sub.insertAdjacentElement('afterend',box);if(miss.length){const ml=document.createElement('div');ml.className='missing-line';ml.textContent='Faltando: '+miss.join(', ');box.insertAdjacentElement('afterend',ml)}}const actions=card.querySelector('.small-actions');if(actions&&!card.querySelector('.duplicate-target')){const bt=document.createElement('button');bt.type='button';bt.className='alt duplicate-target';bt.textContent='Duplicar alvo';bt.onclick=()=>{const n=novoAlvo();n.endereco=a.endereco||'';n.fotoResidencia=a.fotoResidencia||'';n.qrConteudo=a.qrConteudo||'';n.qrPreview=a.qrPreview||'';state.alvos.splice(idx+1,0,n);render();};actions.insertBefore(bt,actions.querySelector('.auto-arrecadacao')||actions.firstChild)}})}
 async function saveCurrentSet(){const name=(document.getElementById('saveSetName').value||'').trim()||('Alvos '+new Date().toLocaleString('pt-BR'));state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget()});const rec={id:'set_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),name,savedAt:new Date().toISOString(),alvos:JSON.parse(JSON.stringify(state.alvos))};await idbPut(rec);document.getElementById('saveSetName').value=name;await renderSaved();alert('Alvos salvos na aba “Alvos salvos”.')}
 async function renderSaved(){const box=document.getElementById('savedList');if(!box)return;let all=await idbAll();all.sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));box.innerHTML='';if(!all.length){box.innerHTML='<div class="emptySaved">Nenhum conjunto de alvos salvo ainda.</div>';return}const autoMap=getAutoMap();all.forEach(rec=>{const card=document.createElement('div');card.className='saved-card';const d=new Date(rec.savedAt);card.innerHTML='<div class="saved-head"><div><div class="saved-title">'+escapeHtml(rec.name)+'</div><div class="saved-meta">'+rec.alvos.length+' alvo(s) · salvo em '+d.toLocaleString('pt-BR')+'</div></div><div class="small-actions"><button class="green loadSaved">Carregar</button><button class="red deleteSaved">Excluir</button></div></div>';rec.alvos.forEach((a,i)=>{const am=autoMap[a.id]||{};const row=document.createElement('div');row.className='saved-target';row.innerHTML='<div><div class="saved-target-name">ALVO Nº '+pad2(i+1)+' — '+escapeHtml(a.nome||'SEM NOME')+'</div><div class="saved-target-info">'+escapeHtml(a.endereco||'Sem endereço')+'<br>Auto de Arrecadação: '+(am.autos?'<b>'+escapeHtml(am.autos)+'</b>':'não preenchido')+(am.odtGerado?' · ODT gerado':'')+(am.pdfAberto?' · impressão aberta':'')+'</div></div><div class="small-actions"><button class="gold openSavedAuto">Auto de Arrecadação</button></div>';row.querySelector('.openSavedAuto').onclick=()=>{if(!a.endereco)return alert('Este alvo salvo não possui endereço.');const qs=new URLSearchParams({endereco:a.endereco,alvo:pad2(i+1),nome:a.nome||'',targetId:a.id||'',autos:am.autos||''});window.open('auto-arrecadacao.html?v=1.3&'+qs.toString(),'_blank');};card.appendChild(row)});card.querySelector('.loadSaved').onclick=async()=>{const r=await idbGet(rec.id);state.alvos=(r.alvos||[]).map(a=>({...novoAlvo(),...a,id:a.id||uidTarget()}));document.getElementById('saveSetName').value=r.name||'';switchEnvTab('ativos');render();};card.querySelector('.deleteSaved').onclick=async()=>{if(!confirm('Excluir este conjunto salvo?'))return;await idbDelete(rec.id);renderSaved();};box.appendChild(card)})}
 function switchEnvTab(tab){document.querySelectorAll('.envTab').forEach(b=>b.classList.toggle('active',b.dataset.envtab===tab));document.getElementById('activeTargetsArea').style.display=tab==='ativos'?'':'none';document.getElementById('savedTargetsArea').style.display=tab==='salvos'?'':'none';if(tab==='salvos')renderSaved()}
 function buildAutoOdtForTarget(a,autos){const h=getHeaderConfig();const entries=odtParseStored(odtB64Bytes(AUTO_KIT_ODT_B64)).map(e=>{if(e.name==='content.xml'){let s=ODT_DEC.decode(e.data).replace('@@AUTOS@@',xmlEscape(autos||'__________________________')).replace('@@ENDERECO@@',xmlEscape((a.endereco||'').toUpperCase()));return {name:e.name,data:ODT_ENC.encode(s)}}if(e.name==='styles.xml'){let s=ODT_DEC.decode(e.data).replaceAll('@@HDR_ESTADO@@',xmlEscape(h.estado)).replaceAll('@@HDR_SECRETARIA@@',xmlEscape(h.secretaria)).replaceAll('@@HDR_DEPARTAMENTO@@',xmlEscape(h.departamento)).replaceAll('@@HDR_SUBDIVISAO@@',xmlEscape(h.subdivisao)).replaceAll('@@HDR_UNIDADE@@',xmlEscape(h.unidade)).replaceAll('@@RODAPE1@@',xmlEscape(footerLine1())).replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));return {name:e.name,data:ODT_ENC.encode(s)}}return e});return odtBuild(entries)}
-async function generateKit(){const btn=document.getElementById('kitBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Gerando kit...';try{state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget()});const env=await buildEnvelopeOdt(),autoMap=getAutoMap(),files=[{name:'01_ENVELOPES_DE_BUSCA.odt',data:env}],lines=['KIT DA BUSCA','Gerado em: '+new Date().toLocaleString('pt-BR'),''];for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i],am=autoMap[a.id]||{},autos=am.autos||'';files.push({name:'AUTO_ARRECADACAO_ALVO_'+pad2(i+1)+(autos?'_'+autos.replace(/[^0-9A-Za-z]+/g,'_'):'_PREENCHER_AUTOS')+'.odt',data:buildAutoOdtForTarget(a,autos)});lines.push('ALVO '+pad2(i+1)+' — '+(a.nome||'SEM NOME'));lines.push('Endereço: '+(a.endereco||'NÃO INFORMADO'));lines.push('Autos: '+(autos||'NÃO PREENCHIDO'));lines.push('Status envelope: '+(essentialMissing(a).length?'FALTAM '+essentialMissing(a).join(', '):'COMPLETO'));lines.push('')}files.push({name:'RESUMO_KIT.txt',data:new TextEncoder().encode(lines.join('\r\n'))});const zip=odtBuild(files);triggerDownload(new Blob([zip],{type:'application/zip'}),'KIT_BUSCA_'+state.alvos.length+'_ALVOS.zip')}catch(e){console.error(e);alert('Não foi possível gerar o kit: '+(e.message||e))}finally{btn.disabled=false;btn.textContent=old}}
-function initEnvelopeFeatures(){document.querySelectorAll('.envTab').forEach(b=>b.addEventListener('click',()=>switchEnvTab(b.dataset.envtab)));document.getElementById('saveSetBtn').addEventListener('click',saveCurrentSet);document.getElementById('kitBtn').addEventListener('click',generateKit);window.addEventListener('storage',e=>{if(e.key===AUTO_MAP_KEY){decorateTargetCards();renderSaved()}})}
+function kitSummary(){const autoMap=getAutoMap();const rows=state.alvos.map((a,i)=>{const miss=essentialMissing(a),am=autoMap[a.id]||{};return{idx:i,complete:miss.length===0,missing:miss,auto:Boolean(am.autos),autos:am.autos||''}});return{total:rows.length,complete:rows.filter(x=>x.complete).length,incomplete:rows.filter(x=>!x.complete).length,autos:rows.filter(x=>x.auto).length,autosPending:rows.filter(x=>!x.auto).length,rows}}
+function updateKitPreflight(){const box=document.getElementById('kitPreflight');if(!box)return;const s=kitSummary();box.classList.toggle('show',s.incomplete>0||s.autosPending>0);if(!box.classList.contains('show')){box.innerHTML='';return}box.innerHTML='<b>Checagem do Kit:</b> '+s.total+' alvo(s) · '+s.complete+' envelope(s) completo(s) · '+s.incomplete+' com pendência · '+s.autos+' Auto(s) identificado(s) · '+s.autosPending+' Auto(s) sem número dos autos. O Kit pode ser gerado mesmo com pendências; o resumo indicará o que falta.'}
+async function generateKit(){const btn=document.getElementById('kitBtn'),old=btn.textContent;const s=kitSummary();if(s.incomplete||s.autosPending){const details=s.rows.filter(x=>!x.complete||!x.auto).map(x=>{const parts=[];if(!x.complete)parts.push('envelope: '+x.missing.join(', '));if(!x.auto)parts.push('Auto sem número dos autos');return 'ALVO '+pad2(x.idx+1)+' — '+parts.join(' | ')}).join('\n');if(!confirm('CHECAGEM DO KIT\\n\\n'+s.total+' alvo(s)\\n'+s.complete+' envelope(s) completo(s)\\n'+s.incomplete+' envelope(s) com pendência\\n'+s.autos+' Auto(s) identificado(s)\\n'+s.autosPending+' Auto(s) sem número dos autos\\n\\n'+details+'\\n\\nDeseja gerar o Kit mesmo assim?'))return}btn.disabled=true;btn.textContent='Gerando kit...';try{state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget()});const autoMap=getAutoMap(),files=[],lines=['KIT DA BUSCA','Gerado em: '+new Date().toLocaleString('pt-BR'),''];if(s.incomplete===0){files.push({name:'01_ENVELOPES_DE_BUSCA.odt',data:await buildEnvelopeOdt()})}else{lines.push('ATENÇÃO: o arquivo 01_ENVELOPES_DE_BUSCA.odt não foi incluído porque existem envelopes incompletos.');lines.push('Complete as pendências e gere novamente para obter o ODT consolidado dos envelopes.');lines.push('')}for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i],am=autoMap[a.id]||{},autos=am.autos||'';files.push({name:'AUTO_ARRECADACAO_ALVO_'+pad2(i+1)+(autos?'_'+autos.replace(/[^0-9A-Za-z]+/g,'_'):'_PREENCHER_AUTOS')+'.odt',data:buildAutoOdtForTarget(a,autos)});lines.push('ALVO '+pad2(i+1)+' — '+(a.nome||'SEM NOME'));lines.push('Endereço: '+(a.endereco||'NÃO INFORMADO'));lines.push('Autos: '+(autos||'NÃO PREENCHIDO'));lines.push('Status envelope: '+(essentialMissing(a).length?'FALTAM '+essentialMissing(a).join(', '):'COMPLETO'));lines.push('')}files.push({name:'RESUMO_KIT.txt',data:new TextEncoder().encode(lines.join('\r\n'))});const zip=odtBuild(files);triggerDownload(new Blob([zip],{type:'application/zip'}),'KIT_BUSCA_'+state.alvos.length+'_ALVOS.zip')}catch(e){console.error(e);alert('Não foi possível gerar o kit: '+(e.message||e))}finally{btn.disabled=false;btn.textContent=old}}
+function initEnvelopeFeatures(){document.querySelectorAll('.envTab').forEach(b=>b.addEventListener('click',()=>switchEnvTab(b.dataset.envtab)));document.getElementById('saveSetBtn').addEventListener('click',saveCurrentSet);document.getElementById('kitBtn').addEventListener('click',generateKit);document.getElementById('topSaveBtn')?.addEventListener('click',()=>document.getElementById('saveSetBtn').click());document.getElementById('topKitBtn')?.addEventListener('click',()=>document.getElementById('kitBtn').click());document.getElementById('topOdtBtn')?.addEventListener('click',()=>document.getElementById('downloadOdtBtn').click());document.getElementById('topPdfBtn')?.addEventListener('click',()=>document.getElementById('printBtn').click());document.getElementById('topConfigBtn')?.addEventListener('click',openUnitConfig);window.addEventListener('storage',e=>{if(e.key===AUTO_MAP_KEY){decorateTargetCards();renderSaved();updateKitPreflight()}if(e.key===FOOTER_CONFIG_KEY){footerConfig=loadFooterConfig();renderPreview()}});updateKitPreflight()}
 
-const _renderBase=render;render=function(){_renderBase();decorateTargetCards();};const _renderPreviewBase=renderPreview;renderPreview=function(){_renderPreviewBase();decorateTargetCards();};initEnvelopeFeatures();render();})();
+const _renderBase=render;render=function(){_renderBase();decorateTargetCards();updateKitPreflight();};const _renderPreviewBase=renderPreview;renderPreview=function(){_renderPreviewBase();decorateTargetCards();};initEnvelopeFeatures();render();})();
 </script>
 <script id="v2EnvelopeScript">function v2SalvarODT(){const all=[...document.querySelectorAll('button,a')];const btn=all.find(x=>x.closest('.v2bar')===null&&/odt/i.test((x.textContent||''))&&x.offsetParent!==null);if(btn){btn.click();return;}alert('Preencha os dados e utilize a opção ODT disponível no próprio formulário.');}</script></body>
 </html>
