@@ -8,83 +8,106 @@ localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais
 ao código público. Funções que consultam serviços externos somente enviam o dado necessário
 quando o usuário executa a consulta, e isso é informado na própria tela.
 -->
-
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sobre as atualizações — Central PCPR</title>
+<title>Histórico de versões — Central PCPR</title>
 <style>
-:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#8f3037}
+:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#8f3037;--blue:#315d7b;--ok:#2e6a53}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
+button,input{font:inherit}
 .wrap{max-width:1120px;margin:0 auto;padding:28px 18px 54px}
 .hero{background:linear-gradient(120deg,var(--ink),var(--green2));border-bottom:5px solid var(--gold);border-radius:16px;padding:24px;color:#fff;box-shadow:0 8px 26px rgba(0,0,0,.12)}
 .kicker{font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:#e7d9b3}
 h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
-.hero p{margin:0;color:#dce4e0;font-size:13px;line-height:1.5}
+.hero p{margin:0;color:#dce4e0;font-size:13px;line-height:1.5;max-width:800px}
 .current{margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .version{display:inline-flex;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900;color:#f4e7bd}
 .note{font-size:11px;color:#cbd6d1}
-.section{margin-top:24px}
-.section-title{display:flex;align-items:center;gap:10px;margin-bottom:11px}
-.section-title h2{margin:0;font-size:17px;color:var(--green2)}
-.section-title:after{content:"";height:1px;background:var(--line);flex:1}
+.tools{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:center}
+.search{position:relative}.search input{width:100%;border:1px solid #cfc9bd;border-radius:10px;background:#fbfaf7;padding:11px 12px 11px 36px;color:#1e2b27;outline:none}.search input:focus{border-color:#9c8655;box-shadow:0 0 0 3px rgba(197,162,83,.12)}
+.search:before{content:"⌕";position:absolute;left:12px;top:8px;color:#738078;font-size:19px}
+.toggle-old{border:1px solid #b9b2a4;background:#f8f6f0;color:var(--green2);border-radius:10px;padding:10px 13px;font-size:11px;font-weight:900;cursor:pointer}.toggle-old:hover{background:#f0ede5}
+.section{margin-top:24px}.section-title{display:flex;align-items:center;gap:10px;margin-bottom:11px}.section-title h2{margin:0;font-size:17px;color:var(--green2)}.section-title:after{content:"";height:1px;background:var(--line);flex:1}
 .timeline{display:grid;gap:11px}
 .item{position:relative;background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 17px 15px 19px;box-shadow:0 3px 12px rgba(0,0,0,.035)}
 .item.latest{border-color:#cdb673;background:linear-gradient(145deg,#fff,#fbf6e8)}
-.item-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.item-ver{font-weight:900;color:var(--green2);font-size:14px}
-.item-date{font-size:10px;color:var(--muted);font-weight:700}
-.badge{margin-left:auto;background:var(--red);color:#fff;border-radius:999px;padding:3px 7px;font-size:8px;font-weight:900;letter-spacing:.5px}
-.item h3{margin:9px 0 6px;font-size:14px;color:#1e2b27}
-.item ul{margin:0;padding-left:18px;color:#53605c;font-size:12px;line-height:1.55}
+.item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.item-ver{font-weight:900;color:var(--green2);font-size:14px}.item-date{font-size:10px;color:var(--muted);font-weight:700}.badge{margin-left:auto;background:var(--red);color:#fff;border-radius:999px;padding:3px 7px;font-size:8px;font-weight:900;letter-spacing:.5px}
+.tag{border-radius:999px;padding:3px 7px;font-size:8px;font-weight:900;letter-spacing:.45px;background:#eef1ee;color:#4d5b55;border:1px solid #d5ddd8}.tag.new{background:#edf4f1;color:var(--ok);border-color:#cfe1d9}.tag.improve{background:#edf2f6;color:var(--blue);border-color:#d3dfe7}.tag.fix{background:#f8f0e7;color:#875a2d;border-color:#ead9c6}
+.item h3{margin:9px 0 6px;font-size:14px;color:#1e2b27}.item ul{margin:0;padding-left:18px;color:#53605c;font-size:12px;line-height:1.55}
+.old-version{display:none}.show-old .old-version{display:block}.searching .old-version{display:block}.filtered-out{display:none!important}.empty{display:none;padding:20px;text-align:center;color:var(--muted);font-size:12px;background:#fff;border:1px dashed #cfc9bd;border-radius:12px}.empty.show{display:block}
 .footer{margin-top:30px;text-align:center;color:#737c79;font-size:10px}
-@media(max-width:600px){.wrap{padding:14px 10px 36px}.hero{padding:19px 16px}h1{font-size:27px}.badge{margin-left:0}}
+@media(max-width:680px){.wrap{padding:14px 10px 36px}.hero{padding:19px 16px}h1{font-size:27px}.badge{margin-left:0}.tools{grid-template-columns:1fr}.toggle-old{width:100%}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <section class="hero">
     <div class="kicker">Central Integrada PCPR</div>
-    <h1>Sobre as atualizações</h1>
-    <p>Registro das principais melhorias implementadas na Central, mantendo um histórico simples para identificar o que mudou em cada versão.</p>
+    <h1>Histórico de versões</h1>
+    <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v1.25</span>
-      <span class="note">04/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
+      <span class="version">VERSÃO ATUAL · v2.0</span>
+      <span class="note">Última atualização: 06/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section-title"><h2>Histórico recente</h2></div>
-    <div class="timeline"><article class="item"><div class="item-head"><span class="item-ver">v2.0.1</span><span class="item-date">06/09/2026</span></div><h3>Novo módulo de Ofício à Perícia</h3><ul><li>Nova aba “Perícia” dentro da Central de Ofícios.</li><li>IP formatado automaticamente como ponto no número do ofício e barra no corpo.</li><li>Autos PROJUDI reaproveitados automaticamente, data atual padrão, vítimas, investigados, delito e descrições múltiplas.</li><li>Destinos predefinidos: Curitiba, Cascavel e Campo Mourão.</li><li>Configuração integrada de cabeçalho, rodapé e Delegado, com impressão/PDF e geração ODT.</li></ul></article><article class="item"><div class="item-head"><span class="item-ver">v2.0</span><span class="item-date">06/09/2026</span></div><h3>Central PCPR v2.0</h3><ul><li>Navegação reorganizada em ordem alfabética e módulos abrindo no topo.</li><li>Oitiva em Penitenciária incorporada como aba interna da Central de Ofícios.</li><li>Central de Ofícios com interface externa mais clean, preservando modelos e funções existentes.</li><li>Consulta IMEI com miniatura aprimorada e fallback seguro.</li><li>Envelope de Busca com acesso simplificado a Imprimir/Salvar PDF e ODT.</li><li>Contatos Vivo mantidos em cpr.br@telefonica.com, ordens.sigilo.br@telefonica.com e 0800-770-8486.</li><li>ERB atualizado para v7.2.</li><li>Segurança, armazenamento local, Sugestões e Analytics sem conteúdo de formulários preservados.</li></ul></article><article class="item"><div class="item-head"><span class="item-ver">v1.26</span><span class="item-date">05/09/2026</span></div><h3>Ajustes finais da série 1.x</h3><ul><li>Melhorias de navegação, consulta de operadora e consolidação dos módulos antes da v2.0.</li></ul></article>
+  <div class="tools">
+    <div class="search"><input id="historySearch" type="search" autocomplete="off" placeholder="Pesquisar versão, módulo ou melhoria..." aria-label="Pesquisar no histórico de versões"></div>
+    <button id="toggleOld" class="toggle-old" type="button" aria-expanded="false">Mostrar versões antigas</button>
+  </div>
 
-      <article class="item latest">
-        <div class="item-head"><span class="item-ver">v1.25</span><span class="item-date">04/09/2026</span><span class="badge">ATUAL</span></div>
+  <section class="section" id="historySection">
+    <div class="section-title"><h2>Histórico recente</h2></div>
+    <div class="timeline" id="timeline">
+      <article class="item latest" data-version="2.0">
+        <div class="item-head"><span class="item-ver">v2.0</span><span class="item-date">06/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span><span class="tag fix">CORREÇÃO</span><span class="badge">ATUAL</span></div>
+        <h3>Central PCPR v2.0 — reorganização e consolidação dos módulos</h3>
+        <ul>
+          <li>Navegação e cartões da tela inicial reorganizados em ordem alfabética, mantendo “Início” como primeiro acesso.</li>
+          <li>Tela inicial aprimorada com pesquisa de ferramentas, últimos módulos acessados, aviso de segurança recolhível e indicação da versão atual.</li>
+          <li>Central de Ofícios consolidada com Ofícios, Oitiva em Penitenciária e Perícia em abas internas, sem duplicar atalhos na Home.</li>
+          <li>Novo módulo de Ofício à Perícia, com formatação automática de IP, Autos PROJUDI, BOU, destinos predefinidos, itens/descrições múltiplos e paginação A4 com papel institucional.</li>
+          <li>Perícia aprimorada para adicionar/remover autoridades e usar nome e cargo separadamente, permitindo “Delegado de Polícia”, “Delegada de Polícia” ou outra denominação informada.</li>
+          <li>Configuração de cargo da autoridade padronizada nos módulos que utilizam assinatura.</li>
+          <li>ERB atualizado para v7.2, com recursos de análise e visualização mantidos.</li>
+          <li>Envelope de Busca com acesso simplificado às opções de impressão/Salvar PDF e ODT.</li>
+          <li>Consulta IMEI e demais módulos receberam ajustes de interface e preservação do armazenamento local.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="1.26">
+        <div class="item-head"><span class="item-ver">v1.26</span><span class="item-date">05/09/2026</span><span class="tag improve">MELHORIA</span></div>
+        <h3>Ajustes finais da série 1.x</h3>
+        <ul><li>Melhorias de navegação, consulta de operadora e consolidação dos módulos antes da migração para a v2.0.</li></ul>
+      </article>
+
+      <article class="item old-version" data-version="1.25">
+        <div class="item-head"><span class="item-ver">v1.25</span><span class="item-date">04/09/2026</span><span class="tag improve">MELHORIA</span></div>
         <h3>Padronização de transparência sobre segurança e armazenamento</h3>
         <ul>
           <li>Todos os HTMLs passaram a informar no código que a Central é uma aplicação estática, sem backend próprio ou banco de dados remoto.</li>
-          <li>Módulos que salvam preferências, históricos, modelos, projetos ou alvos agora deixam explícito que o armazenamento ocorre apenas neste navegador/dispositivo.</li>
-          <li>Consultas externas passaram a indicar claramente qual dado é enviado e somente quando o usuário aciona a função.</li>
+          <li>Módulos que salvam preferências, históricos, modelos, projetos ou alvos passaram a explicitar que o armazenamento ocorre apenas neste navegador/dispositivo.</li>
+          <li>Consultas externas passaram a indicar qual dado é enviado e somente quando o usuário aciona a função.</li>
           <li>Foi reforçado que não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público.</li>
         </ul>
       </article>
 
-
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.24</span><span class="item-date">04/09/2026</span></div>
+      <article class="item old-version" data-version="1.24">
+        <div class="item-head"><span class="item-ver">v1.24</span><span class="item-date">04/09/2026</span><span class="tag fix">CORREÇÃO</span></div>
         <h3>Revisão adicional de segurança e clareza do código</h3>
         <ul>
-          <li>Comentários sobre IndexedDB foram reescritos para deixar claro que se trata apenas de armazenamento local do navegador, sem acesso a banco externo.</li>
+          <li>Comentários sobre IndexedDB foram reescritos para esclarecer que se trata de armazenamento local do navegador.</li>
           <li>Chave fixa encontrada em uma consulta externa foi removida do JavaScript público e a consulta automática foi desativada.</li>
           <li>Campos de token opcionais passaram a indicar expressamente que o valor é informado pelo usuário e não é salvo pela Central.</li>
           <li>Observações de contatos foram ajustadas para não manter senhas, credenciais ou informações de abertura de arquivos no código público.</li>
         </ul>
       </article>
 
-
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.23</span><span class="item-date">04/09/2026</span></div>
+      <article class="item old-version" data-version="1.23">
+        <div class="item-head"><span class="item-ver">v1.23</span><span class="item-date">04/09/2026</span><span class="tag new">NOVO</span></div>
         <h3>Canal de sugestões integrado à Central</h3>
         <ul>
           <li>Novo cartão “Sugestões” disponível diretamente na tela inicial.</li>
@@ -94,9 +117,8 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
         </ul>
       </article>
 
-
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.22</span><span class="item-date">04/09/2026</span></div>
+      <article class="item old-version" data-version="1.22">
+        <div class="item-head"><span class="item-ver">v1.22</span><span class="item-date">04/09/2026</span><span class="tag fix">CORREÇÃO</span></div>
         <h3>Revisão preventiva de contatos e senhas de arquivos</h3>
         <ul>
           <li>Dados de contato da operadora foram retirados da versão pública por determinação da empresa.</li>
@@ -106,72 +128,92 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
         </ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.21</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.21">
+        <div class="item-head"><span class="item-ver">v1.21</span><span class="item-date">03/09/2026</span><span class="tag new">NOVO</span></div>
         <h3>Nova tela inicial e histórico de atualizações</h3>
         <ul>
-          <li>A Central passa a abrir em uma Home limpa, exibindo somente os cartões dos módulos.</li>
+          <li>A Central passou a abrir em uma Home limpa, exibindo somente os cartões dos módulos.</li>
           <li>Novo botão Início para retornar à Home a qualquer momento.</li>
           <li>A navegação completa entre módulos continua disponível depois que um módulo é aberto.</li>
-          <li>Criação da aba “Sobre as atualizações” com o histórico das versões.</li>
+          <li>Criação da aba de histórico das versões.</li>
         </ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.20</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.20">
+        <div class="item-head"><span class="item-ver">v1.20</span><span class="item-date">03/09/2026</span><span class="tag new">NOVO</span></div>
         <h3>Operações, alvos salvos e Kit da Busca</h3>
         <ul>
-          <li>Configuração Geral da Unidade.</li>
-          <li>Alvos salvos com seus respectivos Autos de Arrecadação.</li>
-          <li>Geração do Kit da Busca em ZIP.</li>
-          <li>Duplicação de alvo, validação de campos e status de completude.</li>
-          <li>Integração de retorno e acompanhamento do Auto de Arrecadação.</li>
+          <li>Configuração Geral da Unidade.</li><li>Alvos salvos com seus respectivos Autos de Arrecadação.</li><li>Geração do Kit da Busca em ZIP.</li><li>Duplicação de alvo, validação de campos e status de completude.</li><li>Integração de retorno e acompanhamento do Auto de Arrecadação.</li>
         </ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.19</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.19">
+        <div class="item-head"><span class="item-ver">v1.19</span><span class="item-date">03/09/2026</span><span class="tag improve">MELHORIA</span></div>
         <h3>Configuração do Auto de Arrecadação</h3>
-        <ul>
-          <li>Configuração própria do cabeçalho institucional.</li>
-          <li>Configuração do rodapé compartilhada com o Envelope de Busca.</li>
-          <li>Aplicação das configurações na prévia, impressão/PDF e ODT.</li>
-        </ul>
+        <ul><li>Configuração própria do cabeçalho institucional.</li><li>Configuração do rodapé compartilhada com o Envelope de Busca.</li><li>Aplicação das configurações na prévia, impressão/PDF e ODT.</li></ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.18</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.18">
+        <div class="item-head"><span class="item-ver">v1.18</span><span class="item-date">03/09/2026</span><span class="tag improve">MELHORIA</span></div>
         <h3>Configurações por unidade</h3>
-        <ul>
-          <li>Oitiva com cabeçalho institucional configurável.</li>
-          <li>Laudo de Lesões com configuração institucional e administração de APJs.</li>
-          <li>Envelope de Busca com rodapé configurável e compartilhado.</li>
-        </ul>
+        <ul><li>Oitiva com cabeçalho institucional configurável.</li><li>Laudo de Lesões com configuração institucional e administração de APJs.</li><li>Envelope de Busca com rodapé configurável e compartilhado.</li></ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.17</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.17">
+        <div class="item-head"><span class="item-ver">v1.17</span><span class="item-date">03/09/2026</span><span class="tag new">NOVO</span></div>
         <h3>Auto de Arrecadação integrado ao alvo</h3>
-        <ul>
-          <li>Botão “Auto de Arrecadação” em cada alvo.</li>
-          <li>Endereço do alvo enviado automaticamente para o documento.</li>
-          <li>Geração separada para alvos com endereços diferentes.</li>
-        </ul>
+        <ul><li>Botão “Auto de Arrecadação” em cada alvo.</li><li>Endereço do alvo enviado automaticamente para o documento.</li><li>Geração separada para alvos com endereços diferentes.</li></ul>
       </article>
 
-      <article class="item">
-        <div class="item-head"><span class="item-ver">v1.16</span><span class="item-date">03/09/2026</span></div>
+      <article class="item old-version" data-version="1.16">
+        <div class="item-head"><span class="item-ver">v1.16</span><span class="item-date">03/09/2026</span><span class="tag improve">MELHORIA</span></div>
         <h3>Reestruturação visual do Envelope de Busca</h3>
-        <ul>
-          <li>Grade fixa na tabela superior para garantir as linhas no PDF.</li>
-          <li>Divisões de Foto, Campo e Valor estabilizadas.</li>
-          <li>Observações centralizadas e impressão com um alvo por página.</li>
-        </ul>
+        <ul><li>Grade fixa na tabela superior para garantir as linhas no PDF.</li><li>Divisões de Foto, Campo e Valor estabilizadas.</li><li>Observações centralizadas e impressão com um alvo por página.</li></ul>
       </article>
     </div>
+    <div class="empty" id="emptyState">Nenhuma atualização encontrada para esta pesquisa.</div>
   </section>
 
   <div class="footer">DESENVOLVIDO E ATUALIZADO PELA DELEGACIA DE MAMBORÊ - PR</div>
 </div>
+<script>
+(() => {
+  const CURRENT_VERSION='2.0';
+  const SEEN_KEY='pcprCentralUpdatesSeenVersion';
+  try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
+
+  const body=document.body;
+  const search=document.getElementById('historySearch');
+  const toggle=document.getElementById('toggleOld');
+  const items=[...document.querySelectorAll('.item')];
+  const empty=document.getElementById('emptyState');
+  let oldOpen=false;
+
+  const normalize=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+
+  function applyFilter(){
+    const q=normalize(search.value.trim());
+    body.classList.toggle('searching',!!q);
+    let visible=0;
+    items.forEach(item=>{
+      const match=!q || normalize(item.textContent).includes(q);
+      item.classList.toggle('filtered-out',!match);
+      const hiddenByOld=!q && item.classList.contains('old-version') && !oldOpen;
+      if(match && !hiddenByOld) visible++;
+    });
+    empty.classList.toggle('show',visible===0);
+  }
+
+  toggle.addEventListener('click',()=>{
+    oldOpen=!oldOpen;
+    body.classList.toggle('show-old',oldOpen);
+    toggle.textContent=oldOpen?'Ocultar versões antigas':'Mostrar versões antigas';
+    toggle.setAttribute('aria-expanded',String(oldOpen));
+    applyFilter();
+  });
+  search.addEventListener('input',applyFilter);
+  applyFilter();
+})();
+</script>
 </body>
 </html>
