@@ -15,7 +15,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gerador de QR Code — PCPR</title>
 <style>
-:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--danger:#8f3037}
+:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--danger:#8f3037;--warn:#855f16;--warn-bg:#fff7e4;--print-qr:65mm}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
 .wrap{max-width:1100px;margin:0 auto;padding:24px}
@@ -38,13 +38,24 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #qrCanvas{max-width:100%;height:auto;display:none;image-rendering:auto}
 .placeholder{color:var(--muted);font-size:13px;line-height:1.5}
 .outTitle{font-weight:900;font-size:18px;margin:5px 0}.outDesc{font-size:13px;color:var(--muted);margin:0 0 8px;white-space:pre-wrap}
-.raw{font-size:11px;color:#59636a;word-break:break-all;max-width:390px;margin:4px auto 0}
-.msg{min-height:20px;margin-top:8px;font-size:12px;font-weight:700}.msg.error{color:var(--danger)}.msg.ok{color:var(--accent)}
+.raw-wrap{width:min(100%,420px);margin:8px auto 0;text-align:left;border:1px solid var(--line);border-radius:9px;background:#fafbfc;padding:10px 11px}
+.raw-label{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:10px;font-weight:900;letter-spacing:.45px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.raw{font-size:11px;color:#59636a;word-break:break-all;white-space:pre-wrap;margin:0}
+.qr-status{width:min(100%,420px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:2px auto 8px}
+.qr-status div{border:1px solid var(--line);background:#fafbfc;border-radius:8px;padding:8px;min-width:0}
+.qr-status span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:900;margin-bottom:3px}
+.qr-status strong{font-size:11px;word-break:break-word}
+.msg{min-height:20px;margin-top:8px;font-size:12px;font-weight:700}.msg.error{color:var(--danger)}.msg.ok{color:var(--accent)}.msg.warn{color:var(--warn)}
+.warning{display:none;margin-top:10px;padding:10px 11px;border:1px solid #e6cc8b;border-left:4px solid #b88318;border-radius:8px;background:var(--warn-bg);color:#6c5118;font-size:12px;line-height:1.45}.warning.show{display:block}
 .note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:14px}
+.inline-check{display:flex;align-items:center;gap:7px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:700;color:#39434a;margin-top:6px}.inline-check input{width:auto}
+.small-help{font-size:11px;color:var(--muted);line-height:1.4;margin-top:5px}
+.preview .actions{justify-content:center}
+
 @media(max-width:780px){.wrap{padding:12px}.grid{grid-template-columns:1fr;padding:12px}.row{grid-template-columns:1fr}.hero h1{font-size:20px}}
 @media print{
  body{background:#fff}.wrap{padding:0}.hero,.formcard,.actions,.note,.msg{display:none!important}.grid{display:block;border:0;padding:0}.card{border:0}.preview{padding-top:25mm}
- .qrbox{width:85mm;border:0;padding:5mm}.outTitle{font-size:20pt}.outDesc{font-size:12pt}.raw{font-size:9pt}
+ .qrbox{width:var(--print-qr);border:0;padding:5mm}.outTitle{font-size:20pt}.outDesc{font-size:12pt}.raw-wrap,.qr-status{border:0;background:#fff}.raw{font-size:9pt}.raw-label{display:none}.qr-status{display:none}
 }
 
 .security-note{
@@ -96,38 +107,48 @@ g.QRCode={toCanvas,createMatrix:matrix};
 <body>
 <div class="wrap">
   <header class="hero"><h1>Gerador de QR Code</h1><p>Geração 100% local no navegador — sem CDN e sem envio do conteúdo para servidores externos.</p></header>
-<div class="security-note"><b>Processamento local:</b> o conteúdo informado para gerar o QR Code é processado neste navegador e não é armazenado em banco remoto pela Central.</div>
+<div class="security-note"><b>Processamento local:</b> gerar, copiar, salvar PNG e imprimir/PDF não envia o conteúdo do QR Code para a Central nem para serviço externo. O botão <b>Testar / abrir</b> só é habilitado para destinos navegáveis e, quando acionado, abre o respectivo aplicativo/site fora da Central.</div>
   <main class="grid">
     <section class="card formcard">
       <div class="field"><label for="type">Tipo de QR Code</label>
         <select id="type">
           <option value="link">Link / URL</option><option value="text">Texto</option>
           <option value="phone">Telefone</option><option value="email">E-mail</option>
-          <option value="whatsapp">WhatsApp</option><option value="location">Localização</option>
+          <option value="whatsapp">WhatsApp</option><option value="location">Localização</option><option value="wifi">Wi-Fi</option>
         </select>
       </div>
       <div id="dynamic"></div>
       <div class="field"><label for="title">Título opcional</label><input id="title" maxlength="90" placeholder="Ex.: Consulta de documento"></div>
       <div class="field"><label for="desc">Descrição opcional</label><textarea id="desc" maxlength="250" placeholder="Ex.: Aponte a câmera do celular para acessar."></textarea></div>
       <div class="row">
-        <div class="field"><label for="size">Tamanho</label><select id="size"><option value="260">Pequeno</option><option value="360" selected>Médio</option><option value="520">Grande</option></select></div>
+        <div class="field"><label for="size">Resolução do QR</label><select id="size"><option value="260">Pequena</option><option value="360" selected>Média</option><option value="520">Alta</option></select></div>
         <div class="field"><label for="margin">Margem</label><select id="margin"><option value="2">Compacta</option><option value="4" selected>Padrão</option><option value="6">Ampla</option></select></div>
       </div>
+      <div class="field"><label for="printSize">Tamanho na impressão / PDF</label><select id="printSize"><option value="45mm">Pequeno · 45 mm</option><option value="65mm" selected>Médio · 65 mm</option><option value="85mm">Grande · 85 mm</option></select><div class="small-help">Este ajuste altera apenas o tamanho impresso; a qualidade do PNG é definida em “Resolução do QR”.</div></div>
       <div class="actions"><button id="generate" type="button">Gerar QR Code</button><button id="clear" type="button" class="secondary">Limpar</button></div>
       <div id="msg" class="msg" aria-live="polite"></div>
-      <div class="note">Para links, prefira endereços completos iniciados por <b>https://</b>. O QR Code é criado no próprio navegador e o mecanismo funciona mesmo sem acesso ao CDN.</div>
+      <div id="complexityWarning" class="warning" aria-live="polite"></div>
+      <div class="note">Para links, prefira endereços completos iniciados por <b>https://</b>. Números brasileiros de telefone e WhatsApp informados apenas com DDD recebem <b>+55</b> automaticamente. A geração do QR continua 100% local.</div>
     </section>
 
     <section class="card preview">
       <div id="outTitle" class="outTitle">QR Code</div>
       <div id="outDesc" class="outDesc">Aponte a câmera do celular para acessar.</div>
+      <div class="qr-status">
+        <div><span>Tipo</span><strong id="statusType">—</strong></div>
+        <div><span>Conteúdo</span><strong id="statusContent">Aguardando</strong></div>
+        <div><span>QR</span><strong id="statusQr">Não gerado</strong></div>
+      </div>
       <div class="qrbox"><canvas id="qrCanvas"></canvas><div id="placeholder" class="placeholder">Preencha os dados e clique em<br><b>Gerar QR Code</b></div></div>
-      <div id="raw" class="raw"></div>
+      <div class="raw-wrap"><div class="raw-label"><span>Conteúdo final codificado</span><span id="rawBytes">0 bytes</span></div><div id="raw" class="raw">—</div></div>
       <div class="actions">
+        <button id="copy" type="button" class="secondary" disabled>Copiar conteúdo</button>
+        <button id="open" type="button" class="secondary" disabled>Testar / abrir</button>
         <button id="png" type="button" disabled>Baixar PNG</button>
         <button id="pdf" type="button" class="gold" disabled>Salvar PDF</button>
         <button id="print" type="button" class="secondary" disabled>Imprimir</button>
       </div>
+      <div class="small-help">“Salvar PDF” abre a janela de impressão do navegador; selecione a opção de salvar como PDF.</div>
     </section>
   </main>
 </div>
@@ -136,56 +157,116 @@ g.QRCode={toCanvas,createMatrix:matrix};
 'use strict';
 const $=id=>document.getElementById(id);
 let current='';
+let currentOpenUrl='';
+const typeLabels={link:'Link / URL',text:'Texto',phone:'Telefone',email:'E-mail',whatsapp:'WhatsApp',location:'Localização',wifi:'Wi-Fi'};
 const fields={
  link:'<div class="field"><label for="mainValue">Link</label><input id="mainValue" type="url" placeholder="https://exemplo.com"></div>',
  text:'<div class="field"><label for="mainValue">Texto</label><textarea id="mainValue" placeholder="Digite o texto que será codificado"></textarea></div>',
- phone:'<div class="field"><label for="mainValue">Telefone</label><input id="mainValue" inputmode="tel" placeholder="+55 44 99999-9999"></div>',
+ phone:'<div class="field"><label for="mainValue">Telefone</label><input id="mainValue" inputmode="tel" placeholder="44 99999-9999"><div class="small-help">Se informar somente DDD + número, o sistema acrescenta +55.</div></div>',
  email:'<div class="field"><label for="mainValue">E-mail</label><input id="mainValue" type="email" placeholder="exemplo@dominio.com"></div>',
  whatsapp:'<div class="field"><label for="mainValue">Número com DDD</label><input id="mainValue" inputmode="tel" placeholder="44 99999-9999"></div><div class="field"><label for="extraValue">Mensagem opcional</label><textarea id="extraValue" placeholder="Mensagem que aparecerá pronta no WhatsApp"></textarea></div>',
- location:'<div class="row"><div class="field"><label for="lat">Latitude</label><input id="lat" inputmode="decimal" placeholder="-24.3170"></div><div class="field"><label for="lon">Longitude</label><input id="lon" inputmode="decimal" placeholder="-52.5271"></div></div>'
+ location:'<div class="row"><div class="field"><label for="lat">Latitude</label><input id="lat" inputmode="decimal" placeholder="-24.3170"></div><div class="field"><label for="lon">Longitude</label><input id="lon" inputmode="decimal" placeholder="-52.5271"></div></div><div class="small-help">O QR armazena somente as coordenadas no formato geo:. O botão “Testar / abrir” usa um mapa externo apenas quando você clicar nele.</div>',
+ wifi:'<div class="field"><label for="ssid">Nome da rede (SSID)</label><input id="ssid" autocomplete="off" placeholder="Ex.: Rede_Delegacia"></div><div class="row"><div class="field"><label for="wifiSecurity">Segurança</label><select id="wifiSecurity"><option value="WPA" selected>WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">Sem senha</option></select></div><div class="field"><label for="wifiPassword">Senha</label><input id="wifiPassword" type="password" autocomplete="new-password" placeholder="Senha da rede"></div></div><label class="inline-check"><input id="wifiHidden" type="checkbox"> Rede oculta</label><div class="small-help">A senha fica apenas no conteúdo do QR Code e não é armazenada pela Central.</div>'
 };
-function renderFields(){ $('dynamic').innerHTML=fields[$('type').value]; }
-function cleanPhone(v){return v.replace(/\D/g,'')}
+function renderFields(){
+  $('dynamic').innerHTML=fields[$('type').value];
+  const sec=$('wifiSecurity');
+  if(sec) sec.addEventListener('change',()=>{const p=$('wifiPassword');if(p){p.disabled=sec.value==='nopass';if(p.disabled)p.value='';}});
+  updateLiveStatus();
+}
+function cleanPhone(v){return String(v||'').replace(/\D/g,'')}
+function normalizeBrazilPhone(v){
+  let n=cleanPhone(v).replace(/^00/,'');
+  if(n.startsWith('55') && n.length>=12 && n.length<=13) return n;
+  if(n.length===10 || n.length===11) return '55'+n;
+  if(n.length>=12 && n.length<=15) return n;
+  throw new Error('Informe um telefone válido com DDD.');
+}
+function wifiEscape(v){return String(v||'').replace(/([\\;,:"])/g,'\\$1');}
 function build(){
  const t=$('type').value;
  if(t==='location'){
    const lat=parseFloat(($('lat').value||'').replace(',','.')),lon=parseFloat(($('lon').value||'').replace(',','.'));
    if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -90||lat > 90||lon < -180||lon > 180) throw new Error('Informe latitude e longitude válidas.');
-   return `geo:${lat},${lon}`;
+   return {content:`geo:${lat},${lon}`,openUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat+','+lon)}`};
+ }
+ if(t==='wifi'){
+   const ssid=($('ssid').value||'').trim(),security=$('wifiSecurity').value,password=($('wifiPassword').value||''),hidden=$('wifiHidden').checked;
+   if(!ssid) throw new Error('Informe o nome da rede Wi-Fi (SSID).');
+   if(security!=='nopass'&&!password) throw new Error('Informe a senha da rede Wi-Fi ou selecione “Sem senha”.');
+   const sec=security==='nopass'?'nopass':security;
+   return {content:`WIFI:T:${sec};S:${wifiEscape(ssid)};${security==='nopass'?'':`P:${wifiEscape(password)};`}H:${hidden?'true':'false'};;`,openUrl:''};
  }
  const v=($('mainValue').value||'').trim(); if(!v) throw new Error('Preencha o conteúdo do QR Code.');
  if(t==='link'){
    let u=v;if(!/^https?:\/\//i.test(u))u='https://'+u;
-   try{new URL(u)}catch(e){throw new Error('Informe um link válido.');} return u;
+   let parsed;try{parsed=new URL(u)}catch(e){throw new Error('Informe um link válido.');}
+   if(!/^https?:$/.test(parsed.protocol)) throw new Error('Use um endereço http ou https.');
+   return {content:parsed.href,openUrl:parsed.href};
  }
- if(t==='text')return v;
- if(t==='phone'){const n=cleanPhone(v);if(n.length<8)throw new Error('Informe um telefone válido.');return 'tel:+'+n.replace(/^00/,'');}
- if(t==='email'){if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))throw new Error('Informe um e-mail válido.');return 'mailto:'+v;}
- if(t==='whatsapp'){let n=cleanPhone(v);if(n.length<=11&&!n.startsWith('55'))n='55'+n;if(n.length<12)throw new Error('Informe um número de WhatsApp com DDD.');const m=($('extraValue')?.value||'').trim();return 'https://wa.me/'+n+(m?'?text='+encodeURIComponent(m):'');}
- return v;
+ if(t==='text')return {content:v,openUrl:''};
+ if(t==='phone'){const n=normalizeBrazilPhone(v);return {content:'tel:+'+n,openUrl:''};}
+ if(t==='email'){if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))throw new Error('Informe um e-mail válido.');return {content:'mailto:'+v,openUrl:''};}
+ if(t==='whatsapp'){const n=normalizeBrazilPhone(v),m=($('extraValue')?.value||'').trim();const u='https://wa.me/'+n+(m?'?text='+encodeURIComponent(m):'');return {content:u,openUrl:u};}
+ return {content:v,openUrl:''};
 }
 function safeName(v){return (v||'qrcode').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,70)||'qrcode'}
+function bytesCount(v){return new TextEncoder().encode(String(v||'')).length;}
+function complexityInfo(content){
+  try{
+    const matrix=QRCode.createMatrix(content),modules=matrix.length,version=Math.round((modules-17)/4),bytes=bytesCount(content);
+    let level='normal',text='';
+    if(version>=20||bytes>900){level='high';text=`Conteúdo extenso (${bytes} bytes · QR versão ${version}). Para facilitar a leitura por câmeras, prefira impressão maior e boa qualidade.`;}
+    else if(version>=12||bytes>450){level='medium';text=`QR relativamente denso (${bytes} bytes · versão ${version}). Se possível, use resolução alta e tamanho de impressão médio ou grande.`;}
+    return {version,modules,bytes,level,text};
+  }catch(e){return {version:null,modules:null,bytes:bytesCount(content),level:'unknown',text:''};}
+}
+function updatePrintSize(){document.documentElement.style.setProperty('--print-qr',$('printSize').value||'65mm');}
+function updateLiveStatus(){
+  $('statusType').textContent=typeLabels[$('type').value]||'—';
+  if(!current){$('statusContent').textContent='Aguardando';$('statusQr').textContent='Não gerado';}
+}
+function resetOutput(){
+  current='';currentOpenUrl='';
+  $('qrCanvas').style.display='none';$('placeholder').style.display='block';$('raw').textContent='—';$('rawBytes').textContent='0 bytes';
+  $('outTitle').textContent='QR Code';$('outDesc').textContent='Aponte a câmera do celular para acessar.';
+  $('msg').textContent='';$('msg').className='msg';$('complexityWarning').textContent='';$('complexityWarning').className='warning';
+  $('statusContent').textContent='Aguardando';$('statusQr').textContent='Não gerado';
+  ['copy','open','png','pdf','print'].forEach(x=>$(x).disabled=true);
+}
 async function generate(){
- const msg=$('msg');msg.className='msg';msg.textContent='';
+ const msg=$('msg');msg.className='msg';msg.textContent='';$('complexityWarning').className='warning';$('complexityWarning').textContent='';
  if(typeof QRCode==='undefined'){msg.className='msg error';msg.textContent='Não foi possível iniciar o mecanismo de QR Code.';return}
  try{
-   current=build(); const s=Number($('size').value),m=Number($('margin').value);
-   await QRCode.toCanvas($('qrCanvas'),current,{width:s,margin:m,errorCorrectionLevel:'M',color:{dark:'#000000',light:'#ffffff'}});
+   const built=build();current=built.content;currentOpenUrl=built.openUrl||'';
+   const s=Number($('size').value),m=Number($('margin').value);updatePrintSize();
+   await QRCode.toCanvas($('qrCanvas'),current,{width:s,margin:m,color:{dark:'#000000',light:'#ffffff'}});
    $('qrCanvas').style.display='block';$('placeholder').style.display='none';
    $('outTitle').textContent=$('title').value.trim()||'QR Code';
    $('outDesc').textContent=$('desc').value.trim()||'Aponte a câmera do celular para acessar.';
    $('raw').textContent=current;
-   ['png','pdf','print'].forEach(x=>$(x).disabled=false);
-   msg.className='msg ok';msg.textContent='QR Code gerado com sucesso.';
- }catch(e){current='';msg.className='msg error';msg.textContent=e.message||'Não foi possível gerar o QR Code.';}
+   const info=complexityInfo(current);$('rawBytes').textContent=info.bytes+' byte'+(info.bytes===1?'':'s');
+   $('statusType').textContent=typeLabels[$('type').value]||'—';$('statusContent').textContent='Conferido';$('statusQr').textContent=info.version?'Pronto · v'+info.version:'Pronto';
+   ['copy','png','pdf','print'].forEach(x=>$(x).disabled=false);$('open').disabled=!currentOpenUrl;
+   if(info.text){$('complexityWarning').textContent=info.text;$('complexityWarning').className='warning show';}
+   msg.className='msg ok';msg.textContent='QR Code gerado e pronto para conferência.';
+ }catch(e){resetOutput();msg.className='msg error';msg.textContent=e.message||'Não foi possível gerar o QR Code.';}
 }
-$('type').addEventListener('change',renderFields);
+async function copyText(v){
+  if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(v);return;}
+  const ta=document.createElement('textarea');ta.value=v;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');ta.remove();
+}
+function openCurrent(){if(!currentOpenUrl)return;const w=window.open(currentOpenUrl,'_blank','noopener,noreferrer');if(w)w.opener=null;}
+$('type').addEventListener('change',()=>{renderFields();resetOutput();updateLiveStatus();});
 $('generate').addEventListener('click',generate);
-$('clear').addEventListener('click',()=>{renderFields();$('title').value='';$('desc').value='';$('qrCanvas').style.display='none';$('placeholder').style.display='block';$('raw').textContent='';$('outTitle').textContent='QR Code';$('outDesc').textContent='Aponte a câmera do celular para acessar.';$('msg').textContent='';current='';['png','pdf','print'].forEach(x=>$(x).disabled=true)});
+$('printSize').addEventListener('change',updatePrintSize);
+$('clear').addEventListener('click',()=>{renderFields();$('title').value='';$('desc').value='';$('size').value='360';$('margin').value='4';$('printSize').value='65mm';updatePrintSize();resetOutput();updateLiveStatus();const first=$('dynamic').querySelector('input,textarea,select');if(first)first.focus();});
+$('copy').addEventListener('click',async()=>{if(!current)return;try{await copyText(current);$('msg').className='msg ok';$('msg').textContent='Conteúdo do QR Code copiado.';}catch(e){$('msg').className='msg error';$('msg').textContent='Não foi possível copiar o conteúdo.';}});
+$('open').addEventListener('click',openCurrent);
 $('png').addEventListener('click',()=>{if(!current)return;const a=document.createElement('a');a.download=safeName($('title').value||'qrcode')+'.png';a.href=$('qrCanvas').toDataURL('image/png');a.click()});
-$('print').addEventListener('click',()=>{if(current)window.print()});
-$('pdf').addEventListener('click',()=>{if(!current)return;const old=document.title;document.title=safeName($('title').value||'qrcode');const restore=()=>{document.title=old;window.removeEventListener('afterprint',restore)};window.addEventListener('afterprint',restore);window.print();setTimeout(()=>document.title=old,3000)});
-renderFields();
+$('print').addEventListener('click',()=>{if(current){updatePrintSize();window.print();}});
+$('pdf').addEventListener('click',()=>{if(!current)return;updatePrintSize();const old=document.title;document.title=safeName($('title').value||'qrcode');const restore=()=>{document.title=old;window.removeEventListener('afterprint',restore)};window.addEventListener('afterprint',restore);window.print();setTimeout(()=>document.title=old,3000)});
+renderFields();updatePrintSize();resetOutput();updateLiveStatus();
 })();
 </script>
 </body>
