@@ -165,6 +165,13 @@ input::placeholder{color:#63798d}
 }
 .empty{color:#718599;font-size:12px}
 
+
+.result-source{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.source-chip{border-radius:999px;padding:5px 8px;font-size:9.5px;font-weight:900;letter-spacing:.05em}
+.source-chip.current{background:#103228;border:1px solid #2a6a55;color:#78e1bc}
+.source-chip.context{background:#172a22;border:1px solid #355244;color:#b9c9c1}
+.copy-result{background:#172a22!important}
+
 @media(max-width:700px){
   .search-row{grid-template-columns:1fr}
   .mainbtn{min-height:50px}
@@ -267,7 +274,7 @@ input::placeholder{color:#70877c!important}
     <div class="logo">PCPR</div>
     <div>
       <h1>CONSULTA DE OPERADORA</h1>
-      <p>Identificação direta da operadora atual e indicação de portabilidade</p>
+      <p>Identificação da operadora retornada pela consulta, portabilidade e contexto do DDD</p>
     </div>
   </div>
 </header>
@@ -285,7 +292,7 @@ input::placeholder{color:#70877c!important}
       <button class="mainbtn" id="consultBtn" type="button">CONSULTAR</button>
     </div>
     <div class="hint">
-      Digite DDD + número e clique em CONSULTAR. O resultado da operadora aparece diretamente nesta tela. A fonte gratuita pode aplicar limite temporário de consultas.
+      Digite DDD + número e clique em CONSULTAR. A operadora exibida vem do retorno da fonte consultada; DDD, região e tipo de linha são apresentados separadamente como contexto.
     </div>
       <div class="limit-note" title="Limitação aplicada pela fonte gratuita externa">⚠ <strong>Fonte gratuita:</strong> pode limitar a 6 consultas por hora em cada servidor.</div>
     <div class="state" id="state"></div>
@@ -294,7 +301,7 @@ input::placeholder{color:#70877c!important}
   <section class="card result" id="result">
     <div class="result-head">
       <h2>RESULTADO DA CONSULTA</h2>
-      <span class="badge ok" id="statusBadge">CONSULTA CONCLUÍDA</span>
+      <span class="badge ok" id="statusBadge">OPERADORA CONSULTADA</span>
     </div>
 
     <div class="operator">
@@ -303,29 +310,37 @@ input::placeholder{color:#70877c!important}
         <div class="small">OPERADORA ATUAL</div>
         <h3 id="operatorName">—</h3>
         <p id="operatorDetail">—</p>
+        <div class="result-source">
+          <span class="source-chip current">RETORNO DA CONSULTA</span>
+          <span class="source-chip context">DDD/REGIÃO = CONTEXTO</span>
+        </div>
       </div>
     </div>
 
     <div class="grid">
       <div class="row"><div class="k">Número consultado</div><div class="v" id="fNumber">—</div></div>
       <div class="row"><div class="k">DDD</div><div class="v" id="fDDD">—</div></div>
-      <div class="row"><div class="k">UF / Região</div><div class="v" id="fRegion">—</div></div>
+      <div class="row"><div class="k">Região do DDD</div><div class="v" id="fRegion">—</div></div>
       <div class="row"><div class="k">Tipo provável</div><div class="v" id="fType">—</div></div>
       <div class="row"><div class="k">Código da operadora</div><div class="v" id="fCode">—</div></div>
       <div class="row"><div class="k">Portabilidade</div><div class="v" id="fPorted">—</div></div>
       <div class="row"><div class="k">Fonte automática</div><div class="v">Telein — consulta pública gratuita</div></div>
       <div class="row"><div class="k">Confirmação oficial</div><div class="v">ABR Telecom / BDR</div></div>
+      <div class="row"><div class="k">Data/hora da consulta</div><div class="v" id="fTimestamp">—</div></div>
     </div>
 
     <div class="actions">
       <button class="primary" id="printBtn" type="button">IMPRIMIR RESUMO</button>
+      <button id="copyNumberBtn" type="button">COPIAR NÚMERO</button>
+      <button id="copyOperatorBtn" type="button">COPIAR OPERADORA</button>
+      <button class="copy-result" id="copyResultBtn" type="button">COPIAR RESULTADO</button>
       <a id="abrBtn" href="https://consultanumero.abrtelecom.com.br/" target="_blank" rel="noopener">CONFIRMAR NA ABR TELECOM</a>
       <button id="historyBtn" type="button">CONSULTAS RECENTES</button>
       <button id="newBtn" type="button">NOVA CONSULTA</button>
     </div>
 
     <div class="note">
-      Devido à portabilidade numérica, o prefixo original não é suficiente para definir a operadora atual. Para uso probatório ou antes de expedir ofício, recomenda-se confirmar a prestadora no portal público da ABR Telecom, entidade administradora da portabilidade.
+      Devido à portabilidade numérica, o prefixo original não é suficiente para definir a operadora atual. Nesta tela, o nome da operadora é apresentado a partir do retorno da consulta automática; DDD/região e tipo provável são apenas informações complementares. Para uso probatório ou antes de expedir ofício, recomenda-se confirmar a prestadora no portal público da ABR Telecom.
     </div>
   </section>
 
@@ -485,6 +500,31 @@ input::placeholder{color:#70877c!important}
     throw new Error(errors.join(' | ') || 'fontes indisponíveis');
   }
 
+  async function copyText(text){
+    const value=String(text||'').trim();
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);}
+    catch(_){
+      const ta=document.createElement('textarea');ta.value=value;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+    }
+    showState('Copiado para a área de transferência.','ok');
+    setTimeout(hideState,900);
+  }
+
+  function currentResultText(){
+    if(!current)return '';
+    return [
+      'Número: '+current.formatted,
+      'Operadora consultada: '+current.operator,
+      'Código da operadora: '+(current.code||'não informado'),
+      'Portabilidade: '+(current.ported?'SIM':'NÃO / sem indicação'),
+      'DDD: '+current.ddd,
+      'Região do DDD: '+(current.region||'não catalogada'),
+      'Tipo provável: '+current.type,
+      'Data/hora da consulta: '+new Date(current.ts).toLocaleString('pt-BR')
+    ].join('\n');
+  }
+
   function render(n,data){
     const code=String(data.operadora||'').trim();
     const op=operatorMap[code] || fallbackOperator(code);
@@ -499,6 +539,8 @@ input::placeholder{color:#70877c!important}
     $('fRegion').textContent=dddMap[ddd] || 'DDD válido — região não catalogada localmente';
     $('fType').textContent=probableType(n);
     $('fCode').textContent=code || 'Não informado';
+    $('fTimestamp').textContent=new Date().toLocaleString('pt-BR');
+    $('statusBadge').textContent='OPERADORA CONSULTADA';
     $('fPorted').innerHTML=ported
       ? '<span class="yes">SIM — número portado</span>'
       : '<span class="no">NÃO / sem indicação de portabilidade</span>';
@@ -627,6 +669,9 @@ input::placeholder{color:#70877c!important}
   $('consultBtn').addEventListener('click',consult);
 
   $('printBtn').addEventListener('click',()=>window.print());
+  $('copyNumberBtn').addEventListener('click',()=>copyText(current?.formatted||formatPhone(normalizeNumber(input.value))));
+  $('copyOperatorBtn').addEventListener('click',()=>copyText(current?.operator||''));
+  $('copyResultBtn').addEventListener('click',()=>copyText(currentResultText()));
 
   $('historyBtn').addEventListener('click',()=>{
     $('history').classList.toggle('show');

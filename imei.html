@@ -13,7 +13,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Consulta IMEI PRO — PCPR</title>
+<title>Consulta IMEI — PCPR</title>
 <style>
 :root{
   --bg:#0c1512;
@@ -147,6 +147,15 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
 .report-actions,.summary-actions{display:flex;gap:8px;margin-top:14px}
 .report-actions button,.summary-actions button{border:1px solid #ccc;background:#fff;border-radius:8px;padding:9px 12px;cursor:pointer}
 
+
+.quick-summary{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;margin:-4px 0 20px}
+.quick-box{border:1px solid #2d443a;background:#0e1915;border-radius:12px;padding:10px 12px}
+.quick-box .qk{font-size:9px;font-weight:900;letter-spacing:.08em;color:#8fa49a;text-transform:uppercase}
+.quick-box .qv{margin-top:4px;font-size:13px;font-weight:850;color:#eef4f0;overflow-wrap:anywhere}
+.copy-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.copy-actions button{border:1px solid #355244;background:#172a22;color:#e8f0ec;border-radius:8px;min-height:31px;padding:0 9px;font-size:10.5px;font-weight:800;cursor:pointer}
+@media(max-width:760px){.quick-summary{grid-template-columns:1fr}}
+
 @media(max-width:900px){
   .search-row{grid-template-columns:1fr}
   #consultBtn{min-height:50px}
@@ -194,8 +203,8 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
   <div class="header">
     <div class="logo">PCPR</div>
     <div>
-      <h1>CONSULTA IMEI PRO</h1>
-      <p>Identificação técnica do aparelho por TAC e ficha complementar do modelo</p>
+      <h1>CONSULTA IMEI</h1>
+      <p>Identificação técnica por IMEI/TAC, fabricante, modelo e ficha do aparelho</p>
     </div>
   </div>
 </header>
@@ -211,7 +220,7 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
       </div>
       <button class="mainbtn" id="consultBtn" type="button" disabled>CONSULTAR</button>
     </div>
-    <div class="hint">Ao completar 15 dígitos, a consulta é iniciada automaticamente. Também aceita TAC de 8 dígitos.</div>
+    <div class="hint">Informe 15 dígitos para validar o IMEI completo ou 8 dígitos para consultar apenas o TAC. Ao completar um IMEI válido, a identificação é iniciada automaticamente.</div>
     <div class="state show loading" id="state"><span class="spinner"></span>Carregando a base TAC...</div>
   </section>
 
@@ -248,10 +257,29 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
   <section class="result" id="result">
     <div class="card">
       <div class="result-title">
-        <h2>INFORMAÇÕES DO DISPOSITIVO</h2>
+        <h2>RESULTADO DA IDENTIFICAÇÃO</h2>
         <div class="confidence">
           <span class="badge ok" id="validBadge">IMEI VÁLIDO</span>
           <span class="badge gold" id="confBadge">CORRESPONDÊNCIA TAC: EXATA</span>
+        </div>
+      </div>
+
+      <div class="quick-summary">
+        <div class="quick-box">
+          <div class="qk">IMEI / TAC consultado</div>
+          <div class="qv" id="quickImei">—</div>
+          <div class="copy-actions">
+            <button id="copyImeiBtn" type="button">COPIAR IMEI/TAC</button>
+            <button id="copyTacBtn" type="button">COPIAR TAC</button>
+          </div>
+        </div>
+        <div class="quick-box">
+          <div class="qk">Fabricante / Modelo</div>
+          <div class="qv" id="quickDevice">—</div>
+        </div>
+        <div class="quick-box">
+          <div class="qk">Fonte da identificação</div>
+          <div class="qv" id="quickSource">Base TAC · correspondência exata</div>
         </div>
       </div>
 
@@ -287,7 +315,7 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
 
           <div class="actions">
             <button class="primary" id="reportBtn" type="button">GERAR FICHA / PDF</button>
-            <button id="printBtn" type="button">IMPRIMIR RESUMO</button>
+            <button id="printBtn" type="button">IMPRIMIR RESUMO ESSENCIAL</button>
             <button id="newBtn" type="button">NOVA CONSULTA</button>
           </div>
         </section>
@@ -541,6 +569,17 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
     $('fullGrid').innerHTML=FULL_FIELDS.map(([label,key])=>renderField(label,key,specs[key],sources[key]||'Ficha técnica')).join('');
   }
 
+  async function copyText(text){
+    const value=String(text||'').trim();
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);}
+    catch(_){
+      const ta=document.createElement('textarea');ta.value=value;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+    }
+    setState('Copiado para a área de transferência.','ok');
+    setTimeout(hideState,900);
+  }
+
   function renderIdentity(q,base){
     const title=modelTitle(base.brand,base.specs);
     $('brand').textContent=(base.brand||'Não informado').toUpperCase();
@@ -549,6 +588,9 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
 
     $('validBadge').textContent=q.length===15?'IMEI VÁLIDO':'TAC IDENTIFICADO';
     $('confBadge').textContent='CORRESPONDÊNCIA TAC: EXATA';
+    $('quickImei').textContent=q;
+    $('quickDevice').textContent=(base.brand||'Não informado')+' · '+title;
+    $('quickSource').textContent='Base TAC · correspondência exata';
 
     $('photo').style.display='none';
     $('photoMsg').style.display='block';
@@ -965,6 +1007,8 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
   });
 
   $('reportBtn').addEventListener('click',generateReport);
+  $('copyImeiBtn').addEventListener('click',()=>copyText(current?.query||input.value));
+  $('copyTacBtn').addEventListener('click',()=>copyText(current?.tac||digits(input.value).slice(0,8)));
 
   $('printBtn').addEventListener('click',()=>{
     generatePrintSummary();
