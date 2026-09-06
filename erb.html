@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ERB Mapper Pro v7.2 — Clean</title>
+<title>Análise de ERBs e Antenas v7.3 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -86,6 +86,29 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
 .capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo{display:none!important}
 .presentation .sidebar{display:none}.presentation .app{grid-template-columns:1fr}.presentation .topbar{left:10px}.presentation .coordbar{left:10px}
+
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.analysis-kpi{background:#0b1712;border:1px solid #29483b;border-radius:8px;padding:7px}
+.analysis-kpi span{display:block;font-size:8.4px;color:#8fa399;text-transform:uppercase;font-weight:850}
+.analysis-kpi b{display:block;margin-top:3px;font-size:14px;color:#f0d890}
+.rankrow{border:1px solid #29483b;border-radius:8px;padding:7px;margin-bottom:6px;background:#0b1712}
+.ranktop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.rankname{font-weight:900;font-size:10px;line-height:1.25}
+.rankpct{font-size:9px;color:#e5cc84;font-weight:900;white-space:nowrap}
+.rankmeta{font-size:8.6px;color:#91a59c;line-height:1.35;margin-top:3px}
+.rankactions{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.quickfilters{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 10px}
+.quickfilter{border:1px solid #355847;background:#0b1712;color:#cad8d1;border-radius:999px;padding:5px 7px;font-size:8.8px;font-weight:850}
+.quickfilter.active{background:#5b481f;color:#f4dfa0;border-color:#7c6429}
+.auditbox{border:1px solid #3c604f;background:#0a1712;border-radius:9px;padding:8px;margin-top:8px}
+.auditfile{border:1px solid #2b493c;border-radius:8px;padding:7px;margin-top:6px;background:#102019}
+.auditfile b{font-size:9.8px}.auditmeta{font-size:8.8px;color:#9fb0a8;line-height:1.45;margin-top:3px}
+.auditwarn{color:#e2bd69}.auditok{color:#79d6a7}
+.analysis-note{font-size:8.8px;line-height:1.4;color:#91a59c;border-left:3px solid #456858;padding-left:7px;margin:8px 0}
+.popup-actions{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.popup-btn{border:1px solid #aaa;background:#fff;color:#111;border-radius:5px;padding:4px 6px;font-size:10px;font-weight:700;cursor:pointer}
+.route-label{font-size:8px;color:#c9d7d0;margin-left:4px}
+
 @media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar{width:92%}}
 @media print{.sec{display:none!important}}
 </style>
@@ -96,10 +119,10 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>ERB Mapper Pro <small>v7.2</small></h1><p>Lotes · Voz/Dados · Timeline · Geospatial · Relatório</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v7.3</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
     </div>
   </div>
-  <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. Não há login, senha ou banco remoto.</div>
+  <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
   <div class="sidecontent">
     <div class="block">
       <div class="blocktitle"><span>Investigação</span><span id="projectState" class="badge">não salva</span></div>
@@ -112,6 +135,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
     <div class="side-tabs">
       <button class="sidetab active" data-side="lots">Lotes</button>
+      <button class="sidetab" data-side="analysis">Análise</button>
       <button class="sidetab" data-side="records">Registros</button>
       <button class="sidetab" data-side="pois">Pontos</button>
     </div>
@@ -119,6 +143,23 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
     <section class="sidepane active" id="side-lots">
       <div id="lotList"></div>
       <div class="muted" id="noLots">Nenhum lote. Use “Adicionar › Novo lote”.</div>
+    </section>
+
+
+    <section class="sidepane" id="side-analysis">
+      <div class="analysis-grid">
+        <div class="analysis-kpi"><span>Registros visíveis</span><b id="kpiEvents">0</b></div>
+        <div class="analysis-kpi"><span>ERBs / setores</span><b id="kpiSectors">0</b></div>
+        <div class="analysis-kpi"><span>Lotes visíveis</span><b id="kpiLots">0</b></div>
+        <div class="analysis-kpi"><span>Coincidências</span><b id="kpiCoincidences">0</b></div>
+      </div>
+      <div class="itemmeta" id="analysisPeriod">Período: —</div>
+      <div class="analysis-note">Ranking calculado sobre os registros atualmente visíveis após os filtros. Incidência em ERB/setor não equivale, isoladamente, à localização exata do terminal.</div>
+      <div class="blocktitle" style="margin-top:10px"><span>Ranking de incidência</span><span class="badge" id="rankCount">0</span></div>
+      <div id="rankList"></div>
+      <div class="blocktitle" style="margin-top:10px"><span>Coincidências entre lotes</span><span class="badge" id="coincidenceCount">0</span></div>
+      <div id="coincidenceList"></div>
+      <div class="row" style="margin-top:8px"><button class="btn outline small" id="restoreHidden">Restaurar ERBs ocultas</button></div>
     </section>
 
     <section class="sidepane" id="side-records">
@@ -163,8 +204,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
       </div>
 
       <button class="toolbtn" id="filterBtn">Filtros</button>
-      <button class="toolbtn" id="timelineBtn">Timeline</button>
-      <button class="toolbtn" id="geoBtn">Geospatial</button>
+      <button class="toolbtn" id="timelineBtn">Linha do tempo</button>
+      <button class="toolbtn" id="geoBtn">Interseção</button>
       <span class="filterpill" id="filterPill">FILTRO ATIVO</span>
     </div>
 
@@ -174,6 +215,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
         <div class="dropdown">
           <button class="dropitem" id="saveProject">Salvar neste navegador</button>
           <button class="dropitem" id="openProjects">Abrir projeto salvo</button>
+          <button class="dropitem" id="selfTest">Autoteste do módulo</button>
           <div class="dropsep"></div>
           <button class="dropitem" id="exportJson">Exportar .JSON</button>
           <label class="dropitem" style="display:block;cursor:pointer">Importar .JSON<input id="importJson" type="file" accept=".json" hidden></label>
@@ -207,14 +249,14 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
   <div class="timelinebar" id="timelinebar">
     <div class="timelinehead">
-      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play</button><button class="btn outline small" id="stopTimeline">■</button><span class="muted" id="timelineInfo"></span></div>
+      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play rota</button><button class="btn outline small" id="stopTimeline">■</button><span class="muted" id="timelineInfo"></span></div>
       <button class="btn outline small" id="closeTimeline">Fechar</button>
     </div>
     <div class="timeitems" id="timeitems"></div>
   </div>
 
   <div class="geo" id="geoPanel">
-    <h3>GEOSPATIAL — INTERSEÇÃO DOS SETORES VISÍVEIS</h3>
+    <h3>INTERSEÇÃO — ÁREA DE CONVERGÊNCIA ESTIMADA</h3><div class="muted" style="margin:-3px 0 8px">Inferência geométrica dos setores visíveis; não representa a posição exata do aparelho.</div>
     <div class="geogrid">
       <div class="geokpi">Setores usados<b id="geoSectors">0</b></div>
       <div class="geokpi">Área estimada<b id="geoArea">—</b></div>
@@ -246,7 +288,7 @@ const COLORS=['#2f81f7','#f85149','#a371f7','#3fb950','#d29922','#39c5cf','#f778
 const state={
   lots:[],events:[],pois:[],
   activeLotId:null,focusEventId:null,
-  filters:{start:'',end:'',type:'',operator:'',lotId:''},
+  filters:{start:'',end:'',type:'',operator:'',lotId:'',daypart:''},
   onlyGeo:false,playing:false
 };
 const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean'};
@@ -305,13 +347,22 @@ function filteredEvents(){
   const f=state.filters;
   return state.events.filter(ev=>{
     const lot=lotById(ev.lotId);
-    if(!lot||lot.visible===false||ev.visible===false)return false;
+    if(!lot||lot.visible===false||ev.visible===false||ev.displayMode==='hidden')return false;
     if(f.lotId&&ev.lotId!==f.lotId)return false;
     if(f.type&&String(ev.eventType||lot.type||'').toUpperCase()!==f.type)return false;
     if(f.operator&&currentOperator(ev)!==f.operator)return false;
     const d=parseDate(ev.datetime);
     if(f.start&&(!d||d<new Date(f.start)))return false;
     if(f.end&&(!d||d>new Date(f.end)))return false;
+    if(f.daypart){
+      if(!d)return false;
+      const h=d.getHours();
+      if(f.daypart==='madrugada' && !(h>=0&&h<6))return false;
+      if(f.daypart==='manha' && !(h>=6&&h<12))return false;
+      if(f.daypart==='tarde' && !(h>=12&&h<18))return false;
+      if(f.daypart==='noite' && !(h>=18&&h<24))return false;
+      if(f.daypart==='noturno' && !(h>=18||h<6))return false;
+    }
     return true;
   });
 }
@@ -325,24 +376,37 @@ function sectorGroups(){
   return [...m.values()];
 }
 function eventPopup(group){
-  const ev=group[0],lot=lotById(ev.lotId),op=currentOperator(ev),rows=group.slice(0,12).map(x=>
+  const ev=group[0],lot=lotById(ev.lotId),op=currentOperator(ev),ids=group.map(x=>x.id).join(',');
+  const rows=group.slice(0,40).map(x=>
     `<div style="margin-top:5px;padding-top:5px;border-top:1px solid #ddd">
       ${x.datetime?'<b>'+esc(x.datetime)+'</b><br>':''}
       ${x.origin?'Origem: '+esc(x.origin)+'<br>':''}${x.destination?'Destino: '+esc(x.destination)+'<br>':''}
-      ${x.imeiOrigin?'IMEI origem: '+esc(x.imeiOrigin)+'<br>':''}${x.imeiDestination?'IMEI destino: '+esc(x.imeiDestination)+'<br>':''}${!x.imeiOrigin&&!x.imeiDestination&&x.imei?'IMEI: '+esc(x.imei)+'<br>':''}${x.cgi? 'CGI/ERB: '+esc(x.cgi)+'<br>':''}${x.tech?'Tecnologia: '+esc(x.tech):''}
+      ${x.imeiOrigin?'IMEI origem: '+esc(x.imeiOrigin)+'<br>':''}${x.imeiDestination?'IMEI destino: '+esc(x.imeiDestination)+'<br>':''}${!x.imeiOrigin&&!x.imeiDestination&&x.imei?'IMEI: '+esc(x.imei)+'<br>':''}
+      ${x.callCode?'Evento: '+esc(x.callCode)+(x.central?' / '+esc(x.central):'')+'<br>':''}
+      ${x.duration?'Duração: '+esc(x.duration)+' s<br>':''}
+      ${x.cgi?'CGI/ERB: '+esc(x.cgi)+'<br>':''}${x.tech?'Tecnologia: '+esc(x.tech):''}
     </div>`).join('');
-  return `<div style="min-width:230px">
+  const address=ev.address||ev.obs||'';
+  return `<div style="min-width:250px;max-width:370px">
     <b>${esc(ev.name||ev.station||'ERB')}</b><br>
     <span>${esc(lot?.name||'Lote')} · ${esc(lot?.type||ev.eventType||'')}</span><br>
     Lat.: ${fmt(ev.lat)} · Long.: ${fmt(ev.lng)}<br>
     Az.: ${fmt(ev.az,1)}° · Raio: ${fmt(ev.dist,2)} km · ±${fmt(ev.margin,1)}°
+    <br>Origem do raio: ${esc(ev.radiusSource||'ESTIMADO / NÃO INFORMADO')}
     ${op?'<br>Operadora: '+esc(op):''}
     ${ev.cgi?'<br>CGI/ERB: '+esc(ev.cgi):''}
     ${ev.cellid?'<br>Cell ID: '+esc(ev.cellid):''}
-    ${ev.callCode?'<br>Registro central: '+esc(ev.callCode)+(ev.central?' / '+esc(ev.central):''):''}
-    ${ev.duration?'<br>Duração: '+esc(ev.duration)+' s':''}
+    ${address?'<br>Endereço/obs.: '+esc(address):''}
     <br><b>${group.length} registro(s) neste setor</b>
-    ${rows}${group.length>12?'<br>… e mais '+(group.length-12):''}
+    ${rows}${group.length>40?'<br>… e mais '+(group.length-40):''}
+    <div class="popup-actions">
+      <button class="popup-btn" data-copycoords="${ev.lat},${ev.lng}">Copiar coordenadas</button>
+      <button class="popup-btn" data-copyaz="${ev.az}">Copiar azimute</button>
+      <button class="popup-btn" data-copyerb="${esc((ev.name||ev.station||'ERB')+' | '+ev.lat+','+ev.lng+' | Az. '+ev.az+'° | '+(op||'')+' | '+(ev.cgi||ev.cellid||''))}">Copiar ERB</button>
+      <button class="popup-btn" data-groupmode="dim" data-groupids="${ids}">Atenuar</button>
+      <button class="popup-btn" data-groupmode="normal" data-groupids="${ids}">Normal</button>
+      <button class="popup-btn" data-groupmode="hidden" data-groupids="${ids}">Ocultar</button>
+    </div>
   </div>`;
 }
 function timelineData(){
@@ -354,9 +418,10 @@ function redraw(fit=false){
   if(!state.onlyGeo){
     groups.forEach((group,gi)=>{
       const ev=group[0],lot=lotById(ev.lotId),color=lot?.color||COLORS[gi%COLORS.length],s=sector(ev);
-      L.polygon(s.ll,{color,weight:2,fillColor:color,fillOpacity:.16}).addTo(sectorG).bindPopup(eventPopup(group));
-      L.polyline([[ev.lat,ev.lng],destination(ev.lat,ev.lng,ev.az,ev.dist)],{color,weight:2.5,opacity:.9}).addTo(sectorG);
-      const m=L.circleMarker([ev.lat,ev.lng],{radius:6,color:'#111',weight:1.4,fillColor:color,fillOpacity:1}).addTo(markerG).bindPopup(eventPopup(group));
+      const dim=group.every(x=>x.displayMode==='dim');
+      L.polygon(s.ll,{color,weight:2,opacity:dim?.22:1,fillColor:color,fillOpacity:dim?.035:.16}).addTo(sectorG).bindPopup(eventPopup(group));
+      L.polyline([[ev.lat,ev.lng],destination(ev.lat,ev.lng,ev.az,ev.dist)],{color,weight:2.5,opacity:dim?.18:.9}).addTo(sectorG);
+      const m=L.circleMarker([ev.lat,ev.lng],{radius:6,color:'#111',weight:1.4,fillColor:color,fillOpacity:dim?.28:1,opacity:dim?.35:1}).addTo(markerG).bindPopup(eventPopup(group));
       if(cfg.showLabels)m.bindTooltip(`${ev.station||ev.name||'ERB'}${group.length>1?' ×'+group.length:''}`,{permanent:true,direction:'top',offset:[0,-8],className:'erb-label'});
       s.ll.forEach(p=>bounds.push(p));
     });
@@ -405,12 +470,13 @@ function renderSidebar(){
     return `<div class="lot">
       <div class="lotline"><span class="lotcolor" style="background:${l.color}"></span><div><div class="lotname">${esc(l.name)}</div><div class="lotmeta">${esc(l.type)} · ${evs.length} registro(s)${l.operator?' · '+esc(l.operator):''}${l.importInfo?'<br>'+esc(l.importInfo.summary||''):''}${l.importInfo?.note?'<br><span style="color:#e6c46e">'+esc(l.importInfo.note)+'</span>':''}</div></div>
       <input type="checkbox" data-lotvis="${l.id}" ${l.visible===false?'':'checked'} style="width:auto"></div>
-      <div class="lotactions"><button class="btn ${active?'gold':'outline'} small" data-lotactive="${l.id}">${active?'ATIVO':'Usar'}</button><button class="btn outline small" data-lotfit="${l.id}">Enquadrar</button><button class="btn danger small" data-lotdel="${l.id}">Excluir</button></div>
+      <div class="lotactions"><button class="btn ${active?'gold':'outline'} small" data-lotactive="${l.id}">${active?'ATIVO':'Usar'}</button><button class="btn outline small" data-lotfit="${l.id}">Enquadrar</button>${l.importInfo?`<button class="btn outline small" data-lotaudit="${l.id}">Auditoria</button>`:''}<button class="btn danger small" data-lotdel="${l.id}">Excluir</button></div>
     </div>`;
   }).join('');
   document.querySelectorAll('[data-lotvis]').forEach(x=>x.onchange=()=>{lotById(x.dataset.lotvis).visible=x.checked;redraw()});
   document.querySelectorAll('[data-lotactive]').forEach(x=>x.onclick=()=>{state.activeLotId=x.dataset.lotactive;renderSidebar();status('Lote ativo alterado.')});
   document.querySelectorAll('[data-lotfit]').forEach(x=>x.onclick=()=>fitLot(x.dataset.lotfit));
+  document.querySelectorAll('[data-lotaudit]').forEach(x=>x.onclick=()=>openLotAudit(x.dataset.lotaudit));
   document.querySelectorAll('[data-lotdel]').forEach(x=>x.onclick=()=>deleteLot(x.dataset.lotdel));
 
   const fe=filteredEvents();
@@ -420,7 +486,82 @@ function renderSidebar(){
   $('poiList').innerHTML=state.pois.map(p=>`<div class="item"><div class="itemname">${poiSymbol(p.type)} ${esc(p.name)}</div><div class="itemmeta">${esc(p.type)} · ${fmt(p.lat)} / ${fmt(p.lng)}</div><div style="margin-top:5px"><button class="btn danger small" data-poidel="${p.id}">Excluir</button></div></div>`).join('');
   document.querySelectorAll('[data-poidel]').forEach(x=>x.onclick=()=>{state.pois=state.pois.filter(p=>p.id!==x.dataset.poidel);redraw()});
   updateFilterOptions();
+  renderAnalysis();
 }
+
+function sectorKey(ev){return [Number(ev.lat).toFixed(6),Number(ev.lng).toFixed(6),Number(ev.az).toFixed(1),ev.cgi||ev.cellid||''].join('|')}
+function analysisRanking(){
+  const fe=filteredEvents(),m=new Map();
+  fe.forEach(ev=>{
+    const k=sectorKey(ev);
+    if(!m.has(k))m.set(k,{key:k,events:[],lots:new Set(),ev});
+    const x=m.get(k);x.events.push(ev);x.lots.add(ev.lotId);
+  });
+  return [...m.values()].sort((a,b)=>b.events.length-a.events.length||String(a.ev.name||'').localeCompare(String(b.ev.name||'')));
+}
+function coincidenceGroups(){return analysisRanking().filter(x=>x.lots.size>1)}
+function analysisPeriod(){
+  const ds=timelineData().map(x=>x.d);
+  if(!ds.length)return 'Período: sem data/hora nos registros visíveis';
+  return 'Período: '+ds[0].toLocaleString('pt-BR')+' → '+ds[ds.length-1].toLocaleString('pt-BR');
+}
+function renderAnalysis(){
+  const fe=filteredEvents(),rank=analysisRanking(),coinc=coincidenceGroups();
+  const visLots=new Set(fe.map(e=>e.lotId));
+  if($('kpiEvents'))$('kpiEvents').textContent=fe.length;
+  if($('kpiSectors'))$('kpiSectors').textContent=rank.length;
+  if($('kpiLots'))$('kpiLots').textContent=visLots.size;
+  if($('kpiCoincidences'))$('kpiCoincidences').textContent=coinc.length;
+  if($('analysisPeriod'))$('analysisPeriod').textContent=analysisPeriod();
+  if($('rankCount'))$('rankCount').textContent=rank.length;
+  if($('coincidenceCount'))$('coincidenceCount').textContent=coinc.length;
+  if($('rankList')){
+    $('rankList').innerHTML=rank.slice(0,20).map((x,i)=>{
+      const ev=x.ev,pct=fe.length?x.events.length*100/fe.length:0,op=currentOperator(ev);
+      return `<div class="rankrow"><div class="ranktop"><div class="rankname">${i+1}º · ${esc(ev.name||ev.station||ev.cgi||'ERB')}</div><div class="rankpct">${x.events.length} · ${pct.toFixed(1).replace('.',',')}%</div></div>
+      <div class="rankmeta">${fmt(ev.lat)} / ${fmt(ev.lng)} · Az. ${fmt(ev.az,1)}°${op?' · '+esc(op):''}<br>${x.lots.size} lote(s) · ${esc(ev.cgi||ev.cellid||'sem CGI/Cell ID')}</div>
+      <div class="rankactions"><button class="btn outline small" data-rankfocus="${ev.id}">Centralizar</button><button class="btn outline small" data-rankcopy="${ev.id}">Copiar dados</button></div></div>`;
+    }).join('')||'<div class="muted">Sem registros visíveis.</div>';
+    document.querySelectorAll('[data-rankfocus]').forEach(b=>b.onclick=()=>focusEvent(b.dataset.rankfocus));
+    document.querySelectorAll('[data-rankcopy]').forEach(b=>b.onclick=()=>{
+      const ev=state.events.find(e=>e.id===b.dataset.rankcopy);if(!ev)return;
+      copyText(`${ev.name||ev.station||'ERB'} | ${ev.lat}, ${ev.lng} | Az. ${ev.az}° | ${currentOperator(ev)||''} | ${ev.cgi||ev.cellid||''}`);
+    });
+  }
+  if($('coincidenceList')){
+    $('coincidenceList').innerHTML=coinc.slice(0,12).map(x=>{
+      const ev=x.ev,lots=[...x.lots].map(id=>lotById(id)?.name||id);
+      return `<div class="item"><div class="itemname">${esc(ev.name||ev.station||ev.cgi||'ERB')}</div><div class="itemmeta">${x.events.length} evento(s) · ${x.lots.size} lotes<br>${esc(lots.join(' × '))}<br>${fmt(ev.lat)} / ${fmt(ev.lng)} · Az. ${fmt(ev.az,1)}°</div></div>`;
+    }).join('')||'<div class="muted">Nenhuma coincidência de ERB/setor entre lotes visíveis.</div>';
+  }
+}
+function copyText(v){
+  const s=String(v||'');if(!s)return;
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(s).then(()=>status('Copiado.')).catch(()=>fallbackCopy(s));
+  else fallbackCopy(s);
+}
+function fallbackCopy(s){
+  const t=document.createElement('textarea');t.value=s;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();status('Copiado.');
+}
+function setGroupMode(ids,mode){
+  const set=new Set(String(ids||'').split(',').filter(Boolean));
+  state.events.forEach(e=>{if(set.has(e.id))e.displayMode=mode});
+  redraw();status(mode==='hidden'?'ERB ocultada da análise visual.':mode==='dim'?'ERB atenuada.':'Visualização normal restaurada.');
+}
+
+
+function openLotAudit(id){
+  const l=lotById(id);if(!l)return;
+  const a=l.importInfo||{};
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Auditoria do lote';
+  const reasons=a.reasons?Object.entries(a.reasons).map(([k,v])=>`<li>${v} — ${esc(k)}</li>`).join(''):'';
+  $('drawerBody').innerHTML=`<div class="item"><div class="itemname">${esc(l.name)}</div><div class="itemmeta">${esc(a.format||'Importação')} · ${esc(l.operator||a.detectedOperator||'operadora não identificada')}<br>${esc(a.summary||'')}</div></div>
+  <div class="analysis-grid"><div class="analysis-kpi"><span>Válidas / chamadas</span><b>${a.validRows??a.callsTotal??'—'}</b></div><div class="analysis-kpi"><span>Ignoradas</span><b>${a.ignoredRows??'—'}</b></div><div class="analysis-kpi"><span>ERBs indexadas</span><b>${a.antennas??'—'}</b></div><div class="analysis-kpi"><span>Mapeadas</span><b>${a.mappedCalls??lotEvents(id).length}</b></div></div>
+  ${a.note?`<div class="analysis-note">${esc(a.note)}</div>`:''}${reasons?`<div class="field"><label>Motivos das linhas ignoradas</label><ul class="muted">${reasons}</ul></div>`:''}
+  <div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;
+  $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
+}
+
 function fitLot(id){
   const pts=[];lotEvents(id).forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));
   if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Lote sem registros.',true)
@@ -480,21 +621,33 @@ function openDrawer(kind,preset={}){
     });
     $('poiSearch').onclick=searchPoiAddress;$('doPoi').onclick=savePoi;
   }else if(kind==='import'){
-    title.textContent='Importar arquivo';
+    title.textContent='Importar arquivo — auditoria';
     body.innerHTML=`<div class="field"><label>Tipo do lote</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
       <div class="field"><label>Lote de destino</label>${lotSelectHtml('fImportLot',true)}</div>
       <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf" multiple></div>
-      <div class="muted">XLSX/CSV/TXT/PDF são lidos no navegador. PDFs de extrato de voz no padrão TIM são reconhecidos pela estrutura da tabela, inclusive CGI/ERB e DADOS DE ANTENA. Arquivos sem coordenadas serão informados como válidos, porém não mapeáveis.</div>
-      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doImport">Analisar e importar</button></div>`;
+      <div class="muted">Primeiro o arquivo é analisado sem alterar o projeto. A auditoria mostra o que foi reconhecido, o que será mapeado e o motivo das linhas rejeitadas. TIM/Vivo/Claro são identificadas quando há elementos suficientes no arquivo; PDF de voz TIM possui parser estruturado específico.</div>
+      <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s) e clique em <b>Analisar arquivos</b>.</div></div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Processar lote</button></div>`;
     if(preset.type)$('fImportType').value=preset.type;
-    $('doImport').onclick=importSelectedFile;
+    $('doAnalyzeImport').onclick=previewSelectedFiles;
+    $('doImport').onclick=processPendingImport;
   }else if(kind==='filter'){
     title.textContent='Filtros';
     body.innerHTML=`<div class="grid2"><div class="field"><label>Data/hora inicial</label><input id="filterStart" type="datetime-local" value="${esc(state.filters.start)}"></div><div class="field"><label>Data/hora final</label><input id="filterEnd" type="datetime-local" value="${esc(state.filters.end)}"></div></div>
+      <label>Período do dia</label><div class="quickfilters">
+        <button class="quickfilter" type="button" data-daypart="">Todos</button>
+        <button class="quickfilter" type="button" data-daypart="madrugada">Madrugada 00–06</button>
+        <button class="quickfilter" type="button" data-daypart="manha">Manhã 06–12</button>
+        <button class="quickfilter" type="button" data-daypart="tarde">Tarde 12–18</button>
+        <button class="quickfilter" type="button" data-daypart="noite">Noite 18–24</button>
+        <button class="quickfilter" type="button" data-daypart="noturno">Noturno 18–06</button>
+      </div>
       <div class="grid2"><div class="field"><label>Tipo</label><select id="filterType"><option value="">Todos</option><option value="VOZ">VOZ</option><option value="DADOS">DADOS</option><option value="MISTO">MISTO</option></select></div><div class="field"><label>Operadora</label><select id="filterOperator"></select></div></div>
       <div class="field"><label>Lote</label><select id="filterLot"></select></div>
       <div class="drawerfoot"><button class="btn danger" id="clearFilters">Limpar filtros</button><button class="btn primary" id="applyFilters">Aplicar</button></div>`;
     $('filterType').value=state.filters.type;updateFilterOptions();
+    body.querySelectorAll('[data-daypart]').forEach(b=>{b.classList.toggle('active',b.dataset.daypart===(state.filters.daypart||''));b.onclick=()=>{body.querySelectorAll('[data-daypart]').forEach(x=>x.classList.remove('active'));b.classList.add('active');body.dataset.daypart=b.dataset.daypart}});
+    body.dataset.daypart=state.filters.daypart||'';
     $('applyFilters').onclick=applyFilters;$('clearFilters').onclick=clearFilters;
   }else if(kind==='projects'){
     title.textContent='Projetos salvos';
@@ -540,7 +693,7 @@ function saveManualErb(){
   const ev={id:uid(),lotId,name:$('fErbName').value.trim()||`ERB ${state.events.length+1}`,station:$('fStation').value.trim(),sector:$('fSector').value.trim(),
     lat,lng,az:normAz(az),dist:parseNum($('fDist').value)||cfg.defaultDist,margin:parseNum($('fMargin').value)||cfg.defaultMargin,
     datetime:$('fDate').value?new Date($('fDate').value).toLocaleString('pt-BR'):'',eventType:$('fEventType').value,
-    operator:$('fOperator').value.trim(),tech:$('fTech').value.trim(),cellid:$('fCell').value.trim(),enodeb:$('fNode').value.trim(),lactac:$('fTac').value.trim(),
+    operator:$('fOperator').value.trim(),tech:$('fTech').value.trim(),cellid:$('fCell').value.trim(),enodeb:$('fNode').value.trim(),lactac:$('fTac').value.trim(),radiusSource:'MANUAL',
     origin:$('fOrigin').value.trim(),destination:$('fDestination').value.trim(),imei:$('fImei').value.trim(),obs:$('fObs').value.trim(),visible:true};
   state.events.push(ev);closeDrawer();redraw(true);status('ERB adicionada.')
 }
@@ -583,11 +736,11 @@ function savePoi(){
   closeDrawer();redraw(true);status('Ponto adicionado.')
 }
 function applyFilters(){
-  state.filters={start:$('filterStart').value,end:$('filterEnd').value,type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value};
+  state.filters={start:$('filterStart').value,end:$('filterEnd').value,type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value,daypart:$('drawerBody').dataset.daypart||''};
   $('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));closeDrawer();redraw(true);status('Filtros aplicados.')
 }
 function clearFilters(){
-  state.filters={start:'',end:'',type:'',operator:'',lotId:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
+  state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
 }
 
 function normHead(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
@@ -608,26 +761,63 @@ function ensureImportLot(type,requested){
   const l={id:uid(),name:`${type||'MISTO'} — ${new Date().toLocaleString('pt-BR')}`,type:type||'MISTO',color:COLORS[state.lots.length%COLORS.length],operator:'',visible:true};
   state.lots.push(l);state.activeLotId=l.id;return l.id
 }
-function importRows(rows,lotId,type){
-  if(!rows.length)return{added:0,bad:0};
-  const headers=rows[0].map(canon),known=headers.some(h=>Object.keys(ALIASES).includes(h));let start=known?1:0,added=0,bad=0;
+function analyzeRows(rows,type=''){
+  if(!rows.length)return{total:0,dataRows:0,valid:0,ignored:0,reasons:{},headers:[],known:false,operator:''};
+  const headers=rows[0].map(canon),known=headers.some(h=>Object.keys(ALIASES).includes(h)),start=known?1:0;
+  const reasons={},validRows=[];
+  const addReason=k=>reasons[k]=(reasons[k]||0)+1;
   for(let i=start;i<rows.length;i++){
     const vals=rows[i],o={};
     (known?headers:['nome','latitude','longitude','azimute','datahora','operadora','cellid']).forEach((h,j)=>o[h]=vals[j]??'');
+    if(!vals.some(v=>String(v??'').trim())){addReason('linha vazia');continue}
     const lat=parseCoord(o.latitude,true),lng=parseCoord(o.longitude,false),az=parseNum(o.azimute);
-    if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az)){bad++;continue}
-    let dt=o.datahora||[o.data,o.hora].filter(Boolean).join(' ');
-    state.events.push({id:uid(),lotId,name:o.nome||o.estacao||`ERB ${state.events.length+1}`,station:o.estacao||'',sector:o.setor||'',lat,lng,az:normAz(az),
-      dist:parseNum(o.distancia)||cfg.defaultDist,margin:parseNum(o.margem)||cfg.defaultMargin,datetime:dt,eventType:(o.tipo||type||'').toUpperCase(),
-      operator:o.operadora||'',tech:o.tecnologia||'',cellid:o.cellid||'',enodeb:o.enodeb||'',lactac:o.lactac||'',imei:o.imei||'',origin:o.origem||'',destination:o.destino||'',
-      source:o.fonte||'',page:o.pagina||'',obs:o.obs||'',visible:true});added++
+    if(!Number.isFinite(lat)){addReason('latitude ausente/inválida');continue}
+    if(!Number.isFinite(lng)){addReason('longitude ausente/inválida');continue}
+    if(!Number.isFinite(az)){addReason('azimute ausente/inválido');continue}
+    validRows.push({o,lat,lng,az,rowIndex:i});
   }
-  return{added,bad}
+  return{total:rows.length,dataRows:Math.max(0,rows.length-start),valid:validRows.length,ignored:Math.max(0,rows.length-start-validRows.length),reasons,headers,known,validRows,operator:detectOperatorFromRows(rows)};
+}
+function detectOperatorFromRows(rows,fileName=''){
+  const flat=(fileName+' '+rows.slice(0,150).flat().map(v=>String(v||'')).join(' ')).toUpperCase();
+  const scores={TIM:0,VIVO:0,CLARO:0};
+  if(/\bTIM\b|TIM S\/A|TELECOM ITALIA/.test(flat))scores.TIM+=3;
+  if(/\bVIVO\b|TELEF[ÔO]NICA/.test(flat))scores.VIVO+=3;
+  if(/\bCLARO\b|AM[ÉE]RICA M[ÓO]VIL/.test(flat))scores.CLARO+=3;
+  const vals=[];
+  rows.slice(0,150).forEach(r=>r.forEach(v=>{const s=String(v||'').trim().toUpperCase();if(['TIM','VIVO','CLARO'].includes(s))vals.push(s)}));
+  vals.forEach(v=>scores[v]++);
+  const best=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+  return best&&best[1]>0?best[0]:'';
+}
+function importRows(rows,lotId,type,analysis=null){
+  const a=analysis||analyzeRows(rows,type),lot=lotById(lotId);
+  let added=0;
+  for(const r of a.validRows){
+    const o=r.o,dt=o.datahora||[o.data,o.hora].filter(Boolean).join(' ');
+    const dist=parseNum(o.distancia);
+    state.events.push({id:uid(),lotId,name:o.nome||o.estacao||`ERB ${state.events.length+1}`,station:o.estacao||'',sector:o.setor||'',lat:r.lat,lng:r.lng,az:normAz(r.az),
+      dist:Number.isFinite(dist)&&dist>0?dist:cfg.defaultDist,margin:parseNum(o.margem)||cfg.defaultMargin,datetime:dt,eventType:(o.tipo||type||'').toUpperCase(),
+      operator:o.operadora||a.operator||'',tech:o.tecnologia||'',cellid:o.cellid||'',enodeb:o.enodeb||'',lactac:o.lactac||'',imei:o.imei||'',origin:o.origem||'',destination:o.destino||'',
+      source:o.fonte||'',page:o.pagina||'',obs:o.obs||'',radiusSource:Number.isFinite(dist)&&dist>0?'INFORMADO NO ARQUIVO':'ESTIMADO (PADRÃO)',visible:true,displayMode:'normal'});added++
+  }
+  if(lot){
+    if(!lot.operator&&a.operator)lot.operator=a.operator;
+    lot.importInfo={
+      ...(lot.importInfo||{}),
+      format:lot.importInfo?.format||'PLANILHA/TEXTO',
+      totalRows:a.dataRows,validRows:a.valid,ignoredRows:a.ignored,
+      reasons:a.reasons,detectedOperator:a.operator,
+      summary:`${a.valid} linha(s) válida(s) · ${a.ignored} ignorada(s)${a.operator?' · '+a.operator+' detectada':''}`,
+      note:a.ignored?('Ignoradas: '+Object.entries(a.reasons).map(([k,v])=>`${v} ${k}`).join(' · ')):'Auditoria concluída sem linhas rejeitadas.'
+    };
+  }
+  return{added,bad:a.ignored,reasons:a.reasons,operator:a.operator}
 }
 function importDelimitedText(text,lotId,type){
   text=String(text||'').trim();if(!text)return status('Nenhum dado informado.',true);
   const lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]),rows=lines.map(x=>splitLine(x,d));
-  const lid=ensureImportLot(type,lotId),r=importRows(rows,lid,type);closeDrawer();redraw(true);status(`${r.added} registro(s) importado(s)${r.bad?' · '+r.bad+' linha(s) ignorada(s)':''}.`,r.added===0)
+  const a=analyzeRows(rows,type);if(!confirm(`AUDITORIA DO BLOCO\n\nLinhas de dados: ${a.dataRows}\nVálidas: ${a.valid}\nIgnoradas: ${a.ignored}${a.operator?'\nOperadora detectada: '+a.operator:''}\n\nProcessar?`))return;const lid=ensureImportLot(type,lotId),r=importRows(rows,lid,type,a);closeDrawer();redraw(true);status(`${r.added} registro(s) importado(s)${r.bad?' · '+r.bad+' linha(s) ignorada(s)':''}.`,r.added===0)
 }
 
 function cleanPdfText(s){return String(s||'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').trim()}
@@ -753,7 +943,7 @@ function importTimVoiceResult(parsed,file,lotId){
       state.events.push({
         id:uid(),lotId,
         name:ant.name||cgi,station:ant.name||cgi,sector:'',
-        lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,
+        lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:[ant.address,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · '),
         datetime:call.datetime,eventType:'VOZ',operator:parsed.operator||'',
         tech:'',cellid:'',cgi,callCode:call.code,central:call.central,duration:call.duration,
         origin:call.origin,destination:call.destination,
@@ -761,7 +951,7 @@ function importTimVoiceResult(parsed,file,lotId){
         imei:call.imeiOrigin||call.imeiDestination||'',
         source:file.name,
         obs:`${idx===0&&call.firstCgi===cgi?'Primeira CGI/ERB':'Última CGI/ERB'}${ant.address?' · '+ant.address:''}${ant.city?' · '+ant.city:''}`,
-        visible:true
+        visible:true,displayMode:'normal'
       });created++;
     });
     if(callMapped)mappedCallIndexes.add(ci);
@@ -783,35 +973,25 @@ function importTimVoiceResult(parsed,file,lotId){
   return{created,mappedCalls:mappedCallIndexes.size,totalCalls:parsed.calls.length,antennas:parsed.antennas.length,unresolvedCgi};
 }
 
-async function importSelectedFile(){
+let pendingImport=[];
+async function previewSelectedFiles(){
   const files=[...$('fImportFile').files];if(!files.length)return status('Selecione ao menos um arquivo.',true);
-  const type=$('fImportType').value,requestedLot=$('fImportLot').value;
-  let totalAdded=0,totalBad=0,diagnostics=[];
-
+  const type=$('fImportType').value;
+  pendingImport=[];$('doImport').disabled=true;
+  $('importAudit').innerHTML='<div class="muted">Analisando arquivos...</div>';
   try{
-    status(`Lendo ${files.length} arquivo(s)...`);
     for(const file of files){
       const ext=file.name.split('.').pop().toLowerCase();
-
       if(ext==='pdf'){
         const struct=await readPdfStructured(file);
-
-        if(type==='VOZ'){
-          const parsed=parseTimVoiceStructured(struct);
-          if(parsed){
-            const lotId=ensureImportLot('VOZ',files.length>1?'__new':requestedLot);
-            const r=importTimVoiceResult(parsed,file,lotId);
-            totalAdded+=r.created;
-            diagnostics.push(`${file.name}: ${r.totalCalls} chamada(s), ${r.mappedCalls} com ERB, ${r.antennas} antena(s).`);
-            continue;
-          }
+        const parsed=type==='VOZ'?parseTimVoiceStructured(struct):null;
+        if(parsed){
+          pendingImport.push({file,kind:'timVoice',parsed,type,analysis:{operator:parsed.operator||'TIM',valid:parsed.calls.length,ignored:0,antennas:parsed.antennas.length,mappedEstimate:parsed.calls.filter(c=>[c.firstCgi,c.lastCgi].some(Boolean)).length}});
+        }else{
+          pendingImport.push({file,kind:'unsupportedPdf',type,analysis:{operator:'',valid:0,ignored:1,note:'PDF lido, mas sem formato reconhecido para mapeamento automático.'}});
         }
-
-        diagnostics.push(`${file.name}: PDF lido, mas o formato não foi reconhecido para mapeamento automático.`);
-        totalBad++;
         continue;
       }
-
       let rows=[];
       if(['xlsx','xls'].includes(ext)){
         const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
@@ -821,23 +1001,49 @@ async function importSelectedFile(){
         const text=await file.text(),lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]||'');
         rows=lines.map(x=>splitLine(x,d));
       }else{
-        diagnostics.push(`${file.name}: formato não suportado.`);
-        totalBad++;continue;
+        pendingImport.push({file,kind:'unsupported',type,analysis:{operator:'',valid:0,ignored:1,note:'Formato não suportado.'}});
+        continue;
       }
-
-      const lotId=ensureImportLot(type,files.length>1?'__new':requestedLot);
-      const r=importRows(rows,lotId,type);
-      totalAdded+=r.added;totalBad+=r.bad;
-      diagnostics.push(`${file.name}: ${r.added} registro(s) importado(s), ${r.bad} linha(s) ignorada(s).`);
+      const a=analyzeRows(rows,type);a.operator=a.operator||detectOperatorFromRows(rows,file.name);
+      pendingImport.push({file,kind:'rows',rows,type,analysis:a});
     }
-
-    closeDrawer();redraw(true);
-    const noMap=totalAdded===0;
-    status(noMap?'Arquivo analisado. Consulte o diagnóstico do lote.':`${totalAdded} registro(s) mapeável(is) importado(s).`,false);
-    if(diagnostics.length)console.info('[ERB Importação]',diagnostics.join('\n'));
+    renderImportAudit();
   }catch(e){
-    console.error(e);status('Não foi possível interpretar o arquivo.',true)
+    console.error(e);pendingImport=[];$('importAudit').innerHTML='<div class="auditwarn">Falha ao analisar os arquivos.</div>';status('Não foi possível interpretar o arquivo.',true);
   }
+}
+function renderImportAudit(){
+  const box=$('importAudit');if(!box)return;
+  let can=false;
+  box.innerHTML=pendingImport.map(p=>{
+    const a=p.analysis||{},ok=p.kind==='timVoice'||p.kind==='rows'&&a.valid>0;if(ok)can=true;
+    let meta='';
+    if(p.kind==='timVoice')meta=`Formato: PDF VOZ TIM · chamadas: ${a.valid} · antenas indexadas: ${a.antennas} · eventos com CGI: ${a.mappedEstimate}`;
+    else if(p.kind==='rows')meta=`Linhas de dados: ${a.dataRows} · válidas: ${a.valid} · ignoradas: ${a.ignored}${a.operator?' · operadora detectada: '+a.operator:''}${a.ignored?' · '+Object.entries(a.reasons).map(([k,v])=>v+' '+k).join(' · '):''}`;
+    else meta=a.note||'Arquivo sem mapeamento automático.';
+    return `<div class="auditfile"><b>${esc(p.file.name)}</b><div class="auditmeta ${ok?'auditok':'auditwarn'}">${esc(meta)}</div></div>`;
+  }).join('')||'<div class="muted">Nenhum arquivo analisado.</div>';
+  $('doImport').disabled=!can;
+  status('Auditoria concluída. Revise antes de processar.');
+}
+async function processPendingImport(){
+  if(!pendingImport.length)return status('Analise os arquivos primeiro.',true);
+  const requestedLot=$('fImportLot').value,type=$('fImportType').value;
+  let totalAdded=0,totalBad=0,processed=0;
+  try{
+    status('Processando lote...');
+    for(const p of pendingImport){
+      if(p.kind==='unsupported'||p.kind==='unsupportedPdf'){totalBad++;continue}
+      const lotId=ensureImportLot(p.type||type,pendingImport.length>1?'__new':requestedLot);
+      if(p.kind==='timVoice'){
+        const r=importTimVoiceResult(p.parsed,p.file,lotId);totalAdded+=r.created;processed++;
+      }else if(p.kind==='rows'){
+        const r=importRows(p.rows,lotId,p.type||type,p.analysis);totalAdded+=r.added;totalBad+=r.bad;processed++;
+      }
+    }
+    pendingImport=[];closeDrawer();redraw(true);
+    status(totalAdded?`${totalAdded} registro(s) mapeável(is) importado(s) em ${processed} arquivo(s).`:'Nenhum registro mapeável foi importado.',totalAdded===0);
+  }catch(e){console.error(e);status('Não foi possível processar o lote.',true)}
 }
 
 function updateGeo(openPanel=true){
@@ -863,9 +1069,9 @@ function startTimeline(){
 }
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:7,name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function snapshot(){return{version:'7.3',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
 function applySnapshot(o){
-  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.pois=Array.isArray(o.pois)?o.pois:[];state.filters=o.filters||{start:'',end:'',type:'',operator:'',lotId:''};
+  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
   $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
 }
 function saveProject(){
@@ -890,17 +1096,79 @@ async function captureMap(){
 }
 async function exportPng(){try{status('Gerando PNG...');const c=await captureMap();c.toBlob(b=>saveBlob(b,'mapa_ERB.png'),'image/png');status('PNG gerado.')}catch(e){console.error(e);status('Falha ao gerar PNG.',true)}}
 async function exportPdf(){
-  if(!filteredEvents().length)return status('Não há registros visíveis.',true);
+  const fe=filteredEvents();if(!fe.length)return status('Não há registros visíveis.',true);
   try{
-    status('Gerando relatório PDF...');const c=await captureMap(),img=c.toDataURL('image/jpeg',.92),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;
+    status('Gerando relatório PDF...');
+    const c=await captureMap(),img=c.toDataURL('image/jpeg',.92),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;
+    const rank=analysisRanking(),coinc=coincidenceGroups(),t=timelineData();
+    const first=t[0]?.d,last=t[t.length-1]?.d;
+    const est=fe.filter(e=>String(e.radiusSource||'').includes('ESTIMADO')||!e.radiusSource).length;
+    const day={Madrugada:0,Manhã:0,Tarde:0,Noite:0};
+    t.forEach(x=>{const h=x.d.getHours();if(h<6)day.Madrugada++;else if(h<12)day.Manhã++;else if(h<18)day.Tarde++;else day.Noite++});
+
     doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,16);
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(`Projeto: ${projectName()}`,M,22);doc.text(`Lotes: ${state.lots.length} · Registros visíveis: ${filteredEvents().length}`,M,27);
-    const p=doc.getImageProperties(img),r=Math.min((W-2*M)/p.width,108/p.height);doc.addImage(img,'JPEG',M,34,p.width*r,p.height*r);
-    doc.addPage();doc.autoTable({startY:15,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.3},head:[['#','Lote','ERB','Lat.','Long.','Az.','Data/hora','Operadora','CGI/ERB','IMEI']],body:filteredEvents().map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
-    doc.save('relatorio_ERB_v7.pdf');status('PDF gerado.')
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(`Projeto: ${projectName()}`,M,22);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`,M,27);
+
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('1. RESUMO INVESTIGATIVO',M,36);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.2);
+    const summary=[
+      `Registros visíveis: ${fe.length} · ERBs/setores únicos: ${rank.length} · Lotes visíveis: ${new Set(fe.map(e=>e.lotId)).size}`,
+      `Período: ${first?first.toLocaleString('pt-BR'):'—'} a ${last?last.toLocaleString('pt-BR'):'—'}`,
+      `Coincidências de ERB/setor entre lotes: ${coinc.length}`,
+      `Setores com raio estimado/padrão: ${est} de ${fe.length} registros`,
+      `Distribuição por horário — madrugada: ${day.Madrugada}; manhã: ${day.Manhã}; tarde: ${day.Tarde}; noite: ${day.Noite}.`
+    ];
+    doc.text(summary,M,42,{maxWidth:W-2*M,lineHeightFactor:1.45});
+
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('2. RANKING DAS ERBs / SETORES',M,67);
+    doc.autoTable({startY:71,margin:{left:M,right:M},styles:{fontSize:7,cellPadding:1.4},head:[['#','ERB / setor','Incid.','%','Lat.','Long.','Az.','Lotes']],body:rank.slice(0,20).map((x,i)=>[i+1,x.ev.name||x.ev.station||x.ev.cgi||'ERB',x.events.length,(x.events.length*100/fe.length).toFixed(1)+'%',x.ev.lat.toFixed(6),x.ev.lng.toFixed(6),x.ev.az.toFixed(1)+'°',x.lots.size])});
+    let y=doc.lastAutoTable.finalY+7;
+    doc.setFont('helvetica','normal');doc.setFontSize(7.4);
+    doc.text('Nota: a área de cobertura desenhada é uma representação cartográfica do setor e do raio disponível. Quando o raio não consta do arquivo, o sistema identifica o valor como estimado/padrão. A incidência em uma ERB não representa, isoladamente, a posição exata do terminal.',M,y,{maxWidth:W-2*M});
+
+    doc.addPage();
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('3. MAPA DOS REGISTROS VISÍVEIS',M,15);
+    const p=doc.getImageProperties(img),r=Math.min((W-2*M)/p.width,150/p.height);doc.addImage(img,'JPEG',M,21,p.width*r,p.height*r);
+
+    doc.addPage();
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. REGISTROS',M,15);
+    doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.2,cellPadding:1.2},head:[['#','Lote','ERB','Lat.','Long.','Az.','Raio','Fonte raio','Data/hora','Operadora','CGI/ERB','IMEI']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',(e.dist||0).toFixed(2)+' km',e.radiusSource||'',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
+    doc.save('relatorio_ERB_v7_3.pdf');status('PDF gerado.');
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
 
+
+
+function runSelfTest(){
+  const tests=[];
+  const add=(name,ok,detail='')=>tests.push({name,ok:Boolean(ok),detail});
+  try{add('Leaflet / mapa',Boolean(window.L||typeof L!=='undefined')&&Boolean(map),'biblioteca e instância do mapa');}catch(e){add('Leaflet / mapa',false,e.message)}
+  try{add('Turf / geoespacial',typeof turf!=='undefined'&&typeof turf.polygon==='function','operações de interseção');}catch(e){add('Turf / geoespacial',false,e.message)}
+  try{add('XLSX',typeof XLSX!=='undefined'&&typeof XLSX.read==='function','importação de planilhas');}catch(e){add('XLSX',false,e.message)}
+  try{add('PDF.js',typeof pdfjsLib!=='undefined'&&typeof pdfjsLib.getDocument==='function','leitura de PDF');}catch(e){add('PDF.js',false,e.message)}
+  try{add('html2canvas',typeof html2canvas==='function','captura do mapa');}catch(e){add('html2canvas',false,e.message)}
+  try{add('jsPDF',Boolean(window.jspdf?.jsPDF),'relatório PDF');}catch(e){add('jsPDF',false,e.message)}
+  try{
+    const k='pcpr.erb.selftest';localStorage.setItem(k,'ok');const ok=localStorage.getItem(k)==='ok';localStorage.removeItem(k);
+    add('Armazenamento local',ok,'salvar projetos neste navegador');
+  }catch(e){add('Armazenamento local',false,e.message)}
+  try{add('Coordenadas',Math.abs(parseCoord('24 18 0 S',true)+24.3)<1e-9,'parser decimal/DMS');}catch(e){add('Coordenadas',false,e.message)}
+  try{
+    const test={lat:-24.3,lng:-52.5,az:90,dist:0.5,margin:45};const sg=sector(test);
+    add('Geometria de setor',Array.isArray(sg.ll)&&sg.ll.length>20&&Boolean(sg.geo),'cone/área cartográfica');
+  }catch(e){add('Geometria de setor',false,e.message)}
+  try{add('Auditoria de importação',typeof analyzeRows==='function'&&typeof previewSelectedFiles==='function'&&typeof processPendingImport==='function','prévia e processamento em duas etapas');}catch(e){add('Auditoria de importação',false,e.message)}
+  try{add('Análise / ranking',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','ranking e comparação entre lotes');}catch(e){add('Análise / ranking',false,e.message)}
+  const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo';
+  $('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>
+    ${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓':'✕'} ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}
+    <div class="analysis-note">${fail?'Há dependências indisponíveis ou algum teste falhou. Verifique antes de usar em produção.':'Todos os testes executáveis nesta sessão foram aprovados.'}</div>
+    <div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;
+  $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
+  status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
+}
 
 function closeAllMenus(except=null){
   document.querySelectorAll('.menu.open').forEach(m=>{
@@ -923,6 +1191,17 @@ document.querySelectorAll('.dropdown').forEach(drop=>{
   drop.addEventListener('click',e=>e.stopPropagation());
 });
 
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest?.('[data-copycoords],[data-copyaz],[data-copyerb],[data-groupmode]');
+  if(!b)return;
+  if(b.dataset.copycoords)copyText(b.dataset.copycoords);
+  else if(b.dataset.copyaz)copyText(b.dataset.copyaz+'°');
+  else if(b.dataset.copyerb)copyText(b.dataset.copyerb);
+  else if(b.dataset.groupmode)setGroupMode(b.dataset.groupids,b.dataset.groupmode);
+});
+$('restoreHidden').onclick=()=>{let n=0;state.events.forEach(e=>{if(e.displayMode==='hidden'){e.displayMode='normal';n++}});redraw();status(n?`${n} registro(s) restaurado(s).`:'Não há ERBs ocultas.')};
+
 document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openDrawer(x.dataset.open));
 document.querySelectorAll('[data-import-kind]').forEach(x=>x.onclick=()=>openDrawer('import',{type:x.dataset.importKind}));
 document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLayer(activeBase);cfg.base=x.dataset.base;activeBase=bases[cfg.base];activeBase.addTo(map)});
@@ -932,7 +1211,7 @@ $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
 $('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_1.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_3.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
 $('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
