@@ -114,6 +114,10 @@ body.home-mode .module-main{overflow:visible}
 .suggestion-card .card-badge{
   background:#315f4c;
 }
+.suggestion-card .card-desc{margin-bottom:8px}
+.suggestion-meta{font-size:10px;line-height:1.45;color:#52645b;font-weight:700;margin-top:6px}
+.suggestion-safety{margin-top:9px;padding:8px 9px;border:1px solid #d8c8a0;border-left:3px solid #a98639;border-radius:7px;background:#fffaf0;color:#665425;font-size:10px;line-height:1.42}
+.suggestion-safety b{color:#453813}
 
 
 .home-tools{max-width:1120px;margin:18px auto 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
@@ -172,7 +176,7 @@ body.home-mode .module-main{overflow:visible}
       <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
       <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
       <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
-      <a class="module-tab external-link" id="suggestionsNav" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" title="Abrir formulário de sugestões">💡 Sugestões ↗</a>
+      <a class="module-tab external-link" id="suggestionsNav" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" title="Formulário externo do Google Forms — não envie dados sigilosos">💡 Sugestões · externo ↗</a>
     </div>
   </div>
 </nav>
@@ -260,11 +264,13 @@ body.home-mode .module-main{overflow:visible}
         <div class="card-title">QR Code</div>
         <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
       </button>
-      <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard">
-        <span class="card-badge">ENVIE SUA IDEIA</span>
+      <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard" aria-label="Abrir formulário externo de sugestões no Google Forms">
+        <span class="card-badge">FORMULÁRIO EXTERNO · GOOGLE FORMS</span>
         <div class="card-top"><div class="card-icon">SG</div><div class="card-arrow">↗</div></div>
-        <div class="card-title">Sugestões</div>
-        <div class="card-desc">Envie ideias, melhorias, correções ou sugestões de novos módulos para a Central.</div>
+        <div class="card-title">Sugira melhorias para a Central PCPR</div>
+        <div class="card-desc">Envie correções, melhorias, propostas de novos módulos ou informe contato/dado desatualizado.</div>
+        <div class="suggestion-meta">Correção · Melhoria · Novo módulo · Contato/dado desatualizado · Outro</div>
+        <div class="suggestion-safety"><b>Não envie conteúdo policial ou sigiloso.</b> Não inclua dados de vítimas ou investigados, peças de inquérito, documentos restritos, senhas, tokens ou outras credenciais.</div>
       </a>
       <div class="empty-search" id="emptySearch">Nenhuma ferramenta encontrada para esta pesquisa.</div>
       </div>
@@ -501,6 +507,7 @@ document.querySelectorAll('[data-open-module]').forEach(card=>{
 
 
 function trackSuggestions(){
+  // Registra somente a abertura do canal externo. A Central não lê nem recebe o conteúdo enviado no formulário.
   try{
     if(typeof window.gtag==='function'){
       window.gtag('event','sugestoes_aberto',{origem:'central_pcpr'});
