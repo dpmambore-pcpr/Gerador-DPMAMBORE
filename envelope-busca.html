@@ -169,8 +169,8 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
 @media print{.security-note{display:none!important}}
 
 </style>
-</head>
-<body>
+<style id="v2EnvelopeStyle">.v2bar{position:sticky;top:0;z-index:9999;background:#fff;border-bottom:1px solid #d7dee8;padding:8px 12px;display:flex;gap:8px;align-items:center;box-shadow:0 1px 5px #0001}.v2bar b{color:#0b2a4a;margin-right:auto}.v2bar button{border:0;border-radius:6px;background:#0b2a4a;color:#fff;padding:8px 12px;font-weight:700;cursor:pointer}.v2bar button.alt{background:#fff;color:#0b2a4a;border:1px solid #b9c6d5}@media print{.v2bar{display:none!important}}</style></head>
+<body><div class="v2bar"><b>ENVELOPE DE BUSCA</b><button type="button" onclick="window.print()">Imprimir / Salvar PDF</button><button type="button" class="alt" onclick="v2SalvarODT()">Salvar ODT</button></div>
 <div class="wrap">
   <div class="topbar hiddenprint">
     <div class="titlebox"><h1>Envelope de Busca</h1><p>Gera a capa do envelope de busca com foto do alvo, residência, QR Code e suporte a vários alvos no mesmo documento.</p></div>
@@ -495,5 +495,5 @@ function initEnvelopeFeatures(){document.querySelectorAll('.envTab').forEach(b=>
 
 const _renderBase=render;render=function(){_renderBase();decorateTargetCards();};const _renderPreviewBase=renderPreview;renderPreview=function(){_renderPreviewBase();decorateTargetCards();};initEnvelopeFeatures();render();})();
 </script>
-</body>
+<script id="v2EnvelopeScript">function v2SalvarODT(){const all=[...document.querySelectorAll('button,a')];const btn=all.find(x=>x.closest('.v2bar')===null&&/odt/i.test((x.textContent||''))&&x.offsetParent!==null);if(btn){btn.click();return;}alert('Preencha os dados e utilize a opção ODT disponível no próprio formulário.');}</script></body>
 </html>

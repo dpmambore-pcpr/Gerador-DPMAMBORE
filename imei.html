@@ -188,7 +188,7 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
 @media print{.security-note{display:none!important}}
 
 </style>
-</head>
+<style id="v2ImeiThumb">.device-photo img,.phone-photo img,.photo img,#deviceImage,#phoneImage{max-width:240px!important;max-height:240px!important;object-fit:contain!important;border-radius:10px;background:#f8fafc;border:1px solid #d7e0ea;padding:8px}.v2-img-fallback{display:flex;align-items:center;justify-content:center;min-height:180px;border:1px dashed #b8c4d2;border-radius:10px;background:#f8fafc;color:#64748b;text-align:center;padding:18px;font-size:12px}</style></head>
 <body>
 <header>
   <div class="header">
@@ -1007,5 +1007,5 @@ input, textarea{width:100%;border:0;outline:0;background:transparent;color:#fff;
   loadDB();
 })();
 </script>
-</body>
+<script id="v2ImeiFallback">document.addEventListener('error',function(e){const im=e.target;if(!(im instanceof HTMLImageElement))return;im.style.display='none';if(im.dataset.v2fallback)return;im.dataset.v2fallback='1';const d=document.createElement('div');d.className='v2-img-fallback';d.textContent='Miniatura do aparelho indisponível nesta fonte. Fabricante e modelo permanecem identificados pelos dados técnicos disponíveis.';im.insertAdjacentElement('afterend',d);},true);</script></body>
 </html>

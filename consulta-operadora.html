@@ -197,6 +197,23 @@ input::placeholder{color:#63798d}
 .security-note b{color:#244b3e}
 @media print{.security-note{display:none!important}}
 
+
+.limit-note{
+  margin-top:8px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 8px;
+  border:1px solid #6a5727;
+  border-radius:8px;
+  background:#241f12;
+  color:#e8d18f;
+  font-size:10.5px;
+  font-weight:750;
+  line-height:1.25;
+}
+.limit-note strong{color:#f1d98f}
+
 </style>
 
 <style id="pcpr-central-theme">
@@ -270,6 +287,7 @@ input::placeholder{color:#70877c!important}
     <div class="hint">
       Digite DDD + número e clique em CONSULTAR. O resultado da operadora aparece diretamente nesta tela. A fonte gratuita pode aplicar limite temporário de consultas.
     </div>
+      <div class="limit-note" title="Limitação aplicada pela fonte gratuita externa">⚠ <strong>Fonte gratuita:</strong> pode limitar a 6 consultas por hora em cada servidor.</div>
     <div class="state" id="state"></div>
   </section>
 

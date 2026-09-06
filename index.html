@@ -141,19 +141,18 @@ body.home-mode .module-main{overflow:visible}
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
     <div class="tabs-row">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
+      <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
-      <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
-      <button class="module-tab" data-key="oitivapenal" type="button">Oitiva em Penitenciária</button>
-      <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
-      <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
-      <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
-      <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
-      <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
-      <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
-      <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
       <button class="module-tab" data-key="contatodppr" type="button">Contato DP PR</button>
       <button class="module-tab" data-key="contatos" type="button">Contatos</button>
-      <button class="module-tab" data-key="atualizacoes" type="button">Sobre as atualizações</button>
+      <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
+      <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
+      <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
+      <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
+      <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+      <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
+      <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
+      <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
       <a class="module-tab external-link" id="suggestionsNav" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" title="Abrir formulário de sugestões">💡 Sugestões ↗</a>
     </div>
   </div>
@@ -179,11 +178,6 @@ body.home-mode .module-main{overflow:visible}
         <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Ofícios</div>
         <div class="card-desc">Gerador institucional de ofícios e expedientes.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="oitivapenal">
-        <div class="card-top"><div class="card-icon">OP</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Oitiva em Penitenciária</div>
-        <div class="card-desc">Geração de ofício para realização de oitiva em unidade penal.</div>
       </button>
       <button class="module-card" type="button" data-open-module="lesoes">
         <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
@@ -247,25 +241,24 @@ body.home-mode .module-main{overflow:visible}
 
   <div id="loading" class="loading hide">Carregando…</div>
   <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=1.1"></iframe>
-  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=1.1"></iframe>
-  <iframe id="frameOitivaPenal" class="module-frame" title="Oitiva em Unidade Penal" data-src="oitiva-penitenciaria.html?v=1.7"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=2.0"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.4"></iframe>
-  <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html?v=1.2"></iframe>
-  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.4-20260905"></iframe>
-  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=6.5"></iframe>
+  <iframe id="frameImei" class="module-frame" title="Consulta IMEI PRO" data-src="imei.html?v=2.0"></iframe>
+  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.5-20260905"></iframe>
+  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=7.2"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=1.2"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.1"></iframe>
-  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=1.9"></iframe>
+  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=2.0"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.1"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.4"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=1.4"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=2.0"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='1.26';
-const CENTRAL_VERSION_DATE='05/09/2026';
+const CENTRAL_VERSION='2.0';
+const CENTRAL_VERSION_DATE='06/09/2026';
 
 function updateCentralClock(){
   const now=new Date();
@@ -318,7 +311,6 @@ window.PCPR_DOWNLOAD_CENTRAL_WITH_MODEL=async function(bytes,meta){
 const modules={
   configuracoes:{frame:document.getElementById('frameConfiguracoes'),tab:document.querySelector('[data-key="configuracoes"]'),min:900},
   oficios:{frame:document.getElementById('frameOficios'),tab:document.querySelector('[data-key="oficios"]'),min:820},
-  oitivapenal:{frame:document.getElementById('frameOitivaPenal'),tab:document.querySelector('[data-key="oitivapenal"]'),min:980},
   lesoes:{frame:document.getElementById('frameLesoes'),tab:document.querySelector('[data-key="lesoes"]'),min:900},
   imei:{frame:document.getElementById('frameImei'),tab:document.querySelector('[data-key="imei"]'),min:900},
   operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
@@ -338,7 +330,6 @@ function trackModule(key){
     const nomes = {
       configuracoes:'configuracoes_gerais',
       oficios:'oficios',
-      oitivapenal:'oitiva_penitenciaria',
       lesoes:'laudo_lesoes',
       imei:'consulta_imei',
       operadora:'consulta_operadora',
