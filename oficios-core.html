@@ -63,6 +63,21 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 .security-note b{color:#244b3e}
 @media print{.security-note{display:none!important}}
 
+
+/* v2.0 — fluxo e conferência */
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--pcpr-gold,#c5a253);color:var(--pcpr-ink,#111820);font-size:12px;font-weight:900;margin-right:7px}
+.compact-actions{align-items:center}
+button.mini{min-height:34px!important;padding:0 11px!important;font-size:12px!important}
+.micro-note{font-size:11.5px;color:var(--suave);line-height:1.35}
+.confer-card{border-top:4px solid var(--pcpr-gold,#c5a253)}
+.conf-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.conf-grid>div{border:1px solid var(--borda);border-radius:8px;padding:10px;background:#fafbfc;min-width:0}
+.conf-grid span{display:block;font-size:10px;color:var(--suave);font-weight:800;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px}
+.conf-grid strong{display:block;font-size:12.5px;overflow-wrap:anywhere}
+.conf-status{margin-top:12px;padding:9px 11px;border-radius:8px;background:#edf5f0;border:1px solid #c9ddd0;color:#285748;font-size:12px;font-weight:800}
+.conf-warnings{margin-top:10px;padding:10px 12px;border-radius:8px;background:#fbf6e9;border:1px solid #dfcfaa;color:#725716;font-size:12px;line-height:1.45}
+@media(max-width:760px){.conf-grid{grid-template-columns:1fr}.compact-actions{align-items:flex-start}}
+
 </style>
 
 <style id="pcpr-unified-theme">
@@ -145,16 +160,16 @@ footer{color:var(--suave) !important;}
 </head>
 <body>
 <header>
-  <button id="btnCfgTopo" style="float:right">Configurar para outra delegacia</button>
-  <h1>Gerador de Ofícios</h1>
-  <p id="hSub">Delegacia de Polícia de Mamborê — 16ª SDP / PCPR · funciona offline, sem instalação</p>
+  <button id="btnCfgTopo" style="float:right">Configuração da unidade</button>
+  <h1>Central de Ofícios</h1>
+  <p id="hSub">Delegacia de Polícia de Mamborê — 16ª SDP / PCPR · fluxo operacional v2.0 · processamento local</p>
 </header>
 <div class="security-note"><b>Funcionamento:</b> o gerador não possui banco remoto ou credenciais próprias. Termos como “senha”, “token” ou “sigilo” que aparecem nos modelos fazem parte do texto jurídico das requisições e não representam senhas ou acessos da Central.</div>
 
 <main>
 
 <div class="card">
-  <h2>1. Tipo de ofício</h2>
+  <h2><span class="step-num">1</span> Escolher tipo de ofício</h2>
   <div class="opts" id="tipos">
     <label><input type="checkbox" class="chkTipo" value="operadora" checked> Operadoras de telefonia — dados cadastrais</label>
     <label><input type="checkbox" class="chkTipo" value="banco"> Instituições bancárias — cadastro, abertura de conta e registros técnicos</label>
@@ -171,7 +186,7 @@ footer{color:var(--suave) !important;}
 </div>
 
 <div class="card">
-  <h2>2. Dados do caso</h2>
+  <h2><span class="step-num">2</span> Dados do procedimento</h2>
   <div class="form">
     <label>Inquérito Policial nº<input type="text" id="fInq" placeholder="386606"></label>
     <label>Ano do inquérito<input type="text" id="fAno" placeholder="2026"></label>
@@ -201,7 +216,7 @@ footer{color:var(--suave) !important;}
 </div>
 
 <div class="card" id="cardEsp">
-  <h2>3. Dados específicos</h2>
+  <h2><span class="step-num">3</span> Dados específicos</h2>
 
   <div id="bOperadora" class="bloco">
     <h3>Operadoras de telefonia — dados cadastrais</h3>
@@ -213,6 +228,11 @@ footer{color:var(--suave) !important;}
     <div class="opts" style="margin-top:12px">
       <span style="font-size:12px;color:var(--suave)">Gerar para:</span>
       <span id="listaOperadoras"></span>
+    </div>
+    <div class="linha compact-actions" style="margin-top:8px">
+      <button class="sec mini" type="button" id="btnTodasOps">Todas</button>
+      <button class="sec mini" type="button" id="btnNenhumaOps">Nenhuma</button>
+      <span class="micro-note">Use os atalhos apenas para seleção; a geração continua obedecendo aos destinatários marcados.</span>
     </div>
     <div class="linha" style="margin-top:8px">
       <input type="text" id="fOutraOp" placeholder="outra operadora (ex.: ALGAR, SERCOMTEL, NEXTEL)" style="width:auto;min-width:280px">
@@ -229,6 +249,7 @@ footer{color:var(--suave) !important;}
     <div class="linha" style="margin-top:8px">
       <input type="text" id="fOutroBanco" placeholder="outra instituição (ex.: BANCO BMG, BS2, EFÍ)" style="width:auto;min-width:300px">
       <button class="sec" id="btnAddBanco">Acrescentar instituição</button>
+      <button class="sec" id="btnTodasBancos">Marcar todas</button>
       <button class="sec" id="btnLimpaBancos">Desmarcar todas</button>
     </div>
     <div class="form" style="margin-top:12px">
@@ -287,13 +308,27 @@ footer{color:var(--suave) !important;}
   </div>
 </div>
 
+<div class="card confer-card" id="cardConferencia">
+  <h2><span class="step-num">4</span> Conferência do ofício</h2>
+  <div class="conf-grid">
+    <div><span>Procedimento</span><strong id="confProc">—</strong></div>
+    <div><span>Destinatários</span><strong id="confDest">—</strong></div>
+    <div><span>Período</span><strong id="confPeriodo">—</strong></div>
+    <div><span>Prazo</span><strong id="confPrazo">—</strong></div>
+    <div><span>Assinatura</span><strong id="confAssin">—</strong></div>
+    <div><span>Resposta</span><strong id="confEmail">—</strong></div>
+  </div>
+  <div id="confStatus" class="conf-status">Preencha os dados para conferir a geração.</div>
+  <div id="confWarnings" class="conf-warnings hide"></div>
+</div>
+
 <div class="card">
-  <h2>4. Gerar</h2>
+  <h2><span class="step-num">5</span> Gerar documentos</h2>
   <div class="linha">
     <button id="btnPrev">Pré-visualizar</button>
-    <button id="btnDocx">Baixar .docx</button>
+    <button id="btnOdt">Baixar .odt</button>
     <button id="btnPdf">Baixar .pdf</button>
-    <button class="sec" id="btnZip">Pacote .zip (docx + pdf)</button>
+    <button class="sec" id="btnZip">Pacote .zip (ODT + PDF)</button>
   </div>
   <div id="msg"></div>
 </div>
@@ -304,7 +339,7 @@ footer{color:var(--suave) !important;}
 </div>
 
 <div class="card">
-  <h2 style="cursor:pointer" id="tglCfg">5. Configuração da unidade ▸ <span style="text-transform:none;font-weight:400;color:var(--suave);letter-spacing:0">clique para usar em outra delegacia</span></h2>
+  <h2 style="cursor:pointer" id="tglCfg">Configuração avançada da unidade ▸ <span style="text-transform:none;font-weight:400;color:var(--suave);letter-spacing:0">ajustes locais e compatibilidade</span></h2>
   <div id="boxCfg" class="hide">
     <div class="aviso">Preencha os dados da sua unidade e clique em <b>Baixar versão personalizada</b>. O arquivo gerado já abre configurado — basta distribuí-lo.</div>
     <div class="form">
@@ -397,8 +432,34 @@ var CFG = {};
   var p = (typeof window !== "undefined" && window.CFG_UNIDADE) ? window.CFG_UNIDADE : {};
   try{
     var g=JSON.parse(localStorage.getItem(GENERAL_CFG_KEY)||'null')||{};
-    if(!p.assinante && Array.isArray(g.delegados) && g.delegados.length)p.assinante=g.delegados[0];
+    var av2=JSON.parse(localStorage.getItem('pcpr.autoridades.v2')||'null');
+    var a0=(Array.isArray(av2)&&av2.length?av2[0]:(Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null));
+    if(a0&&typeof a0==='object'){
+      if(!p.assinante)p.assinante=a0.nome||'';
+      if(!p.cargo)p.cargo=a0.cargo||'';
+    }else if(!p.assinante && Array.isArray(g.delegados) && g.delegados.length)p.assinante=g.delegados[0];
     if(!p.cargo)p.cargo=localStorage.getItem(CARGO_AUTORIDADE_KEY)||g.cargo||'';
+    if(g.unidade&&!p.unidade)p.unidade=g.unidade;
+    if(g.subdivisao&&!p.subtitulo)p.subtitulo=g.subdivisao;
+    if(g.cidade&&!p.cidade)p.cidade=g.cidade+(g.uf?'/'+g.uf:'');
+    if(g.email&&!p.emailUnidade)p.emailUnidade=g.email;
+    if(g.email&&!p.emailDelegado)p.emailDelegado=g.email;
+    if(g.endereco||g.cep||g.email||g.fone||g.site){
+      var r1=[g.endereco,g.cep].filter(Boolean).join(', ');
+      var r2=[g.email?('Email: '+g.email):'',g.fone?('Fone: '+g.fone):'',g.site||''].filter(Boolean).join(' – ');
+      p.rodape=[r1,r2].filter(Boolean);
+    }
+    if(g.estadoHeader||g.secretaria||g.departamento||g.subdivisao||g.unidade){
+      p.cabecalho=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean).map(function(s){return String(s).toUpperCase();});
+    }
+    if(Array.isArray(g.apjs)&&g.apjs.length){
+      var antigos=(p.agentes||CFG_PADRAO.agentes),map={};
+      antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
+      p.agentes=g.apjs.map(function(n){
+        var a=map[String(n).toLocaleLowerCase('pt-BR')];
+        return a||{nome:n,email:g.email||CFG_PADRAO.emailUnidade,fone:g.fone||''};
+      });
+    }
   }catch(_){}
   Object.keys(CFG_PADRAO).forEach(function(k){
     CFG[k] = (p[k] === undefined || p[k] === null || p[k] === "") ? CFG_PADRAO[k] : p[k];
@@ -1337,108 +1398,112 @@ function runsItem(tipo,k,it){
   return [{x:marca+it.rot, b:true},{x:it.txt}];
 }
 
-// ===================== DOCX =====================
-function NSW(tag){
-  return "<"+tag+' xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
-    +' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
-    +' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"'
-    +' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
-    +' xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">';
+// ===================== ODT =====================
+function odtRunStyle(r){
+  if(r.b && r.i && r.u) return "TBIU";
+  if(r.b && r.i) return "TBI";
+  if(r.b && r.u) return "TBU";
+  if(r.i && r.u) return "TIU";
+  if(r.b) return "TB";
+  if(r.i) return "TI";
+  if(r.u) return "TU";
+  return "";
 }
-function runXML(r,tam){
-  return "<w:r><w:rPr><w:rFonts w:ascii=\"Arial\" w:hAnsi=\"Arial\" w:cs=\"Arial\"/><w:sz w:val=\""+(tam||24)+"\"/>"
-    +(r.b?"<w:b/>":"")+(r.i?"<w:i/>":"")+(r.u?'<w:u w:val="single"/>':"")
-    +"</w:rPr><w:t xml:space=\"preserve\">"+x(r.x)+"</w:t></w:r>";
-}
-function parXML(bl){
-  var tam=(bl.tam||12)*2;
-  var jc=bl.jc||"both";
-  var esp=bl.compacto?'<w:spacing w:after="0" w:line="220" w:lineRule="auto"/>'
-                     :'<w:spacing w:after="120" w:line="360" w:lineRule="auto"/>';
-  var ind="";
-  if(bl.recuo||bl.ind){
-    ind='<w:ind '+(bl.ind?'w:left="'+Math.round(bl.ind*20)+'" ':"")+(bl.recuo?'w:firstLine="1134"':"")+"/>";
-  }
-  return "<w:p><w:pPr><w:jc w:val=\""+jc+"\"/>"+esp+ind+"</w:pPr>"
-    +juntaRuns(bl.runs).map(function(r){return runXML(r,tam);}).join("")+"</w:p>";
-}
-function celXML(txt,larg,cab){
-  return '<w:tc><w:tcPr><w:tcW w:w="'+larg+'" w:type="dxa"/>'
-    +(cab?'<w:shd w:val="clear" w:color="auto" w:fill="E1E7F2"/>':"")+'<w:vAlign w:val="center"/></w:tcPr>'
-    +parXML({runs:[{x:txt,b:!!cab}],jc:"center",tam:10,compacto:true})+"</w:tc>";
-}
-function tabXML(bl){
-  var disp=9026,soma=bl.pesos.reduce(function(a,b){return a+b;},0);
-  var largs=bl.pesos.map(function(p){return Math.round(p/soma*disp);});
-  var cab=bl.cab?'<w:tr><w:trPr><w:tblHeader/></w:trPr>'+bl.cab.map(function(c,i){return celXML(c,largs[i],1);}).join("")+"</w:tr>":"";
-  var corpo=bl.linhas.map(function(l){
-    return "<w:tr>"+l.map(function(c,i){return celXML(c,largs[i]);}).join("")+"</w:tr>";
+function odtRuns(runs){
+  return juntaRuns(runs).map(function(r){
+    var st=odtRunStyle(r),t=x(r.x);
+    return st?'<text:span text:style-name="'+st+'">'+t+'</text:span>':t;
   }).join("");
-  return '<w:tbl><w:tblPr><w:tblW w:w="'+disp+'" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders>'
-    +["top","left","bottom","right","insideH","insideV"].map(function(b){
-        return '<w:'+b+' w:val="single" w:sz="4" w:space="0" w:color="000000"/>';}).join("")
-    +"</w:tblBorders></w:tblPr><w:tblGrid>"+largs.map(function(w){return '<w:gridCol w:w="'+w+'"/>';}).join("")
-    +"</w:tblGrid>"+cab+corpo+"</w:tbl>";
 }
-function blocosParaDOCX(blocos){
-  var corpo=blocos.map(function(b){
-    if(b.t==="vazio")return parXML({runs:[{x:" "}],jc:"left"});
-    if(b.t==="tab")return tabXML(b);
-    if(b.t==="lista")return b.itens.map(function(it,k){
-      return parXML({runs:runsItem(b.tipo,k,it),ind:36});
-    }).join("");
-    return parXML(b);
-  }).join("");
-
-  var sect='<w:sectPr><w:headerReference w:type="default" r:id="rId2"/><w:footerReference w:type="default" r:id="rId3"/>'
-    +'<w:pgSz w:w="11906" w:h="16838"/>'
-    +'<w:pgMar w:top="2835" w:right="1440" w:bottom="1440" w:left="1440" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>';
-  var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+NSW("w:document")+"<w:body>"+corpo+sect+"</w:body></w:document>";
-
-  var cx=Math.round((CFG.brasaoL||70)*9525),cy=Math.round((CFG.brasaoA||85)*9525);
-  var hdr='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+NSW("w:hdr")
-    +'<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:drawing>'
-    +'<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>'
-    +'<wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Brasao"/>'
-    +'<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
-    +'<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>'
-    +'<pic:nvPicPr><pic:cNvPr id="1" name="Brasao"/><pic:cNvPicPr/></pic:nvPicPr>'
-    +'<pic:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
-    +'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm>'
-    +'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>'
-    +"</wp:inline></w:drawing></w:r></w:p>"
-    +CFG.cabecalho.map(function(l){return parXML({runs:[{x:l,b:true}],jc:"center",tam:9,compacto:true});}).join("")
-    +"</w:hdr>";
-  var ftr='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+NSW("w:ftr")
-    +CFG.rodape.map(function(l){return parXML({runs:[{x:l}],jc:"center",tam:10,compacto:true});}).join("")
-    +"</w:ftr>";
-  var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-    +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-    +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-    +'<Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>'
-    +'<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-    +'<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
-    +'<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
-    +'<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>';
-  var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+NSW("w:styles")
-    +'<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="24"/></w:rPr></w:rPrDefault>'
-    +'<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr></w:pPrDefault>'
-    +"</w:docDefaults></w:styles>";
-  var rel=function(itens){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-    +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+itens+"</Relationships>";};
+function odtPStyle(bl){
+  if(bl.recuo) return "PJustIndent";
+  if(bl.ind) return "PJustBlock";
+  var j=bl.jc||"both";
+  return j==="center"?"PCenter":j==="right"?"PRight":j==="left"?"PLeft":"PJust";
+}
+function odtParagraph(bl){
+  return '<text:p text:style-name="'+odtPStyle(bl)+'">'+odtRuns(bl.runs||[{x:""}])+'</text:p>';
+}
+function odtTable(bl,idx){
+  var cols=Math.max((bl.cab||[]).length,(bl.linhas&&bl.linhas[0]?bl.linhas[0].length:0),1);
+  var c='<table:table table:name="Tabela'+idx+'" table:style-name="Table1">';
+  for(var i=0;i<cols;i++)c+='<table:table-column table:style-name="Col1"/>';
+  if(bl.cab)c+='<table:table-row>'+bl.cab.map(function(v){return '<table:table-cell table:style-name="CellHead" office:value-type="string"><text:p text:style-name="PCellHead">'+x(v)+'</text:p></table:table-cell>';}).join('')+'</table:table-row>';
+  (bl.linhas||[]).forEach(function(row){
+    c+='<table:table-row>'+row.map(function(v){return '<table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="PCell">'+x(v)+'</text:p></table:table-cell>';}).join('')+'</table:table-row>';
+  });
+  return c+'</table:table>';
+}
+function blocosParaODT(blocos){
+  var body="",ti=0;
+  blocos.forEach(function(b){
+    if(b.t==="vazio"){body+='<text:p text:style-name="PLeft"> </text:p>';return;}
+    if(b.t==="tab"){body+=odtTable(b,++ti);return;}
+    if(b.t==="lista"){
+      (b.itens||[]).forEach(function(it,k){
+        body+=odtParagraph({runs:runsItem(b.tipo,k,it),ind:36,jc:"both"});
+      });return;
+    }
+    body+=odtParagraph(b);
+  });
+  var ns='xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"';
+  var auto='<office:automatic-styles>'
+    +'<style:style style:name="PLeft" style:family="paragraph"><style:paragraph-properties fo:text-align="left" fo:margin-bottom="0.12in" fo:line-height="150%"/></style:style>'
+    +'<style:style style:name="PRight" style:family="paragraph"><style:paragraph-properties fo:text-align="right" fo:margin-bottom="0.12in" fo:line-height="150%"/></style:style>'
+    +'<style:style style:name="PCenter" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.05in" fo:line-height="130%"/></style:style>'
+    +'<style:style style:name="PJust" style:family="paragraph"><style:paragraph-properties fo:text-align="justify" fo:margin-bottom="0.12in" fo:line-height="150%"/></style:style>'
+    +'<style:style style:name="PJustIndent" style:family="paragraph"><style:paragraph-properties fo:text-align="justify" fo:text-indent="2cm" fo:margin-bottom="0.12in" fo:line-height="150%"/></style:style>'
+    +'<style:style style:name="PJustBlock" style:family="paragraph"><style:paragraph-properties fo:text-align="justify" fo:margin-left="0.65in" fo:margin-bottom="0.12in" fo:line-height="150%"/></style:style>'
+    +'<style:style style:name="PCell" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0.03in"/><style:text-properties fo:font-size="10pt"/></style:style>'
+    +'<style:style style:name="PCellHead" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0.03in"/><style:text-properties fo:font-size="10pt" fo:font-weight="bold"/></style:style>'
+    +'<style:style style:name="Table1" style:family="table"><style:table-properties table:align="center" style:width="100%"/></style:style>'
+    +'<style:style style:name="Col1" style:family="table-column"><style:table-column-properties style:rel-column-width="1*"/></style:style>'
+    +'<style:style style:name="Cell" style:family="table-cell"><style:table-cell-properties fo:border="0.5pt solid #000000" fo:padding="0.04in"/></style:style>'
+    +'<style:style style:name="CellHead" style:family="table-cell"><style:table-cell-properties fo:border="0.5pt solid #000000" fo:background-color="#E1E7F2" fo:padding="0.04in"/></style:style>'
+    +'</office:automatic-styles>';
+  var content='<?xml version="1.0" encoding="UTF-8"?>'
+    +'<office:document-content '+ns+' office:version="1.2">'
+    +'<office:font-face-decls/><office:scripts/>'+auto
+    +'<office:body><office:text>'+body+'</office:text></office:body></office:document-content>';
+  var cab=CFG.cabecalho.map(function(l){return '<text:p text:style-name="HdrText">'+x(l)+'</text:p>';}).join('');
+  var rod=CFG.rodape.map(function(l){return '<text:p text:style-name="FtrText">'+x(l)+'</text:p>';}).join('');
+  var styles='<?xml version="1.0" encoding="UTF-8"?>'
+    +'<office:document-styles '+ns+' office:version="1.2"><office:font-face-decls/>'
+    +'<office:styles>'
+    +'<style:default-style style:family="paragraph"><style:text-properties style:font-name="Arial" fo:font-family="Arial" fo:font-size="12pt"/></style:default-style>'
+    +'<style:style style:name="TB" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style>'
+    +'<style:style style:name="TI" style:family="text"><style:text-properties fo:font-style="italic"/></style:style>'
+    +'<style:style style:name="TU" style:family="text"><style:text-properties style:text-underline-style="solid" style:text-underline-width="auto"/></style:style>'
+    +'<style:style style:name="TBI" style:family="text"><style:text-properties fo:font-weight="bold" fo:font-style="italic"/></style:style>'
+    +'<style:style style:name="TBU" style:family="text"><style:text-properties fo:font-weight="bold" style:text-underline-style="solid"/></style:style>'
+    +'<style:style style:name="TIU" style:family="text"><style:text-properties fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
+    +'<style:style style:name="TBIU" style:family="text"><style:text-properties fo:font-weight="bold" fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
+    +'<style:style style:name="HdrCenter" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/></style:style><style:style style:name="HdrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt" fo:font-weight="bold"/></style:style>'
+    +'<style:style style:name="FtrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt"/></style:style>'
+    +'</office:styles>'
+    +'<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="3.9cm" fo:margin-bottom="1.8cm" fo:margin-left="2cm" fo:margin-right="2cm"/></style:page-layout></office:automatic-styles>'
+    +'<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1">'
+    +'<style:header><text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="1.6cm" svg:height="2.0cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
+    +'<style:footer>'+rod+'</style:footer>'
+    +'</style:master-page></office:master-styles></office:document-styles>';
+  var meta='<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2"><office:meta><meta:generator>Central PCPR v2.0</meta:generator></office:meta></office:document-meta>';
+  var settings='<?xml version="1.0" encoding="UTF-8"?><office:document-settings xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:version="1.2"><office:settings/></office:document-settings>';
+  var manifest='<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">'
+    +'<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/>'
+    +'<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>'
+    +'<manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>'
+    +'<manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>'
+    +'<manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="text/xml"/>'
+    +'<manifest:file-entry manifest:full-path="Pictures/brasao.png" manifest:media-type="image/png"/>'
+    +'</manifest:manifest>';
   return zip([
-    {name:"[Content_Types].xml",data:ct},
-    {name:"_rels/.rels",data:rel('<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>')},
-    {name:"word/document.xml",data:doc},
-    {name:"word/_rels/document.xml.rels",data:rel(
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
-     +'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'
-     +'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>')},
-    {name:"word/styles.xml",data:styles},
-    {name:"word/header1.xml",data:hdr},
-    {name:"word/_rels/header1.xml.rels",data:rel('<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/brasao.png"/>')},
-    {name:"word/footer1.xml",data:ftr},
-    {name:"word/media/brasao.png",data:b64bin(CFG.brasao)}
+    {name:"mimetype",data:"application/vnd.oasis.opendocument.text"},
+    {name:"content.xml",data:content},
+    {name:"styles.xml",data:styles},
+    {name:"meta.xml",data:meta},
+    {name:"settings.xml",data:settings},
+    {name:"Pictures/brasao.png",data:b64bin(CFG.brasao)},
+    {name:"META-INF/manifest.xml",data:manifest}
   ]);
 }
 
@@ -1625,6 +1690,84 @@ function comAssinatura(docs){
 }
 function msg(t, cor){ var e = document.getElementById("msg"); e.innerHTML = t; e.style.color = cor || "var(--suave)"; }
 
+
+// ===================== conferência e validações v2.0 =====================
+function listaLinhas(id){var e=document.getElementById(id);return e?e.value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean):[];}
+function apenasDigitos(s){return String(s||"").replace(/\D/g,"");}
+function imeiValidoBasico(s){return apenasDigitos(s).length===15;}
+function cpfCnpjTamanhoOk(s){var n=apenasDigitos(s);return n.length===11||n.length===14;}
+function warningsFormulario(){
+  var w=[],ini=val("fPerIni"),fim=val("fPerFim"),tipos=tiposAtuais();
+  if(ini&&fim&&ini>fim)w.push("O período inicial está posterior ao período final.");
+  [["fImeis","Operadora"],["fImeis2","Google"],["fImeisApple","Apple"]].forEach(function(p){
+    listaLinhas(p[0]).forEach(function(v){if(v&&!imeiValidoBasico(v))w.push(p[1]+": IMEI “"+v+"” não possui 15 dígitos.");});
+  });
+  listaLinhas("fCpfs").forEach(function(v){if(v&&!cpfCnpjTamanhoOk(v))w.push("Operadora: CPF/CNPJ “"+v+"” possui quantidade de dígitos incomum.");});
+  var bo=val("fBoBanco"); if(bo&&apenasDigitos(bo).length<7)w.push("O número do Boletim de Ocorrência parece incompleto.");
+  if(!val("fInq"))w.push("O número do Inquérito Policial não foi preenchido.");
+  if(!val("fAno"))w.push("O ano do Inquérito Policial não foi preenchido.");
+  if(!val("fAssin")&&!CFG.assinante)w.push("Não há autoridade definida para assinatura.");
+  if(tipos.indexOf("operadora")>=0){
+    if(!listaLinhas("fNumeros").length&&!listaLinhas("fCpfs").length&&!listaLinhas("fImeis").length)w.push("Operadoras: informe ao menos telefone, CPF/CNPJ ou IMEI.");
+    if(!operadorasMarcadas().length)w.push("Operadoras: selecione ao menos uma destinatária.");
+  }
+  if(tipos.indexOf("banco")>=0){
+    if(!listaLinhas("fContasBanco").length)w.push("Bancos: informe ao menos uma conta/pessoa.");
+    if(!bancosMarcados().length)w.push("Bancos: marque ao menos uma instituição financeira.");
+  }
+  if(tipos.indexOf("google")>=0){
+    if(!listaLinhas("fEmails").length&&!listaLinhas("fImeis2").length)w.push("Google: informe ao menos um Gmail ou IMEI.");
+    if(!ini||!fim)w.push("Google: informe o período inicial e final.");
+  }
+  if(tipos.indexOf("apple")>=0){
+    if(!listaLinhas("fImeisApple").length&&!listaLinhas("fContasApple").length)w.push("Apple: informe ao menos um IMEI ou conta Apple.");
+    if(!ini||!fim)w.push("Apple: informe o período inicial e final.");
+  }
+  if(tipos.indexOf("plataforma")>=0){
+    if(!val("fPlataforma"))w.push("Plataforma: informe o nome da plataforma.");
+    if(!listaLinhas("fIdents").length)w.push("Plataforma: informe ao menos um identificador.");
+  }
+  if(tipos.indexOf("generico")>=0){
+    if(!val("fDest"))w.push("Ofício genérico: informe o destinatário.");
+    if(!val("fCorpo"))w.push("Ofício genérico: escreva o corpo do ofício.");
+  }
+  return w.filter(function(v,i,a){return a.indexOf(v)===i;});
+}
+function destinatariosResumo(){
+  var tipos=tiposAtuais(),p=[];
+  tipos.forEach(function(t){
+    if(t==="operadora")p=p.concat(operadorasMarcadas());
+    else if(t==="banco")p=p.concat(bancosMarcados());
+    else if(t==="google")p.push("Google LLC");
+    else if(t==="apple")p.push("Apple");
+    else if(t==="plataforma")p.push(val("fPlataforma")||"Plataforma digital");
+    else if(t==="generico")p.push((val("fDest").split(/\n/)[0]||"Ofício genérico"));
+  });
+  return p.filter(Boolean);
+}
+function atualizaConferencia(){
+  var proc=(val("fInq")||"—")+"/"+(val("fAno")||"—")+" · "+(crimeAtual()||"crime não informado");
+  var ds=destinatariosResumo(),per=(val("fPerIni")&&val("fPerFim"))?(dataBR(val("fPerIni"))+" a "+dataBR(val("fPerFim"))):"não delimitado";
+  var ag=agenteAtual(),ass=(val("fAssin")||CFG.assinante||"—")+" · "+(val("fCargo")||CFG.cargo||"—");
+  var em=emailsResposta({emailAgente:ag.email,emailExtra:val("fEmailExtra")}).join(", ")||"—";
+  var n=0;tiposAtuais().forEach(function(t){n+=MARCADOS_TIPO[t]?MARCADOS_TIPO[t]().length:1;});
+  var map={confProc:proc,confDest:ds.length?ds.join(", ")+" ("+n+" documento"+(n===1?"":"s")+")":"—",confPeriodo:per,confPrazo:val("fPrazo")||"prazo próprio de cada tipo",confAssin:ass,confEmail:em};
+  Object.keys(map).forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=map[id];});
+  var w=warningsFormulario(),box=document.getElementById("confWarnings"),st=document.getElementById("confStatus");
+  if(box){box.classList.toggle("hide",!w.length);box.innerHTML=w.length?("<b>Atenção antes de gerar:</b><br>• "+w.map(esc).join("<br>• ")):"";}
+  if(st){
+    if(!tiposAtuais().length){st.textContent="Selecione ao menos um tipo de ofício.";st.style.color="var(--erro)";}
+    else if(w.length){st.textContent="Conferência necessária · "+w.length+" alerta(s). A geração continua possível após confirmação.";st.style.color="#725716";}
+    else{st.textContent="PRONTO PARA CONFERIR · "+n+" documento(s) selecionado(s).";st.style.color="var(--ok)";}
+  }
+}
+function documentosComPreflight(){
+  atualizaConferencia();
+  var w=warningsFormulario();
+  if(w.length&&!confirm("Há "+w.length+" alerta(s) de conferência:\\n\\n• "+w.join("\\n• ")+"\\n\\nDeseja gerar mesmo assim?"))throw "Geração cancelada para conferência.";
+  return comAssinatura(montaDocumentos());
+}
+
 // ===================== ações =====================
 function seguro(fn){
   return function(){
@@ -1634,27 +1777,28 @@ function seguro(fn){
 }
 document.getElementById("btnPrev").onclick = seguro(function(){
   var docs = comAssinatura(montaDocumentos());
+  atualizaConferencia();
   document.getElementById("cardPrev").classList.remove("hide");
   document.getElementById("prev").innerHTML = docs.map(function(d, i){
     return '<div style="font-size:11.5px;color:var(--suave);text-align:center;margin:0 0 6px">'
-         + (i + 1) + "/" + docs.length + " — " + esc(d.arquivo) + '.docx</div>'
+         + (i + 1) + "/" + docs.length + " — " + esc(d.arquivo) + '.odt</div>'
          + blocosParaHTML(d.blocos);
   }).join('<div style="height:26px"></div>');
   document.getElementById("cardPrev").scrollIntoView({behavior:"smooth", block:"start"});
   msg(docs.length + " documento(s) montado(s).", "var(--ok)");
 });
-document.getElementById("btnDocx").onclick = seguro(function(){
-  var docs = comAssinatura(montaDocumentos());
+document.getElementById("btnOdt").onclick = seguro(function(){
+  var docs = documentosComPreflight();
   docs.forEach(function(d, i){
     setTimeout(function(){
-      baixaBin(blocosParaDOCX(d.blocos), d.arquivo + ".docx",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+      baixaBin(blocosParaODT(d.blocos), d.arquivo + ".odt",
+        "application/vnd.oasis.opendocument.text");
     }, i * 350);
   });
-  msg(docs.length + " arquivo(s) .docx gerado(s).", "var(--ok)");
+  msg(docs.length + " arquivo(s) .odt gerado(s).", "var(--ok)");
 });
 document.getElementById("btnPdf").onclick = seguro(function(){
-  var docs = comAssinatura(montaDocumentos()), i = 0;
+  var docs = documentosComPreflight(), i = 0;
   msg("Montando PDF…");
   (function proximo(){
     if(i >= docs.length){ msg(docs.length + " arquivo(s) .pdf gerado(s).", "var(--ok)"); return; }
@@ -1665,13 +1809,13 @@ document.getElementById("btnPdf").onclick = seguro(function(){
   })();
 });
 document.getElementById("btnZip").onclick = seguro(function(){
-  var docs = comAssinatura(montaDocumentos()), arqs = [], i = 0;
-  docs.forEach(function(d){ arqs.push({name:"docx/" + d.arquivo + ".docx", data: blocosParaDOCX(d.blocos)}); });
+  var docs = documentosComPreflight(), arqs = [], i = 0;
+  docs.forEach(function(d){ arqs.push({name:"odt/" + d.arquivo + ".odt", data: blocosParaODT(d.blocos)}); });
   msg("Montando o pacote…");
   (function proximo(){
     if(i >= docs.length){
       baixaBin(zip(arqs), "oficios-" + new Date().toISOString().slice(0,10) + ".zip", "application/zip");
-      msg("Pacote com " + docs.length + " ofício(s) em .docx e .pdf.", "var(--ok)");
+      msg("Pacote com " + docs.length + " ofício(s) em .odt e .pdf.", "var(--ok)");
       return;
     }
     blocosParaPDF(docs[i].blocos, function(bytes){
@@ -1743,6 +1887,7 @@ function atualizaResumoTipos(){
     }else{ n += 1; partes.push(NOME_TIPO[t]); }
   });
   e.innerHTML = "serão gerados <b>" + n + "</b> ofício(s): " + esc(partes.join(" · "));
+  if(typeof atualizaConferencia==="function")atualizaConferencia();
 }
 function trocaTipo(){
   var tipos = tiposAtuais(), visiveis = [];
@@ -1800,6 +1945,18 @@ document.getElementById("btnLimpaBancos").onclick = function(){
   [].slice.call(document.querySelectorAll(".chkBanco")).forEach(function(c){ c.checked = false; });
   atualizaResumoTipos();
 };
+document.getElementById("btnTodasBancos").onclick = function(){
+  [].slice.call(document.querySelectorAll(".chkBanco")).forEach(function(c){ c.checked = true; });
+  atualizaResumoTipos(); atualizaConferencia();
+};
+document.getElementById("btnTodasOps").onclick = function(){
+  [].slice.call(document.querySelectorAll(".chkOp")).forEach(function(c){ c.checked = true; });
+  atualizaResumoTipos(); atualizaConferencia();
+};
+document.getElementById("btnNenhumaOps").onclick = function(){
+  [].slice.call(document.querySelectorAll(".chkOp")).forEach(function(c){ c.checked = false; });
+  atualizaResumoTipos(); atualizaConferencia();
+};
 document.getElementById("btnAddOp").onclick = function(){
   var v = val("fOutraOp");
   if(!v){ msg("Digite o nome da operadora.", "var(--erro)"); return; }
@@ -1818,9 +1975,8 @@ document.getElementById("btnPer30").onclick = function(){ periodoRelativo(30); }
 document.getElementById("btnPer12").onclick = function(){ periodoRelativo(365); };
 
 // ===================== configuração da unidade =====================
-var GENERAL_CFG_KEY='pcpr.configGeralUnidade.v1', CARGO_AUTORIDADE_KEY='pcpr.cargoAutoridade.v1';
 function cfgAplicaNaTela(){
-  document.getElementById("hSub").textContent = CFG.unidade + " — " + CFG.subtitulo + " · funciona offline, sem instalação";
+  document.getElementById("hSub").textContent = CFG.unidade + " — " + CFG.subtitulo + " · fluxo operacional v2.0 · processamento local";
   document.getElementById("rodapeTela").innerHTML = esc(CFG.rodape.join(" · "));
   var a = document.getElementById("fAssin"), c = document.getElementById("fCargo");
   if(a && !a.dataset.tocado) a.value = CFG.assinante;
@@ -1958,6 +2114,11 @@ document.getElementById("fileBrasao").onchange = function(){ if(this.files[0]) c
 document.getElementById("fData").value = new Date().toISOString().slice(0,10);
 document.getElementById("fAno").value = String(new Date().getFullYear());
 document.getElementById("fAgente").onchange = function(){ atualizaIniciais(); atualizaDestinos(); };
+[].slice.call(document.querySelectorAll("input,textarea,select")).forEach(function(el){
+  el.addEventListener("input",function(){if(typeof atualizaConferencia==="function")atualizaConferencia();});
+  el.addEventListener("change",function(){if(typeof atualizaConferencia==="function")atualizaConferencia();});
+});
+setTimeout(function(){if(typeof atualizaConferencia==="function")atualizaConferencia();},0);
 document.getElementById("fEmailExtra").oninput = atualizaDestinos;
 document.getElementById("fIniciais").oninput = function(){ this.dataset.tocado = "1"; };
 cfgPreencheForm(); cfgAplicaNaTela(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos(); trocaTipo();
