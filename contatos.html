@@ -13,7 +13,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Diretório de Contatos — PCPR</title>
+<title>Contatos Institucionais — PCPR</title>
 <style>
 :root{
   --ink:#111820;--green:#285748;--green-dark:#183a31;--gold:#c5a253;--red:#8f3037;
@@ -29,7 +29,7 @@ header h1{margin:0;font-size:22px;letter-spacing:.2px}
 header p{margin:5px 0 0;color:#f1ede2;font-size:12.5px}
 main{max-width:1450px;margin:0 auto;padding:20px 22px 50px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 0 rgba(197,162,83,.12)}
-.toolbar{display:grid;grid-template-columns:minmax(260px,1.5fr) minmax(190px,.6fr) auto auto;gap:10px;align-items:end}
+.toolbar{display:grid;grid-template-columns:minmax(260px,1.4fr) minmax(175px,.55fr) minmax(175px,.55fr) minmax(155px,.48fr) auto auto;gap:10px;align-items:end}
 label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:700}
 input,select,textarea{width:100%;border:1px solid #bac5d1;border-radius:8px;background:#fff;color:#17202a;padding:9px 10px;font:inherit;font-size:13px}
 textarea{min-height:92px;resize:vertical}
@@ -80,6 +80,17 @@ dialog::backdrop{background:rgba(11,24,22,.48)}
 .chk{display:flex;flex-direction:row;align-items:center;gap:8px;color:#17202a;font-weight:400}
 .chk input{width:auto}
 footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font-size:11px;color:var(--muted)}
+
+.summary-line{font-size:11px;color:var(--muted);margin:-7px 0 15px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:900;letter-spacing:.35px}
+.tag.portal{background:#eef3ff;color:#344f86;border:1px solid #c8d4f0}
+.tag.oficio{background:#edf5ef;color:#285d47;border:1px solid #c5dacb}
+.tag.alert{background:#fff2cf;color:#7a5610;border:1px solid #dfc16e}
+.tag.emergency{background:#fff0f1;color:#8b3139;border:1px solid #e0b5b9}
+.item.needs-check{border-color:#d7bf7a;background:#fffdf8}
+.copy-email,.copy-phone{white-space:nowrap}
+
 @media(max-width:850px){
   .toolbar{grid-template-columns:1fr 1fr}
   .form{grid-template-columns:1fr}
@@ -98,8 +109,8 @@ footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font
 </head>
 <body>
 <header>
-  <h1>Diretório de Contatos</h1>
-  <p>Bancos, operadoras, plataformas, órgãos e ferramentas · dados personalizados salvos somente neste navegador; sem banco remoto</p>
+  <h1>Contatos Institucionais</h1>
+  <p>Bancos, operadoras, plataformas, fabricantes, órgãos e serviços utilizados em diligências e requisições</p>
   <div style="margin-top:10px"><span style="display:inline-block;background:#eaf3ee;color:#183a31;border:1px solid #a9c6b7;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800">🟢 Armazenamento local neste navegador · sem banco remoto</span></div>
 </header>
 <div class="security-note"><b>Diretório local:</b> favoritos e contatos personalizados ficam somente neste navegador. A versão pública não armazena senhas, credenciais ou informações de abertura de arquivos.</div>
@@ -113,6 +124,22 @@ footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font
       <label>Categoria
         <select id="category"><option value="">Todas as categorias</option></select>
       </label>
+      <label>Filtro operacional
+        <select id="contactFilter">
+          <option value="">Todos</option>
+          <option value="email">Com e-mail</option>
+          <option value="phone">Com telefone</option>
+          <option value="portal">Com portal</option>
+          <option value="alert">Precisa conferir</option>
+        </select>
+      </label>
+      <label>Ordenar por
+        <select id="sortBy">
+          <option value="name">Nome</option>
+          <option value="category">Categoria</option>
+          <option value="favorite">Favoritos primeiro</option>
+        </select>
+      </label>
       <button class="secondary" id="favoritesOnly" type="button">☆ Favoritos</button>
       <button id="addBtn" type="button">+ Adicionar contato</button>
     </div>
@@ -124,10 +151,14 @@ footer{max-width:1450px;margin:0 auto;padding:0 22px 30px;text-align:center;font
       </label>
       <button class="secondary" id="resetBtn" type="button">Restaurar lista inicial</button>
     </div>
-    <div class="notice"><b>🔎 Pesquisa instantânea:</b> procure por instituição, categoria, telefone, e-mail, portal ou observação. Favoritos aparecem primeiro. <br><b>🛡️ Privacidade:</b> contatos adicionados, favoritos e alterações ficam exclusivamente no armazenamento local deste navegador. <br><b>Observação:</b> a lista inicial foi ampliada com os contatos do documento enviado e agora exibe logotipos/ícones ao lado das instituições para localização mais rápida. Como contatos institucionais podem mudar, o módulo permite edição imediata. Dados adicionados por você não são enviados ao Google Analytics.</div>
+    <div class="notice"><b>🔎 Pesquisa instantânea:</b> procure por instituição, categoria, telefone, e-mail, portal ou observação. Use os filtros operacionais para reduzir a lista rapidamente.
+    <br><b>🛡️ Privacidade:</b> contatos adicionados, favoritos e alterações ficam exclusivamente no armazenamento local deste navegador.
+    <br><b>🌐 Ícones:</b> quando houver domínio informado, o navegador pode solicitar o favicon institucional ao serviço público de favicons do Google; os campos do contato não são enviados para esse serviço.
+    <br><b>⚠️ Conferência:</b> contatos institucionais podem mudar. Registros com indicação de dúvida, emergência ou necessidade de confirmação recebem destaque visual.</div>
   </section>
 
   <div class="stats" id="stats"></div>
+  <div class="summary-line" id="summaryLine"></div>
   <section class="grid" id="grid"></section>
 </main>
 
@@ -201,6 +232,17 @@ function sanitizePublicContacts(items){
     if(String(item.id||'').toLowerCase()==='tim'){
       item.notes='Plataforma InfoGuard. Informação de abertura de arquivo removida da versão pública.';
     }
+
+    // Na base pública, priorizar canais institucionais: telefones nominativos
+    // (nome de pessoa entre parênteses) são removidos. Contatos pessoais podem
+    // ser cadastrados localmente pelo próprio usuário.
+    item.phones=(Array.isArray(item.phones)?item.phones:[]).filter(p=>{
+      const txt=String(p||'');
+      const m=txt.match(/\(([^)]*[A-Za-zÀ-ÿ][^)]*)\)\s*$/);
+      if(!m)return true;
+      const label=norm(m[1]);
+      return /ramal|central|plantao|plantão|24h|atendimento|suporte|juridico|jurídico|oficio|ofício|setor/.test(label);
+    });
     return item;
   });
 }
@@ -223,6 +265,19 @@ function uid(){
 }
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
 function categories(){return [...new Set(data.map(x=>x.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'))}
+function needsCheck(item){
+  const s=norm([item?.notes,(item?.emails||[]).join(' '),(item?.phones||[]).join(' ')].join(' '));
+  return /confirmar|confirmacao|aten[cç][aã]o|incompleto|nao informado|não informado|desatualiz|removida da versao publica|removida da versão pública/.test(s);
+}
+function tagsFor(item){
+  const tags=[];
+  if(validUrl(item?.url))tags.push(['PORTAL','portal']);
+  const s=norm([item?.notes,item?.category,item?.name].join(' '));
+  if(/oficio|oficios|requisi[cç][aã]o|ordem judicial|judicial/.test(s))tags.push(['OFÍCIO','oficio']);
+  if(/emergencia|emergencial|urgente|plantao|24h/.test(s))tags.push(['EMERGÊNCIA','emergency']);
+  if(needsCheck(item))tags.push(['CONFIRMAR','alert']);
+  return tags;
+}
 function inferDomain(item){
   const raw=(item.logo||'').trim();
   if(raw){
@@ -269,19 +324,20 @@ function rebuildFilters(){
   if([...sel.options].some(o=>o.value===current))sel.value=current;
 }
 function renderStats(list){
-  const total=data.length, fav=data.filter(x=>x.favorite).length;
+  const total=data.length, fav=data.filter(x=>x.favorite).length, alerts=data.filter(needsCheck).length;
   const cats=categories();
   $('stats').innerHTML='';
-  const vals=[['Total',total],['Exibidos',list.length],['Favoritos',fav],['Categorias',cats.length]];
+  const vals=[['contatos',total],['resultados',list.length],['favoritos',fav],['categorias',cats.length],['para conferir',alerts]];
   vals.forEach(([l,v])=>{
     const s=document.createElement('span');s.className='pill';
     const b=document.createElement('b');b.textContent=v;s.append(b,document.createTextNode(' '+l));$('stats').appendChild(s);
   });
+  $('summaryLine').textContent=total+' contatos institucionais · '+cats.length+' categorias · '+fav+' favoritos · '+alerts+' com alerta de conferência';
 }
 function addEmailRow(parent,email,item){
   const row=document.createElement('div');row.className='email-row';
   const text=document.createElement('div');text.className='email';text.textContent=email;
-  const cp=document.createElement('button');cp.className='secondary icon';cp.type='button';cp.textContent='Copiar';
+  const cp=document.createElement('button');cp.className='secondary icon copy-email';cp.type='button';cp.textContent='Copiar e-mail';
   cp.onclick=()=>copyText(email).then(()=>toast('E-mail copiado'));
   const mail=document.createElement('button');mail.className='icon';mail.type='button';mail.textContent='E-mail';
   mail.onclick=()=>location.href='mailto:'+encodeURIComponent(email);
@@ -290,27 +346,36 @@ function addEmailRow(parent,email,item){
 function addPhoneRow(parent,phone){
   const row=document.createElement('div');row.className='phone-row';
   const text=document.createElement('div');text.className='phone';text.textContent=phone;
-  const cp=document.createElement('button');cp.className='secondary icon';cp.type='button';cp.textContent='Copiar';
+  const cp=document.createElement('button');cp.className='secondary icon copy-phone';cp.type='button';cp.textContent='Copiar telefone';
   cp.onclick=()=>copyText(phone).then(()=>toast('Telefone copiado'));
   row.append(text,cp);parent.appendChild(row);
 }
 function render(){
   rebuildFilters();
-  const q=norm($('search').value), cat=$('category').value;
+  const q=norm($('search').value), cat=$('category').value, contactFilter=$('contactFilter').value, sortBy=$('sortBy').value;
   let list=data.filter(x=>{
     if(cat && x.category!==cat)return false;
     if(favoritesOnly && !x.favorite)return false;
+    if(contactFilter==='email' && !(x.emails||[]).length)return false;
+    if(contactFilter==='phone' && !(x.phones||[]).length)return false;
+    if(contactFilter==='portal' && !validUrl(x.url))return false;
+    if(contactFilter==='alert' && !needsCheck(x))return false;
     if(!q)return true;
     const hay=norm([x.name,x.category,(x.emails||[]).join(' '),(x.phones||[]).join(' '),x.url,x.notes,x.logo].join(' '));
     return hay.includes(q);
-  }).sort((a,b)=>(Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'pt-BR'));
+  });
+  list.sort((a,b)=>{
+    if(sortBy==='favorite')return (Number(b.favorite)-Number(a.favorite))||a.name.localeCompare(b.name,'pt-BR');
+    if(sortBy==='category')return String(a.category||'').localeCompare(String(b.category||''),'pt-BR')||a.name.localeCompare(b.name,'pt-BR');
+    return a.name.localeCompare(b.name,'pt-BR');
+  });
   renderStats(list);
   const grid=$('grid');grid.innerHTML='';
   if(!list.length){
     const e=document.createElement('div');e.className='empty';e.textContent='Nenhum contato encontrado com os filtros atuais.';grid.appendChild(e);return;
   }
   list.forEach(item=>{
-    const card=document.createElement('article');card.className='item';
+    const card=document.createElement('article');card.className='item'+(needsCheck(item)?' needs-check':'');
     const head=document.createElement('div');head.className='item-head';
     const wrap=document.createElement('div');wrap.className='brandline';
     const logoWrap=document.createElement('div');logoWrap.className='logoBox';
@@ -330,6 +395,9 @@ function render(){
     const h=document.createElement('h3');h.textContent=item.name;
     const c=document.createElement('span');c.className='cat';c.textContent=item.category||'Sem categoria';
     textWrap.append(h,c);
+    const badges=document.createElement('div');badges.className='badges';
+    tagsFor(item).forEach(([label,cls])=>{const s=document.createElement('span');s.className='tag '+cls;s.textContent=label;badges.appendChild(s)});
+    if(badges.childNodes.length)textWrap.appendChild(badges);
     wrap.append(logoWrap,textWrap);
     const star=document.createElement('button');star.className='star';star.type='button';star.title='Favorito';
     star.textContent=item.favorite?'★':'☆';
@@ -408,9 +476,11 @@ $('addBtn').onclick=()=>openEditor();
 $('cancelBtn').onclick=closeEditor;
 $('search').addEventListener('input',render);
 $('category').addEventListener('change',render);
+$('contactFilter').addEventListener('change',render);
+$('sortBy').addEventListener('change',render);
 $('favoritesOnly').onclick=()=>{
   favoritesOnly=!favoritesOnly;
-  $('favoritesOnly').textContent=(favoritesOnly?'★':'☆')+' Favoritos';
+  $('favoritesOnly').textContent=favoritesOnly?'★ Exibindo favoritos':'☆ Favoritos';
   render();
 };
 $('exportBtn').onclick=()=>{
