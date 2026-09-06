@@ -124,7 +124,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
       <div class="field"><label for="cfgUf">UF</label><input id="cfgUf" type="text" maxlength="2"></div>
       <div class="field"><label for="cfgUnidadeTexto">Local no corpo do texto</label><input id="cfgUnidadeTexto" type="text" placeholder="Ex.: Delegacia de Polícia"></div>
       <div class="field"><label for="cfgUnidadeCurta">Nome curto da unidade</label><input id="cfgUnidadeCurta" type="text" placeholder="Ex.: Delegacia de Mamborê"></div>
-      <div class="field full"><label for="cfgDelegado">Delegado(a) responsável</label><input id="cfgDelegado" type="text"></div>
+      <div class="field"><label for="cfgDelegado">Delegado(a) responsável</label><input id="cfgDelegado" type="text"></div><div class="field"><label for="cfgCargo">Cargo</label><input id="cfgCargo" type="text" placeholder="Ex.: Delegado de Polícia"></div>
 
       <div class="config-section">Rodapé</div>
       <div class="field full"><label for="cfgEndereco">Endereço</label><input id="cfgEndereco" type="text"></div>
@@ -221,6 +221,7 @@ const dataLaudo=$('dataLaudo'), apj=$('apj'), vitima=$('vitima'), dataFato=$('da
 
 const CONFIG_KEY='geradorLaudoLesoesConfigV4';
 const LEGACY_CONFIG_KEY='geradorLaudoLesoesConfigV3';
+const CARGO_AUTORIDADE_KEY='pcpr.cargoAutoridade.v1';
 const DEFAULT_CONFIG={
   estadoHeader:'ESTADO DO PARANÁ',
   estado:'Paraná',
@@ -233,6 +234,7 @@ const DEFAULT_CONFIG={
   cidade:'Mamborê',
   uf:'PR',
   delegado:'Anderson Sérgio Romão',
+  cargo:'Delegado de Polícia',
   endereco:'Av. Augusto Mendes dos Santos, 997',
   cep:'87.340-000',
   email:'dpmambore@pc.pr.gov.br',
@@ -240,12 +242,12 @@ const DEFAULT_CONFIG={
   site:'www.policiacivil.pr.gov.br',
   apjs:['Thiago Gonzaga da Silva Couto','Tiago Henrique Lemes','Paulo Henrique Vilaça']
 };
-const CFG_IDS={estadoHeader:'cfgEstadoHeader',estado:'cfgEstado',secretaria:'cfgSecretaria',departamento:'cfgDepartamento',subdivisao:'cfgSubdivisao',unidade:'cfgUnidade',unidadeTexto:'cfgUnidadeTexto',unidadeCurta:'cfgUnidadeCurta',cidade:'cfgCidade',uf:'cfgUf',delegado:'cfgDelegado',endereco:'cfgEndereco',cep:'cfgCep',email:'cfgEmail',fone:'cfgFone',site:'cfgSite'};
+const CFG_IDS={estadoHeader:'cfgEstadoHeader',estado:'cfgEstado',secretaria:'cfgSecretaria',departamento:'cfgDepartamento',subdivisao:'cfgSubdivisao',unidade:'cfgUnidade',unidadeTexto:'cfgUnidadeTexto',unidadeCurta:'cfgUnidadeCurta',cidade:'cfgCidade',uf:'cfgUf',delegado:'cfgDelegado',cargo:'cfgCargo',endereco:'cfgEndereco',cep:'cfgCep',email:'cfgEmail',fone:'cfgFone',site:'cfgSite'};
 function cloneDefault(){return JSON.parse(JSON.stringify(DEFAULT_CONFIG));}
 function normalizeConfig(raw){const d=cloneDefault(),r=(raw&&typeof raw==='object')?raw:{};for(const k of Object.keys(CFG_IDS)){if(typeof r[k]==='string')d[k]=r[k];}if(Array.isArray(r.apjs))d.apjs=r.apjs.map(x=>String(x).trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(y=>y.toLocaleLowerCase('pt-BR')===x.toLocaleLowerCase('pt-BR'))===i);return d;}
-function loadConfig(){try{const raw=localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY);return raw?normalizeConfig(JSON.parse(raw)):cloneDefault();}catch(e){return cloneDefault();}}
+function loadConfig(){try{const raw=localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY);const c=raw?normalizeConfig(JSON.parse(raw)):cloneDefault();const gc=localStorage.getItem(CARGO_AUTORIDADE_KEY);if(gc)c.cargo=gc;return c;}catch(e){return cloneDefault();}}
 let settings=loadConfig(),draftApjs=[];
-function persistConfig(){try{localStorage.setItem(CONFIG_KEY,JSON.stringify(settings));return true;}catch(e){return false;}}
+function persistConfig(){try{localStorage.setItem(CONFIG_KEY,JSON.stringify(settings));localStorage.setItem(CARGO_AUTORIDADE_KEY,settings.cargo||'Delegado de Polícia');return true;}catch(e){return false;}}
 function configStatus(msg,kind=''){const e=$('configStatus');e.textContent=msg;e.className='config-status '+kind;}
 function footerLine1(){const left=[settings.endereco,settings.cidade&&settings.uf?(settings.cidade+' - '+settings.uf):(settings.cidade||settings.uf)].filter(Boolean).join(', ');return [left,settings.cep?('CEP: '+settings.cep):''].filter(Boolean).join(' - ');}
 function footerLine2(){return [settings.email?('Email: '+settings.email):'',settings.fone?('Fone/Fax: '+settings.fone):'',settings.site].filter(Boolean).join(' - ');}
@@ -282,7 +284,7 @@ function setStatus(msg,kind=''){status.textContent=msg;status.className='status 
 function validate(){if(!parseDate(dataLaudo.value))return 'Informe a data do laudo.';if(!vitima.value.trim())return 'Informe o nome da vítima.';if(!parseDate(dataFato.value))return 'Informe a data do fato.';return '';}
 function replacements(){const dl=dateInfo(dataLaudo.value),df=dateInfo(dataFato.value);return {
 '@@DIA@@':String(dl.day),'@@MES@@':dl.month,'@@ANO_EXT@@':dl.yearWords,'@@ANO@@':String(dl.year),'@@APJ@@':apj.value,'@@VITIMA@@':vitima.value.trim().toUpperCase(),'@@DATA_FATO@@':df.numeric,
-'@@CIDADE@@':settings.cidade,'@@UF@@':settings.uf,'@@ESTADO@@':settings.estado,'@@DELEGADO@@':settings.delegado,'@@UNIDADE_TEXTO@@':settings.unidadeTexto,'@@UNIDADE_CURTA@@':settings.unidadeCurta,
+'@@CIDADE@@':settings.cidade,'@@UF@@':settings.uf,'@@ESTADO@@':settings.estado,'@@DELEGADO@@':settings.delegado,'@@CARGO@@':settings.cargo||'Delegado de Polícia','@@UNIDADE_TEXTO@@':settings.unidadeTexto,'@@UNIDADE_CURTA@@':settings.unidadeCurta,
 '@@ESTADO_HEADER@@':settings.estadoHeader,'@@SECRETARIA@@':settings.secretaria,'@@DEPARTAMENTO@@':settings.departamento,'@@SUBDIVISAO@@':settings.subdivisao,'@@UNIDADE_HEADER@@':settings.unidade,
 '@@RODAPE1@@':footerLine1(),'@@RODAPE2@@':footerLine2()};}
 function updateSummary(){const d=dateInfo(dataLaudo.value);$('sumData').textContent=d?d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+')':'-';$('sumApj').textContent=apj.value;$('sumVitima').textContent=vitima.value.trim().toUpperCase()||'-';$('sumArquivo').textContent=fileName(formato.value);renderPreview().catch(()=>{});}
@@ -463,9 +465,9 @@ function drawRichWrapped(ctx,segments,x,y,maxW,size=12,lineHeight=20,family='Ari
 function drawHeader(ctx){drawCenteredFit(ctx,settings.estadoHeader,71.5,370,6.7,5.3,'400');drawCenteredFit(ctx,settings.secretaria,80.7,430,6.7,5.1,'400');drawCenteredFit(ctx,settings.departamento,89.9,400,6.8,5.2,'700');drawCenteredFit(ctx,settings.subdivisao,99.1,420,6.7,5.1,'400');drawCenteredFit(ctx,settings.unidade,108.3,420,6.8,5.1,'700');}
 function drawFooter(ctx){drawCenteredFit(ctx,footerLine1(),782.5,470,6.5,4.8,'400','Times New Roman, Times, serif','#000');drawCenteredFit(ctx,footerLine2(),794.0,500,6.3,4.6,'400','Times New Roman, Times, serif','#0000cc');}
 function drawVars(ctx,pageIndex){const d=dateInfo(dataLaudo.value)||dateInfo(todayLocal()),df=dateInfo(dataFato.value)||d,name=(vitima.value.trim().toUpperCase()||'NOME DA VÍTIMA'),a=apj.value||'';drawHeader(ctx);drawFooter(ctx);
- if(pageIndex===0){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como Delegado de Polícia '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia, ao final assinado, foram nomeados os referidos médicos, na qualidade de: '},{text:'PERITOS EXAMINADORES,',weight:'700'},{text:' ao final assinado, que aceitando a missão. Foi-lhes deferida a promessa legal, de bem e fielmente desempenharem as funções, o que prometeram na forma e sob o rigor da lei, tendo dito que faziam sem dolo e nem malícia a bem do direito daquele. E por nada mais haver, deu-se por findo esse termo que para constar foi por mim lavrado, de acordo com o mandato daquele Delegado e que, por isso, foi devidamente assinado. Eu, '+a+', Agente de Polícia Judiciária, que digitei.'}],55,237.5,485,12,20.5);
- }else if(pageIndex===1){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+'-'+settings.uf+', atendendo requisição do Delegado de Polícia, '},{text:settings.delegado+',',weight:'700'},{text:' comigo, Agente PJ, a seu cargo, e os '},{text:'Peritos Médicos Nomeados',weight:'700'},{text:' ao final nomeados e assinados, a quem a Autoridade Policial deferiu o compromisso legal de bem e fielmente desempenharem a sua missão, encarregando-os de procederem a exame de lesões corporais em:'}],55,210.0,485,12,20.2);drawFit(ctx,name,107.0,337.5,425,12,8.2,'700');drawPt(ctx,df.numeric,214.5,350.5,12,'700');
- }else if(pageIndex===3){let yy=drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.year+', nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como Delegado de Polícia '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia Judiciária, ao final assinado, eu, '},{text:name+',',weight:'700'},{text:' declaro que me foi entregue uma via de requisição para exame de corpo delito.'}],55,214.5,485,12,19.8);yy+=4;drawRichWrapped(ctx,[{text:'Declaro também que me foi informado que após a realização do exame, '},{text:'é de minha inteira responsabilidade',weight:'700'},{text:' entregá-lo na '+settings.unidadeCurta+'.'}],115,yy,420,12,19.8);}}
+ if(pageIndex===0){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como '+(settings.cargo||'Delegado de Polícia')+' '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia, ao final assinado, foram nomeados os referidos médicos, na qualidade de: '},{text:'PERITOS EXAMINADORES,',weight:'700'},{text:' ao final assinado, que aceitando a missão. Foi-lhes deferida a promessa legal, de bem e fielmente desempenharem as funções, o que prometeram na forma e sob o rigor da lei, tendo dito que faziam sem dolo e nem malícia a bem do direito daquele. E por nada mais haver, deu-se por findo esse termo que para constar foi por mim lavrado, de acordo com o mandato daquele Delegado e que, por isso, foi devidamente assinado. Eu, '+a+', Agente de Polícia Judiciária, que digitei.'}],55,237.5,485,12,20.5);
+ }else if(pageIndex===1){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+'-'+settings.uf+', atendendo requisição do '+(settings.cargo||'Delegado de Polícia')+', '},{text:settings.delegado+',',weight:'700'},{text:' comigo, Agente PJ, a seu cargo, e os '},{text:'Peritos Médicos Nomeados',weight:'700'},{text:' ao final nomeados e assinados, a quem a Autoridade Policial deferiu o compromisso legal de bem e fielmente desempenharem a sua missão, encarregando-os de procederem a exame de lesões corporais em:'}],55,210.0,485,12,20.2);drawFit(ctx,name,107.0,337.5,425,12,8.2,'700');drawPt(ctx,df.numeric,214.5,350.5,12,'700');
+ }else if(pageIndex===3){let yy=drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.year+', nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como '+(settings.cargo||'Delegado de Polícia')+' '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia Judiciária, ao final assinado, eu, '},{text:name+',',weight:'700'},{text:' declaro que me foi entregue uma via de requisição para exame de corpo delito.'}],55,214.5,485,12,19.8);yy+=4;drawRichWrapped(ctx,[{text:'Declaro também que me foi informado que após a realização do exame, '},{text:'é de minha inteira responsabilidade',weight:'700'},{text:' entregá-lo na '+settings.unidadeCurta+'.'}],115,yy,420,12,19.8);}}
 async function renderPageCanvas(index,canvas){const img=await imagePromises[index];canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);drawVars(ctx,index);return canvas;}
 async function renderFullPreview(){
   const err=validate();
