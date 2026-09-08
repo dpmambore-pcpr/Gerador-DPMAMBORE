@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.1</span>
+      <span class="version">VERSÃO ATUAL · v2.2</span>
       <span class="note">Última atualização: 08/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,17 +62,33 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.1">
-        <div class="item-head"><span class="item-ver">v2.1</span><span class="item-date">08/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.2">
+        <div class="item-head"><span class="item-ver">v2.2</span><span class="item-date">08/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
+        <h3>Relatório Técnico de Viagem integrado à Central de Ofícios</h3>
+        <ul>
+          <li>Nova aba “Relatório de Viagem” dentro da Central de Ofícios, ao lado de Ofícios, Diárias, Oitiva em Penitenciária e Perícia.</li>
+          <li>Gerador construído diretamente sobre o modelo ODT institucional fornecido, preservando as duas páginas, cabeçalho, brasão, tabelas, margens, assinatura e rodapés.</li>
+          <li>Somente os campos originalmente grifados em amarelo são variáveis; o grifo é retirado automaticamente do documento gerado.</li>
+          <li>Servidor selecionado por menu predefinido; RG, valores utilizados na viagem e áreas técnicas são preenchidos no momento da geração.</li>
+          <li>Data convertida automaticamente para o padrão “Mamborê, DD de mês de AAAA”.</li>
+          <li>Informações Complementares podem permanecer em branco, sem inserção de texto desnecessário.</li>
+          <li>Geração em ODT editável a partir do modelo-base e opção de impressão/Salvar PDF.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.1">
+        <div class="item-head"><span class="item-ver">v2.1</span><span class="item-date">08/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span></div>
         <h3>Ofício de Solicitação de Diárias integrado à Central de Ofícios</h3>
         <ul>
           <li>Nova aba “Diárias” dentro da Central de Ofícios, preservando Ofícios, Oitiva em Penitenciária e Perícia.</li>
           <li>Gerador baseado no modelo institucional da Delegacia de Mamborê, com tabelas, cabeçalho, assinatura, destinatário e rodapé preservados.</li>
-          <li>Inclusão dinâmica de servidores, com cadastro reutilizável de nome e cargo e preenchimento manual de CPF e protocolo da Central de Viagens.</li>
+          <li>Inclusão dinâmica de servidores, com cadastro reutilizável de nome e cargo e preenchimento manual apenas do CPF; a coluna de solicitação da Central de Viagens permanece em branco para preenchimento posterior no documento impresso.</li>
           <li>Roteiros de ida e retorno padronizados com datas entre parênteses, horários em “HHhMMmin” e validação dos campos obrigatórios.</li>
+          <li>Cálculo automático das diárias a partir da modalidade (Capital, Interior ou Brasília) e da data/hora de saída e retorno, com faixas de 0%, 15%, 30% e períodos completos de 100%.</li>
+          <li>Valores oficiais fixos incorporados ao cálculo, sem novo arredondamento dos percentuais de 15% e 30%, e total do ofício multiplicado automaticamente pela quantidade de servidores incluídos.</li>
           <li>Configurações próprias para cabeçalho, brasão, rodapé, autoridade, destinatário e servidores, salvas localmente no navegador, com opção de restaurar o padrão original.</li>
           <li>Geração de ODT editável e impressão/Salvar PDF a partir da mesma pré-visualização institucional.</li>
-          <li>CPF, protocolos e dados da viagem não são gravados automaticamente como preferências permanentes.</li>
+          <li>CPF e dados da viagem não são gravados automaticamente como preferências permanentes.</li>
         </ul>
       </article>
 
@@ -192,7 +208,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.1';
+  const CURRENT_VERSION='2.2';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 
