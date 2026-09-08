@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.2</span>
+      <span class="version">VERSÃO ATUAL · v2.3</span>
       <span class="note">Última atualização: 08/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,7 +62,19 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.2">
+      <article class="item latest" data-version="2.3">
+        <div class="item-head"><span class="item-ver">v2.3</span><span class="item-date">08/09/2026</span><span class="tag improve">MELHORIA</span><span class="tag fix">CORREÇÃO</span><span class="badge">ATUAL</span></div>
+        <h3>Relatório Técnico de Viagem — configurações, valores e alinhamentos</h3>
+        <ul>
+          <li>Nova aba própria de Configurações, com cabeçalho, brasão, rodapé, identificação da segunda página, logo PCPR e lista de servidores, tudo salvo localmente no navegador.</li>
+          <li>Valores numéricos de Diária, Translado, Combustível e Passagem passam a ser formatados automaticamente no padrão monetário brasileiro (R$).</li>
+          <li>Data passa a ser exibida à esquerda e a referência ao ofício à direita na mesma linha.</li>
+          <li>Todos os conteúdos variáveis digitados passam a ficar centralizados dentro dos respectivos campos do relatório.</li>
+          <li>Parágrafo fixo “Declaramos...” ajustado com recuo de 2 cm a partir da margem esquerda.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.2">
         <div class="item-head"><span class="item-ver">v2.2</span><span class="item-date">08/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
         <h3>Relatório Técnico de Viagem integrado à Central de Ofícios</h3>
         <ul>
@@ -208,7 +220,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.2';
+  const CURRENT_VERSION='2.3';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 
