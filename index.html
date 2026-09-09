@@ -146,6 +146,7 @@ body.home-mode .module-main{overflow:visible}
 @media(max-width:780px){.home-tools{grid-template-columns:1fr}.home-version{justify-self:center}.recent-wrap{justify-content:center}}
 
 </style>
+<link rel="stylesheet" href="tema-preto-dourado.css?v=1.0">
 
 <!-- Google Analytics 4 — Central PCPR -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-M32VDH5JY0"></script>
@@ -155,6 +156,108 @@ body.home-mode .module-main{overflow:visible}
   gtag('js', new Date());
   gtag('config', 'G-M32VDH5JY0', { anonymize_ip: true, page_location: location.origin + location.pathname, page_path: location.pathname });
 </script>
+
+
+<style id="tema-preto-dourado-incorporado">
+/* TEMA PRETO + DOURADO — incorporado para funcionar também na prévia local */
+:root{
+  --ink:#f6f4ed !important;
+  --accent:#d6ad45 !important;
+  --accent-dark:#0a0d10 !important;
+  --gold:#d6ad45 !important;
+  --bg:#07090b !important;
+  --line:#403a2a !important;
+  --muted:#aeb5bd !important;
+}
+html,body{background:#07090b !important;color:#f5f6f7 !important;color-scheme:dark}
+.module-nav{
+  background:linear-gradient(115deg,#050607 0%,#0b0e11 70%,#18150c 100%) !important;
+  border-bottom-color:#d6ad45 !important;
+}
+.brand-mark{background:#101317 !important;border-color:#79642e !important;color:#e8c45e !important}
+.nav-label,.clock-time{color:#fff !important}
+.version-badge{background:#151711 !important;border-color:#6e5c30 !important;color:#e8c762 !important}
+.credit-line,.clock-date,.clock-icon{color:#d6ad45 !important}
+.module-main{background:#07090b !important}
+.home-screen{
+  background:
+    radial-gradient(circle at 12% 0%,rgba(214,173,69,.11),transparent 30%),
+    linear-gradient(180deg,#090c0f 0%,#06080a 100%) !important;
+}
+.home-kicker{color:#d6ad45 !important}
+.home-title{color:#f5f6f7 !important}
+.home-subtitle{color:#aeb5bd !important}
+.module-card,.module-card.update-card,.suggestion-card{
+  background:linear-gradient(145deg,#171c21 0%,#0f1317 100%) !important;
+  border-color:#443c27 !important;
+  color:#f5f6f7 !important;
+  box-shadow:0 5px 18px rgba(0,0,0,.28) !important;
+}
+.module-card:hover{
+  border-color:#d6ad45 !important;
+  box-shadow:0 9px 25px rgba(214,173,69,.12) !important;
+}
+.card-icon,.suggestion-card .card-icon{
+  background:linear-gradient(145deg,#0c0f12,#201c11) !important;
+  color:#e8c45e !important;
+  box-shadow:inset 0 0 0 1px rgba(214,173,69,.28) !important;
+}
+.card-title{color:#f5f6f7 !important}
+.card-desc,.suggestion-meta{color:#aeb5bd !important}
+.card-arrow{color:#d6ad45 !important}
+.card-badge,.suggestion-card .card-badge{background:#d6ad45 !important;color:#090b0d !important}
+.card-subtag{
+  background:#171711 !important;
+  border-color:#574b2a !important;
+  color:#d9bd69 !important;
+}
+.home-tools .module-search,.module-search{
+  background:#10151a !important;
+  border-color:#454a4f !important;
+  color:#f5f6f7 !important;
+}
+.module-search::placeholder{color:#858d95 !important}
+.module-search:focus{border-color:#d6ad45 !important;outline-color:rgba(214,173,69,.24) !important}
+.module-search-icon{color:#d6ad45 !important}
+.home-version{
+  background:#171711 !important;
+  border-color:#62532d !important;
+  color:#e5c45f !important;
+}
+.recent-label{color:#c7ab5d !important}
+.recent-btn{
+  background:#11161a !important;
+  border-color:#554a2d !important;
+  color:#e2c263 !important;
+}
+.recent-btn:hover{background:#1a1b16 !important;border-color:#d6ad45 !important}
+.security-details summary,.security-summary{
+  background:#101519 !important;
+  border-color:#373d40 !important;
+  color:#aeb5bd !important;
+}
+.security-details summary{color:#d8c16f !important}
+.security-summary b{color:#e5c45f !important}
+.suggestion-safety{
+  background:#18150d !important;
+  border-color:#665522 !important;
+  color:#d6c998 !important;
+}
+.suggestion-safety b{color:#f0cb6a !important}
+.module-tab{
+  background:#12171b !important;
+  border-color:#4c4634 !important;
+  color:#f5f6f7 !important;
+}
+.module-tab:hover{background:#1b1b16 !important;border-color:#d6ad45 !important}
+.module-tab.active{background:#d6ad45 !important;border-color:#f0cb6a !important;color:#090b0d !important}
+.loading{background:#12171b !important;border-color:#49412c !important;color:#c0c5ca !important}
+.empty-search{background:#101418 !important;border-color:#554b30 !important;color:#b9bec4 !important}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#080a0c}
+::-webkit-scrollbar-thumb{background:#5d4e28;border:2px solid #080a0c;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#a88736}
+</style>
 
 </head>
 <body class="home-mode">
@@ -405,6 +508,12 @@ function load(key){
   loading.textContent='Carregando '+m.tab.textContent.trim()+'…';
   loading.classList.remove('hide');
   m.frame.addEventListener('load',()=>{
+    try{
+      const d=m.frame.contentDocument;
+      if(d && !d.getElementById('temaPretoDourado')){
+        const l=d.createElement('link'); l.id='temaPretoDourado'; l.rel='stylesheet'; l.href='tema-preto-dourado.css?v=1.0'; d.head.appendChild(l);
+      }
+    }catch(e){}
     m.loaded=true;m.loading=false;
     if(m.frame.classList.contains('active'))loading.classList.add('hide');
     fit(key);
