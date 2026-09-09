@@ -64,7 +64,7 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 @media print{.security-note{display:none!important}}
 
 
-/* v2.1 — fluxo e conferência */
+/* v2.0 — fluxo e conferência */
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--pcpr-gold,#c5a253);color:var(--pcpr-ink,#111820);font-size:12px;font-weight:900;margin-right:7px}
 .compact-actions{align-items:center}
 button.mini{min-height:34px!important;padding:0 11px!important;font-size:12px!important}
@@ -162,7 +162,7 @@ footer{color:var(--suave) !important;}
 <header>
   <button id="btnCfgTopo" style="float:right">Configuração da unidade</button>
   <h1>Central de Ofícios</h1>
-  <p id="hSub">Delegacia de Polícia de Mamborê — 16ª SDP / PCPR · fluxo operacional v2.1 · processamento local</p>
+  <p id="hSub">Delegacia de Polícia de Mamborê — 16ª SDP / PCPR · fluxo operacional v2.0 · processamento local</p>
 </header>
 <div class="security-note"><b>Funcionamento:</b> o gerador não possui banco remoto ou credenciais próprias. Termos como “senha”, “token” ou “sigilo” que aparecem nos modelos fazem parte do texto jurídico das requisições e não representam senhas ou acessos da Central.</div>
 
@@ -1486,7 +1486,7 @@ function blocosParaODT(blocos){
     +'<style:header><text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="1.6cm" svg:height="2.0cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
     +'<style:footer>'+rod+'</style:footer>'
     +'</style:master-page></office:master-styles></office:document-styles>';
-  var meta='<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2"><office:meta><meta:generator>Central PCPR v2.1</meta:generator></office:meta></office:document-meta>';
+  var meta='<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2"><office:meta><meta:generator>Central PCPR v2.0</meta:generator></office:meta></office:document-meta>';
   var settings='<?xml version="1.0" encoding="UTF-8"?><office:document-settings xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:version="1.2"><office:settings/></office:document-settings>';
   var manifest='<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">'
     +'<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/>'
@@ -1691,7 +1691,7 @@ function comAssinatura(docs){
 function msg(t, cor){ var e = document.getElementById("msg"); e.innerHTML = t; e.style.color = cor || "var(--suave)"; }
 
 
-// ===================== conferência e validações v2.1 =====================
+// ===================== conferência e validações v2.0 =====================
 function listaLinhas(id){var e=document.getElementById(id);return e?e.value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean):[];}
 function apenasDigitos(s){return String(s||"").replace(/\D/g,"");}
 function imeiValidoBasico(s){return apenasDigitos(s).length===15;}
@@ -1976,7 +1976,7 @@ document.getElementById("btnPer12").onclick = function(){ periodoRelativo(365); 
 
 // ===================== configuração da unidade =====================
 function cfgAplicaNaTela(){
-  document.getElementById("hSub").textContent = CFG.unidade + " — " + CFG.subtitulo + " · fluxo operacional v2.1 · processamento local";
+  document.getElementById("hSub").textContent = CFG.unidade + " — " + CFG.subtitulo + " · fluxo operacional v2.0 · processamento local";
   document.getElementById("rodapeTela").innerHTML = esc(CFG.rodape.join(" · "));
   var a = document.getElementById("fAssin"), c = document.getElementById("fCargo");
   if(a && !a.dataset.tocado) a.value = CFG.assinante;
