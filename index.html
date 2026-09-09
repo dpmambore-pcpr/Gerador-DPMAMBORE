@@ -164,12 +164,19 @@ body.home-mode .module-main{overflow:visible}
 .local-data{display:inline-flex;align-items:center;gap:5px}
 .local-data::before{content:"●";font-size:8px;color:#c5a253}
 .update-mini{opacity:.92}
-.tools-count{margin-top:7px;font-size:12px;font-weight:800;letter-spacing:.25px;color:#66736c}
-.search-shortcut{margin-left:auto;border:1px solid #cfc8ba;border-radius:6px;padding:2px 7px;background:#f7f4ed;color:#66706a;font-size:10px;font-weight:800;white-space:nowrap}
+
+
 .back-top{position:fixed;right:18px;bottom:18px;z-index:1200;width:42px;height:42px;border:1px solid #c5a253;border-radius:50%;background:#183a31;color:#fff;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.18);opacity:0;pointer-events:none;transform:translateY(8px);transition:.18s ease}
 .back-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
 .back-top:hover{background:#285748}
 @media(max-width:700px){.system-mini{width:100%;justify-content:center}.back-top{right:12px;bottom:12px}}
+</style>
+
+
+<style id="refino-home-limpo">
+.home-subtitle{margin-bottom:10px !important}
+.home-tools{margin-top:14px !important}
+.home-version{font-size:9.5px !important;padding:6px 10px !important}
 </style>
 
 </head>
@@ -212,8 +219,7 @@ body.home-mode .module-main{overflow:visible}
         <div class="home-kicker" id="autoGreeting">Bem-vindo</div>
 <h1 class="home-title">Selecione um módulo</h1>
         <p class="home-subtitle">Ferramentas operacionais reunidas em um único ambiente.</p>
-<div class="tools-count" id="toolsCount">Ferramentas disponíveis</div>
-        <div class="home-tools">
+<div class="home-tools">
           <div class="module-search-wrap">
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
@@ -567,31 +573,7 @@ window.addEventListener('resize',()=>{
       const h=new Date().getHours();
       greeting.textContent=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
     }
-
-    const count=document.getElementById('toolsCount');
-    if(count){
-      const cards=[...document.querySelectorAll('.module-card')].filter(c=>!c.classList.contains('suggestion-card'));
-      const n=cards.length;
-      count.textContent=n+' ferramenta'+(n===1?'':'s')+' disponível'+(n===1?'':'is');
-    }
-
-    const search=document.querySelector('.module-search, input[type="search"]');
-    if(search && !document.getElementById('searchShortcut')){
-      const key=document.createElement('span');
-      key.id='searchShortcut';
-      key.className='search-shortcut';
-      key.textContent='Ctrl + K';
-      if(search.parentElement) search.parentElement.appendChild(key);
-    }
-    document.addEventListener('keydown',function(e){
-      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
-        e.preventDefault();
-        const s=document.querySelector('.module-search, input[type="search"]');
-        if(s){s.focus(); if(s.select)s.select();}
-      }
-    });
-
-    if(!document.getElementById('backTop')){
+if(!document.getElementById('backTop')){
       const b=document.createElement('button');
       b.id='backTop'; b.className='back-top'; b.type='button';
       b.title='Voltar ao topo'; b.setAttribute('aria-label','Voltar ao topo');
