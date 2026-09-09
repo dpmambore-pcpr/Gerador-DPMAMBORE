@@ -187,12 +187,36 @@ body.home-mode .module-main{overflow:visible}
 .loading{display:none!important}
 @media (prefers-reduced-motion:reduce){.module-card{transition:none !important}.module-card:hover,.module-card:active{transform:none}}
 </style>
+
+<style id="datas-comemorativas-css">
+.data-comemorativa{
+  width:100%;
+  text-align:center;
+  margin-top:3px;
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:.25px;
+  color:#f0dfaa;
+  opacity:.96;
+  animation:dataComemorativaIn .45s ease both;
+}
+.data-comemorativa:empty{display:none}
+@keyframes dataComemorativaIn{
+  from{opacity:0;transform:translateY(-3px)}
+  to{opacity:.96;transform:translateY(0)}
+}
+@media (prefers-reduced-motion:reduce){
+  .data-comemorativa{animation:none}
+}
+</style>
+
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
     <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v2.4 · 08/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
+<div id="dataComemorativa" class="data-comemorativa" aria-live="polite"></div>
 <div class="system-mini" id="systemMini" aria-label="Informações do sistema">
   <span class="system-online">Sistema online</span>
   <span class="local-data">Dados locais</span>
@@ -609,5 +633,69 @@ if(!document.getElementById('backTop')){
  titulo();
 })();
 </script>
+
+<script id="datas-comemorativas-js">
+(function(){
+  function normalizar(v){
+    return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  }
+
+  function cidadeLocalDisponivel(){
+    /* Não solicita geolocalização e não consulta IP.
+       Apenas aproveita uma cidade que já tenha sido salva/disponibilizada
+       localmente pelo próprio sistema ou navegador. */
+    const chaves=[
+      'cidade','city','cidadeAtual','cidade_atual','municipio','município',
+      'localidade','cidadeUsuario','cidade_usuario'
+    ];
+
+    for(const k of chaves){
+      try{
+        const v=localStorage.getItem(k);
+        if(v && normalizar(v).includes('mambore')) return 'Mamborê';
+      }catch(e){}
+    }
+
+    // Também aceita uma variável já existente no sistema, caso algum módulo a defina.
+    const candidatos=[
+      window.cidadeAtual, window.cidade, window.municipio,
+      window.localidade, window.cidadeUsuario
+    ];
+    for(const v of candidatos){
+      if(v && normalizar(v).includes('mambore')) return 'Mamborê';
+    }
+    return '';
+  }
+
+  function mostrarDataComemorativa(){
+    const el=document.getElementById('dataComemorativa');
+    if(!el) return;
+
+    const hoje=new Date();
+    const d=hoje.getDate(), m=hoje.getMonth()+1;
+    let msg='';
+
+    if(d===29 && m===3){
+      msg='🎉 Curitiba celebra hoje seu aniversário!';
+    }else if(d===7 && m===9){
+      msg='🇧🇷 7 de Setembro — Independência do Brasil';
+    }else if(d===10 && m===9 && cidadeLocalDisponivel()==='Mamborê'){
+      msg='🎉 Mamborê celebra hoje seu aniversário!';
+    }else if(d===19 && m===12){
+      msg='🎉 19 de Dezembro — Emancipação Política do Paraná';
+    }
+
+    el.textContent=msg;
+    el.style.display=msg?'block':'none';
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',mostrarDataComemorativa);
+  }else{
+    mostrarDataComemorativa();
+  }
+})();
+</script>
+
 </body>
 </html>
