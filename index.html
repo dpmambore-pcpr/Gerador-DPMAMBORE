@@ -156,12 +156,34 @@ body.home-mode .module-main{overflow:visible}
   gtag('config', 'G-M32VDH5JY0', { anonymize_ip: true, page_location: location.origin + location.pathname, page_path: location.pathname });
 </script>
 
+
+<style id="incrementos-central">
+.system-mini{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;font-weight:800;letter-spacing:.45px;text-transform:uppercase;color:#e7d9b3}
+.system-online{display:inline-flex;align-items:center;gap:5px}
+.system-online::before{content:"";width:7px;height:7px;border-radius:50%;background:#58c777;box-shadow:0 0 0 3px rgba(88,199,119,.12)}
+.local-data{display:inline-flex;align-items:center;gap:5px}
+.local-data::before{content:"●";font-size:8px;color:#c5a253}
+.update-mini{opacity:.92}
+.tools-count{margin-top:7px;font-size:12px;font-weight:800;letter-spacing:.25px;color:#66736c}
+.search-shortcut{margin-left:auto;border:1px solid #cfc8ba;border-radius:6px;padding:2px 7px;background:#f7f4ed;color:#66706a;font-size:10px;font-weight:800;white-space:nowrap}
+.back-top{position:fixed;right:18px;bottom:18px;z-index:1200;width:42px;height:42px;border:1px solid #c5a253;border-radius:50%;background:#183a31;color:#fff;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.18);opacity:0;pointer-events:none;transform:translateY(8px);transition:.18s ease}
+.back-top.show{opacity:1;pointer-events:auto;transform:translateY(0)}
+.back-top:hover{background:#285748}
+@media(max-width:700px){.system-mini{width:100%;justify-content:center}.back-top{right:12px;bottom:12px}}
+</style>
+
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
     <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v2.4 · 08/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line">Desenvolvido e atualizado pela Delegacia de Mamborê - PR</div>
+<div class="system-mini" id="systemMini" aria-label="Informações do sistema">
+  <span class="system-online">Sistema online</span>
+  <span class="local-data">Dados locais</span>
+  <span class="update-mini" id="lastUpdateMini">Atualizado em 09 SET 2026</span>
+</div>
+
     <div class="tabs-row">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
@@ -187,8 +209,10 @@ body.home-mode .module-main{overflow:visible}
     <div class="home-wrap">
       <div class="home-heading">
         <div class="home-kicker">Central Integrada PCPR</div>
-        <h1 class="home-title">Selecione um módulo</h1>
+        <div class="home-kicker" id="autoGreeting">Bem-vindo</div>
+<h1 class="home-title">Selecione um módulo</h1>
         <p class="home-subtitle">Ferramentas operacionais reunidas em um único ambiente.</p>
+<div class="tools-count" id="toolsCount">Ferramentas disponíveis</div>
         <div class="home-tools">
           <div class="module-search-wrap">
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
@@ -534,5 +558,54 @@ window.addEventListener('resize',()=>{
 });
 })();
 </script>
+
+<script id="incrementos-central-js">
+(function(){
+  function initIncrementos(){
+    const greeting=document.getElementById('autoGreeting');
+    if(greeting){
+      const h=new Date().getHours();
+      greeting.textContent=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+    }
+
+    const count=document.getElementById('toolsCount');
+    if(count){
+      const cards=[...document.querySelectorAll('.module-card')].filter(c=>!c.classList.contains('suggestion-card'));
+      const n=cards.length;
+      count.textContent=n+' ferramenta'+(n===1?'':'s')+' disponível'+(n===1?'':'is');
+    }
+
+    const search=document.querySelector('.module-search, input[type="search"]');
+    if(search && !document.getElementById('searchShortcut')){
+      const key=document.createElement('span');
+      key.id='searchShortcut';
+      key.className='search-shortcut';
+      key.textContent='Ctrl + K';
+      if(search.parentElement) search.parentElement.appendChild(key);
+    }
+    document.addEventListener('keydown',function(e){
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
+        e.preventDefault();
+        const s=document.querySelector('.module-search, input[type="search"]');
+        if(s){s.focus(); if(s.select)s.select();}
+      }
+    });
+
+    if(!document.getElementById('backTop')){
+      const b=document.createElement('button');
+      b.id='backTop'; b.className='back-top'; b.type='button';
+      b.title='Voltar ao topo'; b.setAttribute('aria-label','Voltar ao topo');
+      b.textContent='↑';
+      document.body.appendChild(b);
+      b.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+      const toggle=()=>b.classList.toggle('show',window.scrollY>350);
+      window.addEventListener('scroll',toggle,{passive:true}); toggle();
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initIncrementos);
+  else initIncrementos();
+})();
+</script>
+
 </body>
 </html>
