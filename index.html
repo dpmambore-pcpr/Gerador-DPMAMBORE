@@ -179,6 +179,18 @@ body.home-mode .module-main{overflow:visible}
 .home-version{font-size:9.5px !important;padding:6px 10px !important}
 </style>
 
+
+<style id="microinteracoes-central">
+.module-card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important}
+.module-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.10) !important}
+.module-card:active{transform:translateY(-1px)}
+.loading{transition:opacity .18s ease !important}
+.loading.module-opening{display:block !important;opacity:1 !important}
+.loading.module-opening::after{content:"";display:inline-block;width:12px;height:12px;margin-left:8px;vertical-align:-2px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:centralSpin .7s linear infinite}
+@keyframes centralSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.module-card,.loading{transition:none !important}.module-card:hover,.module-card:active{transform:none}.loading.module-opening::after{animation:none}}
+</style>
+
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
@@ -586,6 +598,83 @@ if(!document.getElementById('backTop')){
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initIncrementos);
   else initIncrementos();
+})();
+</script>
+
+
+<script id="microinteracoes-central-js">
+(function(){
+  const TITULO_BASE='Geradores PCPR — Central Integrada';
+
+  function texto(el){
+    return el ? (el.getAttribute('data-title') || el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g,' ').trim() : '';
+  }
+
+  function atualizarTitulo(){
+    const frame=document.querySelector('.module-frame.active, iframe.active');
+    if(!frame){document.title=TITULO_BASE;return;}
+    let nome='';
+    try{
+      if(frame.contentDocument && frame.contentDocument.title){
+        nome=frame.contentDocument.title.replace(/\s*[—|–|-].*$/,'').trim();
+      }
+    }catch(e){}
+    document.title=nome ? nome+' — Central PCPR' : TITULO_BASE;
+  }
+
+  function voltarCentral(){
+    const home=document.querySelector('.home-screen');
+    const frame=document.querySelector('.module-frame.active, iframe.active');
+    if(!home || !frame) return false;
+    document.querySelectorAll('.module-frame.active, iframe.active').forEach(f=>f.classList.remove('active'));
+    document.querySelectorAll('.module-tab.active').forEach(t=>t.classList.remove('active'));
+    home.style.display='';
+    home.classList.add('active');
+    document.title=TITULO_BASE;
+    window.scrollTo({top:0,behavior:'smooth'});
+    return true;
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      const tag=(document.activeElement && document.activeElement.tagName || '').toLowerCase();
+      if(tag==='input'||tag==='textarea'||tag==='select') document.activeElement.blur();
+      if(voltarCentral()) e.preventDefault();
+    }
+  });
+
+  function iniciar(){
+    document.title=TITULO_BASE;
+    const loading=document.querySelector('.loading');
+
+    document.addEventListener('click',function(e){
+      const alvo=e.target.closest('.module-card,.module-tab,[data-module]');
+      if(!alvo) return;
+      if(loading){
+        let nome=texto(alvo).replace(/[›→]+$/,'').trim();
+        if(nome.length>45) nome='';
+        loading.textContent=nome ? 'Abrindo '+nome+'...' : 'Abrindo módulo...';
+        loading.classList.remove('hide');
+        loading.classList.add('module-opening');
+      }
+      setTimeout(atualizarTitulo,100);
+    });
+
+    document.querySelectorAll('iframe').forEach(frame=>{
+      frame.addEventListener('load',function(){
+        if(loading){
+          loading.classList.remove('module-opening');
+          loading.classList.add('hide');
+        }
+        atualizarTitulo();
+      });
+    });
+
+    atualizarTitulo();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar);
+  else iniciar();
 })();
 </script>
 
