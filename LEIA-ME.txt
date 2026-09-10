@@ -1,26 +1,13 @@
-GERADOR DE OFÍCIO - SOLICITAÇÃO DE COFFEE BREAK
-PCPR - modelo baseado no arquivo original fornecido.
+CORREÇÃO DA ABA OFÍCIOS
 
-Arquivo principal:
-- oficio-coffee-break.html
+Substitua/envie TODOS os arquivos deste pacote para a mesma pasta do repositório.
 
-Modelo de referência:
-- MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt
+oficios.html agora é o menu da aba Ofícios e abre:
+- Ofícios gerais (oficios-core.html)
+- Diárias
+- Relatório de Viagem
+- Perícia
+- Oitiva em Unidade Penal
+- Coffee Break
 
-Recursos:
-- Geração ODT usando o documento original como modelo-base.
-- Geração PDF a partir da pré-visualização em A4.
-- Remoção automática dos grifos amarelos no documento gerado.
-- Máscara do nº do ofício, sequência e horário.
-- Datas por extenso em português do Brasil.
-- Endereço dividido em Local, Endereço, Nº, Bairro e Cidade.
-- Pluralização automática de cota/cotas.
-- Configurações permanentes de cabeçalho, rodapé, responsável, cargo e tratamento do destinatário.
-- Configurações salvas somente no navegador/localStorage.
-- Nenhuma dependência externa ou chamada de rede.
-
-Validação realizada:
-- JavaScript validado por sintaxe.
-- ODT de teste gerado e aberto pelo LibreOffice.
-- Conversão do ODT de teste para PDF A4 concluída com sucesso.
-- O documento de teste manteve brasão, cabeçalho, marca-d'água, rodapé, assinatura e estrutura visual do modelo, sem os grifos amarelos.
+Os geradores originais foram preservados; o erro anterior ocorreu porque oficios-core foi colocado diretamente no lugar do menu oficios.html.
