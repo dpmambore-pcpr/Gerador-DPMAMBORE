@@ -30,25 +30,44 @@ button{border:0;border-radius:8px;padding:10px 13px;font-weight:800;cursor:point
 .error{display:none;margin-bottom:12px;padding:10px 12px;border:1px solid #dfbcbc;background:#fff1f1;color:#7c252b;border-radius:8px;font-size:12px;font-weight:700}
 @media(max-width:760px){.grid,.grid3,.config-summary{grid-template-columns:1fr}.photo-list{grid-template-columns:1fr 1fr}.actions{flex-direction:column}}
 @media(max-width:480px){.photo-list{grid-template-columns:1fr}}
+
+.top{position:relative}
+.top-config-btn{position:absolute;right:24px;top:50%;transform:translateY(-50%);border:1px solid rgba(255,255,255,.42);background:rgba(255,255,255,.10);color:#fff;border-radius:9px;padding:9px 13px;font-weight:800;cursor:pointer}
+.top-config-btn:hover{background:rgba(255,255,255,.18)}
+#configPanel[hidden]{display:none}
+@media(max-width:760px){.top-config-btn{position:static;transform:none;margin-top:10px}.top{text-align:center}}
 </style>
 </head>
 <body>
-<header class="top"><h1>Auto de Reconhecimento Fotográfico</h1><p>Gerador integrado às Configurações Gerais da Central PCPR.</p></header>
+<header class="top"><h1>Auto de Reconhecimento Fotográfico</h1><p>Gerador integrado às Configurações Gerais da Central PCPR.</p><button type="button" class="top-config-btn" id="toggleConfig">⚙ Configurações</button></header>
 <main class="wrap">
 <div id="error" class="error"></div>
 
-<section class="card">
-<h2>⚙ Configurações</h2>
-<div class="config-summary">
-<div class="cfg"><b>Unidade</b><span id="cfgUnidade">—</span></div>
-<div class="cfg"><b>Cidade / UF</b><span id="cfgCidade">—</span></div>
-<div class="cfg"><b>Autoridade</b><span id="cfgAutoridade">—</span></div>
+<section class="card" id="configPanel" hidden>
+<h2>⚙ Configurações do Reconhecimento</h2>
+<p class="note">As alterações abaixo valem apenas para este documento. Os dados gerais da Central permanecem preservados.</p>
+<div class="grid">
+<div><label>Unidade</label><input id="editUnidade"></div>
+<div><label>Cidade</label><input id="editCidade"></div>
+<div><label>UF</label><input id="editUf" maxlength="2"></div>
+<div><label>Autoridade</label><input id="editAutoridade"></div>
+<div><label>Cargo</label><input id="cargo"></div>
 </div>
-<div class="grid" style="margin-top:10px">
-<div><label>Autoridade responsável</label><select id="autoridade"></select></div>
-<div><label>Cargo</label><input id="cargo" readonly></div>
+<h3 style="margin:16px 0 8px">Cabeçalho</h3>
+<div class="grid">
+<div><label>Estado</label><input id="editEstado"></div>
+<div><label>Secretaria</label><input id="editSecretaria"></div>
+<div><label>Departamento</label><input id="editDepartamento"></div>
+<div><label>Subdivisão</label><input id="editSubdivisao"></div>
 </div>
-<p class="note">Os dados institucionais são carregados de <b>Configurações Gerais</b>. A escolha de autoridade feita aqui vale apenas para este documento.</p>
+<h3 style="margin:16px 0 8px">Rodapé</h3>
+<div class="grid">
+<div><label>Endereço</label><input id="editEndereco"></div>
+<div><label>CEP</label><input id="editCep"></div>
+<div><label>E-mail</label><input id="editEmail"></div>
+<div><label>Telefone</label><input id="editFone"></div>
+<div><label>Site</label><input id="editSite"></div>
+</div>
 </section>
 
 <section class="card"><h2>I - HISTÓRICO DA OCORRÊNCIA</h2>
@@ -91,30 +110,43 @@ let photos=[{data:null,name:''}], victims=[{nome:'',relato:''}], invs=[{foto:'',
 function jget(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
 function cfg(){
  const g=jget(GENERAL_KEY)||{};
+ const o=window.reconCfgOverride||{};
  const delegados=jget(DELEGADOS_KEY)||g.autoridades||g.delegados||[];
  const arr=(Array.isArray(delegados)?delegados:[]).map(x=>typeof x==='string'?{nome:x,cargo:g.cargo||'Delegado de Polícia'}:{nome:x.nome||x.name||'',cargo:x.cargo||g.cargo||'Delegado de Polícia'}).filter(x=>x.nome);
  return {
-  estado:g.estadoHeader||'ESTADO DO PARANÁ',
-  secretaria:g.secretaria||'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
-  departamento:g.departamento||'DEPARTAMENTO DE POLÍCIA CIVIL',
-  subdivisao:g.subdivisao||'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
-  unidade:g.unidade||'DELEGACIA DE POLÍCIA DE MAMBORÊ',
-  endereco:g.endereco||'Av. Augusto Mendes dos Santos, 997',
-  cidade:g.cidade||'Mamborê', uf:g.uf||'PR', cep:g.cep||'87340-000',
-  email:g.email||'dpmambore@pc.pr.gov.br', fone:g.fone||'(44) 3865-1341',
-  site:g.site||'www.policiacivil.pr.gov.br',
-  cargo:localStorage.getItem(CARGO_KEY)||g.cargo||'Delegado de Polícia',
+  estado:o.estado||g.estadoHeader||'ESTADO DO PARANÁ',
+  secretaria:o.secretaria||g.secretaria||'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
+  departamento:o.departamento||g.departamento||'DEPARTAMENTO DE POLÍCIA CIVIL',
+  subdivisao:o.subdivisao||g.subdivisao||'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
+  unidade:o.unidade||g.unidade||'DELEGACIA DE POLÍCIA DE MAMBORÊ',
+  endereco:o.endereco||g.endereco||'Av. Augusto Mendes dos Santos, 997',
+  cidade:o.cidade||g.cidade||'Mamborê', uf:o.uf||g.uf||'PR', cep:o.cep||g.cep||'87340-000',
+  email:o.email||g.email||'dpmambore@pc.pr.gov.br', fone:o.fone||g.fone||'(44) 3865-1341',
+  site:o.site||g.site||'www.policiacivil.pr.gov.br',
+  cargo:o.cargo||localStorage.getItem(CARGO_KEY)||g.cargo||'Delegado de Polícia',
   autoridades:arr
  };
 }
 function loadCfg(){
- const g=cfg(); $('cfgUnidade').textContent=g.unidade; $('cfgCidade').textContent=g.cidade+' / '+g.uf;
- const sel=$('autoridade'); sel.innerHTML='';
- let a=g.autoridades.length?g.autoridades:[{nome:g.autoridade||g.delegado||'Anderson Sérgio Romão',cargo:g.cargo}];
- a.forEach((x,i)=>{let o=document.createElement('option');o.value=i;o.textContent=x.nome;sel.appendChild(o)});
- function sync(){let x=a[+sel.value]||a[0];$('cargo').value=x.cargo||g.cargo;$('cfgAutoridade').textContent=x.nome||'—'}
- sel.onchange=sync; sync();
+ const g=cfg();
+ const baseAuth=g.autoridades.length?g.autoridades[0]:{nome:'Anderson Sérgio Romão',cargo:g.cargo};
+ const vals={editUnidade:g.unidade,editCidade:g.cidade,editUf:g.uf,editAutoridade:baseAuth.nome||'',cargo:baseAuth.cargo||g.cargo,
+ editEstado:g.estado,editSecretaria:g.secretaria,editDepartamento:g.departamento,editSubdivisao:g.subdivisao,
+ editEndereco:g.endereco,editCep:g.cep,editEmail:g.email,editFone:g.fone,editSite:g.site};
+ Object.entries(vals).forEach(([id,v])=>{if($(id))$(id).value=v||''});
+ const map={editUnidade:'unidade',editCidade:'cidade',editUf:'uf',editAutoridade:'autoridade',cargo:'cargo',
+ editEstado:'estado',editSecretaria:'secretaria',editDepartamento:'departamento',editSubdivisao:'subdivisao',
+ editEndereco:'endereco',editCep:'cep',editEmail:'email',editFone:'fone',editSite:'site'};
+ Object.entries(map).forEach(([id,k])=>$(id)?.addEventListener('input',e=>{
+   window.reconCfgOverride=window.reconCfgOverride||{};
+   window.reconCfgOverride[k]=e.target.value.trim();
+ }));
 }
+$('toggleConfig').onclick=()=>{
+ const p=$('configPanel');p.hidden=!p.hidden;
+ $('toggleConfig').textContent=p.hidden?'⚙ Configurações':'✕ Fechar configurações';
+ if(!p.hidden)p.scrollIntoView({behavior:'smooth',block:'start'});
+};
 function today(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`}
 $('dataRec').value=today();
 function pad(n){return String(n).padStart(2,'0')}
