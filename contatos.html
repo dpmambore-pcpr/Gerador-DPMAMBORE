@@ -350,6 +350,28 @@ function addPhoneRow(parent,phone){
   cp.onclick=()=>copyText(phone).then(()=>toast('Telefone copiado'));
   row.append(text,cp);parent.appendChild(row);
 }
+
+/* Migração SIRA iFood — mantém contatos do usuário e atualiza apenas o registro institucional do iFood */
+(function migrateSiraIfood(){
+  try{
+    const SIRA_URL='https://sira.ifood.com.br/';
+    const SIRA_NOTE='Sistema iFood de Resposta às Autoridades';
+    let changed=false;
+    if(Array.isArray(items)){
+      let food=items.find(x=>String(x.id||'').toLowerCase()==='ifood')
+            || items.find(x=>String(x.name||'').trim().toLowerCase()==='ifood');
+      if(food){
+        if(food.url!==SIRA_URL){food.url=SIRA_URL;changed=true;}
+        if(food.notes!==SIRA_NOTE){food.notes=SIRA_NOTE;changed=true;}
+      }else{
+        items.push({"id":"ifood","name":"iFood","category":"Aplicativos / Transporte / Delivery","emails":["oficios@ifood.com.br"],"phones":["(11) 3634-3360"],"url":SIRA_URL,"notes":SIRA_NOTE,"favorite":false,"logo":"ifood.com.br"});
+        changed=true;
+      }
+      if(changed) save();
+    }
+  }catch(e){console.warn('Migração SIRA/iFood não aplicada',e);}
+})();
+
 function render(){
   rebuildFilters();
   const q=norm($('search').value), cat=$('category').value, contactFilter=$('contactFilter').value, sortBy=$('sortBy').value;
