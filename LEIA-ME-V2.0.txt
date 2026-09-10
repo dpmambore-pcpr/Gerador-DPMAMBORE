@@ -1,8 +1,0 @@
-CENTRAL PCPR v2.0 — 06/09/2026
-
-Abra index.html no navegador.
-Pacote reconstruído sobre a base completa v1.25, preservando os módulos e aplicando as alterações consolidadas da v2.0.
-ERB: v7.2.
-Armazenamento: localStorage/IndexedDB no navegador quando aplicável.
-Analytics: somente navegação/técnico, sem conteúdo de formulários.
-Vivo: cpr.br@telefonica.com | ordens.sigilo.br@telefonica.com | 0800-770-8486.
