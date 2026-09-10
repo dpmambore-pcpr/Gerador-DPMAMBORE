@@ -167,6 +167,43 @@ body.home-mode .module-main{overflow:visible}
   body.home-mode .mobile-main-menu-toggle{display:none}
 }
 
+
+/* ===== AJUSTE DO CABEÇALHO — SOMENTE CELULAR ===== */
+@media(max-width:650px){
+  .brand{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "mark label label"
+      "unit unit version"!important;
+    align-items:center!important;
+    column-gap:9px!important;
+    row-gap:8px!important;
+  }
+  .brand-mark{grid-area:mark!important}
+  .nav-label{
+    grid-area:label!important;
+    min-width:0!important;
+    white-space:nowrap!important;
+  }
+  .configured-unit{
+    grid-area:unit!important;
+    justify-self:start!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    margin:0!important;
+  }
+  .version-badge{
+    grid-area:version!important;
+    justify-self:end!important;
+    white-space:nowrap!important;
+    margin:0!important;
+  }
+}
+
 </style>
 
 <!-- Google Analytics 4 — Central PCPR -->
@@ -414,7 +451,7 @@ body.home-mode .module-main{overflow:visible}
 
   <div id="loading" class="loading hide">Carregando…</div>
   <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=1.1"></iframe>
-  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=2.5"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=2.5.1"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.4"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=2.0"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.5-20260905"></iframe>
