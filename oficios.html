@@ -1,69 +1,95 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ofícios — Central PCPR</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Central de Ofícios — PCPR</title>
 <style>
-:root{--bg:#0b0d0f;--panel:#12161a;--panel2:#171c21;--line:#2c333a;--gold:#c5a253;--text:#f3f0e8;--muted:#aeb5bc;--green:#7fb08b}
+:root{
+  --ink:#111820;
+  --accent:#285748;
+  --accent-dark:#183a31;
+  --gold:#c5a253;
+  --bg:#f4f2ec;
+  --line:#d8d3c8;
+  --text:#17202a;
+  --muted:#626b70;
+}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
-.wrap{max-width:1500px;margin:auto;padding:14px}
-.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#171b1f,#101316)}
-.title h1{font-size:18px;margin:0 0 3px}.title p{font-size:11px;color:var(--muted);margin:0}
-.badge{font-size:9px;font-weight:900;letter-spacing:.8px;color:#eadba9;border:1px solid #5a4b27;background:#211d12;padding:6px 9px;border-radius:999px}
-.tools{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:8px;margin-bottom:12px}
-.tool{appearance:none;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);padding:11px 10px;text-align:left;cursor:pointer;transition:.15s}
-.tool:hover{border-color:#6e5b31;transform:translateY(-1px);background:var(--panel2)}
-.tool.active{border-color:var(--gold);box-shadow:inset 0 0 0 1px rgba(197,162,83,.25);background:#1b1912}
-.tool b{display:block;font-size:11px;margin-bottom:3px}.tool span{display:block;font-size:9px;color:var(--muted);line-height:1.3}
-.framebox{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;min-height:780px}
-iframe{display:block;width:100%;height:calc(100vh - 175px);min-height:780px;border:0;background:#fff}
-@media(max-width:1050px){.tools{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:650px){.wrap{padding:8px}.head{align-items:flex-start;flex-direction:column}.tools{grid-template-columns:repeat(2,1fr)}iframe{height:calc(100vh - 245px)}}
+html,body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif
+}
+.wrap{padding:10px}
+.tabs{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  padding:8px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);
+  border-bottom:4px solid var(--gold);
+  margin-bottom:8px
+}
+.tab{
+  border:1px solid rgba(255,255,255,.24);
+  background:rgba(255,255,255,.07);
+  color:#f4f2ec;
+  border-radius:8px;
+  padding:9px 12px;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.15s
+}
+.tab:hover{
+  background:#285748;
+  border-color:#6f9486
+}
+.tab.active{
+  background:var(--gold);
+  border-color:#e2cf9d;
+  color:var(--ink)
+}
+.frame{
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+  background:#fff
+}
+iframe{
+  display:block;
+  width:100%;
+  height:calc(100vh - 82px);
+  min-height:720px;
+  border:0;
+  background:#fff
+}
+@media(max-width:650px){
+  .tab{flex:1 1 45%;padding:9px 6px;font-size:10px}
+  iframe{height:calc(100vh - 130px)}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="head">
-    <div class="title">
-      <h1>Central de Ofícios</h1>
-      <p>Selecione o expediente. Todos os geradores continuam dentro da aba Ofícios.</p>
-    </div>
-    <span class="badge">MÓDULOS INTEGRADOS</span>
-  </header>
-
-  <nav class="tools" aria-label="Tipos de ofício">
-    <button class="tool active" data-src="oficios-core.html"><b>📄 Ofícios</b><span>Requisições e expedientes gerais</span></button>
-    <button class="tool" data-src="oficio-diaria.html"><b>🧳 Diárias</b><span>Solicitação e expediente de diária</span></button>
-    <button class="tool" data-src="relatorio-viagem.html"><b>🚗 Relatório de Viagem</b><span>Relatório e prestação da viagem</span></button>
-    <button class="tool" data-src="pericia.html"><b>🔬 Perícia</b><span>Expedientes e requisições periciais</span></button>
-    <button class="tool" data-src="oitiva-penitenciaria.html"><b>🎥 Oitiva</b><span>Oitiva em unidade penal</span></button>
-    <button class="tool" data-src="oficio-coffee-break.html"><b>☕ Coffee Break</b><span>Ofício específico de coffee break</span></button>
-  </nav>
-
-  <section class="framebox">
-    <iframe id="officeFrame" src="oficios-core.html" title="Gerador selecionado"></iframe>
-  </section>
+<nav class="tabs">
+<button class="tab active" data-src="oficios-core.html?v=2.4.1">Ofícios</button>
+<button class="tab" data-src="oficio-diaria.html?v=2.4.1">Diárias</button>
+<button class="tab" data-src="relatorio-viagem.html?v=2.4.1">Relatório de Viagem</button>
+<button class="tab" data-src="diario-bordo.html?v=2.4.1">Diário de Bordo</button>
+<button class="tab" data-src="oitiva-penitenciaria.html?v=2.4.1">Oitiva em Penitenciária</button>
+<button class="tab" data-src="pericia.html?v=2.4.1">Perícia</button>
+</nav>
+<div class="frame"><iframe id="f" src="oficios-core.html?v=2.4.1" title="Central de Ofícios"></iframe></div>
 </div>
 <script>
-(()=>{
- const frame=document.getElementById('officeFrame');
- document.querySelectorAll('.tool').forEach(btn=>{
-   btn.addEventListener('click',()=>{
-     document.querySelectorAll('.tool').forEach(x=>x.classList.remove('active'));
-     btn.classList.add('active');
-     frame.src=btn.dataset.src;
-     try{localStorage.setItem('pcpr.ultimoOficio',btn.dataset.src)}catch(e){}
-     window.scrollTo({top:0,behavior:'smooth'});
-   });
- });
- try{
-   const last=localStorage.getItem('pcpr.ultimoOficio');
-   const btn=[...document.querySelectorAll('.tool')].find(x=>x.dataset.src===last);
-   if(btn)btn.click();
- }catch(e){}
-})();
+const f=document.getElementById('f');
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ b.classList.add('active'); f.src=b.dataset.src;
+});
 </script>
-</body>
-</html>
+</body></html>
