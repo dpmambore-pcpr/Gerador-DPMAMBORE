@@ -426,12 +426,29 @@ function render(){
     star.onclick=()=>{item.favorite=!item.favorite;save();render()};
     head.append(wrap,star);card.appendChild(head);
 
-    if(item.notes){const n=document.createElement('div');n.className='note';n.textContent=item.notes;card.appendChild(n)}
+    const isIfood=String(item.id||'').toLowerCase()==='ifood' || String(item.name||'').trim().toLowerCase()==='ifood';
+    if(isIfood){
+      const sira=document.createElement('div');
+      sira.className='note';
+      sira.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-color:#b9d7cc;background:#eef7f3;color:#173f34;font-weight:800';
+      const label=document.createElement('span');
+      label.textContent='🌐 Sistema iFood de Resposta às Autoridades — SIRA';
+      const btn=document.createElement('button');
+      btn.type='button';btn.className='icon';
+      btn.textContent='Acessar SIRA';
+      btn.onclick=()=>window.open('https://sira.ifood.com.br/','_blank','noopener,noreferrer');
+      sira.append(label,btn);
+      card.appendChild(sira);
+      item.url='https://sira.ifood.com.br/';
+      item.notes='Sistema iFood de Resposta às Autoridades';
+    }else if(item.notes){
+      const n=document.createElement('div');n.className='note';n.textContent=item.notes;card.appendChild(n)
+    }
     (item.phones||[]).forEach(p=>addPhoneRow(card,p));
     (item.emails||[]).forEach(e=>addEmailRow(card,e,item));
 
     const u=validUrl(item.url);
-    if(u){
+    if(u && !isIfood){
       const row=document.createElement('div');row.className='link-row';
       const tx=document.createElement('div');tx.className='linktext';tx.textContent=u;
       const op=document.createElement('button');op.className='secondary icon';op.type='button';op.textContent='Abrir portal';
@@ -535,5 +552,59 @@ $('editor').addEventListener('click',e=>{
 load();render();
 })();
 </script>
-<script id="v2VivoCanonical">document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('article,.card,.contato,.item,tr,section,div').forEach(el=>{const t=(el.innerText||'').toLowerCase();if(t.includes('vivo')||t.includes('telefonica')){if(el.children.length>12)return;let h=el.innerHTML;h=h.replace(/[A-Z0-9._%+-]+@(?:vivo|telefonica)[A-Z0-9.-]*\.[A-Z]{2,}/gi,m=>['cpr.br@telefonica.com','ordens.sigilo.br@telefonica.com'].includes(m.toLowerCase())?m:'');el.innerHTML=h;}});});</script></body>
+<script id="v2VivoCanonical">document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('article,.card,.contato,.item,tr,section,div').forEach(el=>{const t=(el.innerText||'').toLowerCase();if(t.includes('vivo')||t.includes('telefonica')){if(el.children.length>12)return;let h=el.innerHTML;h=h.replace(/[A-Z0-9._%+-]+@(?:vivo|telefonica)[A-Z0-9.-]*\.[A-Z]{2,}/gi,m=>['cpr.br@telefonica.com','ordens.sigilo.br@telefonica.com'].includes(m.toLowerCase())?m:'');el.innerHTML=h;}});});</script>
+<script id="migracao-sira-ifood-v2">
+(function(){
+  const SIRA_URL='https://sira.ifood.com.br/';
+  const SIRA_NOTE='Sistema iFood de Resposta às Autoridades';
+  function patchArray(arr){
+    if(!Array.isArray(arr)) return {arr,changed:false};
+    let changed=false;
+    let food=arr.find(x=>x && (
+      String(x.id||'').toLowerCase()==='ifood' ||
+      String(x.name||'').trim().toLowerCase()==='ifood' ||
+      String(x.url||'').toLowerCase().includes('ifood')
+    ));
+    if(food){
+      if(food.url!==SIRA_URL){food.url=SIRA_URL;changed=true;}
+      if(food.notes!==SIRA_NOTE){food.notes=SIRA_NOTE;changed=true;}
+      if(!food.name){food.name='iFood';changed=true;}
+    } else {
+      arr.push({id:'ifood',name:'iFood',category:'Aplicativos / Transporte / Delivery',
+        emails:['oficios@ifood.com.br'],phones:['(11) 3634-3360'],
+        url:SIRA_URL,notes:SIRA_NOTE,favorite:false,logo:'ifood.com.br'});
+      changed=true;
+    }
+    return {arr,changed};
+  }
+
+  // Corrige todos os arrays JSON de contatos salvos no localStorage, sem apagar contatos do usuário.
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i);
+      let raw=localStorage.getItem(key);
+      if(!raw || raw[0]!=='[') continue;
+      try{
+        const parsed=JSON.parse(raw);
+        if(!Array.isArray(parsed)) continue;
+        const hasContacts=parsed.some(x=>x && typeof x==='object' &&
+          ('name' in x || 'emails' in x || 'phones' in x || 'category' in x));
+        if(!hasContacts) continue;
+        const r=patchArray(parsed);
+        if(r.changed) localStorage.setItem(key,JSON.stringify(r.arr));
+      }catch(_){}
+    }
+  }catch(_){}
+
+  // Também corrige o array em memória, quando o módulo já o tiver criado.
+  try{
+    if(typeof items!=='undefined' && Array.isArray(items)){
+      const r=patchArray(items);
+      if(r.changed && typeof save==='function') save();
+    }
+  }catch(_){}
+})();
+</script>
+
+</body>
 </html>
