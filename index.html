@@ -223,6 +223,23 @@ body.home-mode .module-main{overflow:visible}
 }
 </style>
 
+
+<style id="status-esquerda-css">
+.system-mini{
+  width:100%;
+  justify-content:flex-start !important;
+  text-align:left;
+  margin-right:auto;
+}
+@media(max-width:700px){
+  .system-mini{
+    width:100%;
+    justify-content:flex-start !important;
+    padding-left:0;
+  }
+}
+</style>
+
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
@@ -237,7 +254,6 @@ body.home-mode .module-main{overflow:visible}
 <div class="system-mini" id="systemMini" aria-label="Informações do sistema">
   <span class="system-online">Sistema online</span>
   <span class="local-data">Dados locais</span>
-  <span class="update-mini" id="lastUpdateMini">Atualizado em 09 SET 2026</span>
 </div>
 
     <div class="tabs-row">
