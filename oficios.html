@@ -67,15 +67,67 @@ iframe{
   border:0;
   background:#fff
 }
+/* Botão recolhível: oculto no computador */
+.mobile-menu-toggle{display:none}
+
 @media(max-width:650px){
-  .tab{flex:1 1 45%;padding:9px 6px;font-size:10px}
-  iframe{height:calc(100vh - 130px)}
+  html,body{overflow-x:hidden}
+  .wrap{padding:6px}
+
+  .mobile-menu-toggle{
+    display:flex;
+    width:100%;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:12px 14px;
+    margin:0 0 7px;
+    border:1px solid #6f9486;
+    border-radius:10px;
+    background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);
+    color:#f4f2ec;
+    font-size:14px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .mobile-menu-toggle .arrow{transition:transform .18s ease}
+  .mobile-menu-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
+
+  .tabs{
+    display:none;
+    margin:0 0 7px;
+    padding:7px;
+    gap:5px;
+  }
+  .tabs.mobile-open{display:flex}
+  .tab{
+    flex:1 1 47%;
+    padding:10px 6px;
+    font-size:10px;
+  }
+
+  .frame{
+    border-radius:8px;
+    overflow:visible;
+  }
+  iframe{
+    width:100%;
+    height:calc(100dvh - 68px);
+    min-height:calc(100dvh - 68px);
+    border:0;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-<nav class="tabs">
+<button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-expanded="false" aria-controls="oficiosTabs">
+  <span>☰ Menu de Ofícios</span><span class="arrow">▾</span>
+</button>
+<nav class="tabs" id="oficiosTabs">
 <button class="tab" data-src="oficio-coffee-break.html?v=2.4.1">Coffee Break</button>
 <button class="tab" data-src="diario-bordo.html?v=2.4.1">Diário de Bordo</button>
 <button class="tab" data-src="oficio-diaria.html?v=2.4.1">Diárias</button>
@@ -89,9 +141,34 @@ iframe{
 </div>
 <script>
 const f=document.getElementById('f');
+const tabs=document.getElementById('oficiosTabs');
+const mobileToggle=document.getElementById('mobileMenuToggle');
+
+function isMobile(){ return window.matchMedia('(max-width:650px)').matches; }
+
+mobileToggle.addEventListener('click',()=>{
+  const open=tabs.classList.toggle('mobile-open');
+  mobileToggle.setAttribute('aria-expanded',String(open));
+});
+
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
- document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
- b.classList.add('active'); f.src=b.dataset.src;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  f.src=b.dataset.src;
+
+  if(isMobile()){
+    tabs.classList.remove('mobile-open');
+    mobileToggle.setAttribute('aria-expanded','false');
+    setTimeout(()=>f.scrollIntoView({behavior:'smooth',block:'start'}),80);
+  }
+});
+
+/* No celular o menu começa recolhido; no desktop o layout original é preservado. */
+window.addEventListener('resize',()=>{
+  if(!isMobile()){
+    tabs.classList.remove('mobile-open');
+    mobileToggle.setAttribute('aria-expanded','false');
+  }
 });
 </script>
 </body></html>

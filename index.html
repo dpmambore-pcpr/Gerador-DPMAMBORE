@@ -145,6 +145,28 @@ body.home-mode .module-main{overflow:visible}
 .empty-search.show{display:block}
 @media(max-width:780px){.home-tools{grid-template-columns:1fr}.home-version{justify-self:center}.recent-wrap{justify-content:center}}
 
+
+/* ===== MENU PRINCIPAL RECOLHÍVEL — SOMENTE CELULAR ===== */
+.mobile-main-menu-toggle{display:none}
+@media(max-width:650px){
+  .mobile-main-menu-toggle{
+    display:flex;width:100%;align-items:center;justify-content:space-between;
+    gap:10px;min-height:44px;padding:10px 13px;margin:2px 0 5px;
+    border:1px solid rgba(197,162,83,.58);border-radius:10px;
+    background:rgba(255,255,255,.055);color:#f6f2e7;
+    font:800 12px/1.2 Arial,sans-serif;letter-spacing:.2px;cursor:pointer
+  }
+  .mobile-main-menu-toggle .menu-arrow{transition:transform .18s ease}
+  .mobile-main-menu-toggle[aria-expanded="true"] .menu-arrow{transform:rotate(180deg)}
+
+  /* Em módulos, o menu grande fica fechado por padrão */
+  body:not(.home-mode) .tabs-row{display:none}
+  body:not(.home-mode) .tabs-row.mobile-main-open{display:flex}
+
+  /* Na tela inicial, mantém apenas Início como já funcionava */
+  body.home-mode .mobile-main-menu-toggle{display:none}
+}
+
 </style>
 
 <!-- Google Analytics 4 — Central PCPR -->
@@ -270,7 +292,11 @@ body.home-mode .module-main{overflow:visible}
   <span class="local-data">🔒 Dados neste dispositivo</span>
 </div>
 
-    <div class="tabs-row">
+    <button type="button" class="mobile-main-menu-toggle" id="mobileMainMenuToggle"
+      aria-expanded="false" aria-controls="mainTabsRow">
+      <span>☰ Menu da Central</span><span class="menu-arrow">▾</span>
+    </button>
+    <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
@@ -811,6 +837,34 @@ if(!document.getElementById('backTop')){
       document.getElementById('emptySearch')?.classList.toggle('show',visible===0);
     },true);
   }
+})();
+</script>
+
+
+<script id="mobile-main-menu-script">
+(function(){
+  const btn=document.getElementById('mobileMainMenuToggle');
+  const row=document.getElementById('mainTabsRow');
+  if(!btn||!row)return;
+  const mobile=()=>window.matchMedia('(max-width:650px)').matches;
+
+  function closeMenu(){
+    row.classList.remove('mobile-main-open');
+    btn.setAttribute('aria-expanded','false');
+  }
+  btn.addEventListener('click',function(){
+    const open=row.classList.toggle('mobile-main-open');
+    btn.setAttribute('aria-expanded',String(open));
+  });
+
+  /* Selecionou uma aba: recolhe imediatamente no celular */
+  row.addEventListener('click',function(e){
+    if(mobile() && e.target.closest('.module-tab')) setTimeout(closeMenu,0);
+  });
+
+  window.addEventListener('resize',function(){
+    if(!mobile()) closeMenu();
+  });
 })();
 </script>
 
