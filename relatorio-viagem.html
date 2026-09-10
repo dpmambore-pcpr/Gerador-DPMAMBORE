@@ -75,7 +75,24 @@ const DEFAULT_CFG={
  crest:DEFAULT_CREST,pcpr:DEFAULT_PCPR
 };
 function clone(x){return JSON.parse(JSON.stringify(x))}
-function loadCfg(){try{const x=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(x&&typeof x==='object')return Object.assign(clone(DEFAULT_CFG),x,{header:Array.isArray(x.header)&&x.header.length?x.header:clone(DEFAULT_CFG.header),servers:Array.isArray(x.servers)&&x.servers.length?x.servers:clone(DEFAULT_CFG.servers)})}catch(_){ }return clone(DEFAULT_CFG)}
+function generalToTrip(){
+  let g={};try{g=JSON.parse(localStorage.getItem('pcpr.configGeralUnidade.v1')||'null')||{}}catch(_){}
+  const header=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean);
+  const cityuf=[g.cidade,g.uf].filter(Boolean).join(' - ');
+  const footer1=[g.endereco,cityuf,g.cep].filter(Boolean).join(', ');
+  const footer2=[g.email?'Email: '+g.email:'',g.fone?'Fone/Fax: '+g.fone:'',g.site||''].filter(Boolean).join(' – ');
+  const servers=[
+    ...(Array.isArray(g.apjs)?g.apjs:[]),
+    ...(Array.isArray(g.autoridades)?g.autoridades.map(a=>a&&a.nome).filter(Boolean):[])
+  ];
+  return Object.assign(clone(DEFAULT_CFG),{
+    header:header.length?header:clone(DEFAULT_CFG.header),
+    footer1:footer1||DEFAULT_CFG.footer1,footer2:footer2||DEFAULT_CFG.footer2,
+    page2line1:footer1||DEFAULT_CFG.page2line1,page2line2:footer2||DEFAULT_CFG.page2line2,
+    servers:servers.length?servers:clone(DEFAULT_CFG.servers)
+  });
+}
+function loadCfg(){const base=generalToTrip();try{const x=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(x&&typeof x==='object')return Object.assign(base,x,{header:Array.isArray(x.header)&&x.header.length?x.header:base.header,servers:Array.isArray(x.servers)&&x.servers.length?x.servers:base.servers})}catch(_){ }return base}
 let CFG=loadCfg();
 function saveCfgLocal(){try{localStorage.setItem(CFG_KEY,JSON.stringify(CFG))}catch(_){}}
 function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}

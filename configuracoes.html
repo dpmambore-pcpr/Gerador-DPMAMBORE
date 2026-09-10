@@ -73,7 +73,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
     <div class="summary-sub" id="summarySub">—</div>
   </div>
 
-  <div class="card">
+  <div style="margin:0 0 14px;padding:11px 13px;border:1px solid #cdb673;border-radius:10px;background:#fffaf0;color:#5d4b22;font-size:11.5px;line-height:1.5">
+<b>Integração da Central:</b> esta página define a unidade padrão de toda a Central. Salvar aqui substitui as configurações específicas anteriores dos módulos integrados. Depois disso, se desejar, abra um módulo e altere apenas aquele módulo.
+</div>
+<div class="card">
     <h2>1. Unidade</h2>
     <div class="grid">
       <label class="full">Estado<input id="estadoHeader"></label>
@@ -148,7 +151,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 
 <div class="sticky-save">
   <div class="sticky-inner">
-    <div class="sticky-text"><b>Configuração Geral:</b> salve para distribuir os dados aos módulos compatíveis.</div>
+    <div class="sticky-text"><b>Configuração Geral da Central:</b> ao salvar aqui, os dados institucionais passam a ser o padrão de todos os módulos integrados. Depois, cada módulo ainda pode receber uma configuração própria sem alterar os demais.</div>
     <button id="save" type="button">Salvar e aplicar em todos os módulos</button>
   </div>
 </div>
@@ -165,6 +168,13 @@ const HEADER_KEY='pcpr.oitivaPenal.institucional.v1',
       CIDADE_SEL_KEY='pcpr.oitivaPenal.cidadeSelecionada.v1',
       LAUDO_KEY='geradorLaudoLesoesConfigV4',
       GENERAL_KEY='pcpr.configGeralUnidade.v1';
+
+const MODULE_OVERRIDE_KEYS=[
+  'pcpr.pericia.config.v1',
+  'pcpr.oficioDiaria.cfg.v1',
+  'pcprRelatorioViagemCfgV23'
+];
+const GENERAL_REV_KEY='pcpr.configGeralRev.v1';
 
 const DEF={
   estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
@@ -303,6 +313,10 @@ function apply(){
   if(!validate())return;
   const a=cfg.autoridades[0]||{nome:'',cargo:'Delegado de Polícia'};
   localStorage.setItem(GENERAL_KEY,JSON.stringify(cfg));
+  localStorage.setItem(GENERAL_REV_KEY,String(Date.now()));
+  // A Configuração Geral redefine o padrão de toda a Central.
+  // Configurações específicas podem ser feitas novamente depois, dentro de cada módulo.
+  MODULE_OVERRIDE_KEYS.forEach(k=>localStorage.removeItem(k));
   localStorage.setItem(AUTHORITIES_KEY,JSON.stringify(cfg.autoridades));
   localStorage.setItem(HEADER_KEY,JSON.stringify({estado:cfg.estadoHeader,secretaria:cfg.secretaria,departamento:cfg.departamento,subdivisao:cfg.subdivisao,unidade:cfg.unidade}));
   const footerAddress=[cfg.endereco,[cfg.cidade,cfg.uf].filter(Boolean).join(' - '),cfg.cep].filter(Boolean).join(', ');
@@ -327,7 +341,7 @@ function apply(){
   };
   localStorage.setItem(LAUDO_KEY,JSON.stringify(laudo));
   updateSummary();updatePreview();
-  status('Salvo. Dados distribuídos para Oitiva, Laudo de Lesões, Envelope de Busca e Auto de Arrecadação; autoridade padrão e cargo também foram sincronizados com os módulos legados.');
+  status('Configuração Geral aplicada. A unidade, cabeçalho, rodapé, autoridades e dados institucionais foram sincronizados com os módulos integrados. Alterações feitas depois dentro de um módulo valerão somente para aquele módulo.');
 }
 $('addDelegado').onclick=()=>{
   const nome=$('novoDelegado').value.trim(), cargo=$('novoCargo').value.trim();

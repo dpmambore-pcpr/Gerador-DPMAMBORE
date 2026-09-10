@@ -240,11 +240,26 @@ body.home-mode .module-main{overflow:visible}
 }
 </style>
 
+
+<style id="integracao-geral-css">
+.configured-unit{
+  display:inline-flex;align-items:center;justify-content:center;min-height:28px;
+  max-width:360px;padding:0 10px;border:1px solid rgba(197,162,83,.45);
+  border-radius:999px;background:rgba(197,162,83,.10);color:#f4e7bd;
+  font-size:10px;font-weight:900;letter-spacing:.3px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis
+}
+.system-mini{justify-content:flex-start!important}
+@media(max-width:900px){
+  .configured-unit{max-width:100%;font-size:9px}
+}
+</style>
+
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="version-badge" id="centralVersion">v2.4 · 08/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.4 · 08/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line credit-origin">
   <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
   <span>com o propósito de ser compartilhado com outras unidades policiais, promovendo o desenvolvimento conjunto, a troca de experiências e o aprimoramento contínuo das ferramentas de apoio à atividade policial.</span>
@@ -252,8 +267,8 @@ body.home-mode .module-main{overflow:visible}
 </div>
 <div id="dataComemorativa" class="data-comemorativa" aria-live="polite"></div>
 <div class="system-mini" id="systemMini" aria-label="Informações do sistema">
-  <span class="system-online">Sistema online</span>
-  <span class="local-data">Dados locais</span>
+  <span class="system-online">Central operacional</span>
+  <span class="local-data">🔒 Dados neste dispositivo</span>
 </div>
 
     <div class="tabs-row">
@@ -726,6 +741,76 @@ if(!document.getElementById('backTop')){
     document.addEventListener('DOMContentLoaded',mostrarDataComemorativa);
   }else{
     mostrarDataComemorativa();
+  }
+})();
+</script>
+
+
+<script id="integracao-geral-js">
+(function(){
+  const GENERAL_KEY='pcpr.configGeralUnidade.v1';
+
+  function getGeneral(){
+    try{return JSON.parse(localStorage.getItem(GENERAL_KEY)||'null')||{}}catch(e){return{}}
+  }
+  function shortUnit(g){
+    const unidade=String(g.unidade||'DELEGACIA DE POLÍCIA CIVIL DE MAMBORÊ').trim();
+    const cidade=String(g.cidade||'Mamborê').trim();
+    const uf=String(g.uf||'PR').trim().toUpperCase();
+    let u=unidade
+      .replace(/^DELEGACIA DE POLÍCIA CIVIL DE\s+/i,'DP ')
+      .replace(/^DELEGACIA DE POLÍCIA DE\s+/i,'DP ')
+      .replace(/^DELEGACIA REGIONAL DE POLÍCIA DE\s+/i,'DRP ');
+    if(/^DP\s+/i.test(u) && cidade && !u.toLowerCase().includes(cidade.toLowerCase())) u+=' · '+cidade;
+    return '📍 '+u+(uf && !u.toUpperCase().includes('/'+uf)?'/'+uf:'');
+  }
+  function refreshConfiguredUnit(){
+    const el=document.getElementById('configuredUnit'); if(!el)return;
+    const g=getGeneral();
+    el.textContent=shortUnit(g);
+    el.title='Central configurada para: '+(g.unidade||'Delegacia de Polícia Civil de Mamborê')+
+      (g.cidade?' — '+g.cidade+'/'+(g.uf||'PR'):'');
+  }
+  refreshConfiguredUnit();
+  setInterval(refreshConfiguredUnit,1500);
+  window.addEventListener('storage',e=>{if(e.key===GENERAL_KEY)refreshConfiguredUnit()});
+
+  // Pesquisa ampliada por sinônimos/termos operacionais.
+  const aliases={
+    atualizacoes:'novidades versão histórico mudanças melhoria',
+    configuracoes:'unidade delegacia dp autoridade delegado apj endereço email telefone regional subdivisão',
+    contatodppr:'delegacia dp cidade telefone endereço contato unidade policial',
+    contatos:'banco empresa instituição email telefone ofício contato',
+    imei:'celular aparelho telefone imei serial',
+    operadora:'telefone número celular tim claro vivo portabilidade',
+    envelopebusca:'mandado busca apreensão alvo auto arrecadação kit endereço',
+    erb:'antena torre estação rádio base azimute sinal celular localização',
+    filtroip:'ip internet provedor conexão log porta cgnat',
+    lesoes:'lesão laudo exame corpo delito ferimento apj',
+    oficios:'ofício oficio diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
+    qrcode:'qr link url código codigo'
+  };
+  document.querySelectorAll('.module-card[data-open-module]').forEach(card=>{
+    const key=card.dataset.openModule;
+    if(aliases[key]) card.dataset.searchTerms=aliases[key];
+  });
+
+  const input=document.getElementById('moduleSearch');
+  if(input && !input.dataset.enhancedSearch){
+    input.dataset.enhancedSearch='1';
+    const normalize=t=>(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    input.addEventListener('input',()=>{
+      const q=normalize(input.value.trim());
+      const cards=[...document.querySelectorAll('.module-grid .module-card')];
+      let visible=0;
+      cards.forEach(c=>{
+        const hay=normalize(c.textContent+' '+(c.dataset.searchTerms||''));
+        const match=!q||hay.includes(q);
+        c.classList.toggle('search-hidden',!match);
+        if(match)visible++;
+      });
+      document.getElementById('emptySearch')?.classList.toggle('show',visible===0);
+    },true);
   }
 })();
 </script>

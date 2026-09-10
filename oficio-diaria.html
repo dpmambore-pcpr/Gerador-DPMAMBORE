@@ -81,7 +81,24 @@ const DEFAULT_CFG={
 };
 let CFG=loadCfg(); let lastData=null;
 function clone(o){return JSON.parse(JSON.stringify(o))}
-function loadCfg(){try{const j=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(j&&typeof j==='object')return Object.assign(clone(DEFAULT_CFG),j,{servers:Array.isArray(j.servers)&&j.servers.length?j.servers:clone(DEFAULT_CFG.servers)});}catch(_){ }return clone(DEFAULT_CFG)}
+function generalToDaily(){
+  let g={};try{g=JSON.parse(localStorage.getItem('pcpr.configGeralUnidade.v1')||'null')||{}}catch(_){}
+  const a=Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null;
+  const header=[g.secretaria||'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',g.departamento||'POLÍCIA CIVIL DO PARANÁ',g.subdivisao,g.unidade].filter(Boolean);
+  const address=[g.endereco,[g.cidade,g.uf].filter(Boolean).join(' - '),g.cep].filter(Boolean).join(', ');
+  const servers=(Array.isArray(g.apjs)?g.apjs:[]).map(name=>({name,role:'Agente de Polícia Judiciária'}));
+  if(a&&a.nome)servers.push({name:a.nome,role:a.cargo||'Delegado de Polícia'});
+  return Object.assign(clone(DEFAULT_CFG),{
+    header:header.length?header:clone(DEFAULT_CFG.header),
+    address:address||DEFAULT_CFG.address,email:g.email||DEFAULT_CFG.email,
+    phone:g.fone||DEFAULT_CFG.phone,site:g.site||DEFAULT_CFG.site,
+    authority:(a&&a.nome)||DEFAULT_CFG.authority,
+    authorityRole:(a&&a.cargo)||DEFAULT_CFG.authorityRole,
+    recipientCity:g.cidade?g.cidade+' – '+(g.uf||'PR')+',':DEFAULT_CFG.recipientCity,
+    servers:servers.length?servers:clone(DEFAULT_CFG.servers)
+  });
+}
+function loadCfg(){const base=generalToDaily();try{const j=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(j&&typeof j==='object')return Object.assign(base,j,{servers:Array.isArray(j.servers)&&j.servers.length?j.servers:base.servers});}catch(_){ }return base}
 function saveLocal(){localStorage.setItem(CFG_KEY,JSON.stringify(CFG))}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function v(id){return document.getElementById(id).value.trim()}
