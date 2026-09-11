@@ -157,36 +157,25 @@ body.home-mode .module-main{overflow:visible}
 @media(max-width:780px){.home-tools{grid-template-columns:1fr}.home-version{justify-self:center}.recent-wrap{justify-content:center}}
 
 
-/* ===== MENU PRINCIPAL RECOLHÍVEL — TODOS OS MÓDULOS ===== */
-.mobile-main-menu-toggle{
-  display:flex;width:100%;align-items:center;justify-content:space-between;
-  gap:10px;min-height:36px;padding:7px 11px;margin:2px 0 5px;
-  border:1px solid rgba(197,162,83,.58);border-radius:9px;
-  background:rgba(255,255,255,.055);color:#f6f2e7;
-  font:800 11px/1.2 Arial,sans-serif;letter-spacing:.2px;cursor:pointer;
-  transition:background .16s ease,border-color .16s ease
-}
-.mobile-main-menu-toggle:hover{background:rgba(255,255,255,.11);border-color:rgba(226,207,157,.82)}
-.mobile-main-menu-toggle .menu-arrow{transition:transform .18s ease}
-.mobile-main-menu-toggle[aria-expanded="true"] .menu-arrow{transform:rotate(180deg)}
-body.home-mode .mobile-main-menu-toggle{display:none}
-
-body:not(.home-mode).nav-collapsed .module-nav .brand,
-body:not(.home-mode).nav-collapsed .module-nav .nav-clock,
-body:not(.home-mode).nav-collapsed .module-nav .credit-line,
-body:not(.home-mode).nav-collapsed .module-nav .data-comemorativa,
-body:not(.home-mode).nav-collapsed .module-nav .system-mini,
-body:not(.home-mode).nav-collapsed .module-nav .tabs-row{display:none!important}
-body:not(.home-mode).nav-collapsed .nav-inner{padding:6px 18px}
-body:not(.home-mode).nav-collapsed .mobile-main-menu-toggle{
-  margin:0;min-height:34px;background:rgba(197,162,83,.12);border-color:rgba(197,162,83,.68)
-}
-body:not(.home-mode).nav-collapsed .module-main{min-height:calc(100vh - 46px)}
-body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
-
+/* ===== MENU PRINCIPAL RECOLHÍVEL — SOMENTE CELULAR ===== */
+.mobile-main-menu-toggle{display:none}
 @media(max-width:650px){
-  .mobile-main-menu-toggle{min-height:42px;padding:9px 12px;font-size:11.5px}
-  body:not(.home-mode).nav-collapsed .nav-inner{padding:5px 10px}
+  .mobile-main-menu-toggle{
+    display:flex;width:100%;align-items:center;justify-content:space-between;
+    gap:10px;min-height:44px;padding:10px 13px;margin:2px 0 5px;
+    border:1px solid rgba(197,162,83,.58);border-radius:10px;
+    background:rgba(255,255,255,.055);color:#f6f2e7;
+    font:800 12px/1.2 Arial,sans-serif;letter-spacing:.2px;cursor:pointer
+  }
+  .mobile-main-menu-toggle .menu-arrow{transition:transform .18s ease}
+  .mobile-main-menu-toggle[aria-expanded="true"] .menu-arrow{transform:rotate(180deg)}
+
+  /* Em módulos, o menu grande fica fechado por padrão */
+  body:not(.home-mode) .tabs-row{display:none}
+  body:not(.home-mode) .tabs-row.mobile-main-open{display:flex}
+
+  /* Na tela inicial, mantém apenas Início como já funcionava */
+  body.home-mode .mobile-main-menu-toggle{display:none}
 }
 
 
@@ -340,7 +329,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.5 · 10/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.6 · 11/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line credit-origin">
   <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
   <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
@@ -352,8 +341,8 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 </div>
 
     <button type="button" class="mobile-main-menu-toggle" id="mobileMainMenuToggle"
-      aria-expanded="true" aria-controls="mainTabsRow" title="Recolher ou mostrar o menu da Central">
-      <span id="mainMenuToggleText">▲ Recolher menu</span><span class="menu-arrow">▾</span>
+      aria-expanded="false" aria-controls="mainTabsRow">
+      <span>☰ Menu da Central</span><span class="menu-arrow">▾</span>
     </button>
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
@@ -366,6 +355,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
       <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
       <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
       <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+      <button class="module-tab" data-key="fundorotativo" type="button">Fundo Rotativo</button>
       <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
       <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
       <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
@@ -388,7 +378,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
           </div>
-          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.4</div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.6</div>
         </div>
         <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
         <details class="security-details">
@@ -442,6 +432,13 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
         <div class="card-title">Filtro IP</div>
         <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
       </button>
+      <button class="module-card" type="button" data-open-module="fundorotativo">
+        <span class="card-badge">NOVO</span>
+        <div class="card-top"><div class="card-icon">FR</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Fundo Rotativo</div>
+        <div class="card-desc">Justificativa de despesas, geração pelo modelo oficial e acesso rápido às certidões.</div>
+        <div class="card-subtags"><span class="card-subtag">JUSTIFICATIVA</span><span class="card-subtag">CERTIDÕES</span></div>
+      </button>
       <button class="module-card" type="button" data-open-module="lesoes">
         <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
         <div class="card-title">Laudo de Lesões</div>
@@ -479,18 +476,19 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.5-20260905"></iframe>
   <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=7.2"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=1.2"></iframe>
+  <iframe id="frameFundoRotativo" class="module-frame" title="Fundo Rotativo" data-src="fundo-rotativo.html?v=1.0"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.1"></iframe>
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=2.0"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=1.1"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=1.4"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=2.5"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=2.6"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='2.5';
-const CENTRAL_VERSION_DATE='10/09/2026';
+const CENTRAL_VERSION='2.6';
+const CENTRAL_VERSION_DATE='11/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
 const homeVersion=document.getElementById('homeVersion');
@@ -552,6 +550,7 @@ const modules={
   operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
   erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
   filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900},
+  fundorotativo:{frame:document.getElementById('frameFundoRotativo'),tab:document.querySelector('[data-key="fundorotativo"]'),min:980},
   qrcode:{frame:document.getElementById('frameQrCode'),tab:document.querySelector('[data-key="qrcode"]'),min:820},
   envelopebusca:{frame:document.getElementById('frameEnvelopeBusca'),tab:document.querySelector('[data-key="envelopebusca"]'),min:1180},
   contatodppr:{frame:document.getElementById('frameContatoDpPr'),tab:document.querySelector('[data-key="contatodppr"]'),min:900},
@@ -571,6 +570,7 @@ function trackModule(key){
       operadora:'consulta_operadora',
       erb:'erb_antenas',
       filtroip:'filtro_ip',
+      fundorotativo:'fundo_rotativo',
       qrcode:'gerador_qrcode',
       envelopebusca:'envelope_busca',
       contatodppr:'contato_dp_pr',
@@ -584,15 +584,13 @@ function trackModule(key){
 
 function fit(key){
   const m=modules[key];
-  const nav=document.querySelector('.module-nav');
-  const navHeight=Math.max(0,Math.ceil(nav?.getBoundingClientRect().height||68));
   try{
     const d=m.frame.contentDocument;
-    const viewport=Math.max(700,window.innerHeight-navHeight);
+    const viewport=Math.max(700,window.innerHeight-68);
     if(key==='erb'){m.frame.style.height=viewport+'px';return}
     const h=Math.max(d?.documentElement?.scrollHeight||0,d?.body?.scrollHeight||0,m.min);
     m.frame.style.height=(h+10)+'px';
-  }catch(e){m.frame.style.height=Math.max(m.min,window.innerHeight-navHeight)+'px'}
+  }catch(e){m.frame.style.height=Math.max(m.min,window.innerHeight-68)+'px'}
 }
 function load(key){
   const m=modules[key];
@@ -625,7 +623,7 @@ const homeBtn=document.getElementById('homeBtn');
 const MODULE_LABELS={
   atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas',
-  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
+  filtroip:'Filtro IP', fundorotativo:'Fundo Rotativo', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
 };
 const RECENT_KEY='pcprCentralRecentModulesV2';
 const UPDATE_SEEN_KEY='pcprCentralUpdatesSeenVersion';
@@ -872,6 +870,7 @@ if(!document.getElementById('backTop')){
     envelopebusca:'mandado busca apreensão alvo auto arrecadação kit endereço',
     erb:'antena torre estação rádio base azimute sinal celular localização',
     filtroip:'ip internet provedor conexão log porta cgnat',
+    fundorotativo:'fundo rotativo nota fiscal justificativa certidão certidoes fgts cndt receita estadual municipal despesa pagamento orçamento',
     lesoes:'lesão laudo exame corpo delito ferimento apj',
     oficios:'ofício oficio diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
     qrcode:'qr link url código codigo'
@@ -905,77 +904,27 @@ if(!document.getElementById('backTop')){
 <script id="mobile-main-menu-script">
 (function(){
   const btn=document.getElementById('mobileMainMenuToggle');
-  const text=document.getElementById('mainMenuToggleText');
   const row=document.getElementById('mainTabsRow');
   if(!btn||!row)return;
+  const mobile=()=>window.matchMedia('(max-width:650px)').matches;
 
-  const STORAGE_KEY='pcprCentralMenuCollapsedV1';
-  let preferredCollapsed=false;
-  try{preferredCollapsed=localStorage.getItem(STORAGE_KEY)==='1'}catch(e){}
-
-  function activeModuleName(){
-    const active=row.querySelector('.module-tab.active:not(.home-tab)');
-    return active?.textContent?.trim()||'módulo atual';
+  function closeMenu(){
+    row.classList.remove('mobile-main-open');
+    btn.setAttribute('aria-expanded','false');
   }
-
-  function refitActiveModule(){
-    setTimeout(()=>{
-      window.dispatchEvent(new Event('resize'));
-      const frame=document.querySelector('.module-frame.active');
-      try{frame?.contentWindow?.dispatchEvent(new Event('resize'))}catch(e){}
-    },80);
-  }
-
-  function renderButton(){
-    const collapsed=document.body.classList.contains('nav-collapsed')&&!document.body.classList.contains('home-mode');
-    btn.setAttribute('aria-expanded',String(!collapsed));
-    if(text) text.textContent=collapsed?'☰ Mostrar menu · '+activeModuleName():'▲ Recolher menu';
-    btn.title=collapsed?'Mostrar menu da Central':'Recolher menu da Central';
-  }
-
-  function applyCollapsed(collapsed,savePreference){
-    if(document.body.classList.contains('home-mode')) collapsed=false;
-    document.body.classList.toggle('nav-collapsed',Boolean(collapsed));
-    if(savePreference){
-      preferredCollapsed=Boolean(collapsed);
-      try{localStorage.setItem(STORAGE_KEY,preferredCollapsed?'1':'0')}catch(e){}
-    }
-    renderButton();
-    refitActiveModule();
-  }
-
-  function syncView(){
-    if(document.body.classList.contains('home-mode')){
-      document.body.classList.remove('nav-collapsed');
-      renderButton();
-      return;
-    }
-    applyCollapsed(preferredCollapsed,false);
-  }
-
   btn.addEventListener('click',function(){
-    applyCollapsed(!document.body.classList.contains('nav-collapsed'),true);
+    const open=row.classList.toggle('mobile-main-open');
+    btn.setAttribute('aria-expanded',String(open));
   });
 
-  document.addEventListener('click',function(e){
-    if(e.target.closest('.module-tab,.module-card,[data-open-module]')){
-      setTimeout(()=>{syncView();renderButton()},0);
-    }
+  /* Selecionou uma aba: recolhe imediatamente no celular */
+  row.addEventListener('click',function(e){
+    if(mobile() && e.target.closest('.module-tab')) setTimeout(closeMenu,0);
   });
 
-  const observer=new MutationObserver(()=>{
-    const home=document.body.classList.contains('home-mode');
-    if(home){
-      if(document.body.classList.contains('nav-collapsed')) document.body.classList.remove('nav-collapsed');
-    }else if(document.body.classList.contains('nav-collapsed')!==preferredCollapsed){
-      document.body.classList.toggle('nav-collapsed',preferredCollapsed);
-    }
-    renderButton();
+  window.addEventListener('resize',function(){
+    if(!mobile()) closeMenu();
   });
-  observer.observe(document.body,{attributes:true,attributeFilter:['class']});
-  row.querySelectorAll('.module-tab').forEach(tab=>observer.observe(tab,{attributes:true,attributeFilter:['class']}));
-
-  syncView();
 })();
 </script>
 
