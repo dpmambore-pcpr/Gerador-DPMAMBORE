@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v7.9 — PCPR</title>
+<title>Análise de ERBs e Antenas v8.4 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -109,6 +109,13 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .popup-btn{border:1px solid #aaa;background:#fff;color:#111;border-radius:5px;padding:4px 6px;font-size:10px;font-weight:700;cursor:pointer}
 .route-label{font-size:8px;color:#c9d7d0;margin-left:4px}
 
+.route-note{margin-top:7px;padding-top:7px;border-top:1px solid #29483b;color:#93a89e;font-size:8.6px;line-height:1.4}
+.route-summary{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 7px}
+.route-chip{border:1px solid #355847;border-radius:999px;background:#102019;color:#d7e4de;padding:4px 7px;font-size:8.5px;font-weight:850}
+.routearrow{background:rgba(255,255,255,.94);border:1px solid #111;border-radius:50%;width:22px!important;height:22px!important;display:grid!important;place-items:center;font-weight:950;color:#111;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+.routearrow span{display:block;line-height:18px;font-size:14px;transform-origin:center}
+.timeitem .routecity{color:#e3c979;font-weight:850}
+
 @media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar{width:92%}}
 @media print{.sec{display:none!important}}
 </style>
@@ -119,7 +126,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v7.9</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v8.4</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
@@ -204,7 +211,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
       </div>
 
       <button class="toolbtn" id="filterBtn">Filtros</button>
-      <button class="toolbtn" id="timelineBtn">Linha do tempo</button>
+      <button class="toolbtn" id="timelineBtn">Trajeto / tempo</button>
       <button class="toolbtn" id="geoBtn">Interseção</button>
       <span class="filterpill" id="filterPill">FILTRO ATIVO</span>
     </div>
@@ -249,10 +256,13 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
   <div class="timelinebar" id="timelinebar">
     <div class="timelinehead">
-      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play rota</button><button class="btn outline small" id="stopTimeline">■</button><span class="muted" id="timelineInfo"></span></div>
+      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button></div>
       <button class="btn outline small" id="closeTimeline">Fechar</button>
     </div>
-    <div class="timeitems" id="timeitems"></div>
+    <div class="route-summary" id="routeSummary"></div>
+    <div class="muted" id="timelineInfo"></div>
+    <div class="timeitems" id="timeitems" style="margin-top:7px"></div>
+    <div class="route-note">Trajeto cronológico estimado a partir da sequência de ERBs/CGIs após os filtros aplicados. A linha entre antenas serve para visualizar a ordem de utilização das ERBs e <b>não representa percurso GPS, via efetivamente utilizada ou posição exata do terminal</b>.</div>
   </div>
 
   <div class="geo" id="geoPanel">
@@ -288,7 +298,7 @@ const COLORS=['#2f81f7','#f85149','#a371f7','#3fb950','#d29922','#39c5cf','#f778
 const state={
   lots:[],events:[],pois:[],
   activeLotId:null,focusEventId:null,
-  filters:{start:'',end:'',type:'',operator:'',lotId:'',daypart:''},
+  filters:{start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:''},
   onlyGeo:false,playing:false
 };
 const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean'};
@@ -331,6 +341,10 @@ function lotById(id){return state.lots.find(x=>x.id===id)}
 function activeLot(){return lotById(state.activeLotId)}
 function lotEvents(id){return state.events.filter(e=>e.lotId===id)}
 function currentOperator(ev){return ev.operator||lotById(ev.lotId)?.operator||''}
+function validGeoEvent(ev){
+  const lat=Number(ev?.lat),lng=Number(ev?.lng),az=Number(ev?.az);
+  return Number.isFinite(lat)&&Number.isFinite(lng)&&Number.isFinite(az)&&lat>=-90&&lat<=90&&lng>=-180&&lng<=180;
+}
 function projectName(){return $('projectName').value.trim()||'Projeto ERB'}
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
 
@@ -348,10 +362,17 @@ function filteredEvents(){
   return state.events.filter(ev=>{
     const lot=lotById(ev.lotId);
     if(!lot||lot.visible===false||ev.visible===false||ev.displayMode==='hidden')return false;
+    if(!validGeoEvent(ev))return false;
     if(f.lotId&&ev.lotId!==f.lotId)return false;
     if(f.type&&String(ev.eventType||lot.type||'').toUpperCase()!==f.type)return false;
     if(f.operator&&currentOperator(ev)!==f.operator)return false;
+    if(f.city&&String(ev.city||'').trim().toLocaleUpperCase('pt-BR')!==String(f.city).trim().toLocaleUpperCase('pt-BR'))return false;
     const d=parseDate(ev.datetime);
+    if(f.date){
+      if(!d)return false;
+      const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+      if(`${y}-${m}-${day}`!==f.date)return false;
+    }
     if(f.start&&(!d||d<new Date(f.start)))return false;
     if(f.end&&(!d||d>new Date(f.end)))return false;
     if(f.daypart){
@@ -415,6 +436,30 @@ function eventPopup(group){
 function timelineData(){
   return filteredEvents().map(ev=>({ev,d:parseDate(ev.datetime)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);
 }
+function routeKey(ev){
+  return [ev.lotId||'',ev.cgi||ev.cellid||'',Number(ev.lat).toFixed(6),Number(ev.lng).toFixed(6),Number(ev.az).toFixed(1)].join('|');
+}
+function trajectoryData(){
+  const src=timelineData(),out=[];
+  src.forEach(x=>{
+    const last=out[out.length-1];
+    if(last&&routeKey(last.ev)===routeKey(x.ev)){
+      last.end=x.d;last.events.push(x.ev);last.lastEv=x.ev;
+    }else out.push({ev:x.ev,d:x.d,end:x.d,events:[x.ev],lastEv:x.ev});
+  });
+  return out;
+}
+function bearingBetween(a,b){
+  const p1=a.lat*Math.PI/180,p2=b.lat*Math.PI/180,dl=(b.lng-a.lng)*Math.PI/180;
+  const y=Math.sin(dl)*Math.cos(p2),x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);
+  return normAz(Math.atan2(y,x)*180/Math.PI);
+}
+function fitTrajectory(){
+  const t=trajectoryData();
+  if(!t.length)return status('Não há trajeto cronológico após os filtros.',true);
+  const pts=t.map(x=>[x.ev.lat,x.ev.lng]);
+  if(pts.length===1)map.setView(pts[0],15);else map.fitBounds(pts,{padding:[45,45],maxZoom:15});
+}
 function redraw(fit=false){
   sectorG.clearLayers();markerG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();geoG.clearLayers();
   const groups=sectorGroups(),bounds=[];
@@ -440,16 +485,39 @@ function redraw(fit=false){
   autosave();
 }
 function drawTimelineLayers(){
-  const t=timelineData();
-  if(cfg.showPath&&t.length>1)L.polyline(t.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:1.8,dashArray:'7 7',opacity:.72}).addTo(pathG);
+  const t=trajectoryData();
+  if(cfg.showPath&&t.length>1){
+    const pts=t.map(x=>[x.ev.lat,x.ev.lng]);
+    L.polyline(pts,{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.82}).addTo(pathG);
+    const maxArrows=60,step=Math.max(1,Math.ceil((t.length-1)/maxArrows));
+    for(let i=0;i<t.length-1;i+=step){
+      const a=t[i].ev,b=t[i+1].ev;if(a.lat===b.lat&&a.lng===b.lng)continue;
+      const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2],br=bearingBetween(a,b);
+      const ic=L.divIcon({className:'routearrow',html:`<span style="transform:rotate(${br}deg)">↑</span>`,iconSize:[22,22],iconAnchor:[11,11]});
+      L.marker(mid,{icon:ic,interactive:false}).addTo(pathG);
+    }
+  }
   if(cfg.showSeq)t.forEach((x,i)=>{
     const ic=L.divIcon({className:'seqicon',html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
     L.marker([x.ev.lat,x.ev.lng],{icon:ic}).addTo(seqG);
   });
-  $('timelineInfo').textContent=t.length?`${t.length} evento(s)`:'sem eventos com data/hora';
-  $('timeitems').innerHTML=t.map((x,i)=>`<div class="timeitem" data-time="${x.ev.id}"><b>${i+1}. ${esc(x.ev.name||x.ev.station||'ERB')}</b><br>${esc(x.ev.datetime||'')}<br><span class="muted">${esc(lotById(x.ev.lotId)?.name||'')}</span></div>`).join('');
+  const uniqueErbs=new Set(t.map(x=>x.ev.cgi||x.ev.cellid||routeKey(x.ev))).size;
+  const cities=[...new Set(t.map(x=>String(x.ev.city||'').trim()).filter(Boolean))];
+  const transitions=Math.max(0,t.length-1);
+  $('timelineInfo').textContent=t.length?`${t.length} etapa(s) cronológica(s) · ${transitions} transição(ões)`:'sem eventos com data/hora';
+  if($('routeSummary'))$('routeSummary').innerHTML=t.length?[
+    `<span class="route-chip">${uniqueErbs} ERB(s)</span>`,
+    `<span class="route-chip">${cities.length} cidade(s)</span>`,
+    `<span class="route-chip">${esc(t[0].d.toLocaleString('pt-BR'))} → ${esc(t[t.length-1].end.toLocaleString('pt-BR'))}</span>`
+  ].join(''):'';
+  $('timeitems').innerHTML=t.map((x,i)=>{
+    const ev=x.ev,city=String(ev.city||'').trim(),count=x.events.length;
+    const period=x.end&&x.end.getTime()!==x.d.getTime()?`${x.d.toLocaleString('pt-BR')} → ${x.end.toLocaleString('pt-BR')}`:x.d.toLocaleString('pt-BR');
+    return `<div class="timeitem" data-time="${ev.id}"><b>${i+1}. ${esc(ev.name||ev.station||ev.cgi||'ERB')}</b><br>${esc(period)}${city?`<br><span class="routecity">${esc(city)}</span>`:''}${ev.cgi?`<br>CGI: ${esc(ev.cgi)}`:''}<br><span class="muted">${esc(lotById(ev.lotId)?.name||'')}${count>1?' · '+count+' registros consecutivos':''}</span></div>`;
+  }).join('');
   document.querySelectorAll('[data-time]').forEach(el=>el.onclick=()=>focusEvent(el.dataset.time));
 }
+
 function focusEvent(id){
   const ev=state.events.find(e=>e.id===id);if(!ev)return;
   state.focusEventId=id;map.setView([ev.lat,ev.lng],15);
@@ -482,8 +550,8 @@ function renderSidebar(){
   document.querySelectorAll('[data-lotaudit]').forEach(x=>x.onclick=()=>openLotAudit(x.dataset.lotaudit));
   document.querySelectorAll('[data-lotdel]').forEach(x=>x.onclick=()=>deleteLot(x.dataset.lotdel));
 
-  const fe=filteredEvents();
-  $('recordCount').textContent=`${fe.length} registros`;
+  const fe=filteredEvents().slice().sort((a,b)=>{const da=parseDate(a.datetime),db=parseDate(b.datetime);return (da?da.getTime():Infinity)-(db?db.getTime():Infinity)});
+  $('recordCount').textContent=`${fe.length} registros · ordem cronológica`;
   $('recordList').innerHTML=fe.slice(0,180).map(ev=>`<div class="item"><div class="itemname">${esc(ev.name||ev.station||'ERB')}</div><div class="itemmeta">${fmt(ev.lat)} / ${fmt(ev.lng)} · Az. ${fmt(ev.az,1)}°${ev.datetime?'<br>'+esc(ev.datetime):''}<br>${esc(lotById(ev.lotId)?.name||'')}</div></div>`).join('')+(fe.length>180?'<div class="muted">Mostrando os primeiros 180 registros.</div>':'');
   $('poiCount').textContent=`${state.pois.length} pontos`;
   $('poiList').innerHTML=state.pois.map(p=>`<div class="item"><div class="itemname">${poiSymbol(p.type)} ${esc(p.name)}</div><div class="itemmeta">${esc(p.type)} · ${fmt(p.lat)} / ${fmt(p.lng)}</div><div style="margin-top:5px"><button class="btn danger small" data-poidel="${p.id}">Excluir</button></div></div>`).join('');
@@ -568,7 +636,7 @@ function openLotAudit(id){
 }
 
 function fitLot(id){
-  const pts=[];lotEvents(id).forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));
+  const pts=[];lotEvents(id).filter(validGeoEvent).forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));
   if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Lote sem registros.',true)
 }
 function deleteLot(id){
@@ -577,9 +645,13 @@ function deleteLot(id){
   if(state.activeLotId===id)state.activeLotId=state.lots[0]?.id||null;redraw()
 }
 function updateFilterOptions(){
-  const operators=[...new Set(state.events.map(currentOperator).filter(Boolean))].sort();
+  const operators=[...new Set(state.events.map(currentOperator).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const cities=[...new Set(state.events.map(e=>String(e.city||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const dates=[...new Set(state.events.map(e=>parseDate(e.datetime)).filter(Boolean).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`))].sort();
   const lots=state.lots;
-  const op=$('filterOperator');if(op)op.innerHTML='<option value="">Todas</option>'+operators.map(v=>`<option ${state.filters.operator===v?'selected':''}>${esc(v)}</option>`).join('');
+  const op=$('filterOperator');if(op)op.innerHTML='<option value="">Todas</option>'+operators.map(v=>`<option value="${esc(v)}" ${state.filters.operator===v?'selected':''}>${esc(v)}</option>`).join('');
+  const city=$('filterCity');if(city)city.innerHTML='<option value="">Todas as cidades</option>'+cities.map(v=>`<option value="${esc(v)}" ${state.filters.city===v?'selected':''}>${esc(v)}</option>`).join('');
+  const date=$('filterDate');if(date)date.innerHTML='<option value="">Todos os dias</option>'+dates.map(v=>{const [y,m,d]=v.split('-');return `<option value="${v}" ${state.filters.date===v?'selected':''}>${d}/${m}/${y}</option>`}).join('');
   const lo=$('filterLot');if(lo)lo.innerHTML='<option value="">Todos</option>'+lots.map(l=>`<option value="${l.id}" ${state.filters.lotId===l.id?'selected':''}>${esc(l.name)}</option>`).join('');
 }
 function openDrawer(kind,preset={}){
@@ -633,7 +705,7 @@ function openDrawer(kind,preset={}){
     body.innerHTML=`<div class="field"><label>Tipo dos dados</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
       ${importLotField}
       <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf" multiple></div>
-      <div class="muted"><b>Planilha TIM:</b> se o XLSX contiver as abas “Extrato Conexões” e “Dados de Antena”, basta selecionar o arquivo: o sistema filtra IPv6 válido, remove duplicatas, cruza PRIMEIRA/ÚLTIMA CGI/ERB com latitude, longitude, azimute, local e cidade e <b>plota automaticamente no mapa</b>. Para outros formatos, a auditoria normal permanece disponível.</div>
+      <div class="muted"><b>Planilha TIM:</b> se o XLSX contiver as abas “Extrato Conexões” e “Dados de Antena”, basta selecionar o arquivo: o sistema filtra IPv6 válido, remove duplicatas, cruza PRIMEIRA/ÚLTIMA CGI/ERB com latitude, longitude, azimute, local e cidade e <b>plota automaticamente no mapa</b>. PDF de conexões TIM também é reconhecido automaticamente pelo conteúdo e cruza os registros IPv6 com a tabela DADOS DE ANTENA. Para outros formatos, a auditoria normal permanece disponível.</div>
       <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s). A análise será iniciada automaticamente; também é possível usar o botão <b>Analisar arquivos</b>.</div></div>
       <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Importar</button></div>`;
     if(preset.type)$('fImportType').value=preset.type;
@@ -642,7 +714,8 @@ function openDrawer(kind,preset={}){
     $('doImport').onclick=()=>processPendingImport(false);
   }else if(kind==='filter'){
     title.textContent='Filtros';
-    body.innerHTML=`<div class="grid2"><div class="field"><label>Data/hora inicial</label><input id="filterStart" type="datetime-local" value="${esc(state.filters.start)}"></div><div class="field"><label>Data/hora final</label><input id="filterEnd" type="datetime-local" value="${esc(state.filters.end)}"></div></div>
+    body.innerHTML=`<div class="grid2"><div class="field"><label>Dia</label><select id="filterDate"></select></div><div class="field"><label>Cidade da ERB</label><select id="filterCity"></select></div></div>
+      <div class="grid2"><div class="field"><label>Data/hora inicial</label><input id="filterStart" type="datetime-local" value="${esc(state.filters.start)}"></div><div class="field"><label>Data/hora final</label><input id="filterEnd" type="datetime-local" value="${esc(state.filters.end)}"></div></div>
       <label>Período do dia</label><div class="quickfilters">
         <button class="quickfilter" type="button" data-daypart="">Todos</button>
         <button class="quickfilter" type="button" data-daypart="madrugada">Madrugada 00–06</button>
@@ -759,11 +832,11 @@ function savePoi(){
   closeDrawer();redraw(true);status('Ponto adicionado.')
 }
 function applyFilters(){
-  state.filters={start:$('filterStart').value,end:$('filterEnd').value,type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value,daypart:$('drawerBody').dataset.daypart||''};
+  state.filters={start:$('filterStart').value,end:$('filterEnd').value,date:$('filterDate')?.value||'',city:$('filterCity')?.value||'',type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value,daypart:$('drawerBody').dataset.daypart||''};
   $('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));closeDrawer();redraw(true);status('Filtros aplicados.')
 }
 function clearFilters(){
-  state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
+  state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
 }
 
 function normHead(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
@@ -828,6 +901,11 @@ function timCleanCgi(v){
 function timNum(v){
   const m=String(v??'').replace(/\s/g,'').match(/-?\d+(?:[.,]\d+)?/);
   return m?Number(m[0].replace(',','.')):NaN;
+}
+function timCoord(v,isLat){
+  const n=timNum(v),lim=isLat?90:180;
+  if(!Number.isFinite(n)||Math.abs(n)>lim)return NaN;
+  return n;
 }
 function timValidIpv6(v){
   const x=String(v??'').replace(/[\u00a0\u200b-\u200d\ufeff\s]/g,'').toLowerCase();
@@ -908,7 +986,7 @@ function parseTimDataWorkbook(wb,fileName=''){
     const get=k=>ah.map[k]!=null?r[ah.map[k]]:'';
     const cgi=timCleanCgi(get('cgi'));if(!cgi)continue;
     antennaRowsCount++;
-    const lat=timNum(get('lat')),lng=timNum(get('lng')),az=timNum(get('az'));
+    const lat=timCoord(get('lat'),true),lng=timCoord(get('lng'),false),az=timNum(get('az'));
     if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))antennaCoordInvalid++;
     const local=String((get('local')||get('endereco')||'')??'').trim();
     const city=String(get('city')??'').trim();
@@ -991,7 +1069,7 @@ function importTimDataWorkbook(parsed,file,lotId){
       state.events.push({
         id:uid(),lotId,name:ant.name||ep.cgi,station:ant.name||ep.cgi,sector:'',lat:ant.lat,lng:ant.lng,az:ant.az,
         dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',
-        address:place,datetime:ep.datetime,eventType:'DADOS',operator:'TIM',tech:'',cellid:'',cgi:ep.cgi,
+        address:place,city:ant.city||'',datetime:ep.datetime,eventType:'DADOS',operator:'TIM',tech:'',cellid:'',cgi:ep.cgi,
         origin:o.msisdn,destination:'',imei:'',ipv6:o.ipv6,source:file.name,
         obs:`${role} CGI/ERB · ${trafficBits}`.trim(),visible:true,displayMode:'normal'
       });created++;
@@ -999,10 +1077,10 @@ function importTimDataWorkbook(parsed,file,lotId){
     if(rowPlot)rowsWithPlot++;
   }
   lot.importInfo={
-    format:'XLSX DADOS TIM',detectedOperator:'TIM',totalRows:parsed.totalTraffic,validRows:parsed.filteredRows.length,
+    format:parsed.sourceKind==='PDF'?'PDF DADOS TIM':'XLSX DADOS TIM',detectedOperator:'TIM',totalRows:parsed.totalTraffic,validRows:parsed.filteredRows.length,
     ignoredRows:Math.max(0,parsed.totalTraffic-parsed.ipv6ValidCount)+parsed.duplicates,antennas:parsed.antennas,mappedCalls:rowsWithPlot,
     summary:`${parsed.totalTraffic} linha(s) no extrato · ${parsed.ipv6ValidCount} com IPv6 válido · ${parsed.filteredRows.length} após deduplicação · ${rowsWithPlot} conexão(ões) com ERB plotável`,
-    note:`Abas: ${parsed.trafficSheet} + ${parsed.antennaSheet}. Match PRIMEIRA: ${parsed.matchFirst}/${parsed.filteredRows.length}; ÚLTIMA: ${parsed.matchLast}/${parsed.filteredRows.length}. ERBs não localizadas: ${parsed.unmatchedOccurrences} ocorrência(s).`,
+    note:`Fonte: ${parsed.trafficSheet} + ${parsed.antennaSheet}. Match PRIMEIRA: ${parsed.matchFirst}/${parsed.filteredRows.length}; ÚLTIMA: ${parsed.matchLast}/${parsed.filteredRows.length}. ERBs não localizadas: ${parsed.unmatchedOccurrences} ocorrência(s).`,
     timData:{totalTraffic:parsed.totalTraffic,ipv6ValidCount:parsed.ipv6ValidCount,dedupRows:parsed.filteredRows.length,duplicates:parsed.duplicates,matchFirst:parsed.matchFirst,matchLast:parsed.matchLast,mappableFirst:parsed.mappableFirst,mappableLast:parsed.mappableLast,unmatchedOccurrences:parsed.unmatchedOccurrences,uniqueUnmatched:parsed.uniqueUnmatched,missingKeys:parsed.missingKeys,trafficSheet:parsed.trafficSheet,antennaSheet:parsed.antennaSheet,antennaCoordInvalid:parsed.antennaCoordInvalid}
   };
   return{created,rows:parsed.filteredRows.length,rowsWithPlot};
@@ -1076,6 +1154,135 @@ async function readPdfStructured(file){
   return{pdf,pages,text:textParts.join('\n')};
 }
 
+
+/* ===== TIM PDF DE CONEXÕES / DADOS ===== */
+function parseTimPdfAntennas(struct){
+  const antennas=[],seen=new Set();
+  // Limites derivados da tabela TIM "DADOS DE ANTENA". O PDF.js mantém as coordenadas
+  // em pontos do próprio PDF, por isso este método é muito mais confiável que depender
+  // apenas da ordem do texto extraído.
+  const bounds=[114,151,194,240,274,326,399,464,498,529];
+  for(const rows of (struct.pages||[])){
+    let cityPrefix='';
+    for(const row of rows){
+      const c=bucketRow(row,bounds);
+      const rowText=cleanPdfText(row.items.map(x=>x.text).join(' '));
+      let cgi=firstMatch(c[0],/\d{3}-\d{2}-\d{5}-\d+/);
+      if(!cgi)cgi=firstMatch(rowText,/\d{3}-\d{2}-\d{5}-\d+/);
+      if(!cgi){
+        // A coluna CIDADE às vezes quebra "UMUARAMA" em duas linhas: "UMUARAM" + "A".
+        const non=c.filter(x=>String(x||'').trim()).length;
+        if(c[8]&&non===1)cityPrefix=(cityPrefix+' '+c[8]).trim();
+        continue;
+      }
+      let lat=timCoord(c[1],true),lng=timCoord(c[2],false),az=parseNum(firstMatch(c[4],/-?\d{1,3}(?:[.,]\d+)?/));
+      let date=firstMatch(c[3],/\d{2}\/\d{2}\/\d{4}/);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az)){
+        const m=rowText.match(/(\d{3}-\d{2}-\d{5}-\d+)\s+(-?\d{1,2}[.,]\d+)\s+(-?\d{1,3}[.,]\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{1,3}(?:[.,]\d+)?)\s*°?/);
+        if(m){cgi=m[1];lat=timCoord(m[2],true);lng=timCoord(m[3],false);date=m[4];az=parseNum(m[5]);}
+      }
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az)||seen.has(cgi))continue;
+      seen.add(cgi);
+      const city=cleanPdfText(cityPrefix&&String(c[8]||'').trim().length===1?cityPrefix+String(c[8]||'').trim():[cityPrefix,c[8]].filter(Boolean).join(' '));cityPrefix='';
+      antennas.push({
+        cgi,lat,lng,az:normAz(az),startDate:date,
+        name:cleanPdfText(c[5])||cgi,
+        local:cleanPdfText(c[6]),address:cleanPdfText(c[6]),
+        neighborhood:cleanPdfText(c[7]),city,
+        state:cleanPdfText(c[9]),cep:cleanPdfText(c[10])
+      });
+    }
+  }
+  // Último fallback: procura a sequência CGI + latitude + longitude + data + azimute
+  // em qualquer linha reconstruída geometricamente.
+  if(!antennas.length){
+    for(const rows of (struct.pages||[]))for(const row of rows){
+      const t=cleanPdfText(row.items.map(x=>x.text).join(' '));
+      const m=t.match(/(\d{3}-\d{2}-\d{5}-\d+)\s+(-?\d{1,2}[.,]\d+)\s+(-?\d{1,3}[.,]\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{1,3}(?:[.,]\d+)?)\s*°?/);
+      if(!m||seen.has(m[1]))continue;
+      const lat=timCoord(m[2],true),lng=timCoord(m[3],false),az=parseNum(m[5]);
+      if(Number.isFinite(lat)&&Number.isFinite(lng)&&Number.isFinite(az)){
+        seen.add(m[1]);antennas.push({cgi:m[1],lat,lng,az:normAz(az),startDate:m[4],name:m[1],local:'',address:'',neighborhood:'',city:'',state:'',cep:''});
+      }
+    }
+  }
+  return antennas;
+}
+function parseTimDataPdfStructured(struct,fileName=''){
+  const full=String(struct?.text||'');
+  const flat=full.replace(/\s+/g,' ').trim();
+  const detect=flat.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  const looksReport=detect.includes('RELATORIO DE CONEXOES POR LINHA')||(detect.includes('RELATORIO DE CONEXOES')&&detect.includes('LINHA'));
+  const looksColumns=detect.includes('MSISDN')&&detect.includes('IPV6')&&detect.includes('PRIMEIRA CGI ERB')&&detect.includes('ULTIMA CGI ERB');
+  const looksAntenna=detect.includes('CGI ERB LATITUDE LONGITUDE')||detect.includes('DADOS DE ANTENA');
+  if(!(looksReport&&looksColumns))return null;
+
+  const target=(flat.match(/Relat[oó]rio\s+de\s+Conex[oõ]es\s+por\s*\(\s*Linha\s*\)\s*:\s*(\d{8,15})/i)||[])[1]
+    ||(detect.match(/RELATORIO DE CONEXOES POR LINHA\s+(\d{8,15})/)||[])[1]||'';
+  const request=(flat.match(/N[uú]mero\s+Solicita[cç][aã]o\s*:?\s*([0-9.-]+)/i)||[])[1]||'';
+  const protocol=(flat.match(/N[uú]mero\s+Protocolo\s*:?\s*([0-9./-]+)/i)||[])[1]||'';
+  const process=(flat.match(/N[uú]mero\s+Processo\s*:?\s*([0-9./-]+)/i)||[])[1]||'';
+  const antennas=parseTimPdfAntennas(struct),antennaMap=new Map(antennas.map(a=>[a.cgi,a]));
+
+  const filtered=[];const seen=new Set();let totalTraffic=0,ipv6ValidCount=0,duplicates=0;
+  // Colunas da tabela "Relatório de Conexões" TIM.
+  const bounds=[76,99,125,153,175,244,269,293,340,382,423,460,496,532];
+  for(const rows of (struct.pages||[])){
+    for(const row of rows){
+      const c=bucketRow(row,bounds);
+      const rowText=cleanPdfText(row.items.map(x=>x.text).join(' '));
+      let msisdn=firstMatch(c[0],/\b\d{10,13}\b/);
+      let primeira=timCleanCgi(firstMatch(c[12],/\d{3}-\d{2}-\d{5}-\d+/));
+      let ultima=timCleanCgi(firstMatch(c[13],/\d{3}-\d{2}-\d{5}-\d+/));
+      let tipo=cleanPdfText(c[14]);
+      if(!msisdn||!primeira||!ultima){
+        const cgis=[...rowText.matchAll(/\d{3}-\d{2}-\d{5}-\d+/g)].map(m=>m[0]);
+        if(!msisdn)msisdn=firstMatch(rowText,/\b\d{10,13}\b/);
+        if(!primeira)primeira=timCleanCgi(cgis[0]||'');
+        if(!ultima)ultima=timCleanCgi(cgis[1]||cgis[0]||'');
+        if(!tipo&&/CONEX[AÃ]O/i.test(rowText))tipo=(rowText.match(/CONEX[AÃ]O\s*\([^)]*\)/i)||[])[0]||'CONEXÃO';
+      }
+      if(!msisdn||!/CONEX/i.test(tipo||rowText)||(!primeira&&!ultima))continue;
+      totalTraffic++;
+      let ipv6=cleanPdfText(c[5]);
+      if(!timValidIpv6(ipv6)){
+        const m6=rowText.match(/\b[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{0,4}){2,}\b/);
+        ipv6=m6?m6[0]:ipv6;
+      }
+      if(!timValidIpv6(ipv6))continue;
+      ipv6ValidCount++;
+      const dates=[...rowText.matchAll(/\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/g)].map(m=>m[0]);
+      const horaInicio=normalizePdfDate(c[8])||dates[0]||'';
+      const horaFim=normalizePdfDate(c[10])||dates[2]||dates[1]||horaInicio;
+      const o={
+        msisdn,serviceId:cleanPdfText(c[1]),ipv4:cleanPdfText(c[2]),ipv6,
+        portaInicio:cleanPdfText(c[3]),portaFim:cleanPdfText(c[4]),uplink:cleanPdfText(c[6]),downlink:cleanPdfText(c[7]),
+        horaInicio,horaFim,primeiraCgi:primeira,ultimaCgi:ultima,tipo
+      };
+      const key=[o.msisdn,o.ipv6,o.horaInicio,o.primeiraCgi,o.ultimaCgi].join('\u001f');
+      if(seen.has(key)){duplicates++;continue}seen.add(key);filtered.push(o);
+    }
+  }
+
+  let matchFirst=0,matchLast=0,mappableFirst=0,mappableLast=0,rowsMappable=0;
+  const unmatchedOccurrences=[],uniqueUnmatched=new Set(),missingKeys={first:0,last:0};
+  for(const o of filtered){
+    let rowMap=false;
+    if(o.primeiraCgi){const a=antennaMap.get(o.primeiraCgi);if(a){matchFirst++;if(Number.isFinite(a.lat)&&Number.isFinite(a.lng)&&Number.isFinite(a.az)){mappableFirst++;rowMap=true}}else{unmatchedOccurrences.push(o.primeiraCgi);uniqueUnmatched.add(o.primeiraCgi)}}else missingKeys.first++;
+    if(o.ultimaCgi){const a=antennaMap.get(o.ultimaCgi);if(a){matchLast++;if(Number.isFinite(a.lat)&&Number.isFinite(a.lng)&&Number.isFinite(a.az)){mappableLast++;rowMap=true}}else{unmatchedOccurrences.push(o.ultimaCgi);uniqueUnmatched.add(o.ultimaCgi)}}else missingKeys.last++;
+    if(rowMap)rowsMappable++;
+  }
+  return{
+    recognized:true,valid:true,sourceKind:'PDF',fileName,target,request,protocol,process,operator:'TIM',
+    trafficSheet:'PDF — Relatório de Conexões',antennaSheet:looksAntenna?'PDF — Dados de Antena':'PDF — antenas',
+    totalTraffic,ipv6ValidCount,duplicates,filteredRows:filtered,antennaMap,antennas:antennaMap.size,
+    antennaRowsCount:antennaMap.size,antennaCoordInvalid:0,matchFirst,matchLast,mappableFirst,mappableLast,rowsMappable,
+    unmatchedOccurrences:unmatchedOccurrences.length,uniqueUnmatched:[...uniqueUnmatched],missingKeys,
+    msisdns:[...new Set(filtered.map(x=>x.msisdn).filter(Boolean))]
+  };
+}
+/* ===== FIM TIM PDF DE CONEXÕES / DADOS ===== */
+
 function parseTimVoiceStructured(struct){
   const full=String(struct?.text||'');
   const flat=full.replace(/\s+/g,' ').trim();
@@ -1127,6 +1334,26 @@ function parseTimVoiceStructured(struct){
     }
   }
 
+  // Fallback textual para DADOS DE ANTENA.
+  // Alguns PDFs TIM mantêm todas as informações, mas o PDF.js pode devolver
+  // posições X/Y ligeiramente diferentes e o parser por colunas deixa de reconhecer a tabela.
+  // Este fallback procura diretamente a sequência CGI → latitude → longitude → data → azimute.
+  if(!antennas.length&&hasAntennaSection&&!antennaSectionEmpty){
+    const antRegion=(full.split(/DADOS\s+DE\s+ANTENA/i)[1]||full);
+    const rxAnt=/(\d{3}-\d{2}-\d{5}-\d+)\s+(-?\d{1,2}[.,]\d+)\s+(-?\d{1,3}[.,]\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{1,3}(?:[.,]\d+)?)\s*°?/g;
+    let m;
+    while((m=rxAnt.exec(antRegion))){
+      const cgi=m[1],lat=parseCoord(m[2],true),lng=parseCoord(m[3],false),az=parseNum(m[5]);
+      if(cgi&&Number.isFinite(lat)&&Number.isFinite(lng)&&Number.isFinite(az)&&!antSeen.has(cgi)){
+        antSeen.add(cgi);
+        antennas.push({
+          cgi,lat,lng,az:normAz(az),startDate:m[4],
+          name:cgi,address:'',neighborhood:'',city:'',state:'',cep:''
+        });
+      }
+    }
+  }
+
   const calls=[];
   const callCodes=new Set(['MOC','MTC','CF','RCF','SSP']);
   for(const rows of (struct.pages||[])){
@@ -1153,13 +1380,15 @@ function parseTimVoiceStructured(struct){
   }
 
   // Fallback textual: alguns PDFs TIM têm o mesmo conteúdo, mas o PDF.js devolve
-  // coordenadas X/Y das células de forma diferente e o parser tabular não encontra as linhas.
-  if(!calls.length){
+  // coordenadas X/Y das células de forma diferente e o parser tabular pode perder a CGI/ERB.
+  // O fallback também é executado quando as chamadas foram lidas, mas nenhuma delas trouxe CGI.
+  if(!calls.length||!calls.some(c=>c.firstCgi||c.lastCgi)){
+    const fallbackCalls=[];
     const lines=full.split(/\n+/).map(cleanPdfText).filter(Boolean);
     for(let i=0;i<lines.length;i++){
       const code=lines[i].trim().toUpperCase();
       if(!callCodes.has(code))continue;
-      const win=lines.slice(i+1,i+20);
+      const win=lines.slice(i+1,i+24);
       const stop=win.findIndex(x=>callCodes.has(x.trim().toUpperCase()));
       const seg=(stop>=0?win.slice(0,stop):win);
       if(!seg.some(x=>/\bCHAMADA\b/i.test(x)))continue;
@@ -1174,8 +1403,19 @@ function parseTimVoiceStructured(struct){
       const central=(seg.find(x=>/^[A-Z0-9]{3,12}$/i.test(x)&&!/^\d+$/.test(x))||'');
       const durationLine=seg.find(x=>/^\s*\d+\s+CHAMADA\b/i.test(x))||'';
       const duration=(durationLine.match(/^\s*(\d+)/)||[])[1]||'';
-      if(dates.length||phones.length>=2){
-        calls.push({code,central,origin:phones[0]||'',destination:phones[1]||'',redirected:'',imeiOrigin:imeis[0]||'',imeiDestination:imeis[1]||'',firstCgi:cgis[0]||'',lastCgi:cgis[1]||'',datetime:dates[0]||'',duration,service:'CHAMADA'});
+      if(dates.length||phones.length>=2||cgis.length){
+        fallbackCalls.push({code,central,origin:phones[0]||'',destination:phones[1]||'',redirected:'',imeiOrigin:imeis[0]||'',imeiDestination:imeis[1]||'',firstCgi:cgis[0]||'',lastCgi:cgis[1]||'',datetime:dates[0]||'',duration,service:'CHAMADA'});
+      }
+    }
+    if(!calls.length&&fallbackCalls.length){
+      calls.push(...fallbackCalls);
+    }else if(calls.length&&!calls.some(c=>c.firstCgi||c.lastCgi)&&fallbackCalls.some(c=>c.firstCgi||c.lastCgi)){
+      // Preserva a leitura tabular, mas injeta CGI/ERB do fallback pela ordem dos eventos.
+      for(let i=0;i<Math.min(calls.length,fallbackCalls.length);i++){
+        if(!calls[i].firstCgi)calls[i].firstCgi=fallbackCalls[i].firstCgi||'';
+        if(!calls[i].lastCgi)calls[i].lastCgi=fallbackCalls[i].lastCgi||'';
+        if(!calls[i].imeiOrigin)calls[i].imeiOrigin=fallbackCalls[i].imeiOrigin||'';
+        if(!calls[i].imeiDestination)calls[i].imeiDestination=fallbackCalls[i].imeiDestination||'';
       }
     }
   }
@@ -1209,7 +1449,7 @@ function importTimVoiceResult(parsed,file,lotId){
       state.events.push({
         id:uid(),lotId,
         name:ant.name||cgi,station:ant.name||cgi,sector:'',
-        lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:[ant.address,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · '),
+        lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:[ant.address,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · '),city:ant.city||'',
         datetime:call.datetime,eventType:'VOZ',operator:parsed.operator||'',
         tech:'',cellid:'',cgi,callCode:call.code,central:call.central,duration:call.duration,
         origin:call.origin,destination:call.destination,
@@ -1252,14 +1492,19 @@ async function previewSelectedFiles(){
       const ext=file.name.split('.').pop().toLowerCase();
       if(ext==='pdf'){
         const struct=await readPdfStructured(file);
-        // Detecta PDFs de voz pelo conteúdo, independentemente do tipo escolhido na interface.
-        // Antes, selecionar DADOS/MISTO impedia até mesmo a tentativa do parser TIM.
-        const parsed=parseTimVoiceStructured(struct);
-        if(parsed){
-          const callsWithCgi=parsed.calls.filter(c=>[c.firstCgi,c.lastCgi].some(Boolean)).length;
-          pendingImport.push({file,kind:'timVoice',parsed,type:'VOZ',analysis:{operator:parsed.operator||'TIM',valid:parsed.calls.length,ignored:0,antennas:parsed.antennas.length,mappedEstimate:callsWithCgi,antennaSectionEmpty:parsed.antennaSectionEmpty}});
+        // Primeiro tenta o relatório TIM de CONEXÕES/DADOS; depois o relatório de VOZ.
+        // A detecção é feita pelo conteúdo, independentemente do tipo escolhido na interface.
+        const dataPdf=parseTimDataPdfStructured(struct,file.name);
+        if(dataPdf){
+          pendingImport.push({file,kind:'timDataPdf',parsed:dataPdf,type:'DADOS',analysis:{operator:'TIM',valid:dataPdf.filteredRows.length,ignored:Math.max(0,dataPdf.totalTraffic-dataPdf.ipv6ValidCount)+dataPdf.duplicates,antennas:dataPdf.antennas,mappedEstimate:dataPdf.rowsMappable,totalTraffic:dataPdf.totalTraffic,ipv6ValidCount:dataPdf.ipv6ValidCount,matchFirst:dataPdf.matchFirst,matchLast:dataPdf.matchLast,unmatchedOccurrences:dataPdf.unmatchedOccurrences,uniqueUnmatched:dataPdf.uniqueUnmatched,trafficSheet:dataPdf.trafficSheet,antennaSheet:dataPdf.antennaSheet}});
         }else{
-          pendingImport.push({file,kind:'unsupportedPdf',type,analysis:{operator:'',valid:0,ignored:1,note:'PDF lido, mas não foi possível identificar automaticamente o layout pelos títulos/campos extraídos. Verifique se o arquivo é um relatório de voz ou dados de outra operadora.'}});
+          const parsed=parseTimVoiceStructured(struct);
+          if(parsed){
+            const callsWithCgi=parsed.calls.filter(c=>[c.firstCgi,c.lastCgi].some(Boolean)).length;
+            pendingImport.push({file,kind:'timVoice',parsed,type:'VOZ',analysis:{operator:parsed.operator||'TIM',valid:parsed.calls.length,ignored:0,antennas:parsed.antennas.length,mappedEstimate:callsWithCgi,antennaSectionEmpty:parsed.antennaSectionEmpty}});
+          }else{
+            pendingImport.push({file,kind:'unsupportedPdf',type,analysis:{operator:'',valid:0,ignored:1,note:'PDF lido, mas não foi possível identificar automaticamente o layout pelos títulos/campos extraídos. Verifique se o arquivo é um relatório de voz/dados TIM ou de outra operadora.'}});
+          }
         }
         continue;
       }
@@ -1285,11 +1530,18 @@ async function previewSelectedFiles(){
       pendingImport.push({file,kind:'rows',rows,type,analysis:a});
     }
     renderImportAudit();
-    // Para o layout TIM de dados, um único XLSX é processado imediatamente após a seleção.
-    // O usuário não precisa gerar uma planilha intermediária nem clicar em “Importar”.
-    if(pendingImport.length===1&&pendingImport[0].kind==='timDataXlsx'){
-      status('Planilha TIM reconhecida. Cruzando CGI/ERB e plotando automaticamente...');
-      await processPendingImport(true);
+    // TIM com dados suficientes é processada imediatamente após a seleção.
+    // Vale tanto para XLSX de dados quanto para PDF de voz que já contenha CGI/ERB
+    // e a tabela DADOS DE ANTENA com latitude, longitude e azimute.
+    if(pendingImport.length===1){
+      const p=pendingImport[0],a=p.analysis||{};
+      if(p.kind==='timDataXlsx'||p.kind==='timDataPdf'){
+        status(p.kind==='timDataPdf'?'PDF de conexões TIM reconhecido. Cruzando CGI/ERB e plotando automaticamente...':'Planilha TIM reconhecida. Cruzando CGI/ERB e plotando automaticamente...');
+        await processPendingImport(true);
+      }else if(p.kind==='timVoice'&&a.mappedEstimate>0&&a.antennas>0){
+        status('PDF TIM reconhecido com CGI/ERB e dados de antena. Plotando automaticamente...');
+        await processPendingImport(true);
+      }
     }
   }catch(e){
     console.error(e);pendingImport=[];$('importAudit').innerHTML='<div class="auditwarn">Falha ao analisar os arquivos.</div>';status('Não foi possível interpretar o arquivo.',true);
@@ -1299,11 +1551,12 @@ function renderImportAudit(){
   const box=$('importAudit');if(!box)return;
   let can=false;
   box.innerHTML=pendingImport.map(p=>{
-    const a=p.analysis||{},processable=p.kind==='timVoice'||p.kind==='timDataXlsx'||p.kind==='rows'&&a.valid>0;if(processable)can=true;
+    const a=p.analysis||{},processable=p.kind==='timVoice'||p.kind==='timDataXlsx'||p.kind==='timDataPdf'||p.kind==='rows'&&a.valid>0;if(processable)can=true;
     let meta='',good=processable;
-    if(p.kind==='timDataXlsx'){
+    if(p.kind==='timDataXlsx'||p.kind==='timDataPdf'){
       good=a.mappedEstimate>0;
-      meta=`Formato: XLSX DADOS TIM · aba tráfego: ${a.trafficSheet} · aba antenas: ${a.antennaSheet} · linhas: ${a.totalTraffic} · IPv6 válido: ${a.ipv6ValidCount} · após deduplicação: ${a.valid} · match PRIMEIRA: ${a.matchFirst} · match ÚLTIMA: ${a.matchLast} · ERBs não localizadas: ${a.unmatchedOccurrences} · conexões plotáveis: ${a.mappedEstimate}`;
+      const origem=p.kind==='timDataPdf'?'PDF CONEXÕES TIM':'XLSX DADOS TIM';
+      meta=`Formato: ${origem} · fonte tráfego: ${a.trafficSheet} · fonte antenas: ${a.antennaSheet} · linhas de conexão: ${a.totalTraffic} · IPv6 válido: ${a.ipv6ValidCount} · após deduplicação: ${a.valid} · antenas indexadas: ${a.antennas} · match PRIMEIRA: ${a.matchFirst} · match ÚLTIMA: ${a.matchLast} · ERBs não localizadas: ${a.unmatchedOccurrences} · conexões plotáveis: ${a.mappedEstimate}`;
       if(Array.isArray(a.uniqueUnmatched)&&a.uniqueUnmatched.length)meta+=` · não encontradas: ${a.uniqueUnmatched.slice(0,8).join(', ')}${a.uniqueUnmatched.length>8?'…':''}`;
     }
     else if(p.kind==='timVoice'){
@@ -1327,8 +1580,9 @@ async function processPendingImport(auto=false){
     status('Processando lote...');
     for(const p of pendingImport){
       if(p.kind==='unsupported'||p.kind==='unsupportedPdf'||p.kind==='timDataInvalid'){totalBad++;continue}
-      const lotId=ensureImportLot(p.type||type,pendingImport.length>1?'__new':requestedLot);
-      if(p.kind==='timDataXlsx'){
+      const forceNewTim=auto&&(p.kind==='timDataXlsx'||p.kind==='timDataPdf'||p.kind==='timVoice');
+      const lotId=ensureImportLot(p.type||type,(pendingImport.length>1||forceNewTim)?'__new':requestedLot);
+      if(p.kind==='timDataXlsx'||p.kind==='timDataPdf'){
         const r=importTimDataWorkbook(p.parsed,p.file,lotId);totalAdded+=r.created;processed++;
       }else if(p.kind==='timVoice'){
         const r=importTimVoiceResult(p.parsed,p.file,lotId);totalAdded+=r.created;totalRecognizedCalls+=r.totalCalls;processed++;
@@ -1359,16 +1613,16 @@ function updateGeo(openPanel=true){
   }catch(e){console.error(e);$('geoArea').textContent='erro';if(openPanel)$('geoPanel').classList.add('show')}
 }
 function startTimeline(){
-  const t=timelineData();if(!t.length)return status('Não há eventos com data/hora.',true);
+  const t=trajectoryData();if(!t.length)return status('Não há eventos com data/hora para montar o trajeto.',true);
   $('timelinebar').classList.add('show');clearInterval(playTimer);let i=0;
   const step=()=>{focusEvent(t[i].ev.id);map.setView([t[i].ev.lat,t[i].ev.lng],15);i++;if(i>=t.length){clearInterval(playTimer);state.playing=false}};
   step();state.playing=true;playTimer=setInterval(step,1500)
 }
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:'7.9',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function snapshot(){return{version:'8.4',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
 function applySnapshot(o){
-  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
+  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
   $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
 }
 function saveProject(){
@@ -1431,7 +1685,7 @@ async function exportPdf(){
     doc.addPage();
     doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. REGISTROS',M,15);
     doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.2,cellPadding:1.2},head:[['#','Lote','ERB','Lat.','Long.','Az.','Raio','Fonte raio','Data/hora','Operadora','CGI/ERB','IMEI']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',(e.dist||0).toFixed(2)+' km',e.radiusSource||'',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
-    doc.save('relatorio_ERB_v7_9.pdf');status('PDF gerado.');
+    doc.save('relatorio_ERB_v8_1.pdf');status('PDF gerado.');
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
 
@@ -1457,6 +1711,7 @@ function runSelfTest(){
   }catch(e){add('Geometria de setor',false,e.message)}
   try{add('Auditoria de importação',typeof analyzeRows==='function'&&typeof previewSelectedFiles==='function'&&typeof processPendingImport==='function','prévia e processamento de arquivos');}catch(e){add('Auditoria de importação',false,e.message)}
   try{add('TIM XLSX automático',typeof parseTimDataWorkbook==='function'&&typeof importTimDataWorkbook==='function','Extrato Conexões + Dados de Antena + IPv6 + CGI/ERB');}catch(e){add('TIM XLSX automático',false,e.message)}
+  try{add('TIM PDF conexões',typeof parseTimDataPdfStructured==='function'&&typeof parseTimPdfAntennas==='function','PDF de conexões + IPv6 + CGI/ERB + Dados de Antena');}catch(e){add('TIM PDF conexões',false,e.message)}
   try{add('Análise / ranking',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','ranking e comparação entre lotes');}catch(e){add('Análise / ranking',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo';
@@ -1507,9 +1762,9 @@ document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySe
 $('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
 $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
-$('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
+$('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('fitTimeline').onclick=fitTrajectory;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_9.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v8_1.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
 $('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
