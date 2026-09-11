@@ -94,7 +94,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 .card-desc{font-size:11.5px;line-height:1.42;color:#65706d}
 .module-card.update-card{border-color:#cdb673;background:linear-gradient(145deg,#fff 0%,#fbf6e8 100%)}
 .card-badge{position:absolute;right:14px;top:14px;border-radius:999px;background:#8f3037;color:#fff;padding:3px 7px;font-size:8.5px;font-weight:900;letter-spacing:.55px}
-body.home-mode .module-tab:not(.home-tab){display:none}
 body.home-mode .tabs-row{justify-content:flex-start}
 body.home-mode .module-main{overflow:visible}
 @media(max-width:1120px){.module-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -157,27 +156,22 @@ body.home-mode .module-main{overflow:visible}
 @media(max-width:780px){.home-tools{grid-template-columns:1fr}.home-version{justify-self:center}.recent-wrap{justify-content:center}}
 
 
-/* ===== MENU PRINCIPAL RECOLHÍVEL — SOMENTE CELULAR ===== */
-.mobile-main-menu-toggle{display:none}
-@media(max-width:650px){
-  .mobile-main-menu-toggle{
-    display:flex;width:100%;align-items:center;justify-content:space-between;
-    gap:10px;min-height:44px;padding:10px 13px;margin:2px 0 5px;
-    border:1px solid rgba(197,162,83,.58);border-radius:10px;
-    background:rgba(255,255,255,.055);color:#f6f2e7;
-    font:800 12px/1.2 Arial,sans-serif;letter-spacing:.2px;cursor:pointer
-  }
-  .mobile-main-menu-toggle .menu-arrow{transition:transform .18s ease}
-  .mobile-main-menu-toggle[aria-expanded="true"] .menu-arrow{transform:rotate(180deg)}
-
-  /* Em módulos, o menu grande fica fechado por padrão */
-  body:not(.home-mode) .tabs-row{display:none}
-  body:not(.home-mode) .tabs-row.mobile-main-open{display:flex}
-
-  /* Na tela inicial, mantém apenas Início como já funcionava */
-  body.home-mode .mobile-main-menu-toggle{display:none}
+/* ===== MENU PRINCIPAL RECOLHÍVEL — TODAS AS TELAS ===== */
+.mobile-main-menu-toggle{
+  display:flex;width:100%;align-items:center;justify-content:space-between;
+  gap:10px;min-height:42px;padding:9px 13px;margin:2px 0 5px;
+  border:1px solid rgba(197,162,83,.58);border-radius:10px;
+  background:rgba(255,255,255,.055);color:#f6f2e7;
+  font:800 12px/1.2 Arial,sans-serif;letter-spacing:.2px;cursor:pointer
 }
-
+.mobile-main-menu-toggle:hover{background:rgba(255,255,255,.11)}
+.mobile-main-menu-toggle .menu-arrow{transition:transform .18s ease}
+.mobile-main-menu-toggle[aria-expanded="true"] .menu-arrow{transform:rotate(180deg)}
+.tabs-row.main-menu-collapsed{display:none!important}
+@media(max-width:650px){
+  .mobile-main-menu-toggle{min-height:44px;padding:10px 13px}
+  .module-tab{flex:1 1 47%;padding:10px 7px;font-size:11px}
+}
 
 /* ===== AJUSTE DO CABEÇALHO — SOMENTE CELULAR ===== */
 @media(max-width:650px){
@@ -342,7 +336,7 @@ body.home-mode .module-main{overflow:visible}
 
     <button type="button" class="mobile-main-menu-toggle" id="mobileMainMenuToggle"
       aria-expanded="false" aria-controls="mainTabsRow">
-      <span>☰ Menu da Central</span><span class="menu-arrow">▾</span>
+      <span id="mainMenuToggleText">☰ Recolher menu de abas</span><span class="menu-arrow">▾</span>
     </button>
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
@@ -905,25 +899,27 @@ if(!document.getElementById('backTop')){
 (function(){
   const btn=document.getElementById('mobileMainMenuToggle');
   const row=document.getElementById('mainTabsRow');
+  const label=document.getElementById('mainMenuToggleText');
   if(!btn||!row)return;
-  const mobile=()=>window.matchMedia('(max-width:650px)').matches;
 
-  function closeMenu(){
-    row.classList.remove('mobile-main-open');
-    btn.setAttribute('aria-expanded','false');
+  const STORAGE_KEY='pcpr.central.menuAbasRecolhido.v1';
+
+  function apply(collapsed, persist){
+    row.classList.toggle('main-menu-collapsed',collapsed);
+    btn.setAttribute('aria-expanded',String(!collapsed));
+    if(label) label.textContent=collapsed?'☰ Mostrar menu de abas':'☰ Recolher menu de abas';
+    btn.title=collapsed?'Mostrar as abas de navegação':'Recolher as abas de navegação';
+    if(persist!==false){
+      try{ localStorage.setItem(STORAGE_KEY,collapsed?'1':'0'); }catch(_){}
+    }
   }
+
+  let collapsed=false;
+  try{ collapsed=localStorage.getItem(STORAGE_KEY)==='1'; }catch(_){}
+  apply(collapsed,false);
+
   btn.addEventListener('click',function(){
-    const open=row.classList.toggle('mobile-main-open');
-    btn.setAttribute('aria-expanded',String(open));
-  });
-
-  /* Selecionou uma aba: recolhe imediatamente no celular */
-  row.addEventListener('click',function(e){
-    if(mobile() && e.target.closest('.module-tab')) setTimeout(closeMenu,0);
-  });
-
-  window.addEventListener('resize',function(){
-    if(!mobile()) closeMenu();
+    apply(!row.classList.contains('main-menu-collapsed'),true);
   });
 })();
 </script>
