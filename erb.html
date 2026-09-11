@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v7.3 — PCPR</title>
+<title>Análise de ERBs e Antenas v7.5 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -119,7 +119,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v7.3</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v7.5</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
@@ -622,13 +622,17 @@ function openDrawer(kind,preset={}){
     $('poiSearch').onclick=searchPoiAddress;$('doPoi').onclick=savePoi;
   }else if(kind==='import'){
     title.textContent='Importar arquivo — auditoria';
-    body.innerHTML=`<div class="field"><label>Tipo do lote</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
-      <div class="field"><label>Lote de destino</label>${lotSelectHtml('fImportLot',true)}</div>
+    const importLotField=state.lots.length
+      ? `<div class="field"><label>Destino da importação (opcional)</label>${lotSelectHtml('fImportLot',true)}<div class="muted" style="margin-top:4px">Deixe em “Criar novo lote automaticamente” para o sistema criar o lote a partir da importação.</div></div>`
+      : `<input id="fImportLot" type="hidden" value="__new"><div class="analysis-note"><b>Nenhum lote existente.</b> Você pode anexar o arquivo normalmente. O lote será criado automaticamente quando a importação for processada.</div>`;
+    body.innerHTML=`<div class="field"><label>Tipo dos dados</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
+      ${importLotField}
       <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf" multiple></div>
-      <div class="muted">Primeiro o arquivo é analisado sem alterar o projeto. A auditoria mostra o que foi reconhecido, o que será mapeado e o motivo das linhas rejeitadas. TIM/Vivo/Claro são identificadas quando há elementos suficientes no arquivo; PDF de voz TIM possui parser estruturado específico.</div>
-      <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s) e clique em <b>Analisar arquivos</b>.</div></div>
-      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Processar lote</button></div>`;
+      <div class="muted">O arquivo pode ser selecionado mesmo sem nenhum lote criado. Primeiro ele é analisado sem alterar o projeto; depois, ao processar, o sistema usa o lote escolhido ou cria um automaticamente.</div>
+      <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s). A análise será iniciada automaticamente; também é possível usar o botão <b>Analisar arquivos</b>.</div></div>
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Importar</button></div>`;
     if(preset.type)$('fImportType').value=preset.type;
+    $('fImportFile').onchange=()=>{ pendingImport=[]; $('doImport').disabled=true; if($('fImportFile').files.length) previewSelectedFiles(); };
     $('doAnalyzeImport').onclick=previewSelectedFiles;
     $('doImport').onclick=processPendingImport;
   }else if(kind==='filter'){
@@ -665,7 +669,10 @@ function lotSelectHtml(id,allowNew=false){
   return `<select id="${id}">${allowNew?'<option value="__new">Criar novo lote automaticamente</option>':''}${state.lots.map(l=>`<option value="${l.id}" ${l.id===state.activeLotId?'selected':''}>${esc(l.name)}</option>`).join('')}</select>`
 }
 function erbFormHtml(){
-  return `<div class="field"><label>Lote</label>${lotSelectHtml('fErbLot')}</div>
+  const lotField=state.lots.length
+    ? `<div class="field"><label>Lote (opcional)</label>${lotSelectHtml('fErbLot',true)}<div class="muted" style="margin-top:4px">Você pode usar um lote existente ou deixar o sistema criar um lote manual automaticamente.</div></div>`
+    : `<input id="fErbLot" type="hidden" value="__new"><div class="analysis-note">Nenhum lote existente. Ao adicionar esta ERB, o sistema criará automaticamente o lote <b>ERBs MANUAIS</b>. Não é necessário criar lote antes.</div>`;
+  return `${lotField}
     <div class="field"><label>Nome / identificação</label><input id="fErbName" placeholder="Ex.: ERB Centro — Setor 2"></div>
     <div class="grid2"><div class="field"><label>Latitude</label><input id="fLat" placeholder="-24.318000"></div><div class="field"><label>Longitude</label><input id="fLng" placeholder="-52.530000"></div></div>
     <div class="grid3"><div class="field"><label>Azimute</label><input id="fAz" placeholder="0–360"></div><div class="field"><label>Raio (km)</label><input id="fDist" value="${cfg.defaultDist}"></div><div class="field"><label>Margem (±°)</label><input id="fMargin" value="${cfg.defaultMargin}"></div></div>
@@ -686,8 +693,19 @@ function createLotFromForm(){
   const l={id:uid(),name,type:$('fLotType').value,color:$('fLotColor').value,operator:$('fLotOperator').value.trim(),visible:true};
   state.lots.push(l);state.activeLotId=l.id;closeDrawer();redraw();status('Lote criado.')
 }
+function ensureManualLot(requested){
+  if(requested&&requested!=='__new'&&lotById(requested))return requested;
+  if(state.activeLotId&&lotById(state.activeLotId)&&requested!=='__new')return state.activeLotId;
+  let l=state.lots.find(x=>x.type==='MANUAL'&&x.autoManual===true);
+  if(!l){
+    l={id:uid(),name:'ERBs MANUAIS',type:'MANUAL',color:COLORS[state.lots.length%COLORS.length],operator:'',visible:true,autoManual:true};
+    state.lots.push(l);
+  }
+  state.activeLotId=l.id;
+  return l.id;
+}
 function saveManualErb(){
-  const lotId=$('fErbLot').value||state.activeLotId;if(!lotId)return status('Crie ou selecione um lote.',true);
+  const lotId=ensureManualLot($('fErbLot')?.value||state.activeLotId);
   const lat=parseCoord($('fLat').value,true),lng=parseCoord($('fLng').value,false),az=parseNum($('fAz').value);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))return status('Confira latitude, longitude e azimute.',true);
   const ev={id:uid(),lotId,name:$('fErbName').value.trim()||`ERB ${state.events.length+1}`,station:$('fStation').value.trim(),sector:$('fSector').value.trim(),
@@ -757,7 +775,7 @@ function canon(h){h=normHead(h);for(const[k,v]of Object.entries(ALIASES))if(v.in
 function detectDelim(line){if(line.includes('\t'))return '\t';if((line.match(/;/g)||[]).length>2)return ';';return ','}
 function splitLine(line,d){const a=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"')q=!q;else if(ch===d&&!q){a.push(c.trim());c=''}else c+=ch}a.push(c.trim());return a}
 function ensureImportLot(type,requested){
-  if(requested&&requested!=='__new')return requested;
+  if(requested&&requested!=='__new'&&lotById(requested))return requested;
   const l={id:uid(),name:`${type||'MISTO'} — ${new Date().toLocaleString('pt-BR')}`,type:type||'MISTO',color:COLORS[state.lots.length%COLORS.length],operator:'',visible:true};
   state.lots.push(l);state.activeLotId=l.id;return l.id
 }
@@ -1027,8 +1045,8 @@ function renderImportAudit(){
   status('Auditoria concluída. Revise antes de processar.');
 }
 async function processPendingImport(){
-  if(!pendingImport.length)return status('Analise os arquivos primeiro.',true);
-  const requestedLot=$('fImportLot').value,type=$('fImportType').value;
+  if(!pendingImport.length)return status('Selecione e analise ao menos um arquivo primeiro.',true);
+  const requestedLot=$('fImportLot')?.value||'__new',type=$('fImportType').value;
   let totalAdded=0,totalBad=0,processed=0;
   try{
     status('Processando lote...');
@@ -1069,7 +1087,7 @@ function startTimeline(){
 }
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:'7.3',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function snapshot(){return{version:'7.5',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
 function applySnapshot(o){
   state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
   $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
@@ -1134,7 +1152,7 @@ async function exportPdf(){
     doc.addPage();
     doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. REGISTROS',M,15);
     doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.2,cellPadding:1.2},head:[['#','Lote','ERB','Lat.','Long.','Az.','Raio','Fonte raio','Data/hora','Operadora','CGI/ERB','IMEI']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',(e.dist||0).toFixed(2)+' km',e.radiusSource||'',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
-    doc.save('relatorio_ERB_v7_3.pdf');status('PDF gerado.');
+    doc.save('relatorio_ERB_v7_5.pdf');status('PDF gerado.');
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
 
@@ -1211,7 +1229,7 @@ $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
 $('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_3.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_5.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
 $('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
