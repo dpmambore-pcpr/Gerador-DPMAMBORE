@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v7.8 — PCPR</title>
+<title>Análise de ERBs e Antenas v7.9 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -119,7 +119,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v7.8</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v7.9</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
@@ -384,6 +384,7 @@ function eventPopup(group){
       ${x.imeiOrigin?'IMEI origem: '+esc(x.imeiOrigin)+'<br>':''}${x.imeiDestination?'IMEI destino: '+esc(x.imeiDestination)+'<br>':''}${!x.imeiOrigin&&!x.imeiDestination&&x.imei?'IMEI: '+esc(x.imei)+'<br>':''}
       ${x.callCode?'Evento: '+esc(x.callCode)+(x.central?' / '+esc(x.central):'')+'<br>':''}
       ${x.duration?'Duração: '+esc(x.duration)+' s<br>':''}
+      ${x.ipv6?'IPv6: '+esc(x.ipv6)+'<br>':''}
       ${x.cgi?'CGI/ERB: '+esc(x.cgi)+'<br>':''}${x.tech?'Tecnologia: '+esc(x.tech):''}
     </div>`).join('');
   const address=ev.address||ev.obs||'';
@@ -396,7 +397,9 @@ function eventPopup(group){
     ${op?'<br>Operadora: '+esc(op):''}
     ${ev.cgi?'<br>CGI/ERB: '+esc(ev.cgi):''}
     ${ev.cellid?'<br>Cell ID: '+esc(ev.cellid):''}
+    ${ev.ipv6?'<br>IPv6: '+esc(ev.ipv6):''}
     ${address?'<br>Endereço/obs.: '+esc(address):''}
+    ${ev.obs&&ev.obs!==address?'<br>Observação: '+esc(ev.obs):''}
     <br><b>${group.length} registro(s) neste setor</b>
     ${rows}${group.length>40?'<br>… e mais '+(group.length-40):''}
     <div class="popup-actions">
@@ -558,6 +561,7 @@ function openLotAudit(id){
   $('drawerBody').innerHTML=`<div class="item"><div class="itemname">${esc(l.name)}</div><div class="itemmeta">${esc(a.format||'Importação')} · ${esc(l.operator||a.detectedOperator||'operadora não identificada')}<br>${esc(a.summary||'')}</div></div>
   <div class="analysis-grid"><div class="analysis-kpi"><span>Válidas / chamadas</span><b>${a.validRows??a.callsTotal??'—'}</b></div><div class="analysis-kpi"><span>Ignoradas</span><b>${a.ignoredRows??'—'}</b></div><div class="analysis-kpi"><span>ERBs indexadas</span><b>${a.antennas??'—'}</b></div><div class="analysis-kpi"><span>Mapeadas</span><b>${a.mappedCalls??lotEvents(id).length}</b></div></div>
   ${a.note?`<div class="analysis-note">${esc(a.note)}</div>`:''}${reasons?`<div class="field"><label>Motivos das linhas ignoradas</label><ul class="muted">${reasons}</ul></div>`:''}
+  ${a.timData?`<details open><summary>Resumo TIM — IPv6 / CGI-ERB</summary><div class="analysis-grid" style="margin-top:8px"><div class="analysis-kpi"><span>Linhas no tráfego</span><b>${a.timData.totalTraffic}</b></div><div class="analysis-kpi"><span>IPv6 válido</span><b>${a.timData.ipv6ValidCount}</b></div><div class="analysis-kpi"><span>Após deduplicação</span><b>${a.timData.dedupRows}</b></div><div class="analysis-kpi"><span>Duplicatas removidas</span><b>${a.timData.duplicates}</b></div><div class="analysis-kpi"><span>Match PRIMEIRA</span><b>${a.timData.matchFirst}</b></div><div class="analysis-kpi"><span>Match ÚLTIMA</span><b>${a.timData.matchLast}</b></div><div class="analysis-kpi"><span>Não localizadas</span><b>${a.timData.unmatchedOccurrences}</b></div><div class="analysis-kpi"><span>Antenas sem coordenada válida</span><b>${a.timData.antennaCoordInvalid}</b></div></div><div class="itemmeta">Tráfego: ${esc(a.timData.trafficSheet)}<br>Antenas: ${esc(a.timData.antennaSheet)}</div>${Array.isArray(a.timData.uniqueUnmatched)&&a.timData.uniqueUnmatched.length?`<div class="field" style="margin-top:8px"><label>CGI/ERB não localizadas (${a.timData.uniqueUnmatched.length} únicas)</label><div class="muted">${esc(a.timData.uniqueUnmatched.join(' · '))}</div></div>`:'<div class="analysis-note">Todas as CGI/ERB informadas foram encontradas na base de antenas.</div>'}</details>`:''}
   ${Array.isArray(a.rawCalls)&&a.rawCalls.length?`<details open><summary>Chamadas reconhecidas (${a.rawCalls.length})</summary><div style="overflow:auto;margin-top:7px"><table style="width:100%;border-collapse:collapse;font-size:8.5px"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Data/hora</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Evento/Central</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Origem</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Destino</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">CGI/ERB</th></tr></thead><tbody>${a.rawCalls.slice(0,50).map(c=>`<tr><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.datetime||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.code,c.central].filter(Boolean).join(' / ')||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.origin||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.destination||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.firstCgi,c.lastCgi].filter(Boolean).join(' → ')||'—')}</td></tr>`).join('')}</tbody></table></div></details>`:''}
   <div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;
   $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
@@ -629,13 +633,13 @@ function openDrawer(kind,preset={}){
     body.innerHTML=`<div class="field"><label>Tipo dos dados</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
       ${importLotField}
       <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf" multiple></div>
-      <div class="muted">O arquivo pode ser selecionado mesmo sem nenhum lote criado. Primeiro ele é analisado sem alterar o projeto; depois, ao processar, o sistema usa o lote escolhido ou cria um automaticamente.</div>
+      <div class="muted"><b>Planilha TIM:</b> se o XLSX contiver as abas “Extrato Conexões” e “Dados de Antena”, basta selecionar o arquivo: o sistema filtra IPv6 válido, remove duplicatas, cruza PRIMEIRA/ÚLTIMA CGI/ERB com latitude, longitude, azimute, local e cidade e <b>plota automaticamente no mapa</b>. Para outros formatos, a auditoria normal permanece disponível.</div>
       <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s). A análise será iniciada automaticamente; também é possível usar o botão <b>Analisar arquivos</b>.</div></div>
       <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Importar</button></div>`;
     if(preset.type)$('fImportType').value=preset.type;
     $('fImportFile').onchange=()=>{ pendingImport=[]; $('doImport').disabled=true; if($('fImportFile').files.length) previewSelectedFiles(); };
     $('doAnalyzeImport').onclick=previewSelectedFiles;
-    $('doImport').onclick=processPendingImport;
+    $('doImport').onclick=()=>processPendingImport(false);
   }else if(kind==='filter'){
     title.textContent='Filtros';
     body.innerHTML=`<div class="grid2"><div class="field"><label>Data/hora inicial</label><input id="filterStart" type="datetime-local" value="${esc(state.filters.start)}"></div><div class="field"><label>Data/hora final</label><input id="filterEnd" type="datetime-local" value="${esc(state.filters.end)}"></div></div>
@@ -809,6 +813,202 @@ function detectOperatorFromRows(rows,fileName=''){
   const best=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
   return best&&best[1]>0?best[0]:'';
 }
+
+/* ===== TIM XLSX — EXTRATO CONEXÕES + DADOS DE ANTENA ===== */
+function timNorm(v){
+  return String(v??'').replace(/[\u00a0\u200b-\u200d\ufeff]/g,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+}
+function timHead(v){return timNorm(v).replace(/[^A-Z0-9]+/g,'')}
+function timCleanCgi(v){
+  let x=String(v??'').replace(/[\u00a0\u200b-\u200d\ufeff\r\n\t]/g,'').trim();
+  // SheetJS com raw:false preserva CGI textual. Removemos somente espaços invisíveis/externos.
+  x=x.replace(/\s+/g,'');
+  return x==='.'||x==='-'?'':x;
+}
+function timNum(v){
+  const m=String(v??'').replace(/\s/g,'').match(/-?\d+(?:[.,]\d+)?/);
+  return m?Number(m[0].replace(',','.')):NaN;
+}
+function timValidIpv6(v){
+  const x=String(v??'').replace(/[\u00a0\u200b-\u200d\ufeff\s]/g,'').toLowerCase();
+  if(!x||x==='.'||x==='-'||x==='0'||x==='::')return false;
+  const parts=x.split(':');
+  if(parts.length>1&&parts.every(p=>p===''||/^0+$/.test(p)))return false;
+  return true;
+}
+function timTrafficCanon(h){
+  const n=timHead(h);
+  if(n==='MSISDN'||n.includes('MSISDN'))return'msisdn';
+  if(n==='SERVICEID'||n.includes('SERVICEID'))return'serviceId';
+  if(n==='IPV4')return'ipv4';
+  if(n==='IPV6')return'ipv6';
+  if(n==='PORTAINICIO'||n==='PORTAINICIAL')return'portaInicio';
+  if(n==='PORTAFIM'||n==='PORTAFINAL')return'portaFim';
+  if(n==='UPLINK')return'uplink';
+  if(n==='DOWNLINK')return'downlink';
+  if(n.includes('UPLINK')&&n.includes('DOWNLINK'))return'uplinkDownlink';
+  if(n.includes('HORABRASILIA')&&n.includes('INICIO'))return'horaInicio';
+  if(n.includes('HORABRASILIA')&&n.includes('FIM'))return'horaFim';
+  if(n.includes('PRIMEIRA')&&(n.includes('CGI')||n.includes('ERB')))return'primeiraCgi';
+  if(n.includes('ULTIMA')&&(n.includes('CGI')||n.includes('ERB')))return'ultimaCgi';
+  return'';
+}
+function timAntennaCanon(h){
+  const n=timHead(h);
+  if((n==='CGIERB')||(n.includes('CGI')&&n.includes('ERB')))return'cgi';
+  if(n==='LATITUDE'||n==='LAT')return'lat';
+  if(n==='LONGITUDE'||['LON','LNG','LONG'].includes(n))return'lng';
+  if(n.includes('AZIMUTE')||n.includes('AZIMUTH'))return'az';
+  if(n==='LOCAL'||n.includes('LOCAL'))return'local';
+  if(n.includes('ENDERECO'))return'endereco';
+  if(n==='CIDADE'||n.includes('CIDADE')||n==='MUNICIPIO'||n.includes('MUNICIPIO'))return'city';
+  if(n==='NOME'||n.includes('NOMEERB')||n.includes('ESTACAO'))return'name';
+  if(n==='BAIRRO'||n.includes('BAIRRO'))return'neighborhood';
+  if(n==='ESTADO'||n==='UF')return'state';
+  if(n==='CEP')return'cep';
+  return'';
+}
+function timFindHeader(rows,canonFn,required=[],limit=80){
+  let best={idx:-1,map:{},score:0};
+  for(let i=0;i<Math.min(rows.length,limit);i++){
+    const map={};
+    (rows[i]||[]).forEach((v,j)=>{const c=canonFn(v);if(c&&!Object.prototype.hasOwnProperty.call(map,c))map[c]=j});
+    const score=Object.keys(map).length;
+    const req=required.filter(k=>Object.prototype.hasOwnProperty.call(map,k)).length;
+    if(req===required.length&&score>best.score)best={idx:i,map,score};
+  }
+  return best;
+}
+function timSheetByWords(wb,a,b){
+  return wb.SheetNames.find(n=>{const x=timHead(n);return x.includes(a)&&x.includes(b)})||'';
+}
+function timRowsFromSheet(ws){
+  return XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
+}
+function parseTimDataWorkbook(wb,fileName=''){
+  const trafficSheet=timSheetByWords(wb,'EXTRATO','CONEX');
+  const antennaSheet=timSheetByWords(wb,'DADOS','ANTENA');
+  // Se nenhuma das duas assinaturas aparece, não é o layout TIM descrito e o importador genérico pode tentar.
+  if(!trafficSheet&&!antennaSheet)return null;
+  if(!trafficSheet||!antennaSheet){
+    return{recognized:true,valid:false,trafficSheet,antennaSheet,error:`Planilha TIM identificada, porém não foi localizada a aba ${!trafficSheet?'de tráfego (nome contendo “Extrato” e “Conex”)':'de cadastro de ERBs (nome contendo “Dados” e “Antena”)'}.`,sheetNames:[...wb.SheetNames]};
+  }
+  const trafficRows=timRowsFromSheet(wb.Sheets[trafficSheet]);
+  const antennaRows=timRowsFromSheet(wb.Sheets[antennaSheet]);
+  const th=timFindHeader(trafficRows,timTrafficCanon,['ipv6','primeiraCgi','ultimaCgi']);
+  const ah=timFindHeader(antennaRows,timAntennaCanon,['cgi','lat','lng','az']);
+  if(th.idx<0||ah.idx<0){
+    return{recognized:true,valid:false,trafficSheet,antennaSheet,error:`As abas TIM foram encontradas, mas os cabeçalhos essenciais não puderam ser identificados (${th.idx<0?'Extrato Conexões':''}${th.idx<0&&ah.idx<0?' e ':''}${ah.idx<0?'Dados de Antena':''}).`,sheetNames:[...wb.SheetNames]};
+  }
+  const antennaMap=new Map();
+  let antennaRowsCount=0,antennaCoordInvalid=0;
+  for(let i=ah.idx+1;i<antennaRows.length;i++){
+    const r=antennaRows[i]||[];
+    if(!r.some(v=>String(v??'').trim()))continue;
+    const get=k=>ah.map[k]!=null?r[ah.map[k]]:'';
+    const cgi=timCleanCgi(get('cgi'));if(!cgi)continue;
+    antennaRowsCount++;
+    const lat=timNum(get('lat')),lng=timNum(get('lng')),az=timNum(get('az'));
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))antennaCoordInvalid++;
+    const local=String((get('local')||get('endereco')||'')??'').trim();
+    const city=String(get('city')??'').trim();
+    const ant={cgi,lat,lng,az:Number.isFinite(az)?normAz(az):NaN,local,city,name:String(get('name')??'').trim(),neighborhood:String(get('neighborhood')??'').trim(),state:String(get('state')??'').trim(),cep:String(get('cep')??'').trim()};
+    // Mantém a primeira ocorrência completa. Se a anterior não tinha coordenada e a nova tem, substitui.
+    const prev=antennaMap.get(cgi);
+    if(!prev||(!Number.isFinite(prev.lat)&&Number.isFinite(lat)))antennaMap.set(cgi,ant);
+  }
+
+  const dataRows=trafficRows.slice(th.idx+1).filter(r=>(r||[]).some(v=>String(v??'').trim()));
+  const totalTraffic=dataRows.length;
+  const filtered=[];let ipv6ValidCount=0,duplicates=0;
+  const seen=new Set();
+  for(const r of dataRows){
+    const get=k=>th.map[k]!=null?r[th.map[k]]:'';
+    const ipv6=String(get('ipv6')??'').trim();
+    if(!timValidIpv6(ipv6))continue;
+    ipv6ValidCount++;
+    let uplink=String(get('uplink')??'').trim(),downlink=String(get('downlink')??'').trim();
+    if(!uplink&&!downlink&&th.map.uplinkDownlink!=null){
+      const both=String(get('uplinkDownlink')??'');
+      const parts=both.split(/\s*\/\s*/,2);uplink=(parts[0]||'').trim();downlink=(parts[1]||'').trim();
+    }
+    const o={
+      msisdn:String(get('msisdn')??'').trim(),serviceId:String(get('serviceId')??'').trim(),ipv4:String(get('ipv4')??'').trim(),ipv6,
+      uplink,downlink,portaInicio:String(get('portaInicio')??'').trim(),portaFim:String(get('portaFim')??'').trim(),
+      horaInicio:String(get('horaInicio')??'').trim(),horaFim:String(get('horaFim')??'').trim(),
+      primeiraCgi:timCleanCgi(get('primeiraCgi')),ultimaCgi:timCleanCgi(get('ultimaCgi'))
+    };
+    const dedup=[o.msisdn,o.ipv6,o.horaInicio,o.primeiraCgi,o.ultimaCgi].join('\u001f');
+    if(seen.has(dedup)){duplicates++;continue}seen.add(dedup);filtered.push(o);
+  }
+
+  let matchFirst=0,matchLast=0,mappableFirst=0,mappableLast=0,rowsMappable=0;
+  const unmatchedOccurrences=[];
+  const uniqueUnmatched=new Set();
+  const missingKeys={first:0,last:0};
+  for(const o of filtered){
+    let rowMap=false;
+    const first=o.primeiraCgi,last=o.ultimaCgi;
+    if(first){
+      const ant=antennaMap.get(first);if(ant){matchFirst++;if(Number.isFinite(ant.lat)&&Number.isFinite(ant.lng)&&Number.isFinite(ant.az)){mappableFirst++;rowMap=true}}
+      else{unmatchedOccurrences.push(first);uniqueUnmatched.add(first)}
+    }else missingKeys.first++;
+    if(last){
+      const ant=antennaMap.get(last);if(ant){matchLast++;if(Number.isFinite(ant.lat)&&Number.isFinite(ant.lng)&&Number.isFinite(ant.az)){mappableLast++;rowMap=true}}
+      else{unmatchedOccurrences.push(last);uniqueUnmatched.add(last)}
+    }else missingKeys.last++;
+    if(rowMap)rowsMappable++;
+  }
+  const msisdns=[...new Set(filtered.map(x=>x.msisdn).filter(Boolean))];
+  return{
+    recognized:true,valid:true,fileName,trafficSheet,antennaSheet,trafficHeader:th.idx,antennaHeader:ah.idx,
+    totalTraffic,ipv6ValidCount,duplicates,filteredRows:filtered,antennaMap,antennas:antennaMap.size,antennaRowsCount,antennaCoordInvalid,
+    matchFirst,matchLast,mappableFirst,mappableLast,rowsMappable,unmatchedOccurrences:unmatchedOccurrences.length,uniqueUnmatched:[...uniqueUnmatched],missingKeys,msisdns
+  };
+}
+function importTimDataWorkbook(parsed,file,lotId){
+  const lot=lotById(lotId);if(!lot)return{created:0,rows:0};
+  lot.type='DADOS';lot.operator='TIM';lot.sourceFile=file.name;
+  if(parsed.msisdns.length===1)lot.name=`DADOS TIM — ${parsed.msisdns[0]}`;
+  else if(!lot.name||/^DADOS\s+—/i.test(lot.name))lot.name=`DADOS TIM — ${file.name.replace(/\.[^.]+$/,'')}`;
+  let created=0,rowsWithPlot=0;
+  for(const o of parsed.filteredRows){
+    const plotted=new Set();let rowPlot=false;
+    const endpoints=[
+      {side:'PRIMEIRA',cgi:o.primeiraCgi,datetime:o.horaInicio},
+      {side:'ÚLTIMA',cgi:o.ultimaCgi,datetime:o.horaFim||o.horaInicio}
+    ];
+    for(const ep of endpoints){
+      if(!ep.cgi)continue;
+      const ant=parsed.antennaMap.get(ep.cgi);
+      if(!ant||!Number.isFinite(ant.lat)||!Number.isFinite(ant.lng)||!Number.isFinite(ant.az))continue;
+      // PRIMEIRA e ÚLTIMA iguais: no mapa basta uma ocorrência por conexão para não dobrar artificialmente a incidência.
+      if(plotted.has(ep.cgi))continue;plotted.add(ep.cgi);rowPlot=true;
+      const same=o.primeiraCgi&&o.primeiraCgi===o.ultimaCgi;
+      const role=same?'PRIMEIRA E ÚLTIMA':ep.side;
+      const place=[ant.local,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · ');
+      const trafficBits=[o.msisdn?`MSISDN ${o.msisdn}`:'',o.ipv6?`IPv6 ${o.ipv6}`:'',o.horaFim&&ep.side==='PRIMEIRA'?`fim ${o.horaFim}`:''].filter(Boolean).join(' · ');
+      state.events.push({
+        id:uid(),lotId,name:ant.name||ep.cgi,station:ant.name||ep.cgi,sector:'',lat:ant.lat,lng:ant.lng,az:ant.az,
+        dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',
+        address:place,datetime:ep.datetime,eventType:'DADOS',operator:'TIM',tech:'',cellid:'',cgi:ep.cgi,
+        origin:o.msisdn,destination:'',imei:'',ipv6:o.ipv6,source:file.name,
+        obs:`${role} CGI/ERB · ${trafficBits}`.trim(),visible:true,displayMode:'normal'
+      });created++;
+    }
+    if(rowPlot)rowsWithPlot++;
+  }
+  lot.importInfo={
+    format:'XLSX DADOS TIM',detectedOperator:'TIM',totalRows:parsed.totalTraffic,validRows:parsed.filteredRows.length,
+    ignoredRows:Math.max(0,parsed.totalTraffic-parsed.ipv6ValidCount)+parsed.duplicates,antennas:parsed.antennas,mappedCalls:rowsWithPlot,
+    summary:`${parsed.totalTraffic} linha(s) no extrato · ${parsed.ipv6ValidCount} com IPv6 válido · ${parsed.filteredRows.length} após deduplicação · ${rowsWithPlot} conexão(ões) com ERB plotável`,
+    note:`Abas: ${parsed.trafficSheet} + ${parsed.antennaSheet}. Match PRIMEIRA: ${parsed.matchFirst}/${parsed.filteredRows.length}; ÚLTIMA: ${parsed.matchLast}/${parsed.filteredRows.length}. ERBs não localizadas: ${parsed.unmatchedOccurrences} ocorrência(s).`,
+    timData:{totalTraffic:parsed.totalTraffic,ipv6ValidCount:parsed.ipv6ValidCount,dedupRows:parsed.filteredRows.length,duplicates:parsed.duplicates,matchFirst:parsed.matchFirst,matchLast:parsed.matchLast,mappableFirst:parsed.mappableFirst,mappableLast:parsed.mappableLast,unmatchedOccurrences:parsed.unmatchedOccurrences,uniqueUnmatched:parsed.uniqueUnmatched,missingKeys:parsed.missingKeys,trafficSheet:parsed.trafficSheet,antennaSheet:parsed.antennaSheet,antennaCoordInvalid:parsed.antennaCoordInvalid}
+  };
+  return{created,rows:parsed.filteredRows.length,rowsWithPlot};
+}
+/* ===== FIM TIM XLSX ===== */
+
 function importRows(rows,lotId,type,analysis=null){
   const a=analysis||analyzeRows(rows,type),lot=lotById(lotId);
   let added=0;
@@ -1066,8 +1266,14 @@ async function previewSelectedFiles(){
       let rows=[];
       if(['xlsx','xls'].includes(ext)){
         const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
+        const tim=parseTimDataWorkbook(wb,file.name);
+        if(tim){
+          if(tim.valid)pendingImport.push({file,kind:'timDataXlsx',parsed:tim,type:'DADOS',analysis:{operator:'TIM',valid:tim.filteredRows.length,ignored:Math.max(0,tim.totalTraffic-tim.ipv6ValidCount)+tim.duplicates,antennas:tim.antennas,mappedEstimate:tim.rowsMappable,totalTraffic:tim.totalTraffic,ipv6ValidCount:tim.ipv6ValidCount,matchFirst:tim.matchFirst,matchLast:tim.matchLast,unmatchedOccurrences:tim.unmatchedOccurrences,uniqueUnmatched:tim.uniqueUnmatched,trafficSheet:tim.trafficSheet,antennaSheet:tim.antennaSheet}});
+          else pendingImport.push({file,kind:'timDataInvalid',type:'DADOS',analysis:{operator:'TIM',valid:0,ignored:1,note:tim.error+(tim.sheetNames?.length?' Abas existentes: '+tim.sheetNames.join(' | '):'')}});
+          continue;
+        }
         const ws=wb.Sheets[wb.SheetNames[0]];
-        rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
       }else if(ext==='csv'||ext==='txt'){
         const text=await file.text(),lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]||'');
         rows=lines.map(x=>splitLine(x,d));
@@ -1079,6 +1285,12 @@ async function previewSelectedFiles(){
       pendingImport.push({file,kind:'rows',rows,type,analysis:a});
     }
     renderImportAudit();
+    // Para o layout TIM de dados, um único XLSX é processado imediatamente após a seleção.
+    // O usuário não precisa gerar uma planilha intermediária nem clicar em “Importar”.
+    if(pendingImport.length===1&&pendingImport[0].kind==='timDataXlsx'){
+      status('Planilha TIM reconhecida. Cruzando CGI/ERB e plotando automaticamente...');
+      await processPendingImport(true);
+    }
   }catch(e){
     console.error(e);pendingImport=[];$('importAudit').innerHTML='<div class="auditwarn">Falha ao analisar os arquivos.</div>';status('Não foi possível interpretar o arquivo.',true);
   }
@@ -1087,9 +1299,14 @@ function renderImportAudit(){
   const box=$('importAudit');if(!box)return;
   let can=false;
   box.innerHTML=pendingImport.map(p=>{
-    const a=p.analysis||{},processable=p.kind==='timVoice'||p.kind==='rows'&&a.valid>0;if(processable)can=true;
+    const a=p.analysis||{},processable=p.kind==='timVoice'||p.kind==='timDataXlsx'||p.kind==='rows'&&a.valid>0;if(processable)can=true;
     let meta='',good=processable;
-    if(p.kind==='timVoice'){
+    if(p.kind==='timDataXlsx'){
+      good=a.mappedEstimate>0;
+      meta=`Formato: XLSX DADOS TIM · aba tráfego: ${a.trafficSheet} · aba antenas: ${a.antennaSheet} · linhas: ${a.totalTraffic} · IPv6 válido: ${a.ipv6ValidCount} · após deduplicação: ${a.valid} · match PRIMEIRA: ${a.matchFirst} · match ÚLTIMA: ${a.matchLast} · ERBs não localizadas: ${a.unmatchedOccurrences} · conexões plotáveis: ${a.mappedEstimate}`;
+      if(Array.isArray(a.uniqueUnmatched)&&a.uniqueUnmatched.length)meta+=` · não encontradas: ${a.uniqueUnmatched.slice(0,8).join(', ')}${a.uniqueUnmatched.length>8?'…':''}`;
+    }
+    else if(p.kind==='timVoice'){
       good=(a.mappedEstimate>0&&a.antennas>0);
       meta=`Formato: PDF VOZ TIM reconhecido · chamadas: ${a.valid} · eventos com CGI: ${a.mappedEstimate} · antenas indexadas: ${a.antennas}`;
       if(a.antennaSectionEmpty)meta+=' · O PRÓPRIO PDF INFORMA: SEM DADOS DE ANTENA — as chamadas serão registradas na auditoria, mas não podem ser plotadas no mapa.';
@@ -1102,23 +1319,25 @@ function renderImportAudit(){
   $('doImport').disabled=!can;
   status('Auditoria concluída. Revise antes de processar.');
 }
-async function processPendingImport(){
+async function processPendingImport(auto=false){
   if(!pendingImport.length)return status('Selecione e analise ao menos um arquivo primeiro.',true);
   const requestedLot=$('fImportLot')?.value||'__new',type=$('fImportType').value;
   let totalAdded=0,totalBad=0,processed=0,totalRecognizedCalls=0;
   try{
     status('Processando lote...');
     for(const p of pendingImport){
-      if(p.kind==='unsupported'||p.kind==='unsupportedPdf'){totalBad++;continue}
+      if(p.kind==='unsupported'||p.kind==='unsupportedPdf'||p.kind==='timDataInvalid'){totalBad++;continue}
       const lotId=ensureImportLot(p.type||type,pendingImport.length>1?'__new':requestedLot);
-      if(p.kind==='timVoice'){
+      if(p.kind==='timDataXlsx'){
+        const r=importTimDataWorkbook(p.parsed,p.file,lotId);totalAdded+=r.created;processed++;
+      }else if(p.kind==='timVoice'){
         const r=importTimVoiceResult(p.parsed,p.file,lotId);totalAdded+=r.created;totalRecognizedCalls+=r.totalCalls;processed++;
       }else if(p.kind==='rows'){
         const r=importRows(p.rows,lotId,p.type||type,p.analysis);totalAdded+=r.added;totalBad+=r.bad;processed++;
       }
     }
     pendingImport=[];closeDrawer();redraw(true);
-    if(totalAdded)status(`${totalAdded} registro(s) mapeável(is) importado(s) em ${processed} arquivo(s).`);
+    if(totalAdded)status(auto?`TIM importada automaticamente: ${totalAdded} ponto(s)/setor(es) plotado(s) no mapa.`:`${totalAdded} registro(s) mapeável(is) importado(s) em ${processed} arquivo(s).`);
     else if(totalRecognizedCalls)status(`PDF reconhecido: ${totalRecognizedCalls} chamada(s) registradas na auditoria, mas sem dados de ERB/antena para plotar no mapa.`);
     else status('Nenhum registro mapeável foi importado.',true);
   }catch(e){console.error(e);status('Não foi possível processar o lote.',true)}
@@ -1147,7 +1366,7 @@ function startTimeline(){
 }
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:'7.8',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function snapshot(){return{version:'7.9',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
 function applySnapshot(o){
   state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
   $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
@@ -1212,7 +1431,7 @@ async function exportPdf(){
     doc.addPage();
     doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. REGISTROS',M,15);
     doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.2,cellPadding:1.2},head:[['#','Lote','ERB','Lat.','Long.','Az.','Raio','Fonte raio','Data/hora','Operadora','CGI/ERB','IMEI']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',(e.dist||0).toFixed(2)+' km',e.radiusSource||'',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
-    doc.save('relatorio_ERB_v7_8.pdf');status('PDF gerado.');
+    doc.save('relatorio_ERB_v7_9.pdf');status('PDF gerado.');
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
 
@@ -1236,7 +1455,8 @@ function runSelfTest(){
     const test={lat:-24.3,lng:-52.5,az:90,dist:0.5,margin:45};const sg=sector(test);
     add('Geometria de setor',Array.isArray(sg.ll)&&sg.ll.length>20&&Boolean(sg.geo),'cone/área cartográfica');
   }catch(e){add('Geometria de setor',false,e.message)}
-  try{add('Auditoria de importação',typeof analyzeRows==='function'&&typeof previewSelectedFiles==='function'&&typeof processPendingImport==='function','prévia e processamento em duas etapas');}catch(e){add('Auditoria de importação',false,e.message)}
+  try{add('Auditoria de importação',typeof analyzeRows==='function'&&typeof previewSelectedFiles==='function'&&typeof processPendingImport==='function','prévia e processamento de arquivos');}catch(e){add('Auditoria de importação',false,e.message)}
+  try{add('TIM XLSX automático',typeof parseTimDataWorkbook==='function'&&typeof importTimDataWorkbook==='function','Extrato Conexões + Dados de Antena + IPv6 + CGI/ERB');}catch(e){add('TIM XLSX automático',false,e.message)}
   try{add('Análise / ranking',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','ranking e comparação entre lotes');}catch(e){add('Análise / ranking',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo';
@@ -1289,7 +1509,7 @@ $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
 $('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_8.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v7_9.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
 $('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
