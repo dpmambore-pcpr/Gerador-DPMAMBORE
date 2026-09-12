@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.7.4</span>
+      <span class="version">VERSÃO ATUAL · v2.8.2</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,8 +62,29 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.7.4">
-        <div class="item-head"><span class="item-ver">v2.7.4</span><span class="item-date">12/09/2026</span><span class="tag improve">CORREÇÃO</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.8.2">
+        <div class="item-head"><span class="item-ver">v2.8.2</span><span class="item-date">12/09/2026</span><span class="tag improve">ATUALIZAÇÃO</span><span class="tag new">ERB</span><span class="badge">ATUAL</span></div>
+        <h3>ERB / Antenas atualizada para v9.7.0</h3>
+        <ul>
+          <li>Substituído o módulo <b>ERB / Antenas v9.6.0</b> pela versão mais recente enviada, <b>v9.7.0</b>.</li>
+          <li>Preservadas as demais ferramentas e configurações da Central PCPR v2.8.1.</li>
+          <li>Atualizado o cache do PWA para <b>v2.8.2</b>, permitindo que instalações existentes detectem e recebam a nova versão.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.8.1">
+        <div class="item-head"><span class="item-ver">v2.8.1</span><span class="item-date">12/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">PWA</span></div>
+        <h3>Central PCPR instalável como aplicativo (PWA)</h3>
+        <ul>
+          <li>Transformação da versão atualmente publicada no GitHub em <b>PWA instalável</b>, preservando as alterações existentes no repositório.</li>
+          <li>Inclusão de manifesto, Service Worker, suporte offline dos arquivos locais e aviso de nova versão disponível.</li>
+          <li>Preservada a versão <b>ERB v9.6.0</b> existente no repositório enviado.</li>
+          <li>Compatível com hospedagem estática HTTPS, incluindo GitHub Pages.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.7.4">
+        <div class="item-head"><span class="item-ver">v2.7.4</span><span class="item-date">12/09/2026</span><span class="tag improve">CORREÇÃO</span></div>
         <h3>Bairro padrão e rodapé do Coffee Break</h3>
         <ul>
           <li>O bairro padrão da Configuração Geral de Mamborê passa a ser <b>Centro</b>, inclusive na migração de configurações antigas em que o bairro estava vazio.</li>
@@ -291,7 +312,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.7.4';
+  const CURRENT_VERSION='2.8.2';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 
