@@ -224,8 +224,8 @@ const enc=new TextEncoder(), dec=new TextDecoder('utf-8');
 const $=id=>document.getElementById(id);
 const dataLaudo=$('dataLaudo'), apj=$('apj'), vitima=$('vitima'), dataFato=$('dataFato'), formato=$('formato'), status=$('status');
 
-const CONFIG_KEY='geradorLaudoLesoesConfigV4';
-const LEGACY_CONFIG_KEY='geradorLaudoLesoesConfigV3';
+const CONFIG_KEY='geradorLaudoLesoesConfigV5';
+const LEGACY_CONFIG_KEYS=['geradorLaudoLesoesConfigV4','geradorLaudoLesoesConfigV3'];
 const CARGO_AUTORIDADE_KEY='pcpr.cargoAutoridade.v1';
 const AUTORIDADES_KEY='pcpr.autoridades.v2';
 const GENERAL_CONFIG_KEY='pcpr.configGeralUnidade.v1';
@@ -267,11 +267,11 @@ function generalToLaudo(){
     email:g.email||DEFAULT_CONFIG.email,fone:g.fone||DEFAULT_CONFIG.fone,site:g.site||DEFAULT_CONFIG.site,logo:g.logo||'',
     apjs:apjs&&apjs.length?apjs:DEFAULT_CONFIG.apjs});
 }
-function hasSpecificConfig(){return !!(localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY));}
+function hasSpecificConfig(){return !!localStorage.getItem(CONFIG_KEY);}
 function updateConfigSource(){const box=$('configSource');if(!box)return;const t=box.querySelector('div');if(t)t.innerHTML=hasSpecificConfig()?'<b>Configuração personalizada neste módulo.</b> Ela prevalece sobre a Configuração Geral.':'<b>Usando Configuração Geral da Central.</b> Cabeçalho, rodapé, autoridade e servidores são herdados da configuração central.';}
 function loadConfig(){try{
   const base=generalToLaudo();
-  const raw=localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY);
+  const raw=localStorage.getItem(CONFIG_KEY);
   if(!raw)return base;
   const local=JSON.parse(raw);
   return normalizeConfig({...base,...local,apjs:Array.isArray(local&&local.apjs)?local.apjs:base.apjs});
@@ -291,9 +291,9 @@ function openConfig(){fillConfigForm();updateConfigSource();$('configPanel').cla
 function closeConfig(){$('configPanel').classList.remove('open');configStatus('');}
 function addApj(){const inp=$('novoApj'),name=inp.value.trim();if(!name){configStatus('Digite o nome do APJ antes de adicionar.','err');inp.focus();return;}if(draftApjs.some(x=>x.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'))){configStatus('Esse APJ já está cadastrado.','err');return;}draftApjs.push(name);inp.value='';renderApjAdmin();configStatus('APJ adicionado à configuração. Clique em “Salvar configurações” para confirmar.','ok');inp.focus();}
 function saveConfig(){const c=readConfigForm();if(!c.cidade){configStatus('Informe a cidade.','err');return;}if(!c.unidade){configStatus('Informe o nome da unidade.','err');return;}if(!c.delegado){configStatus('Informe o nome do Delegado(a) responsável.','err');return;}if(!c.apjs.length){configStatus('Cadastre ao menos um APJ.','err');return;}const old=apj.value;settings=c;const ok=persistConfig();refreshApjSelect(old);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateSummary();configStatus(ok?'Configurações salvas neste navegador.':'Configurações aplicadas, mas o navegador não permitiu salvá-las permanentemente.','ok');if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
-function useGeneralConfig(){if(!confirm('Remover a personalização deste módulo e voltar a usar a Configuração Geral da Central?'))return;localStorage.removeItem(CONFIG_KEY);localStorage.removeItem(LEGACY_CONFIG_KEY);settings=generalToLaudo();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Configuração específica removida. O módulo voltou a usar a Configuração Geral.','ok');if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
+function useGeneralConfig(){if(!confirm('Remover a personalização deste módulo e voltar a usar a Configuração Geral da Central?'))return;localStorage.removeItem(CONFIG_KEY);LEGACY_CONFIG_KEYS.forEach(k=>localStorage.removeItem(k));settings=generalToLaudo();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Configuração específica removida. O módulo voltou a usar a Configuração Geral.','ok');if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
 function restoreConfig(){if(!confirm('Restaurar a configuração ORIGINAL deste módulo? Isso criará uma personalização local e deixará de herdar a Configuração Geral.'))return;settings=cloneDefault();persistConfig();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Padrão original deste módulo restaurado.','ok');}
-function exportConfig(){const payload={tipo:'configuracao-gerador-laudo-lesoes',versao:4,config:settings};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CONFIGURACAO_LAUDO_'+sanitizeName(settings.unidade)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function exportConfig(){const payload={tipo:'configuracao-gerador-laudo-lesoes',versao:5,config:settings};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CONFIGURACAO_LAUDO_'+sanitizeName(settings.unidade)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function importConfigFile(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const raw=JSON.parse(String(reader.result||''));const c=normalizeConfig(raw.config||raw);if(!c.apjs.length)throw new Error('A configuração não possui APJs.');settings=c;persistConfig();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Configurações importadas e aplicadas com sucesso.','ok');}catch(e){configStatus('Não foi possível importar o arquivo de configuração.','err');}};reader.onerror=()=>configStatus('Não foi possível ler o arquivo de configuração.','err');reader.readAsText(file,'UTF-8');}
 
 let templateCache={};
@@ -543,7 +543,7 @@ $('restaurarModeloOdt').addEventListener('click',restoreOdtModel);
 $('baixarModeloOdt').addEventListener('click',downloadCurrentOdtModel);
 $('baixarCentralComModelo').addEventListener('click',downloadCentralWithCurrentModel);
 loadSavedOdtModel().catch(()=>renderOdtModelStatus());
-window.addEventListener('storage',e=>{if([CONFIG_KEY,LEGACY_CONFIG_KEY,CARGO_AUTORIDADE_KEY,AUTORIDADES_KEY,GENERAL_CONFIG_KEY].includes(e.key)){const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateConfigSource();updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}});
+window.addEventListener('storage',e=>{if([CONFIG_KEY,...LEGACY_CONFIG_KEYS,CARGO_AUTORIDADE_KEY,AUTORIDADES_KEY,GENERAL_CONFIG_KEY].includes(e.key)){const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateConfigSource();updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}});
 if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(hasSpecificConfig())return;const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateConfigSource();updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});});
 dataLaudo.value=todayLocal();refreshApjSelect();updateConfigSource();$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');[dataLaudo,apj,vitima,dataFato,formato].forEach(el=>el.addEventListener('input',()=>{updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}));vitima.addEventListener('input',()=>{const pos=vitima.selectionStart;vitima.value=vitima.value.toUpperCase();try{vitima.setSelectionRange(pos,pos)}catch{}});$('previsualizar').addEventListener('click',renderFullPreview);$('fecharPreview').addEventListener('click',closeFullPreview);$('fecharPreview2').addEventListener('click',closeFullPreview);$('gerar').addEventListener('click',generate);$('gerarAposPreview').addEventListener('click',generate);$('limpar').addEventListener('click',clearFields);updateSummary();
 </script>
