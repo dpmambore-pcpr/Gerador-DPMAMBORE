@@ -5,13 +5,13 @@ const KEY='pcpr.configGeralUnidade.v1';
 const REV_KEY='pcpr.configGeralRev.v2';
 const CHANNEL='pcpr-config-geral-v2';
 const DEFAULT={
-  versao:2,estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
+  versao:3,estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
   secretaria:'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
   departamento:'DEPARTAMENTO DE POLÍCIA CIVIL',
   subdivisao:'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
   unidade:'DELEGACIA DE POLÍCIA CIVIL DE MAMBORÊ',
   cidade:'Mamborê',uf:'PR',
-  logradouro:'Av. Augusto Mendes dos Santos',numero:'997',bairro:'',
+  logradouro:'Av. Augusto Mendes dos Santos',numero:'997',bairro:'Centro',
   endereco:'Av. Augusto Mendes dos Santos, 997',cep:'87.340-000',
   email:'dpmambore@pc.pr.gov.br',fone:'(44) 3865-1341',site:'www.policiacivil.pr.gov.br',
   logo:'',assinaturaComplementar:'',
@@ -37,12 +37,15 @@ function uniqueByName(arr){
   return out;
 }
 function normalize(raw){
-  const r=(raw&&typeof raw==='object')?raw:{}, c={...clone(DEFAULT),...r};
+  const r=(raw&&typeof raw==='object')?raw:{}, incomingVersion=Number(r.versao)||0, c={...clone(DEFAULT),...r};
   c.uf=cleanName(c.uf||'PR').toUpperCase().slice(0,2)||'PR';
   c.estadoHeader=cleanName(c.estadoHeader)||DEFAULT.estadoHeader;
   c.estado=cleanName(c.estado)||c.estadoHeader.replace(/^ESTADO\s+(DO|DE|DA)\s+/i,'')||DEFAULT.estado;
   for(const k of ['secretaria','departamento','subdivisao','unidade','cidade'])c[k]=cleanName(c[k])||DEFAULT[k];
   c.logradouro=cleanName(c.logradouro); c.numero=cleanName(c.numero); c.bairro=cleanName(c.bairro);
+  // Migração v3: configurações antigas da unidade de Mamborê não gravavam o bairro padrão.
+  // Ao migrar apenas versões antigas, preservamos a possibilidade de o usuário limpar o bairro manualmente nas versões novas.
+  if(incomingVersion<3 && !c.bairro)c.bairro=DEFAULT.bairro;
   if(!c.logradouro && c.endereco){const p=String(c.endereco).split(',');c.logradouro=cleanName(p.shift());if(!c.numero)c.numero=cleanName(p.shift());}
   c.endereco=[c.logradouro,c.numero].filter(Boolean).join(', ')||cleanName(c.endereco)||DEFAULT.endereco;
   c.cep=cleanName(c.cep)||DEFAULT.cep; c.email=cleanName(c.email); c.fone=cleanName(c.fone); c.site=cleanName(c.site);
@@ -60,7 +63,7 @@ function normalize(raw){
     if(!c.servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===a.nome.toLocaleLowerCase('pt-BR')))c.servidores.unshift({nome:a.nome,cargo:a.cargo||'Delegado de Polícia'});
   }
   c.apjs=c.servidores.filter(x=>/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(x.cargo||'')).map(x=>x.nome);
-  c.versao=2; return c;
+  c.versao=3; return c;
 }
 function deriveLegacy(){
   const h=readJSON('pcpr.oitivaPenal.institucional.v1')||{};

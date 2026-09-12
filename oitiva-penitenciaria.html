@@ -51,7 +51,7 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 .security-note b{color:#244b3e}
 @media print{.security-note{display:none!important}}
 
-</style><script src="pcpr-config.js?v=2.7"></script>
+</style><script src="pcpr-config.js?v=2.7.4"></script>
 </head>
 <body>
 <header><h1>Gerador de Ofício — Oitiva em Unidade Penal</h1><p>Agendamento de oitiva por videoconferência · Novo modelo institucional · cidade configurável</p></header>
@@ -199,7 +199,21 @@ function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/
 function getUnit(){const i=Number($('unitIndex').value);return Number.isInteger(i)&&i>=0&&UNITS[i]?UNITS[i]:null}
 function delegates(){const ov=getOitivaOverride();if(Array.isArray(ov.delegados)&&ov.delegados.length)return ov.delegados.slice();const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};const a=(Array.isArray(g.autoridades)?g.autoridades:[]).map(x=>x&&x.nome).filter(Boolean);return a.length?a:DEFAULT_DELEGADOS.slice()}
 function saveDelegates(a){const ov=getOitivaOverride();ov.delegados=Array.isArray(a)?a.slice():[];saveOitivaOverride(ov)}
-function generalCidade(){const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};const nome=g.cidade||'Mamborê',uf=(g.uf||'PR').toUpperCase();const endereco=[g.endereco,g.bairro,[nome,uf].filter(Boolean).join(' - '),g.cep].filter(Boolean).join(', ');return {id:'__geral__',nome,uf,endereco:endereco||('Av. Augusto Mendes dos Santos, 997, '+nome+' - '+uf+', 87340-000'),email:g.email||'dpmambore@pc.pr.gov.br',telefone:g.fone||'(44) 3865-1341',site:g.site||'www.policiacivil.pr.gov.br',geral:true}}
+function cepRodape(v){const d=String(v||'').replace(/\D/g,'').slice(0,8);return d.length===8?d.slice(0,5)+'-'+d.slice(5):String(v||'').trim()}
+function generalCidade(){
+  const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};
+  const def=(window.PCPRConfig&&PCPRConfig.DEFAULT)?PCPRConfig.DEFAULT:{};
+  const nome=(g.cidade||def.cidade||'Mamborê').trim();
+  const uf=(g.uf||def.uf||'PR').toUpperCase();
+  const logradouro=(g.logradouro||def.logradouro||'Av. Augusto Mendes dos Santos').trim();
+  const numero=(g.numero||def.numero||'997').trim();
+  const bairro=(g.bairro||'').trim();
+  const cep=cepRodape(g.cep||def.cep||'87340-000');
+  const primeira=[logradouro,numero].filter(Boolean).join(', ');
+  const cidadeUf=[nome,uf].filter(Boolean).join(' - ');
+  const endereco=[primeira,bairro,cidadeUf,cep].filter(Boolean).join(', ');
+  return {id:'__geral__',nome,uf,endereco,email:g.email||def.email||'dpmambore@pc.pr.gov.br',telefone:g.fone||def.fone||'(44) 3865-1341',site:g.site||def.site||'www.policiacivil.pr.gov.br',geral:true};
+}
 function cidades(){let custom=[];try{const x=JSON.parse(localStorage.getItem(CIDADES_KEY)||'null');if(Array.isArray(x))custom=x}catch(e){}custom=custom.filter(c=>c&&c.id!=='__geral__'&&c.id!=='mambore'&&!/^geral_/i.test(String(c.id||'')));return [generalCidade(),...custom]}
 function saveCidades(a){localStorage.setItem(CIDADES_KEY,JSON.stringify((Array.isArray(a)?a:[]).filter(c=>c&&c.id!=='__geral__'&&!c.geral)))}
 function getCidade(){const a=cidades(),id=$('cidade')?.value||localStorage.getItem(CIDADE_SEL_KEY)||'__geral__';return a.find(x=>x.id===id)||a[0]||generalCidade()}

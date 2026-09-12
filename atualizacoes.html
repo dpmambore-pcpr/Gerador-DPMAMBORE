@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.7</span>
+      <span class="version">VERSÃO ATUAL · v2.7.4</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,7 +62,17 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.7">
+      <article class="item latest" data-version="2.7.4">
+        <div class="item-head"><span class="item-ver">v2.7.4</span><span class="item-date">12/09/2026</span><span class="tag improve">CORREÇÃO</span><span class="badge">ATUAL</span></div>
+        <h3>Bairro padrão e rodapé do Coffee Break</h3>
+        <ul>
+          <li>O bairro padrão da Configuração Geral de Mamborê passa a ser <b>Centro</b>, inclusive na migração de configurações antigas em que o bairro estava vazio.</li>
+          <li>O rodapé do <b>Coffee Break</b> passa a incluir o bairro e a herdar esse campo da Configuração Geral.</li>
+          <li>O bairro também pode ser personalizado na configuração específica do módulo Coffee Break.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.7">
         <div class="item-head"><span class="item-ver">v2.7</span><span class="item-date">12/09/2026</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
         <h3>Configuração Geral integrada em toda a Central</h3>
         <ul>
@@ -281,7 +291,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.7';
+  const CURRENT_VERSION='2.7.4';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 
