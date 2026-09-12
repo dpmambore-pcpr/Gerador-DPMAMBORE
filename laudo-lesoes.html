@@ -101,6 +101,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 @media print{.security-note{display:none!important}}
 
 </style>
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <header class="top"><div class="wrap top-row"><div><h1>Laudo de Exame de Lesões Corporais</h1><p id="headerUnit">Delegacia de Polícia de Mamborê - PCPR</p></div><button id="abrirConfig" class="config-top" type="button">Configurações</button></div></header>
@@ -112,6 +113,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
       <div><h2>Configurações do gerador</h2><p>Edite os dados institucionais e, quando necessário, atualize o modelo-base ODT do Laudo de Lesões.</p></div>
       <button id="fecharConfig" class="secondary" type="button">Fechar</button>
     </div>
+    <div id="configSource" class="privacy" style="margin:0 0 14px"><span class="dot"></span><div></div></div>
     <div class="config-grid">
       <div class="config-section">Cabeçalho e identificação</div>
       <div class="field"><label for="cfgEstadoHeader">Linha do Estado no cabeçalho</label><input id="cfgEstadoHeader" type="text"></div>
@@ -120,6 +122,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
       <div class="field full"><label for="cfgDepartamento">Departamento / instituição</label><input id="cfgDepartamento" type="text"></div>
       <div class="field full"><label for="cfgSubdivisao">Subdivisão / regional</label><input id="cfgSubdivisao" type="text"></div>
       <div class="field full"><label for="cfgUnidade">Nome da unidade no cabeçalho</label><input id="cfgUnidade" type="text"></div>
+      <div class="field full"><label>Brasão / logo do cabeçalho</label><div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:5px"><img id="cfgLogoPreview" src="brasao-padrao.png" alt="Brasão" style="width:56px;height:64px;object-fit:contain;border:1px solid #d8d3c8;border-radius:8px;background:#fff;padding:3px"><button id="cfgLogoBtn" class="secondary" type="button">Trocar imagem</button><button id="cfgLogoOriginal" class="secondary" type="button">Usar brasão original</button><input id="cfgLogoFile" class="hidden-file" type="file" accept="image/*"></div><p class="config-note">Se nenhuma imagem específica for definida, o módulo usa o brasão original do modelo. Uma imagem definida na Configuração Geral é herdada automaticamente.</p></div>
       <div class="field"><label for="cfgCidade">Cidade</label><input id="cfgCidade" type="text"></div>
       <div class="field"><label for="cfgUf">UF</label><input id="cfgUf" type="text" maxlength="2"></div>
       <div class="field"><label for="cfgUnidadeTexto">Local no corpo do texto</label><input id="cfgUnidadeTexto" type="text" placeholder="Ex.: Delegacia de Polícia"></div>
@@ -161,10 +164,11 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
       </div>
     </div>
     <div class="config-actions">
-      <button id="salvarConfig" class="primary" type="button">Salvar configurações</button>
+      <button id="salvarConfig" class="primary" type="button">Salvar configuração deste módulo</button>
+      <button id="usarConfigGeral" class="preview-button" type="button">Usar Configuração Geral</button>
       <button id="exportarConfig" class="secondary" type="button">Exportar configurações</button>
       <button id="importarConfigBtn" class="secondary" type="button">Importar configurações</button>
-      <button id="restaurarConfig" class="secondary" type="button">Restaurar padrão de Mamborê</button>
+      <button id="restaurarConfig" class="secondary" type="button">Restaurar padrão original</button>
       <input id="importarConfigFile" class="hidden-file" type="file" accept="application/json,.json">
     </div>
     <p class="config-note">As configurações ficam salvas somente neste navegador/computador. A opção de exportar gera um pequeno arquivo JSON para copiar a mesma configuração para outro computador.</p>
@@ -243,47 +247,54 @@ const DEFAULT_CONFIG={
   email:'dpmambore@pc.pr.gov.br',
   fone:'(44) 3568-1341',
   site:'www.policiacivil.pr.gov.br',
+  logo:'',
   apjs:['Thiago Gonzaga da Silva Couto','Tiago Henrique Lemes','Paulo Henrique Vilaça']
 };
 const CFG_IDS={estadoHeader:'cfgEstadoHeader',estado:'cfgEstado',secretaria:'cfgSecretaria',departamento:'cfgDepartamento',subdivisao:'cfgSubdivisao',unidade:'cfgUnidade',unidadeTexto:'cfgUnidadeTexto',unidadeCurta:'cfgUnidadeCurta',cidade:'cfgCidade',uf:'cfgUf',delegado:'cfgDelegado',cargo:'cfgCargo',endereco:'cfgEndereco',cep:'cfgCep',email:'cfgEmail',fone:'cfgFone',site:'cfgSite'};
 function cloneDefault(){return JSON.parse(JSON.stringify(DEFAULT_CONFIG));}
-function normalizeConfig(raw){const d=cloneDefault(),r=(raw&&typeof raw==='object')?raw:{};for(const k of Object.keys(CFG_IDS)){if(typeof r[k]==='string')d[k]=r[k];}if(Array.isArray(r.apjs))d.apjs=r.apjs.map(x=>String(x).trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(y=>y.toLocaleLowerCase('pt-BR')===x.toLocaleLowerCase('pt-BR'))===i);return d;}
+function normalizeConfig(raw){const d=cloneDefault(),r=(raw&&typeof raw==='object')?raw:{};for(const k of Object.keys(CFG_IDS)){if(typeof r[k]==='string')d[k]=r[k];}if(typeof r.logo==='string')d.logo=r.logo;if(Array.isArray(r.apjs))d.apjs=r.apjs.map(x=>String(x).trim()).filter(Boolean).filter((x,i,a)=>a.findIndex(y=>y.toLocaleLowerCase('pt-BR')===x.toLocaleLowerCase('pt-BR'))===i);return d;}
+function generalToLaudo(){
+  const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};
+  const a=(Array.isArray(g.autoridades)&&g.autoridades[0])||{};
+  const apjs=(window.PCPRConfig&&PCPRConfig.apjs)?PCPRConfig.apjs(g):((g.apjs||[]));
+  return normalizeConfig({...DEFAULT_CONFIG,
+    estadoHeader:g.estadoHeader||DEFAULT_CONFIG.estadoHeader,estado:g.estado||DEFAULT_CONFIG.estado,
+    secretaria:g.secretaria||DEFAULT_CONFIG.secretaria,departamento:g.departamento||DEFAULT_CONFIG.departamento,
+    subdivisao:g.subdivisao||DEFAULT_CONFIG.subdivisao,unidade:g.unidade||DEFAULT_CONFIG.unidade,
+    cidade:g.cidade||DEFAULT_CONFIG.cidade,uf:g.uf||DEFAULT_CONFIG.uf,
+    delegado:a.nome||DEFAULT_CONFIG.delegado,cargo:a.cargo||DEFAULT_CONFIG.cargo,
+    endereco:g.endereco||DEFAULT_CONFIG.endereco,cep:g.cep||DEFAULT_CONFIG.cep,
+    email:g.email||DEFAULT_CONFIG.email,fone:g.fone||DEFAULT_CONFIG.fone,site:g.site||DEFAULT_CONFIG.site,logo:g.logo||'',
+    apjs:apjs&&apjs.length?apjs:DEFAULT_CONFIG.apjs});
+}
+function hasSpecificConfig(){return !!(localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY));}
+function updateConfigSource(){const box=$('configSource');if(!box)return;const t=box.querySelector('div');if(t)t.innerHTML=hasSpecificConfig()?'<b>Configuração personalizada neste módulo.</b> Ela prevalece sobre a Configuração Geral.':'<b>Usando Configuração Geral da Central.</b> Cabeçalho, rodapé, autoridade e servidores são herdados da configuração central.';}
 function loadConfig(){try{
+  const base=generalToLaudo();
   const raw=localStorage.getItem(CONFIG_KEY)||localStorage.getItem(LEGACY_CONFIG_KEY);
-  const c=raw?normalizeConfig(JSON.parse(raw)):cloneDefault();
-  const gc=localStorage.getItem(CARGO_AUTORIDADE_KEY);if(gc)c.cargo=gc;
-  try{
-    const auth=JSON.parse(localStorage.getItem(AUTORIDADES_KEY)||'null');
-    if(Array.isArray(auth)&&auth.length&&auth[0]&&auth[0].nome){c.delegado=String(auth[0].nome).trim();if(auth[0].cargo)c.cargo=String(auth[0].cargo).trim();}
-  }catch(e){}
-  try{
-    const geral=JSON.parse(localStorage.getItem(GENERAL_CONFIG_KEY)||'null');
-    if(geral&&typeof geral==='object'){
-      ['estadoHeader','estado','secretaria','departamento','subdivisao','unidade','unidadeTexto','unidadeCurta','cidade','uf','endereco','cep','email','fone','site'].forEach(k=>{if(typeof geral[k]==='string'&&geral[k].trim())c[k]=geral[k].trim();});
-      if(Array.isArray(geral.apjs)&&geral.apjs.length)c.apjs=normalizeConfig({apjs:geral.apjs}).apjs;
-      if(Array.isArray(geral.autoridades)&&geral.autoridades.length&&geral.autoridades[0]&&geral.autoridades[0].nome){c.delegado=String(geral.autoridades[0].nome).trim();if(geral.autoridades[0].cargo)c.cargo=String(geral.autoridades[0].cargo).trim();}
-    }
-  }catch(e){}
-  return c;
-}catch(e){return cloneDefault();}}
-let settings=loadConfig(),draftApjs=[];
-function persistConfig(){try{localStorage.setItem(CONFIG_KEY,JSON.stringify(settings));localStorage.setItem(CARGO_AUTORIDADE_KEY,settings.cargo||'Delegado de Polícia');return true;}catch(e){return false;}}
+  if(!raw)return base;
+  const local=JSON.parse(raw);
+  return normalizeConfig({...base,...local,apjs:Array.isArray(local&&local.apjs)?local.apjs:base.apjs});
+}catch(e){return generalToLaudo();}}
+let settings=loadConfig(),draftApjs=[],draftLogo=settings.logo||'';
+function persistConfig(){try{localStorage.setItem(CONFIG_KEY,JSON.stringify(settings));updateConfigSource();return true;}catch(e){return false;}}
 function configStatus(msg,kind=''){const e=$('configStatus');e.textContent=msg;e.className='config-status '+kind;}
 function footerLine1(){const left=[settings.endereco,settings.cidade&&settings.uf?(settings.cidade+' - '+settings.uf):(settings.cidade||settings.uf)].filter(Boolean).join(', ');return [left,settings.cep?('CEP: '+settings.cep):''].filter(Boolean).join(' - ');}
 function footerLine2(){return [settings.email?('Email: '+settings.email):'',settings.fone?('Fone/Fax: '+settings.fone):'',settings.site].filter(Boolean).join(' - ');}
 function refreshApjSelect(preferred){const keep=preferred||apj.value;apj.innerHTML='';for(const name of settings.apjs){const o=document.createElement('option');o.value=name;o.textContent=name;apj.appendChild(o);}if(settings.apjs.includes(keep))apj.value=keep;else if(settings.apjs.length)apj.selectedIndex=0;}
 function applySettings(){refreshApjSelect();$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateSummary();}
-function fillConfigForm(cfg=settings){for(const [k,id] of Object.entries(CFG_IDS))$(id).value=cfg[k]||'';draftApjs=[...(cfg.apjs||[])];renderApjAdmin();configStatus('');}
-function readConfigForm(){const c={};for(const [k,id] of Object.entries(CFG_IDS))c[k]=$(id).value.trim();c.uf=c.uf.toUpperCase().slice(0,2);c.apjs=[...draftApjs];return normalizeConfig(c);}
+function fillConfigForm(cfg=settings){for(const [k,id] of Object.entries(CFG_IDS))$(id).value=cfg[k]||'';draftApjs=[...(cfg.apjs||[])];draftLogo=cfg.logo||'';const lp=$('cfgLogoPreview');if(lp)lp.src=draftLogo||'brasao-padrao.png';renderApjAdmin();configStatus('');}
+function readConfigForm(){const c={};for(const [k,id] of Object.entries(CFG_IDS))c[k]=$(id).value.trim();c.uf=c.uf.toUpperCase().slice(0,2);c.logo=draftLogo||'';c.apjs=[...draftApjs];return normalizeConfig(c);}
 function renderApjAdmin(){const list=$('apjAdminList');list.innerHTML='';if(!draftApjs.length){const p=document.createElement('p');p.className='config-note';p.textContent='Nenhum APJ cadastrado.';list.appendChild(p);return;}draftApjs.forEach((name,i)=>{const row=document.createElement('div');row.className='apj-row';const sp=document.createElement('span');sp.textContent=name;const bt=document.createElement('button');bt.type='button';bt.className='danger';bt.textContent='Excluir';bt.addEventListener('click',()=>{draftApjs.splice(i,1);renderApjAdmin();});row.append(sp,bt);list.appendChild(row);});}
-function openConfig(){fillConfigForm();$('configPanel').classList.add('open');$('configPanel').scrollIntoView({behavior:'smooth',block:'start'});}
+function readLogoFile(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));r.onload=()=>resolve(String(r.result||''));r.readAsDataURL(file)})}
+function openConfig(){fillConfigForm();updateConfigSource();$('configPanel').classList.add('open');$('configPanel').scrollIntoView({behavior:'smooth',block:'start'});}
 function closeConfig(){$('configPanel').classList.remove('open');configStatus('');}
 function addApj(){const inp=$('novoApj'),name=inp.value.trim();if(!name){configStatus('Digite o nome do APJ antes de adicionar.','err');inp.focus();return;}if(draftApjs.some(x=>x.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'))){configStatus('Esse APJ já está cadastrado.','err');return;}draftApjs.push(name);inp.value='';renderApjAdmin();configStatus('APJ adicionado à configuração. Clique em “Salvar configurações” para confirmar.','ok');inp.focus();}
 function saveConfig(){const c=readConfigForm();if(!c.cidade){configStatus('Informe a cidade.','err');return;}if(!c.unidade){configStatus('Informe o nome da unidade.','err');return;}if(!c.delegado){configStatus('Informe o nome do Delegado(a) responsável.','err');return;}if(!c.apjs.length){configStatus('Cadastre ao menos um APJ.','err');return;}const old=apj.value;settings=c;const ok=persistConfig();refreshApjSelect(old);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateSummary();configStatus(ok?'Configurações salvas neste navegador.':'Configurações aplicadas, mas o navegador não permitiu salvá-las permanentemente.','ok');if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
-function restoreConfig(){if(!confirm('Restaurar todas as configurações para o padrão da Delegacia de Mamborê?'))return;settings=cloneDefault();persistConfig();fillConfigForm(settings);applySettings();configStatus('Padrão da Delegacia de Mamborê restaurado.','ok');}
+function useGeneralConfig(){if(!confirm('Remover a personalização deste módulo e voltar a usar a Configuração Geral da Central?'))return;localStorage.removeItem(CONFIG_KEY);localStorage.removeItem(LEGACY_CONFIG_KEY);settings=generalToLaudo();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Configuração específica removida. O módulo voltou a usar a Configuração Geral.','ok');if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
+function restoreConfig(){if(!confirm('Restaurar a configuração ORIGINAL deste módulo? Isso criará uma personalização local e deixará de herdar a Configuração Geral.'))return;settings=cloneDefault();persistConfig();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Padrão original deste módulo restaurado.','ok');}
 function exportConfig(){const payload={tipo:'configuracao-gerador-laudo-lesoes',versao:4,config:settings};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CONFIGURACAO_LAUDO_'+sanitizeName(settings.unidade)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
-function importConfigFile(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const raw=JSON.parse(String(reader.result||''));const c=normalizeConfig(raw.config||raw);if(!c.apjs.length)throw new Error('A configuração não possui APJs.');settings=c;persistConfig();fillConfigForm(settings);window.addEventListener('storage',e=>{if(e.key===CONFIG_KEY){settings=loadConfig();fillConfigForm(settings);applySettings();}});
-applySettings();configStatus('Configurações importadas e aplicadas com sucesso.','ok');}catch(e){configStatus('Não foi possível importar o arquivo de configuração.','err');}};reader.onerror=()=>configStatus('Não foi possível ler o arquivo de configuração.','err');reader.readAsText(file,'UTF-8');}
+function importConfigFile(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const raw=JSON.parse(String(reader.result||''));const c=normalizeConfig(raw.config||raw);if(!c.apjs.length)throw new Error('A configuração não possui APJs.');settings=c;persistConfig();fillConfigForm(settings);applySettings();updateConfigSource();configStatus('Configurações importadas e aplicadas com sucesso.','ok');}catch(e){configStatus('Não foi possível importar o arquivo de configuração.','err');}};reader.onerror=()=>configStatus('Não foi possível ler o arquivo de configuração.','err');reader.readAsText(file,'UTF-8');}
 
 let templateCache={};
 let activeOdtBytes=null;
@@ -307,7 +318,7 @@ function replacements(){const dl=dateInfo(dataLaudo.value),df=dateInfo(dataFato.
 '@@CIDADE@@':settings.cidade,'@@UF@@':settings.uf,'@@ESTADO@@':settings.estado,'@@DELEGADO@@':settings.delegado,'@@CARGO@@':settings.cargo||'Delegado de Polícia','@@UNIDADE_TEXTO@@':settings.unidadeTexto,'@@UNIDADE_CURTA@@':settings.unidadeCurta,
 '@@ESTADO_HEADER@@':settings.estadoHeader,'@@SECRETARIA@@':settings.secretaria,'@@DEPARTAMENTO@@':settings.departamento,'@@SUBDIVISAO@@':settings.subdivisao,'@@UNIDADE_HEADER@@':settings.unidade,
 '@@RODAPE1@@':footerLine1(),'@@RODAPE2@@':footerLine2()};}
-function updateSummary(){const d=dateInfo(dataLaudo.value);$('sumData').textContent=d?d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+')':'-';$('sumApj').textContent=apj.value;$('sumVitima').textContent=vitima.value.trim().toUpperCase()||'-';$('sumArquivo').textContent=fileName(formato.value);const ready=$('sumReady');if(ready){const ok=!validate();ready.textContent=ok?'PRONTO PARA CONFERIR':'PREENCHIMENTO PENDENTE';ready.style.color=ok?'var(--ok)':'var(--muted)';}renderPreview().catch(()=>{});}
+function updateSummary(){const d=dateInfo(dataLaudo.value);$('sumData').textContent=d?d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+')':'-';$('sumApj').textContent=apj.value;$('sumVitima').textContent=vitima.value.trim().toUpperCase()||'-';$('sumArquivo').textContent=fileName(formato.value);const ready=$('sumReady');if(ready){const ok=!validate();ready.textContent=ok?'PRONTO PARA CONFERIR':'PREENCHIMENTO PENDENTE';ready.style.color=ok?'var(--ok)':'var(--muted)';}if($('previewFull')&&$('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}
 
 function b64ToBytes(b64){const bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
 function bytesToB64(bytes){let bin='';const a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes),step=0x6000;for(let i=0;i<a.length;i+=step)bin+=String.fromCharCode(...a.subarray(i,i+step));return btoa(bin);}
@@ -439,7 +450,9 @@ async function downloadCentralWithCurrentModel(){
 }
 function downloadCurrentOdtModel(){const bytes=activeOdtBytes||b64ToBytes(ODT_TEMPLATE_B64);downloadBytes(bytes,'MODELO_BASE_LAUDO_LESOES_ATUAL.odt','application/vnd.oasis.opendocument.text');}
 
-function editableBytes(){const key='odt';if(!templateCache[key])templateCache[key]=parseStoredZipBytes(activeOdtBytes||b64ToBytes(ODT_TEMPLATE_B64));const rep=replacements();const entries=templateCache[key].map(e=>{if(!/\.xml$/i.test(e.name))return {name:e.name,data:e.data};let s=dec.decode(e.data),changed=false;for(const [a,b] of Object.entries(rep)){if(s.includes(a)){s=s.split(a).join(xmlEscape(b));changed=true;}}return {name:e.name,data:changed?enc.encode(s):e.data};});return buildStoredZip(entries);}
+function imageFromDataUrl(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Não foi possível carregar o brasão.'));im.src=src})}
+async function logoJpegBytes(){if(!settings.logo)return null;const im=await imageFromDataUrl(settings.logo);const side=500,cv=document.createElement('canvas');cv.width=side;cv.height=side;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,side,side);const r=Math.min((side-30)/im.width,(side-30)/im.height);const w=im.width*r,h=im.height*r;x.drawImage(im,(side-w)/2,(side-h)/2,w,h);const blob=await new Promise((resolve,reject)=>cv.toBlob(b=>b?resolve(b):reject(new Error('Não foi possível converter o brasão.')),'image/jpeg',0.94));return new Uint8Array(await blob.arrayBuffer())}
+async function editableBytes(){const key='odt';if(!templateCache[key])templateCache[key]=parseStoredZipBytes(activeOdtBytes||b64ToBytes(ODT_TEMPLATE_B64));const rep=replacements(),logoBytes=await logoJpegBytes();const entries=templateCache[key].map(e=>{if(logoBytes&&/Pictures\/10000000000000E1000000E10EDAD3C6818A3F68\.jpg$/i.test(e.name))return {name:e.name,data:logoBytes};if(!/\.xml$/i.test(e.name))return {name:e.name,data:e.data};let s=dec.decode(e.data),changed=false;for(const [a,b] of Object.entries(rep)){if(s.includes(a)){s=s.split(a).join(xmlEscape(b));changed=true;}}return {name:e.name,data:changed?enc.encode(s):e.data};});return buildStoredZip(entries);}
 function downloadBytes(bytes,name,mime){const blob=new Blob([bytes],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
 
 function setFont(ctx,sizePt,weight='400',family='Arial, Helvetica, sans-serif',color='#000'){const scale=ctx.canvas.height/PAGE_H_PT;ctx.font=weight+' '+(sizePt*scale).toFixed(2)+'px '+family;ctx.fillStyle=color;ctx.textBaseline='top';}
@@ -488,7 +501,9 @@ function drawVars(ctx,pageIndex){const d=dateInfo(dataLaudo.value)||dateInfo(tod
  if(pageIndex===0){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como '+(settings.cargo||'Delegado de Polícia')+' '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia, ao final assinado, foram nomeados os referidos médicos, na qualidade de: '},{text:'PERITOS EXAMINADORES,',weight:'700'},{text:' ao final assinado, que aceitando a missão. Foi-lhes deferida a promessa legal, de bem e fielmente desempenharem as funções, o que prometeram na forma e sob o rigor da lei, tendo dito que faziam sem dolo e nem malícia a bem do direito daquele. E por nada mais haver, deu-se por findo esse termo que para constar foi por mim lavrado, de acordo com o mandato daquele Delegado e que, por isso, foi devidamente assinado. Eu, '+a+', Agente de Polícia Judiciária, que digitei.'}],55,237.5,485,12,20.5);
  }else if(pageIndex===1){drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.yearWords+' ('+d.year+'), nesta cidade de '+settings.cidade+'-'+settings.uf+', atendendo requisição do '+(settings.cargo||'Delegado de Polícia')+', '},{text:settings.delegado+',',weight:'700'},{text:' comigo, Agente PJ, a seu cargo, e os '},{text:'Peritos Médicos Nomeados',weight:'700'},{text:' ao final nomeados e assinados, a quem a Autoridade Policial deferiu o compromisso legal de bem e fielmente desempenharem a sua missão, encarregando-os de procederem a exame de lesões corporais em:'}],55,210.0,485,12,20.2);drawFit(ctx,name,107.0,337.5,425,12,8.2,'700');drawPt(ctx,df.numeric,214.5,350.5,12,'700');
  }else if(pageIndex===3){let yy=drawRichWrapped(ctx,[{text:'Aos '+d.day+' dias do mês de '+d.month+' do ano de '+d.year+', nesta cidade de '+settings.cidade+', Estado '+settings.estado+', na '+settings.unidadeTexto+', tendo como '+(settings.cargo||'Delegado de Polícia')+' '},{text:settings.delegado+',',weight:'700'},{text:' comigo Agente de Polícia Judiciária, ao final assinado, eu, '},{text:name+',',weight:'700'},{text:' declaro que me foi entregue uma via de requisição para exame de corpo delito.'}],55,214.5,485,12,19.8);yy+=4;drawRichWrapped(ctx,[{text:'Declaro também que me foi informado que após a realização do exame, '},{text:'é de minha inteira responsabilidade',weight:'700'},{text:' entregá-lo na '+settings.unidadeCurta+'.'}],115,yy,420,12,19.8);}}
-async function renderPageCanvas(index,canvas){const img=await imagePromises[index];canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);drawVars(ctx,index);return canvas;}
+let previewLogoCache={src:'',promise:null};
+async function drawConfiguredLogo(ctx){if(!settings.logo)return;let im;if(previewLogoCache.src===settings.logo&&previewLogoCache.promise)im=await previewLogoCache.promise;else{previewLogoCache.src=settings.logo;previewLogoCache.promise=imageFromDataUrl(settings.logo);im=await previewLogoCache.promise}const sx=ctx.canvas.width/PAGE_W_PT,sy=ctx.canvas.height/PAGE_H_PT;ctx.save();ctx.fillStyle='#fff';ctx.fillRect(235*sx,2*sy,125*sx,66*sy);const maxW=55*sx,maxH=55*sy,r=Math.min(maxW/im.width,maxH/im.height),w=im.width*r,h=im.height*r;ctx.drawImage(im,(ctx.canvas.width-w)/2,7*sy,w,h);ctx.restore();}
+async function renderPageCanvas(index,canvas){const img=await imagePromises[index];canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);await drawConfiguredLogo(ctx);drawVars(ctx,index);return canvas;}
 async function renderFullPreview(){
   const err=validate();
   if(err){setStatus(err,'err');return;}
@@ -516,16 +531,20 @@ function makePdf(jpegs,widths,heights){const N=2+jpegs.length*3,offsets=new Arra
  const xref=pos;push(ascii('xref\n0 '+(N+1)+'\n0000000000 65535 f \n'));for(let i=1;i<=N;i++)push(ascii(String(offsets[i]).padStart(10,'0')+' 00000 n \n'));push(ascii('trailer\n<< /Size '+(N+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n'));return concat(chunks);}
 async function pdfBytes(){const jpegs=[],ws=[],hs=[];for(let i=0;i<4;i++){const c=document.createElement('canvas');await renderPageCanvas(i,c);const url=c.toDataURL('image/jpeg',0.94);jpegs.push(dataUrlBytes(url));ws.push(c.width);hs.push(c.height);}return makePdf(jpegs,ws,hs);}
 
-async function generate(){const err=validate();if(err){setStatus(err,'err');return;}const btn=$('gerar');btn.disabled=true;setStatus('Gerando documento...');try{if(formato.value==='pdf'){const bytes=await pdfBytes();downloadBytes(bytes,fileName('pdf'),'application/pdf');}else{const bytes=editableBytes();downloadBytes(bytes,fileName('odt'),'application/vnd.oasis.opendocument.text');}setStatus('Documento gerado com sucesso.','ok');}catch(e){console.error(e);setStatus('Não foi possível gerar o documento: '+(e&&e.message?e.message:e),'err');}finally{btn.disabled=false;}}
+async function generate(){const err=validate();if(err){setStatus(err,'err');return;}const btn=$('gerar');btn.disabled=true;setStatus('Gerando documento...');try{if(formato.value==='pdf'){const bytes=await pdfBytes();downloadBytes(bytes,fileName('pdf'),'application/pdf');}else{const bytes=await editableBytes();downloadBytes(bytes,fileName('odt'),'application/vnd.oasis.opendocument.text');}setStatus('Documento gerado com sucesso.','ok');}catch(e){console.error(e);setStatus('Não foi possível gerar o documento: '+(e&&e.message?e.message:e),'err');}finally{btn.disabled=false;}}
 function clearFields(){vitima.value='';dataFato.value='';dataLaudo.value=todayLocal();refreshApjSelect();formato.value='pdf';$('previewFull').classList.remove('open');setStatus('');updateSummary();vitima.focus();}
-$('abrirConfig').addEventListener('click',openConfig);$('fecharConfig').addEventListener('click',closeConfig);$('adicionarApj').addEventListener('click',addApj);$('novoApj').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addApj();}});$('salvarConfig').addEventListener('click',saveConfig);$('restaurarConfig').addEventListener('click',restoreConfig);$('exportarConfig').addEventListener('click',exportConfig);$('importarConfigBtn').addEventListener('click',()=>$('importarConfigFile').click());$('importarConfigFile').addEventListener('change',e=>{importConfigFile(e.target.files&&e.target.files[0]);e.target.value='';});
+$('abrirConfig').addEventListener('click',openConfig);$('fecharConfig').addEventListener('click',closeConfig);$('adicionarApj').addEventListener('click',addApj);
+$('cfgLogoBtn').addEventListener('click',()=>$('cfgLogoFile').click());
+$('cfgLogoFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{draftLogo=await readLogoFile(f);$('cfgLogoPreview').src=draftLogo;configStatus('Nova imagem carregada. Clique em “Salvar configuração deste módulo” para confirmar.','ok')}catch(err){configStatus(err.message||'Não foi possível carregar a imagem.','err')}});
+$('cfgLogoOriginal').addEventListener('click',()=>{draftLogo='';$('cfgLogoPreview').src='brasao-padrao.png';configStatus('Brasão original selecionado. Salve a configuração do módulo para confirmar.','ok')});$('novoApj').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addApj();}});$('salvarConfig').addEventListener('click',saveConfig);$('usarConfigGeral').addEventListener('click',useGeneralConfig);$('restaurarConfig').addEventListener('click',restoreConfig);$('exportarConfig').addEventListener('click',exportConfig);$('importarConfigBtn').addEventListener('click',()=>$('importarConfigFile').click());$('importarConfigFile').addEventListener('change',e=>{importConfigFile(e.target.files&&e.target.files[0]);e.target.value='';});
 $('selecionarModeloOdt').addEventListener('click',()=>$('modeloOdtFile').click());
 $('modeloOdtFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)await importOdtModel(f);});
 $('restaurarModeloOdt').addEventListener('click',restoreOdtModel);
 $('baixarModeloOdt').addEventListener('click',downloadCurrentOdtModel);
 $('baixarCentralComModelo').addEventListener('click',downloadCentralWithCurrentModel);
 loadSavedOdtModel().catch(()=>renderOdtModelStatus());
-window.addEventListener('storage',e=>{if([CONFIG_KEY,LEGACY_CONFIG_KEY,CARGO_AUTORIDADE_KEY,AUTORIDADES_KEY,GENERAL_CONFIG_KEY].includes(e.key)){const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}});
-dataLaudo.value=todayLocal();refreshApjSelect();$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');[dataLaudo,apj,vitima,dataFato,formato].forEach(el=>el.addEventListener('input',()=>{updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}));vitima.addEventListener('input',()=>{const pos=vitima.selectionStart;vitima.value=vitima.value.toUpperCase();try{vitima.setSelectionRange(pos,pos)}catch{}});$('previsualizar').addEventListener('click',renderFullPreview);$('fecharPreview').addEventListener('click',closeFullPreview);$('fecharPreview2').addEventListener('click',closeFullPreview);$('gerar').addEventListener('click',generate);$('gerarAposPreview').addEventListener('click',generate);$('limpar').addEventListener('click',clearFields);updateSummary();
+window.addEventListener('storage',e=>{if([CONFIG_KEY,LEGACY_CONFIG_KEY,CARGO_AUTORIDADE_KEY,AUTORIDADES_KEY,GENERAL_CONFIG_KEY].includes(e.key)){const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateConfigSource();updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}});
+if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(hasSpecificConfig())return;const keep=apj.value;settings=loadConfig();refreshApjSelect(keep);$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');updateConfigSource();updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});});
+dataLaudo.value=todayLocal();refreshApjSelect();updateConfigSource();$('headerUnit').textContent=(settings.unidade||'Unidade policial')+(settings.uf?' - '+settings.uf:'');[dataLaudo,apj,vitima,dataFato,formato].forEach(el=>el.addEventListener('input',()=>{updateSummary();if($('previewFull').classList.contains('open'))renderFullPreview().catch(()=>{});}));vitima.addEventListener('input',()=>{const pos=vitima.selectionStart;vitima.value=vitima.value.toUpperCase();try{vitima.setSelectionRange(pos,pos)}catch{}});$('previsualizar').addEventListener('click',renderFullPreview);$('fecharPreview').addEventListener('click',closeFullPreview);$('fecharPreview2').addEventListener('click',closeFullPreview);$('gerar').addEventListener('click',generate);$('gerarAposPreview').addEventListener('click',generate);$('limpar').addEventListener('click',clearFields);updateSummary();
 </script>
 </body></html>

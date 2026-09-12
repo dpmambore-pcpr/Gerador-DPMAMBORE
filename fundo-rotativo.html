@@ -29,6 +29,7 @@ sobre o modelo oficial fornecido, sem envio do conteúdo do documento a serviço
 @media(max-width:480px){.paper{transform:scale(.55);margin-bottom:-134mm}}
 @page{size:A4 portrait;margin:0}@media print{body{background:#fff}.top,.security,.formcol,.preview-head,.preview-note,#viewCert,#viewCfg{display:none!important}.wrap{max-width:none;padding:0;margin:0}#viewJust{display:block!important}.layout{display:block}.preview-card{position:static;border:0;padding:0;margin:0;box-shadow:none}.paper-wrap{padding:0;background:#fff;border:0;overflow:visible}.paper{box-shadow:none;transform:none!important;margin:0!important;width:210mm;min-height:297mm}}
 </style>
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <div class="top"><div class="top-inner"><div class="title">FUNDO ROTATIVO</div><button class="tab active" id="tabJust" type="button">Justificativa</button><button class="tab" id="tabCert" type="button">Certidões</button><button class="cfg-top" id="openCfg" type="button">⚙ Configurações</button><div class="subtitle">Central PCPR · justificativa baseada no modelo oficial fornecido · processamento e armazenamento local</div></div></div>
@@ -87,7 +88,7 @@ sobre o modelo oficial fornecido, sem envio do conteúdo do documento a serviço
 <div class="field"><label>Cidade/UF</label><input id="cfgCidadeUf" class="upper" placeholder="MAMBORÊ/PR"></div>
 <div class="field"><label>Nome do Delegado</label><input id="cfgDelegado" placeholder="Anderson Sérgio Romão"></div>
 <div class="field"><label>Cargo</label><input id="cfgCargo" placeholder="Delegado de Polícia"></div>
-</div><div class="actions"><button class="btn" id="saveCfg" type="button">SALVAR CONFIGURAÇÃO ESPECÍFICA</button><button class="btn secondary" id="clearCfg" type="button">USAR CONFIGURAÇÃO GERAL</button></div><div class="msg" id="cfgMsg"></div></div>
+</div><div class="actions"><button class="btn" id="saveCfg" type="button">SALVAR CONFIGURAÇÃO ESPECÍFICA</button><button class="btn secondary" id="clearCfg" type="button">USAR CONFIGURAÇÃO GERAL</button><button class="btn secondary" id="restoreCfg" type="button">RESTAURAR PADRÃO ORIGINAL</button></div><div class="msg" id="cfgMsg"></div></div>
 <div class="card"><h2>Regra aplicada</h2><div style="font-size:12px;line-height:1.55;color:var(--muted)">1. Havendo configuração específica salva neste módulo, ela tem prioridade.<br>2. Sem configuração específica, o módulo utiliza a Configuração Geral da Central.<br>3. Na ausência de ambas, são usados os valores padrão de Mamborê/PR.</div></div>
 </div>
 </section>
@@ -118,7 +119,7 @@ function sentence(s){s=normalizeSpace(s);return s}
 function cityUfDoc(v){const raw=normalizeSpace(v);const parts=raw.split('/');const city=(parts[0]||'').toLocaleLowerCase('pt-BR').replace(/(^|[\s-])([a-záàâãéèêíïóôõöúç])/g,(m,p,c)=>p+c.toLocaleUpperCase('pt-BR')).replace(/\b(De|Da|Do|Das|Dos|E)\b/g,x=>x.toLocaleLowerCase('pt-BR'));const uf=(parts[1]||'').toUpperCase();return city+(uf?'/'+uf:'')}
 function ensurePeriod(s){s=sentence(s);return s&&!/[.!?]$/.test(s)?s+'.':s}
 function stripLead(s,rx){return String(s||'').trim().replace(rx,'').trim()}
-function getGeneral(){return getJSON(GENERAL_KEY)||{}}
+function getGeneral(){return (window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():(getJSON(GENERAL_KEY)||{})}
 function generalCfg(){const g=getGeneral(),auth=Array.isArray(g.autoridades)&&g.autoridades[0]?g.autoridades[0]:{};return{cidadeUf:((g.cidade||'Mamborê')+'/'+(g.uf||'PR')).toUpperCase(),delegado:auth.nome||g.delegado||DEFAULT_CFG.delegado,cargo:auth.cargo||g.cargo||DEFAULT_CFG.cargo}}
 function specificCfg(){const s=getJSON(CFG_KEY);return s&&typeof s==='object'?s:null}
 function activeCfg(){return Object.assign({},DEFAULT_CFG,generalCfg(),specificCfg()||{})}
@@ -156,6 +157,7 @@ $('btnLimpar').onclick=()=>{if(!confirm('Limpar todos os campos da justificativa
 function fillCfg(){const c=activeCfg();$('cfgCidadeUf').value=c.cidadeUf||'';$('cfgDelegado').value=c.delegado||'';$('cfgCargo').value=c.cargo||'';$('cfgSource').textContent=configSourceText();$('cfgMsg').textContent=''}
 $('saveCfg').onclick=()=>{const c={cidadeUf:normalizeSpace($('cfgCidadeUf').value).toUpperCase(),delegado:normalizeSpace($('cfgDelegado').value),cargo:normalizeSpace($('cfgCargo').value)};if(!c.cidadeUf||!c.delegado||!c.cargo){$('cfgMsg').className='msg err';$('cfgMsg').textContent='Preencha Cidade/UF, Nome do Delegado e Cargo.';return}localStorage.setItem(CFG_KEY,JSON.stringify(c));$('cidadeUf').value=c.cidadeUf;$('cfgMsg').className='msg ok';$('cfgMsg').textContent='Configuração específica salva neste navegador.';$('cfgSource').textContent=configSourceText();renderPreview()};
 $('clearCfg').onclick=()=>{if(!confirm('Remover a configuração específica e voltar a usar a Configuração Geral da Central?'))return;localStorage.removeItem(CFG_KEY);fillCfg();$('cidadeUf').value=activeCfg().cidadeUf;$('cfgMsg').className='msg ok';$('cfgMsg').textContent='Configuração específica removida. A configuração geral passa a ser utilizada.';renderPreview()};
+$('restoreCfg').onclick=()=>{if(!confirm('Restaurar o padrão ORIGINAL do Fundo Rotativo? Isso criará uma configuração específica local.'))return;localStorage.setItem(CFG_KEY,JSON.stringify(DEFAULT_CFG));fillCfg();$('cidadeUf').value=DEFAULT_CFG.cidadeUf;$('cfgMsg').className='msg ok';$('cfgMsg').textContent='Padrão original do Fundo Rotativo restaurado.';renderPreview()};
 
 function loadCerts(){const x=getJSON(CERT_KEY);return Array.isArray(x)&&x.length?x:clone(DEFAULT_CERTS)}
 let certs=loadCerts();
@@ -182,6 +184,6 @@ function buildOdt(d){const files=readStoredZip(b64u8(ODT_TEMPLATE_B64)),dec=new 
 function download(bytes,name,mime){const url=URL.createObjectURL(new Blob([bytes],{type:mime})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000)}
 $('btnOdt').onclick=()=>{const d=collect(),m=validate(d);if(m.length){$('msg').className='msg err';$('msg').textContent='Preencha os campos obrigatórios: '+m.join(', ')+'.';return}try{download(buildOdt(d),`justificativa-fundo-rotativo-NF-${d.nf.replace(/[^0-9A-Za-z-]/g,'-')}.odt`,'application/vnd.oasis.opendocument.text');$('msg').className='msg ok';$('msg').textContent='ODT gerado a partir do modelo oficial.'}catch(e){console.error(e);$('msg').className='msg err';$('msg').textContent='Não foi possível gerar o ODT: '+String(e.message||e)}};
 
-$('dataDoc').value=todayISO();$('cidadeUf').value=activeCfg().cidadeUf||DEFAULT_CFG.cidadeUf;renderPreview();renderCerts();fillCfg();
+$('dataDoc').value=todayISO();$('cidadeUf').value=activeCfg().cidadeUf||DEFAULT_CFG.cidadeUf;renderPreview();renderCerts();fillCfg();if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(!specificCfg()){fillCfg();$('cidadeUf').value=activeCfg().cidadeUf||DEFAULT_CFG.cidadeUf;renderPreview();}});
 </script>
 </body></html>

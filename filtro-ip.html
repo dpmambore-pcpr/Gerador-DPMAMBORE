@@ -145,6 +145,7 @@ tbody tr:hover{background:#faf7f0!important}
 footer{color:var(--suave)!important}
 </style>
 
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <header>
@@ -306,6 +307,8 @@ footer{color:var(--suave)!important}
     <div class="linha" style="margin-top:16px">
       <button id="btnVersao">Baixar versão personalizada (.html)</button>
       <button class="sec" id="btnAplicaCfg">Aplicar só nesta sessão</button>
+      <button class="sec" id="btnCfgGeral">Usar Configuração Geral</button>
+      <button class="sec" id="btnCfgOriginal">Restaurar padrão original</button>
       <button class="sec" id="btnExpCfg">Exportar configuração (.json)</button>
       <button class="sec" id="btnImpCfg">Importar configuração (.json)</button>
       <input type="file" id="fileCfg" class="hide" accept=".json">
@@ -824,7 +827,21 @@ function textoOficio(c, temPorta){
 var CFG = {};
 (function(){
   var p = (typeof window !== "undefined" && window.CFG_UNIDADE) ? window.CFG_UNIDADE : {};
-  Object.keys(CFG_PADRAO).forEach(function(k){ CFG[k] = (p[k] === undefined || p[k] === null || p[k] === "") ? CFG_PADRAO[k] : p[k]; });
+  var g = (typeof window !== "undefined" && window.PCPRConfig && PCPRConfig.get) ? PCPRConfig.get() : {};
+  var a = (g.autoridades && g.autoridades[0]) || {};
+  var base = Object.assign({}, CFG_PADRAO);
+  if(g && Object.keys(g).length){
+    base.unidade = g.unidade || base.unidade;
+    base.subtitulo = g.subdivisao || base.subtitulo;
+    base.cabecalho = (window.PCPRConfig && PCPRConfig.headerLines) ? PCPRConfig.headerLines(g) : base.cabecalho;
+    base.rodape = (window.PCPRConfig && PCPRConfig.footerLines) ? PCPRConfig.footerLines(g) : base.rodape;
+    base.cidade = [g.cidade,g.uf].filter(Boolean).join('/') || base.cidade;
+    base.email = g.email || base.email;
+    base.assinante = a.nome || base.assinante;
+    base.cargo = a.cargo || base.cargo;
+    if(g.logo) base.brasao = String(g.logo).replace(/^data:image\/[^;]+;base64,/i,'');
+  }
+  Object.keys(CFG_PADRAO).forEach(function(k){ CFG[k] = (p[k] === undefined || p[k] === null || p[k] === "") ? base[k] : p[k]; });
   if(!CFG.brasao) CFG.brasao = BRASAO_B64;
 })();
 var CABECALHO_INST = CFG.cabecalho;
@@ -1514,6 +1531,29 @@ function cfgAplica(){
   renderEmails(); renderCrimes();
   msgCfg("Configuração aplicada nesta sessão. Para não repetir, baixe a versão personalizada.", "var(--ok)");
 }
+function cfgBaseGeral(){
+  var g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};
+  var a=(g.autoridades&&g.autoridades[0])||{};
+  var b=Object.assign({},CFG_PADRAO);
+  if(g&&Object.keys(g).length){
+    b.unidade=g.unidade||b.unidade;b.subtitulo=g.subdivisao||b.subtitulo;
+    b.cabecalho=(window.PCPRConfig&&PCPRConfig.headerLines)?PCPRConfig.headerLines(g):b.cabecalho;
+    b.rodape=(window.PCPRConfig&&PCPRConfig.footerLines)?PCPRConfig.footerLines(g):b.rodape;
+    b.cidade=[g.cidade,g.uf].filter(Boolean).join('/')||b.cidade;b.email=g.email||b.email;
+    b.assinante=a.nome||b.assinante;b.cargo=a.cargo||b.cargo;
+    if(g.logo)b.brasao=String(g.logo).replace(/^data:image\/[^;]+;base64,/i,'');
+  }
+  b.brasao=b.brasao||BRASAO_B64;return b;
+}
+function cfgUsarGeral(){
+  if(!confirm('Aplicar a Configuração Geral da Central neste módulo? As alterações desta sessão serão substituídas.'))return;
+  var b=cfgBaseGeral();Object.keys(CFG_PADRAO).forEach(function(k){CFG[k]=b[k]});CFG.emails=CFG_PADRAO.emails.slice();CFG.crimes=CFG_PADRAO.crimes.slice();CFG.modelo=null;
+  CABECALHO_INST=CFG.cabecalho;RODAPE_INST=CFG.rodape;cfgPreencheForm();cfgAplicaNaTela();renderEmails();renderCrimes();msgCfg('Configuração Geral aplicada nesta sessão.','var(--ok)');
+}
+function cfgRestaurarOriginal(){
+  if(!confirm('Restaurar o padrão ORIGINAL deste módulo nesta sessão?'))return;
+  Object.keys(CFG_PADRAO).forEach(function(k){var v=CFG_PADRAO[k];CFG[k]=Array.isArray(v)?v.slice():v});CFG.brasao=BRASAO_B64;CABECALHO_INST=CFG.cabecalho;RODAPE_INST=CFG.rodape;cfgPreencheForm();cfgAplicaNaTela();renderEmails();renderCrimes();msgCfg('Padrão original restaurado nesta sessão.','var(--ok)');
+}
 function msgCfg(t, cor){
   var e = document.getElementById("msgCfg");
   e.innerHTML = t; e.style.color = cor || "var(--suave)";
@@ -1633,6 +1673,8 @@ document.getElementById("tglCfg").onclick = function(){
   this.firstChild.nodeValue = b.classList.contains("hide") ? "4. Configuração da unidade \u25B8 " : "4. Configuração da unidade \u25BE ";
 };
 document.getElementById("btnAplicaCfg").onclick = cfgAplica;
+document.getElementById("btnCfgGeral").onclick = cfgUsarGeral;
+document.getElementById("btnCfgOriginal").onclick = cfgRestaurarOriginal;
 document.getElementById("btnVersao").onclick = cfgBaixaVersao;
 document.getElementById("btnExpCfg").onclick = cfgExportaJSON;
 document.getElementById("btnImpCfg").onclick = function(){ document.getElementById("fileCfg").click(); };
@@ -1654,6 +1696,7 @@ document.getElementById("fileBrasao").onchange = function(){ if(this.files[0]) c
   document.getElementById(id).oninput = function(){ this.dataset.tocado = "1"; };
 });
 cfgPreencheForm(); cfgAplicaNaTela(); renderEmails(); renderCrimes();
+if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(function(){if(window.CFG_UNIDADE)return;var b=cfgBaseGeral();Object.keys(CFG_PADRAO).forEach(function(k){CFG[k]=b[k]});CFG.emails=CFG_PADRAO.emails.slice();CFG.crimes=CFG_PADRAO.crimes.slice();CFG.modelo=null;CABECALHO_INST=CFG.cabecalho;RODAPE_INST=CFG.rodape;cfgPreencheForm();cfgAplicaNaTela();renderEmails();renderCrimes();});
 document.getElementById("btnASN").onclick = consultaASN;
 document.getElementById("btnIPs").onclick = function(){
   var u = []; atual.forEach(function(l){ if(u.indexOf(l.ip) < 0) u.push(l.ip); });

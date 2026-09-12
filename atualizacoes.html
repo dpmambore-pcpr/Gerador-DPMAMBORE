@@ -49,8 +49,8 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.6</span>
-      <span class="note">Última atualização: 11/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
+      <span class="version">VERSÃO ATUAL · v2.7</span>
+      <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
 
@@ -62,8 +62,24 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.6">
-        <div class="item-head"><span class="item-ver">v2.6</span><span class="item-date">11/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.7">
+        <div class="item-head"><span class="item-ver">v2.7</span><span class="item-date">12/09/2026</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
+        <h3>Configuração Geral integrada em toda a Central</h3>
+        <ul>
+          <li>A <b>Configuração Geral da Unidade</b> passa a ser a fonte principal de cabeçalho, brasão/logo, rodapé, autoridade e servidores dos módulos integrados.</li>
+          <li>Novo gerenciamento central de <b>autoridades e servidores</b>, com nome, cargo e definição da autoridade padrão.</li>
+          <li>Cargos padronizados para <b>Delegado de Polícia</b>, <b>Delegada de Polícia</b> e <b>APJ - Agente de Polícia Judiciária</b>.</li>
+          <li>Troca centralizada do brasão/logo institucional, com prévia e opção de restaurar a imagem original.</li>
+          <li>Edição centralizada do rodapé, incluindo endereço, município/UF, CEP, e-mail, telefone e site.</li>
+          <li>Configurações próprias de cada módulo foram preservadas e continuam tendo prioridade sobre a configuração geral.</li>
+          <li>Módulos configuráveis passam a oferecer, conforme aplicável, as opções <b>Usar Configuração Geral</b> e <b>Restaurar padrão original</b>.</li>
+          <li>Sincronização local entre abas e módulos por armazenamento do navegador, com compatibilidade com as configurações legadas existentes.</li>
+          <li>Restauração individual de cabeçalho, brasão, rodapé, autoridades e servidores, além da restauração completa da configuração original.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.6">
+        <div class="item-head"><span class="item-ver">v2.6</span><span class="item-date">11/09/2026</span><span class="tag new">NOVO</span><span class="tag improve">MELHORIA</span></div>
         <h3>Novo módulo — Fundo Rotativo</h3>
         <ul>
           <li>Novo cartão <b>Fundo Rotativo</b> integrado à tela inicial e à navegação superior da Central.</li>
@@ -265,7 +281,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.4';
+  const CURRENT_VERSION='2.7';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 

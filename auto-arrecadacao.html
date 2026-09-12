@@ -39,11 +39,12 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 .settingsBox summary{cursor:pointer;font-size:12px;font-weight:800;color:var(--green2)}
 .settingsActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .autoHeader{
-  position:absolute;left:16mm;right:16mm;top:22mm;height:38mm;
+  position:absolute;left:0;right:0;top:0;height:60mm;
   background:#fff;z-index:5;text-align:center;color:#000;
-  font-family:Arial,Helvetica,sans-serif;padding-top:1.5mm;
+  font-family:Arial,Helvetica,sans-serif;padding-top:2.5mm;
   border-bottom:.55pt solid #444;overflow:hidden
 }
+.autoHeader .ahLogo{display:block;width:18mm;height:20mm;object-fit:contain;margin:0 auto 1.5mm}
 .autoHeader .ahLine{font-size:8.4pt;line-height:1.18;white-space:normal}
 .autoHeader .ahStrong{font-weight:700}
 @media(max-width:700px){.cfgGrid{grid-template-columns:1fr}.cfgGrid .full{grid-column:auto}}
@@ -57,6 +58,7 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 @media print{.security-note{display:none!important}}
 
 </style>
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <header><h1>Auto de Arrecadação e Exibição</h1><p>Documento vinculado ao endereço de um alvo do Envelope de Busca</p></header>
@@ -101,12 +103,22 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
         <label class="full">Unidade policial
           <input id="cfgAutoUnidade">
         </label>
+        <label>Cidade
+          <input id="cfgAutoCidade">
+        </label>
+        <label>UF
+          <input id="cfgAutoUf" maxlength="2">
+        </label>
+        <label class="full">Brasão / logo
+          <div class="row" style="margin-top:5px;align-items:center"><img id="cfgAutoLogoPreview" src="brasao-padrao.png" alt="Brasão" style="width:56px;height:64px;object-fit:contain;border:1px solid #d8d3c8;border-radius:7px;background:#fff;padding:3px"><button type="button" class="secondary" id="cfgAutoLogoBtn">Trocar imagem</button><button type="button" class="secondary" id="cfgAutoLogoOriginal">Usar brasão original</button><input id="cfgAutoLogoFile" type="file" accept="image/*" style="display:none"></div>
+        </label>
       </div>
       <div class="settingsActions">
-        <button type="button" id="saveAutoHeader">Salvar cabeçalho</button>
-        <button type="button" class="secondary" id="resetAutoHeader">Restaurar padrão</button>
+        <button type="button" id="saveAutoHeader">Salvar neste módulo</button>
+        <button type="button" class="secondary" id="useGeneralAutoHeader">Usar Configuração Geral</button>
+        <button type="button" class="secondary" id="resetAutoHeader">Restaurar padrão original</button>
       </div>
-      <div class="note">Esta configuração é compatível com o cabeçalho institucional usado na aba Oitiva.</div>
+      <div class="note" id="autoHeaderSource"></div>
     </details>
 
     <details class="settingsBox">
@@ -126,10 +138,11 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
         </label>
       </div>
       <div class="settingsActions">
-        <button type="button" id="saveAutoFooter">Salvar rodapé</button>
-        <button type="button" class="secondary" id="resetAutoFooter">Restaurar padrão</button>
+        <button type="button" id="saveAutoFooter">Salvar neste módulo</button>
+        <button type="button" class="secondary" id="useGeneralAutoFooter">Usar Configuração Geral</button>
+        <button type="button" class="secondary" id="resetAutoFooter">Restaurar padrão original</button>
       </div>
-      <div class="note">O rodapé é compartilhado com o Envelope de Busca.</div>
+      <div class="note" id="autoFooterSource"></div>
     </details>
   </div>
 </section>
@@ -156,20 +169,19 @@ function xmlEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&
 function maskCNJ(v){let d=String(v||'').replace(/\D/g,'').slice(0,20),o='';if(d.length<=7)return d;o=d.slice(0,7);if(d.length>7)o+='-'+d.slice(7,9);if(d.length>9)o+='.'+d.slice(9,13);if(d.length>13)o+='.'+d.slice(13,14);if(d.length>14)o+='.'+d.slice(14,16);if(d.length>16)o+='.'+d.slice(16,20);return o}
 
 
-const AUTO_HEADER_CONFIG_KEY='pcpr.oitivaPenal.institucional.v1';
+const AUTO_HEADER_CONFIG_KEY='pcpr.autoArrecadacao.headerOverride.v2';
 const DEFAULT_AUTO_HEADER_CONFIG={
   estado:'ESTADO DO PARANÁ',
   secretaria:'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
   departamento:'DEPARTAMENTO DE POLÍCIA CIVIL',
   subdivisao:'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
-  unidade:'DELEGACIA DE POLÍCIA CIVIL DE MAMBORÊ'
+  unidade:'DELEGACIA DE POLÍCIA CIVIL DE MAMBORÊ',
+  cidade:'Mamborê',uf:'PR',
+  logo:''
 };
-function loadAutoHeaderConfig(){
-  try{
-    const x=JSON.parse(localStorage.getItem(AUTO_HEADER_CONFIG_KEY)||'null');
-    return {...DEFAULT_AUTO_HEADER_CONFIG,...(x&&typeof x==='object'?x:{})};
-  }catch(e){return {...DEFAULT_AUTO_HEADER_CONFIG}}
-}
+function generalAutoHeader(){const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};return {...DEFAULT_AUTO_HEADER_CONFIG,estado:g.estadoHeader||DEFAULT_AUTO_HEADER_CONFIG.estado,secretaria:g.secretaria||DEFAULT_AUTO_HEADER_CONFIG.secretaria,departamento:g.departamento||DEFAULT_AUTO_HEADER_CONFIG.departamento,subdivisao:g.subdivisao||DEFAULT_AUTO_HEADER_CONFIG.subdivisao,unidade:g.unidade||DEFAULT_AUTO_HEADER_CONFIG.unidade,cidade:g.cidade||DEFAULT_AUTO_HEADER_CONFIG.cidade,uf:g.uf||DEFAULT_AUTO_HEADER_CONFIG.uf,logo:g.logo||''}}
+function loadAutoHeaderConfig(){const base=generalAutoHeader();try{const x=JSON.parse(localStorage.getItem(AUTO_HEADER_CONFIG_KEY)||'null');return {...base,...(x&&typeof x==='object'?x:{})};}catch(e){return base}}
+function updateAutoHeaderSource(){const e=document.getElementById('autoHeaderSource');if(e)e.innerHTML=localStorage.getItem(AUTO_HEADER_CONFIG_KEY)?'<b>Configuração personalizada neste módulo.</b>':'<b>Usando Configuração Geral da Central.</b>';}
 let autoHeaderConfig=loadAutoHeaderConfig();
 
 function fillAutoHeaderConfig(){
@@ -178,6 +190,9 @@ function fillAutoHeaderConfig(){
   document.getElementById('cfgAutoDepartamento').value=autoHeaderConfig.departamento||'';
   document.getElementById('cfgAutoSubdivisao').value=autoHeaderConfig.subdivisao||'';
   document.getElementById('cfgAutoUnidade').value=autoHeaderConfig.unidade||'';
+  document.getElementById('cfgAutoCidade').value=autoHeaderConfig.cidade||'';
+  document.getElementById('cfgAutoUf').value=autoHeaderConfig.uf||'';
+  document.getElementById('cfgAutoLogoPreview').src=autoHeaderConfig.logo||'brasao-padrao.png';
 }
 function saveAutoHeaderConfig(){
   autoHeaderConfig={
@@ -185,19 +200,17 @@ function saveAutoHeaderConfig(){
     secretaria:document.getElementById('cfgAutoSecretaria').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.secretaria,
     departamento:document.getElementById('cfgAutoDepartamento').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.departamento,
     subdivisao:document.getElementById('cfgAutoSubdivisao').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.subdivisao,
-    unidade:document.getElementById('cfgAutoUnidade').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.unidade
+    unidade:document.getElementById('cfgAutoUnidade').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.unidade,
+    cidade:document.getElementById('cfgAutoCidade').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.cidade,
+    uf:(document.getElementById('cfgAutoUf').value.trim()||DEFAULT_AUTO_HEADER_CONFIG.uf).toUpperCase().slice(0,2),
+    logo:autoHeaderConfig.logo||''
   };
-  localStorage.setItem(AUTO_HEADER_CONFIG_KEY,JSON.stringify(autoHeaderConfig));
+  localStorage.setItem(AUTO_HEADER_CONFIG_KEY,JSON.stringify(autoHeaderConfig));updateAutoHeaderSource();
   updatePreview();
-  alert('Cabeçalho institucional salvo.');
+  alert('Cabeçalho específico deste módulo salvo.');
 }
-function resetAutoHeaderConfig(){
-  if(!confirm('Restaurar o cabeçalho padrão da Delegacia de Mamborê?'))return;
-  autoHeaderConfig={...DEFAULT_AUTO_HEADER_CONFIG};
-  localStorage.setItem(AUTO_HEADER_CONFIG_KEY,JSON.stringify(autoHeaderConfig));
-  fillAutoHeaderConfig();
-  updatePreview();
-}
+function useGeneralAutoHeader(){if(!confirm('Remover a personalização do cabeçalho e usar a Configuração Geral?'))return;localStorage.removeItem(AUTO_HEADER_CONFIG_KEY);autoHeaderConfig=loadAutoHeaderConfig();fillAutoHeaderConfig();updateAutoHeaderSource();updatePreview();}
+function resetAutoHeaderConfig(){if(!confirm('Restaurar o cabeçalho ORIGINAL deste módulo?'))return;autoHeaderConfig={...DEFAULT_AUTO_HEADER_CONFIG};localStorage.setItem(AUTO_HEADER_CONFIG_KEY,JSON.stringify(autoHeaderConfig));fillAutoHeaderConfig();updateAutoHeaderSource();updatePreview();}
 function ensureAutoHeaders(){
   document.querySelectorAll('.page').forEach(p=>{
     let h=p.querySelector('.autoHeader');
@@ -207,6 +220,7 @@ function ensureAutoHeaders(){
       p.appendChild(h);
     }
     h.innerHTML=
+      '<img class="ahLogo" alt="Brasão" src="'+escapeHtml(autoHeaderConfig.logo||'brasao-padrao.png')+'">'+
       '<div class="ahLine ahStrong">'+escapeHtml(autoHeaderConfig.estado)+'</div>'+
       '<div class="ahLine">'+escapeHtml(autoHeaderConfig.secretaria)+'</div>'+
       '<div class="ahLine ahStrong">'+escapeHtml(autoHeaderConfig.departamento)+'</div>'+
@@ -215,9 +229,11 @@ function ensureAutoHeaders(){
   });
 }
 
-const FOOTER_CONFIG_KEY='pcpr.rodapeUnidade.v1';
+const FOOTER_CONFIG_KEY='pcpr.autoArrecadacao.footerOverride.v2';
 const DEFAULT_FOOTER_CONFIG={endereco:'Av. Augusto Mendes dos Santos, 997, Mamborê - PR, 87340-000',email:'dpmambore@pc.pr.gov.br',fone:'(44) 3865-1341',site:'www.policiacivil.pr.gov.br'};
-function loadFooterConfig(){try{const x=JSON.parse(localStorage.getItem(FOOTER_CONFIG_KEY)||'null');return {...DEFAULT_FOOTER_CONFIG,...(x&&typeof x==='object'?x:{})}}catch(e){return {...DEFAULT_FOOTER_CONFIG}}}
+function generalAutoFooter(){const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};const line=(window.PCPRConfig&&PCPRConfig.footerLines)?(PCPRConfig.footerLines(g)[0]||''):'';return {...DEFAULT_FOOTER_CONFIG,endereco:line||DEFAULT_FOOTER_CONFIG.endereco,email:g.email||DEFAULT_FOOTER_CONFIG.email,fone:g.fone||DEFAULT_FOOTER_CONFIG.fone,site:g.site||DEFAULT_FOOTER_CONFIG.site}}
+function loadFooterConfig(){const base=generalAutoFooter();try{const x=JSON.parse(localStorage.getItem(FOOTER_CONFIG_KEY)||'null');return {...base,...(x&&typeof x==='object'?x:{})}}catch(e){return base}}
+function updateAutoFooterSource(){const e=document.getElementById('autoFooterSource');if(e)e.innerHTML=localStorage.getItem(FOOTER_CONFIG_KEY)?'<b>Configuração personalizada neste módulo.</b>':'<b>Usando Configuração Geral da Central.</b>';}
 let footerConfig=loadFooterConfig();
 
 function fillAutoFooterConfig(){
@@ -233,23 +249,19 @@ function saveAutoFooterConfig(){
     fone:document.getElementById('cfgAutoRodFone').value.trim()||DEFAULT_FOOTER_CONFIG.fone,
     site:document.getElementById('cfgAutoRodSite').value.trim()||DEFAULT_FOOTER_CONFIG.site
   };
-  localStorage.setItem(FOOTER_CONFIG_KEY,JSON.stringify(footerConfig));
+  localStorage.setItem(FOOTER_CONFIG_KEY,JSON.stringify(footerConfig));updateAutoFooterSource();
   updatePreview();
-  alert('Rodapé institucional salvo.');
+  alert('Rodapé específico deste módulo salvo.');
 }
-function resetAutoFooterConfig(){
-  if(!confirm('Restaurar o rodapé padrão da Delegacia de Mamborê?'))return;
-  footerConfig={...DEFAULT_FOOTER_CONFIG};
-  localStorage.setItem(FOOTER_CONFIG_KEY,JSON.stringify(footerConfig));
-  fillAutoFooterConfig();
-  updatePreview();
-}
+function useGeneralAutoFooter(){if(!confirm('Remover a personalização do rodapé e usar a Configuração Geral?'))return;localStorage.removeItem(FOOTER_CONFIG_KEY);footerConfig=loadFooterConfig();fillAutoFooterConfig();updateAutoFooterSource();updatePreview();}
+function resetAutoFooterConfig(){if(!confirm('Restaurar o rodapé ORIGINAL deste módulo?'))return;footerConfig={...DEFAULT_FOOTER_CONFIG};localStorage.setItem(FOOTER_CONFIG_KEY,JSON.stringify(footerConfig));fillAutoFooterConfig();updateAutoFooterSource();updatePreview();}
 
 function footerLine1(){return footerConfig.endereco||''}
 function footerLine2(){return [footerConfig.email?('Email: '+footerConfig.email):'',footerConfig.fone?('Fone/Fax: '+footerConfig.fone):'',footerConfig.site||''].filter(Boolean).join(' – ')}
 function ensureAutoFooters(){document.querySelectorAll('.page').forEach(p=>{let f=p.querySelector('.autoFooter');if(!f){f=document.createElement('div');f.className='autoFooter';p.appendChild(f)}f.innerHTML=escapeHtml(footerLine1())+'<br>'+escapeHtml(footerLine2())})}
 
-function certText(){const autos=document.getElementById('autos').value.trim()||'__________________________';const end=(document.getElementById('endereco').value.trim()||'____________________________________________').toUpperCase();return `CERTIFICO QUE, aos______________________________, às _______horas, foi dado fiel cumprimento ao Mandado de Busca e Apreensão, expedido nos Autos Nº <strong>${escapeHtml(autos)}</strong> pelo da Juiz(a) de Direito da Comarca de MAMBORÊ/ PR, no endereço localizado na <strong>${escapeHtml(end)}</strong> sendo o responsável pelo local _________________________________________________, RG: ________________ que neste ato se dá por cientificado, subscrevendo-o, juntamente com a(s) testemunha(s) que abaixo segue(m) identificada(s).`}
+function comarcaText(){return ((autoHeaderConfig.cidade||DEFAULT_AUTO_HEADER_CONFIG.cidade)+'/'+(autoHeaderConfig.uf||DEFAULT_AUTO_HEADER_CONFIG.uf)).toUpperCase()}
+function certText(){const autos=document.getElementById('autos').value.trim()||'__________________________';const end=(document.getElementById('endereco').value.trim()||'____________________________________________').toUpperCase();return `CERTIFICO QUE, aos______________________________, às _______horas, foi dado fiel cumprimento ao Mandado de Busca e Apreensão, expedido nos Autos Nº <strong>${escapeHtml(autos)}</strong> pelo da Juiz(a) de Direito da Comarca de ${escapeHtml(comarcaText())}, no endereço localizado na <strong>${escapeHtml(end)}</strong> sendo o responsável pelo local _________________________________________________, RG: ________________ que neste ato se dá por cientificado, subscrevendo-o, juntamente com a(s) testemunha(s) que abaixo segue(m) identificada(s).`}
 function escapeHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function updatePreview(){ensureAutoHeaders();ensureAutoFooters();const cert=document.getElementById('cert');cert.style.fontSize='11pt';cert.innerHTML=certText();let size=11;while(cert.scrollHeight>cert.clientHeight&&size>9.2){size-=0.2;cert.style.fontSize=size+'pt';}}
 function params(){return new URLSearchParams(location.search)}
@@ -261,7 +273,10 @@ function saveAutoTargetState(extra={}){const tid=q.get('targetId')||'';if(!tid)r
 const q=params();document.getElementById('endereco').value=q.get('endereco')||'';const alvo=q.get('alvo')||'';const nome=q.get('nome')||'';const tid=q.get('targetId')||'';const savedAuto=tid?(readAutoTargetMap()[tid]||{}):{};document.getElementById('autos').value=maskCNJ(q.get('autos')||savedAuto.autos||'');document.getElementById('targetContext').textContent=(alvo||nome)?`Vinculado ao ${alvo?'ALVO Nº '+alvo:''}${alvo&&nome?' — ':''}${nome||''}`:'Auto aberto a partir do Envelope de Busca.';
 document.getElementById('autos').addEventListener('input',e=>{e.target.value=maskCNJ(e.target.value);saveAutoTargetState({status:'preenchido'});updatePreview()});document.getElementById('endereco').addEventListener('input',()=>{saveAutoTargetState();updatePreview()});
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
-document.getElementById('downloadOdt').addEventListener('click',()=>{const autos=document.getElementById('autos').value.trim();const end=document.getElementById('endereco').value.trim();if(!autos)return alert('Informe o nº dos autos.');if(!end)return alert('Informe o endereço.');try{const entries=parseStored(bytesB64(ODT_TEMPLATE_B64)).map(e=>{if(e.name==='content.xml'){let s=ODT_DEC.decode(e.data);s=s.replace('@@AUTOS@@',xmlEscape(autos)).replace('@@ENDERECO@@',xmlEscape(end.toUpperCase()));return{name:e.name,data:ODT_ENC.encode(s)}}if(e.name==='styles.xml'){
+function readImageDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));r.onload=()=>resolve(String(r.result||''));r.readAsDataURL(file)})}
+function imageFromSrc(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src})}
+async function headerLogoJpeg(){if(!autoHeaderConfig.logo)return null;const im=await imageFromSrc(autoHeaderConfig.logo),cv=document.createElement('canvas');cv.width=cv.height=500;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,500,500);const r=Math.min(460/im.width,460/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,(500-w)/2,(500-h)/2,w,h);const b=await new Promise((resolve,reject)=>cv.toBlob(v=>v?resolve(v):reject(new Error('Falha ao converter o brasão.')),'image/jpeg',.94));return new Uint8Array(await b.arrayBuffer())}
+document.getElementById('downloadOdt').addEventListener('click',async()=>{const autos=document.getElementById('autos').value.trim();const end=document.getElementById('endereco').value.trim();if(!autos)return alert('Informe o nº dos autos.');if(!end)return alert('Informe o endereço.');try{const logoBytes=await headerLogoJpeg();const entries=parseStored(bytesB64(ODT_TEMPLATE_B64)).map(e=>{if(logoBytes&&e.name==='Pictures/1000000000000552000006027AB83DBA547B0E23.jpg')return{name:e.name,data:logoBytes};if(e.name==='content.xml'){let s=ODT_DEC.decode(e.data);s=s.replace('@@AUTOS@@',xmlEscape(autos)).replace('@@ENDERECO@@',xmlEscape(end.toUpperCase())).replace('MAMBORÊ/ PR',xmlEscape(comarcaText()));return{name:e.name,data:ODT_ENC.encode(s)}}if(e.name==='styles.xml'){
   let s=ODT_DEC.decode(e.data)
     .replaceAll('@@HDR_ESTADO@@',xmlEscape(autoHeaderConfig.estado))
     .replaceAll('@@HDR_SECRETARIA@@',xmlEscape(autoHeaderConfig.secretaria))
@@ -272,31 +287,30 @@ document.getElementById('downloadOdt').addEventListener('click',()=>{const autos
     .replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));
   return{name:e.name,data:ODT_ENC.encode(s)}
 }return e;});saveAutoTargetState({odtGerado:true,status:'odt_gerado'});download(new Blob([buildZip(entries)],{type:'application/vnd.oasis.opendocument.text'}),'AUTO_ARRECADACAO_'+autos.replace(/[^0-9A-Za-z]+/g,'_')+'.odt')}catch(err){console.error(err);alert('Não foi possível gerar o ODT: '+(err.message||err))}});
-function printOnly(){const source=document.getElementById('pages'),iframe=document.createElement('iframe');iframe.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(iframe);const doc=iframe.contentDocument||iframe.contentWindow.document;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}.pages{display:block}.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.page>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.autoHeader{position:absolute;left:16mm;right:16mm;top:22mm;height:38mm;background:#fff;z-index:5;text-align:center;color:#000;font-family:Arial,sans-serif;padding-top:1.5mm;border-bottom:.55pt solid #444;overflow:hidden}.autoHeader .ahLine{font-size:8.4pt;line-height:1.18}.autoHeader .ahStrong{font-weight:700}.cert{position:absolute;left:22.54mm;top:97.27mm;width:169.1mm;height:46.5mm;font-family:Arial,sans-serif;font-size:'+document.getElementById('cert').style.fontSize+';line-height:1.5;text-align:justify;color:#000;z-index:2}.cert strong{font-weight:700}.autoFooter{position:absolute;left:18mm;right:18mm;bottom:4.8mm;height:13mm;background:#fff;z-index:4;border-top:.55pt solid #555;text-align:center;font-family:Arial,sans-serif;font-size:7.5pt;line-height:1.35;padding-top:1.4mm}</style></head><body>'+source.outerHTML+'</body></html>');doc.close();setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print()},250);iframe.contentWindow.addEventListener('afterprint',()=>setTimeout(()=>iframe.remove(),300),{once:true});setTimeout(()=>iframe.remove(),120000)}
+function printOnly(){const source=document.getElementById('pages'),iframe=document.createElement('iframe');iframe.style.cssText='position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';document.body.appendChild(iframe);const doc=iframe.contentDocument||iframe.contentWindow.document;doc.open();doc.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 portrait;margin:0}html,body{margin:0;padding:0;background:#fff}.pages{display:block}.page{width:210mm;height:297mm;position:relative;overflow:hidden;page-break-after:always;break-after:page}.page:last-child{page-break-after:auto;break-after:auto}.page>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.autoHeader{position:absolute;left:0;right:0;top:0;height:60mm;background:#fff;z-index:5;text-align:center;color:#000;font-family:Arial,sans-serif;padding-top:2.5mm;border-bottom:.55pt solid #444;overflow:hidden}.autoHeader .ahLogo{display:block;width:18mm;height:20mm;object-fit:contain;margin:0 auto 1.5mm}.autoHeader .ahLine{font-size:8.4pt;line-height:1.18}.autoHeader .ahStrong{font-weight:700}.cert{position:absolute;left:22.54mm;top:97.27mm;width:169.1mm;height:46.5mm;font-family:Arial,sans-serif;font-size:'+document.getElementById('cert').style.fontSize+';line-height:1.5;text-align:justify;color:#000;z-index:2}.cert strong{font-weight:700}.autoFooter{position:absolute;left:18mm;right:18mm;bottom:4.8mm;height:13mm;background:#fff;z-index:4;border-top:.55pt solid #555;text-align:center;font-family:Arial,sans-serif;font-size:7.5pt;line-height:1.35;padding-top:1.4mm}</style></head><body>'+source.outerHTML+'</body></html>');doc.close();setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print()},250);iframe.contentWindow.addEventListener('afterprint',()=>setTimeout(()=>iframe.remove(),300),{once:true});setTimeout(()=>iframe.remove(),120000)}
 
-fillAutoHeaderConfig();
-fillAutoFooterConfig();
+fillAutoHeaderConfig();updateAutoHeaderSource();
+fillAutoFooterConfig();updateAutoFooterSource();
 
 document.getElementById('saveAutoHeader').addEventListener('click',saveAutoHeaderConfig);
+document.getElementById('useGeneralAutoHeader').addEventListener('click',useGeneralAutoHeader);
 document.getElementById('resetAutoHeader').addEventListener('click',resetAutoHeaderConfig);
+document.getElementById('cfgAutoLogoBtn').addEventListener('click',()=>document.getElementById('cfgAutoLogoFile').click());
+document.getElementById('cfgAutoLogoFile').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{autoHeaderConfig.logo=await readImageDataUrl(f);document.getElementById('cfgAutoLogoPreview').src=autoHeaderConfig.logo;updatePreview();alert('Imagem carregada. Clique em “Salvar neste módulo” para manter a personalização.')}catch(err){alert(err.message||'Não foi possível carregar a imagem.')}});
+document.getElementById('cfgAutoLogoOriginal').addEventListener('click',()=>{autoHeaderConfig.logo='';document.getElementById('cfgAutoLogoPreview').src='brasao-padrao.png';updatePreview();});
 document.getElementById('saveAutoFooter').addEventListener('click',saveAutoFooterConfig);
+document.getElementById('useGeneralAutoFooter').addEventListener('click',useGeneralAutoFooter);
 document.getElementById('resetAutoFooter').addEventListener('click',resetAutoFooterConfig);
+document.getElementById('cfgAutoUf').addEventListener('input',e=>e.target.value=e.target.value.replace(/[^a-z]/gi,'').toUpperCase().slice(0,2));
 
 window.addEventListener('storage',e=>{
-  if(e.key===AUTO_HEADER_CONFIG_KEY){
-    autoHeaderConfig=loadAutoHeaderConfig();
-    fillAutoHeaderConfig();
-    updatePreview();
-  }
-  if(e.key===FOOTER_CONFIG_KEY){
-    footerConfig=loadFooterConfig();
-    fillAutoFooterConfig();
-    updatePreview();
-  }
+  if(e.key===AUTO_HEADER_CONFIG_KEY){autoHeaderConfig=loadAutoHeaderConfig();fillAutoHeaderConfig();updateAutoHeaderSource();updatePreview();}
+  if(e.key===FOOTER_CONFIG_KEY){footerConfig=loadFooterConfig();fillAutoFooterConfig();updateAutoFooterSource();updatePreview();}
 });
+if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{let changed=false;if(!localStorage.getItem(AUTO_HEADER_CONFIG_KEY)){autoHeaderConfig=loadAutoHeaderConfig();fillAutoHeaderConfig();updateAutoHeaderSource();changed=true}if(!localStorage.getItem(FOOTER_CONFIG_KEY)){footerConfig=loadFooterConfig();fillAutoFooterConfig();updateAutoFooterSource();changed=true}if(changed)updatePreview();});
 
 saveAutoTargetState();
-document.getElementById('printBtn').addEventListener('click',()=>{saveAutoTargetState({pdfAberto:true,status:'impressao'});printOnly();});document.getElementById('backTargetBtn').addEventListener('click',()=>{saveAutoTargetState();try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}window.close();});document.getElementById('closeBtn').addEventListener('click',()=>window.close());updatePreview();
+document.getElementById('printBtn').addEventListener('click',()=>{saveAutoTargetState({pdfAberto:true,status:'impressao'});printOnly();});document.getElementById('backTargetBtn')?.addEventListener('click',()=>{saveAutoTargetState();try{if(window.opener&&!window.opener.closed){window.opener.focus();window.close();return}}catch(e){}window.close();});document.getElementById('closeBtn').addEventListener('click',()=>window.close());updatePreview();
 })();
 </script>
 </body></html>

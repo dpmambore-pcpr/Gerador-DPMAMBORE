@@ -1,377 +1,166 @@
 <!DOCTYPE html>
-<!--
-SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
-Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
-ou servidor institucional conectado à Central. Quando um módulo salva preferências, históricos,
-projetos, modelos ou alvos, o armazenamento ocorre somente neste navegador/dispositivo por
-localStorage ou IndexedDB. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas
-ao código público.
--->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Configuração Geral da Unidade</title>
+<title>Configuração Geral da Unidade — Central PCPR</title>
 <style>
-:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#8f3037;--soft:#f8f7f2}
+:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#8f3037;--soft:#f8f7f2;--ok:#246344}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#17202a}
 header{background:linear-gradient(115deg,var(--ink),var(--green2) 72%,#20473c);color:#fff;border-bottom:5px solid var(--gold);padding:18px 22px}
-header h1{margin:0;font-size:21px}header p{margin:5px 0 0;color:#eee8d9;font-size:12px}
-main{max-width:1200px;margin:0 auto;padding:18px 20px 95px}
-.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:13px}
+header h1{margin:0;font-size:22px}header p{margin:5px 0 0;color:#eee8d9;font-size:12px}
+main{max-width:1220px;margin:0 auto;padding:18px 20px 100px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 0 rgba(197,162,83,.1)}
 h2{font-size:13px;margin:0 0 12px;text-transform:uppercase;color:var(--green2);letter-spacing:.4px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}.grid3{display:grid;grid-template-columns:1.2fr 1fr auto;gap:10px;align-items:end}.full{grid-column:1/-1}
 label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--muted)}
-input,select{width:100%;border:1px solid #bbc5cf;border-radius:8px;padding:9px 10px;font:inherit;font-size:13px;background:#fff}
-input:focus,select:focus{outline:2px solid rgba(40,87,72,.14);border-color:#6a8b7e}
+input,select,textarea{width:100%;border:1px solid #bbc5cf;border-radius:8px;padding:9px 10px;font:inherit;font-size:13px;background:#fff;color:#17202a}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(40,87,72,.13)}
 button{border:1px solid var(--green2);border-radius:8px;min-height:38px;padding:0 12px;background:linear-gradient(#326b58,var(--green));color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
-button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}
-button.danger{background:#fff;color:var(--red);border-color:#d9a9ae}
-button:disabled{opacity:.45;cursor:not-allowed}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:7px}
-.status{margin-top:10px;padding:9px 11px;border-radius:8px;background:#edf4ef;color:#204b3e;font-size:12px;display:none}
-.status.show{display:block}
-.security-note{margin:10px auto 0;max-width:1180px;padding:9px 11px;border:1px solid #cfd9d3;border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42}
-.security-note b{color:#244b3e}
+button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button.danger{background:#fff;color:var(--red);border-color:#d9a9ae}button.gold{background:var(--gold);color:var(--ink);border-color:#a98639}
+button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:7px}
 .summary{background:linear-gradient(135deg,#f8fbf9,#f2f6f3);border:1px solid #cbd9d2;border-radius:12px;padding:13px 15px;margin-bottom:13px}
-.summary-title{font-size:10px;font-weight:800;text-transform:uppercase;color:#5a6f66;letter-spacing:.6px}
-.summary-main{font-size:15px;font-weight:800;color:#183a31;margin-top:4px}
-.summary-sub{font-size:11px;color:#627169;margin-top:4px}
-.authority-add{display:grid;grid-template-columns:1.2fr 1fr auto;gap:8px;align-items:end}
-.authority-list{display:flex;flex-direction:column;gap:8px;margin-top:11px}
-.authority{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft)}
-.authority.default{border-color:#b99a53;background:#fffaf0}
-.authority-top{display:flex;gap:8px;align-items:flex-start}
-.authority-info{flex:1;min-width:0}
-.authority-name{font-size:13px;font-weight:800;color:#1d2b27}
-.authority-role{font-size:11.5px;color:#5e6965;margin-top:2px}
-.authority-extra{font-size:10.5px;color:#79827f;margin-top:3px;font-style:italic}
-.authority-actions{display:flex;gap:6px;flex-wrap:wrap}
-.authority-actions button{min-height:31px;padding:0 9px;font-size:11px}
-.apj-item{display:flex;gap:7px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:7px 8px}
-.apj-item span{flex:1;font-size:12px}
-.preview{border:1px dashed #b7c4bd;border-radius:10px;background:#fbfcfb;padding:16px;text-align:center;min-height:88px;display:grid;place-items:center}
-.preview-name{font-weight:800;font-size:14px}.preview-role{font-weight:700;font-size:12px;margin-top:3px}.preview-extra{font-size:11px;margin-top:3px;color:#616b67}
-.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.backup-box{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf9f6}
-.backup-box h3{font-size:12px;margin:0 0 5px;color:#263b33}
-.backup-box p{font-size:10.8px;color:var(--muted);margin:0 0 10px;line-height:1.4}
-.sticky-save{position:fixed;left:0;right:0;bottom:0;background:rgba(17,24,32,.96);border-top:3px solid var(--gold);padding:9px 14px;z-index:30}
-.sticky-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.sticky-text{color:#ddd6c7;font-size:11px}.sticky-text b{color:#fff}
-.field-error{border-color:#b84b54!important;background:#fff7f7!important}
-@media(max-width:760px){.grid,.backup-grid,.authority-add{grid-template-columns:1fr}.full{grid-column:auto}.authority-top{flex-direction:column}.sticky-text{display:none}}
-@media print{.security-note,.sticky-save{display:none!important}}
-</style></head>
+.summary-title{font-size:10px;font-weight:800;text-transform:uppercase;color:#5a6f66;letter-spacing:.6px}.summary-main{font-size:15px;font-weight:800;color:#183a31;margin-top:4px}.summary-sub{font-size:11px;color:#627169;margin-top:4px}
+.integration{margin:0 0 14px;padding:11px 13px;border:1px solid #cdb673;border-radius:10px;background:#fffaf0;color:#5d4b22;font-size:11.5px;line-height:1.5}
+.logo-row{display:grid;grid-template-columns:160px 1fr;gap:16px;align-items:start;margin-top:13px}.logo-box{border:1px solid var(--line);border-radius:10px;background:#faf9f6;padding:12px;text-align:center}.logo-box img{width:115px;height:125px;object-fit:contain;background:#fff;border:1px solid #e1ddd2;border-radius:8px;padding:5px}.logo-box small{display:block;margin-top:6px;color:var(--muted)}
+.list{display:grid;gap:8px;margin-top:11px}.rowitem{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft);display:flex;gap:10px;align-items:flex-start}.rowitem.default{border-color:#b99a53;background:#fffaf0}.rowinfo{flex:1;min-width:0}.rowname{font-size:13px;font-weight:800;color:#1d2b27}.rowrole{font-size:11.5px;color:#5e6965;margin-top:2px}.rowextra{font-size:10.5px;color:#79827f;margin-top:3px;font-style:italic}.rowactions{display:flex;gap:6px;flex-wrap:wrap}.rowactions button{min-height:31px;padding:0 9px;font-size:11px}
+.section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}.section-head h2{margin:0}.restore-mini{font-size:11px;min-height:34px}
+.preview{border:1px dashed #b7c4bd;border-radius:10px;background:#fbfcfb;padding:16px;text-align:center;min-height:88px;display:grid;place-items:center;margin-top:10px}.preview-name{font-weight:800;font-size:14px}.preview-role{font-weight:700;font-size:12px;margin-top:3px}.preview-extra{font-size:11px;margin-top:3px;color:#616b67}
+.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.backup-box{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf9f6}.backup-box h3{font-size:12px;margin:0 0 5px;color:#263b33}.backup-box p{font-size:10.8px;color:var(--muted);margin:0 0 10px;line-height:1.4}
+.status{margin-top:10px;padding:9px 11px;border-radius:8px;background:#edf4ef;color:#204b3e;font-size:12px;display:none}.status.show{display:block}.status.err{background:#fff2f2;color:#8f3037;border:1px solid #ddb8bb}
+.sticky-save{position:fixed;left:0;right:0;bottom:0;background:rgba(17,24,32,.97);border-top:3px solid var(--gold);padding:9px 14px;z-index:30}.sticky-inner{max-width:1220px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.sticky-text{color:#ddd6c7;font-size:11px}.sticky-text b{color:#fff}
+.badge{display:inline-flex;align-items:center;border:1px solid #c8d9cf;background:#edf5f0;color:#285748;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800}
+@media(max-width:780px){.grid,.grid3,.backup-grid,.logo-row{grid-template-columns:1fr}.full{grid-column:auto}.rowitem{flex-direction:column}.sticky-text{display:none}}
+@media print{.sticky-save{display:none!important}}
+</style>
+</head>
 <body>
-<header><h1>Configuração Geral da Unidade</h1><p>Configure uma vez os dados institucionais para reutilização nos geradores da Central.</p></header>
-<div class="security-note"><b>Armazenamento:</b> as configurações desta página ficam somente no navegador deste dispositivo. Não são enviadas para banco remoto ou servidor da Central.</div>
+<header><h1>Configuração Geral da Unidade</h1><p>Fonte principal de cabeçalho, brasão, rodapé, autoridades e servidores de toda a Central PCPR.</p></header>
 <main>
-  <div class="summary">
-    <div class="summary-title">Configuração ativa</div>
-    <div class="summary-main" id="summaryMain">—</div>
-    <div class="summary-sub" id="summarySub">—</div>
-  </div>
+<div class="summary"><div class="summary-title">Configuração ativa</div><div class="summary-main" id="summaryMain">—</div><div class="summary-sub" id="summarySub">—</div></div>
+<div class="integration"><b>Integração da Central:</b> ao salvar aqui, os dados passam a ser o padrão dos módulos integrados. Configurações específicas já salvas dentro de um módulo <b>não são apagadas</b> e continuam tendo prioridade naquele módulo. Para voltar ao padrão geral, use o botão <b>USAR CONFIGURAÇÃO GERAL</b> dentro do módulo.</div>
 
-  <div style="margin:0 0 14px;padding:11px 13px;border:1px solid #cdb673;border-radius:10px;background:#fffaf0;color:#5d4b22;font-size:11.5px;line-height:1.5">
-<b>Integração da Central:</b> esta página define a unidade padrão de toda a Central. Salvar aqui substitui as configurações específicas anteriores dos módulos integrados. Depois disso, se desejar, abra um módulo e altere apenas aquele módulo.
+<section class="card">
+<div class="section-head"><h2>1. Cabeçalho institucional e brasão</h2><div class="actions"><button class="secondary restore-mini" id="restoreHeader" type="button">Restaurar cabeçalho original</button><button class="secondary restore-mini" id="restoreLogo" type="button">Restaurar brasão original</button></div></div>
+<div class="grid">
+<label class="full">Estado<input id="estadoHeader"></label>
+<label class="full">Secretaria / órgão superior<input id="secretaria"></label>
+<label class="full">Departamento / instituição<input id="departamento"></label>
+<label class="full">Subdivisão / regional<input id="subdivisao"></label>
+<label class="full">Unidade policial<input id="unidade"></label>
+<label>Cidade<input id="cidade"></label><label>UF<input id="uf" maxlength="2"></label>
 </div>
-<div class="card">
-    <h2>1. Unidade</h2>
-    <div class="grid">
-      <label class="full">Estado<input id="estadoHeader"></label>
-      <label class="full">Secretaria / órgão superior<input id="secretaria"></label>
-      <label class="full">Departamento / instituição<input id="departamento"></label>
-      <label class="full">Subdivisão / regional<input id="subdivisao"></label>
-      <label class="full">Unidade policial<input id="unidade"></label>
-      <label>Cidade<input id="cidade"></label>
-      <label>UF<input id="uf" maxlength="2"></label>
-    </div>
-  </div>
+<div class="logo-row">
+<div class="logo-box"><img id="logoPreview" alt="Brasão / logo"><small id="logoSource">Brasão original</small></div>
+<div>
+<div class="actions"><button id="pickLogo" class="secondary" type="button">Trocar brasão / logo</button><button id="clearLogo" class="secondary" type="button">Usar brasão original</button><input id="logoFile" type="file" accept="image/*" hidden></div>
+<div class="note">A imagem personalizada fica salva apenas neste navegador. Os módulos integrados usam a imagem geral quando não houver imagem específica configurada no próprio módulo.</div>
+</div>
+</div>
+</section>
 
-  <div class="card">
-    <h2>2. Autoridades</h2>
-    <div class="authority-add">
-      <label>Nome da autoridade<input id="novoDelegado" placeholder="Ex.: Anderson Sérgio Romão"></label>
-      <label>Cargo<input id="novoCargo" placeholder="Ex.: Delegado de Polícia"></label>
-      <button id="addDelegado" type="button">Adicionar autoridade</button>
-    </div>
-    <div class="grid" style="margin-top:10px">
-      <label class="full">Assinatura complementar padrão (opcional)
-        <input id="assinaturaComplementar" placeholder="Ex.: Por ordem / Respondendo pela Unidade">
-      </label>
-    </div>
-    <div class="authority-list" id="delegados"></div>
-    <div class="note">Cada autoridade possui nome e cargo próprios. A marcada com ★ é a padrão e continua sendo sincronizada com os módulos antigos para manter compatibilidade.</div>
-  </div>
+<section class="card">
+<div class="section-head"><h2>2. Rodapé institucional</h2><button class="secondary restore-mini" id="restoreFooter" type="button">Restaurar rodapé original</button></div>
+<div class="grid">
+<label>Logradouro<input id="logradouro"></label><label>Número<input id="numero"></label>
+<label>Bairro<input id="bairro"></label><label>CEP<input id="cep" inputmode="numeric" maxlength="10"></label>
+<label>E-mail<input id="email" type="email"></label><label>Telefone / Fone-Fax<input id="fone"></label>
+<label class="full">Site<input id="site"></label>
+</div>
+<div class="note">Cidade e UF do rodapé utilizam os mesmos campos definidos no cabeçalho acima.</div>
+</section>
 
-  <div class="card">
-    <h2>Prévia da assinatura padrão</h2>
-    <div class="preview" id="signaturePreview"></div>
-  </div>
+<section class="card">
+<div class="section-head"><h2>3. Autoridades / assinantes</h2><button class="secondary restore-mini" id="restoreAuthorities" type="button">Restaurar autoridades originais</button></div>
+<div class="grid3">
+<label>Nome da autoridade<input id="novoDelegado" placeholder="Ex.: Anderson Sérgio Romão"></label>
+<label>Cargo<select id="novoCargo"><option>Delegado de Polícia</option><option>Delegada de Polícia</option><option>APJ - Agente de Polícia Judiciária</option></select></label>
+<button id="addDelegado" type="button">Adicionar autoridade</button>
+</div>
+<div class="grid" style="margin-top:10px"><label class="full">Assinatura complementar padrão (opcional)<input id="assinaturaComplementar" placeholder="Ex.: Respondendo pela Unidade"></label></div>
+<div class="list" id="delegados"></div>
+<div class="note">A autoridade marcada com ★ é a padrão. Alterar a ordem ou definir outra autoridade padrão atualiza a assinatura dos módulos que usam a Configuração Geral.</div>
+<div class="preview" id="signaturePreview"></div>
+</section>
 
-  <div class="card">
-    <h2>3. APJs responsáveis</h2>
-    <div class="actions"><input id="novoApj" style="flex:1;min-width:240px" placeholder="Nome do APJ"><button id="addApj" type="button">Adicionar APJ</button></div>
-    <div class="authority-list" id="apjs"></div>
-  </div>
+<section class="card">
+<div class="section-head"><h2>4. Servidores e cargos</h2><button class="secondary restore-mini" id="restoreServers" type="button">Restaurar servidores originais</button></div>
+<div class="grid3">
+<label>Nome do servidor<input id="novoServidor" placeholder="Nome completo"></label>
+<label>Cargo<select id="novoServidorCargo"><option>Delegado de Polícia</option><option>Delegada de Polícia</option><option selected>APJ - Agente de Polícia Judiciária</option></select></label>
+<button id="addServidor" type="button">Adicionar servidor</button>
+</div>
+<div class="list" id="servidores"></div>
+<div class="note">Esta lista alimenta os módulos que possuem seleção de servidor. Os APJs também são mantidos em formato compatível com os módulos antigos.</div>
+</section>
 
-  <div class="card">
-    <h2>4. Rodapé institucional</h2>
-    <div class="grid">
-      <label class="full">Endereço<input id="endereco"></label>
-      <label>CEP<input id="cep" inputmode="numeric" maxlength="10"></label>
-      <label>E-mail<input id="email" type="email"></label>
-      <label>Telefone / Fone-Fax<input id="fone"></label>
-      <label>Site<input id="site"></label>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>5. Backup e manutenção</h2>
-    <div class="backup-grid">
-      <div class="backup-box">
-        <h3>Levar configuração para outro computador</h3>
-        <p>Exporte um arquivo JSON com unidade, autoridades, cargos, APJs e rodapé. Depois importe no outro navegador.</p>
-        <div class="actions">
-          <button id="export" class="secondary" type="button">Exportar configuração</button>
-          <input id="importFile" type="file" accept="application/json,.json" hidden>
-          <button id="importBtn" class="secondary" type="button">Importar configuração</button>
-        </div>
-      </div>
-      <div class="backup-box">
-        <h3>Restaurar padrão de Mamborê</h3>
-        <p>Substitui os dados atualmente preenchidos pelos valores padrão. A ação exige confirmação antes de aplicar.</p>
-        <button id="reset" class="danger" type="button">Restaurar padrão Mamborê</button>
-      </div>
-    </div>
-    <div class="status" id="status"></div>
-  </div>
+<section class="card">
+<h2>5. Backup e manutenção</h2>
+<div class="backup-grid">
+<div class="backup-box"><h3>Levar configuração para outro computador</h3><p>Exporte um arquivo JSON com cabeçalho, logo, rodapé, autoridades e servidores.</p><div class="actions"><button id="export" class="secondary" type="button">Exportar configuração</button><input id="importFile" type="file" accept="application/json,.json" hidden><button id="importBtn" class="secondary" type="button">Importar configuração</button></div></div>
+<div class="backup-box"><h3>Restaurar configuração original</h3><p>Restaura somente a Configuração Geral. Não apaga formulários, históricos, projetos nem personalizações específicas dos módulos.</p><button id="reset" class="danger" type="button">Restaurar configuração original</button></div>
+</div>
+<div class="status" id="status"></div>
+</section>
 </main>
 
-<div class="sticky-save">
-  <div class="sticky-inner">
-    <div class="sticky-text"><b>Configuração Geral da Central:</b> ao salvar aqui, os dados institucionais passam a ser o padrão de todos os módulos integrados. Depois, cada módulo ainda pode receber uma configuração própria sem alterar os demais.</div>
-    <button id="save" type="button">Salvar e aplicar em todos os módulos</button>
-  </div>
-</div>
+<div class="sticky-save"><div class="sticky-inner"><div class="sticky-text"><b>Configuração Geral da Central:</b> cabeçalho, brasão, rodapé, autoridade e servidores serão reutilizados pelos módulos integrados.</div><button id="save" class="gold" type="button">Salvar e aplicar em toda a Central</button></div></div>
 
+<script src="pcpr-config.js?v=2.7"></script>
 <script>
 (()=>{'use strict';
-const $=id=>document.getElementById(id);
-const HEADER_KEY='pcpr.oitivaPenal.institucional.v1',
-      FOOTER_KEY='pcpr.rodapeUnidade.v1',
-      DELEGADOS_KEY='pcpr.oitivaPenal.delegados.v1',
-      CARGO_KEY='pcpr.cargoAutoridade.v1',
-      AUTHORITIES_KEY='pcpr.autoridades.v2',
-      CIDADES_KEY='pcpr.oitivaPenal.cidades.v1',
-      CIDADE_SEL_KEY='pcpr.oitivaPenal.cidadeSelecionada.v1',
-      LAUDO_KEY='geradorLaudoLesoesConfigV4',
-      GENERAL_KEY='pcpr.configGeralUnidade.v1';
+const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
+const ORIGINAL_LOGO="data:image/jpeg;base64,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";
+let cfg=API.get(), autoridades=[], servidores=[];
 
-const MODULE_OVERRIDE_KEYS=[
-  'pcpr.pericia.config.v1',
-  'pcpr.oficioDiaria.cfg.v1',
-  'pcprRelatorioViagemCfgV23'
-];
-const GENERAL_REV_KEY='pcpr.configGeralRev.v1';
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function normCargo(c){return String(c||'').trim()}
+function normalizeAuthorities(a){const out=[];(a||[]).forEach(x=>{if(typeof x==='string')x={nome:x,cargo:'Delegado de Polícia'};const nome=String(x?.nome||'').trim(),cargo=normCargo(x?.cargo),complemento=String(x?.complemento||'').trim();if(nome&&!out.some(y=>y.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))out.push({nome,cargo,complemento});});return out}
+function normalizeServers(a){const out=[];(a||[]).forEach(x=>{if(typeof x==='string')x={nome:x,cargo:'APJ - Agente de Polícia Judiciária'};const nome=String(x?.nome||'').trim(),cargo=normCargo(x?.cargo);if(nome&&!out.some(y=>y.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))out.push({nome,cargo});});return out}
 
-const DEF={
-  estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
-  secretaria:'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
-  departamento:'DEPARTAMENTO DE POLÍCIA CIVIL',
-  subdivisao:'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
-  unidade:'DELEGACIA DE POLÍCIA CIVIL DE MAMBORÊ',
-  cidade:'Mamborê',uf:'PR',endereco:'Av. Augusto Mendes dos Santos, 997',
-  cep:'87.340-000',email:'dpmambore@pc.pr.gov.br',fone:'(44) 3865-1341',
-  site:'www.policiacivil.pr.gov.br',assinaturaComplementar:'',
-  autoridades:[{nome:'Anderson Sérgio Romão',cargo:'Delegado de Polícia'}],
-  apjs:['Thiago Gonzaga da Silva Couto','Tiago Henrique Lemes','Paulo Henrique Vilaça']
-};
+function maskCep(v){const d=String(v||'').replace(/\D/g,'').slice(0,8);return d.length>5?d.slice(0,2)+'.'+d.slice(2,5)+'-'+d.slice(5):d.length>2?d.slice(0,2)+'.'+d.slice(2):d}
+function status(t,err=false){const e=$('status');e.textContent=t;e.className='status show'+(err?' err':'');clearTimeout(status.t);status.t=setTimeout(()=>e.classList.remove('show'),5000)}
+function buildEndereco(){return [$('logradouro').value.trim(),$('numero').value.trim()].filter(Boolean).join(', ')}
+function readForm(){
+  cfg={...cfg,estadoHeader:$('estadoHeader').value.trim(),secretaria:$('secretaria').value.trim(),departamento:$('departamento').value.trim(),subdivisao:$('subdivisao').value.trim(),unidade:$('unidade').value.trim(),cidade:$('cidade').value.trim(),uf:$('uf').value.trim().toUpperCase().slice(0,2),logradouro:$('logradouro').value.trim(),numero:$('numero').value.trim(),bairro:$('bairro').value.trim(),cep:maskCep($('cep').value),email:$('email').value.trim(),fone:$('fone').value.trim(),site:$('site').value.trim(),assinaturaComplementar:$('assinaturaComplementar').value.trim(),autoridades:normalizeAuthorities(autoridades),servidores:normalizeServers(servidores)};
+  cfg.endereco=buildEndereco(); cfg.estado=(cfg.estadoHeader||'').replace(/^ESTADO\s+(DO|DE|DA)\s+/i,'')||'Paraná';
+  cfg.apjs=cfg.servidores.filter(x=>/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(x.cargo)).map(x=>x.nome);
+  return API.normalize(cfg);
+}
+function fill(){
+  cfg=API.normalize(cfg); autoridades=normalizeAuthorities(cfg.autoridades); servidores=normalizeServers(cfg.servidores);
+  ['estadoHeader','secretaria','departamento','subdivisao','unidade','cidade','uf','logradouro','numero','bairro','cep','email','fone','site','assinaturaComplementar'].forEach(id=>$(id).value=cfg[id]||'');
+  $('logoPreview').src=cfg.logo||ORIGINAL_LOGO;$('logoSource').textContent=cfg.logo?'Logo personalizado da Configuração Geral':'Brasão original';
+  renderAuthorities();renderServers();updateSummary();updatePreview();
+}
+function updateSummary(){const a=autoridades[0]||{};$('summaryMain').textContent=(cfg.unidade||'Unidade não informada')+(cfg.cidade?' · '+cfg.cidade+'/'+(cfg.uf||''):'');$('summarySub').textContent=a.nome?'Autoridade padrão: '+a.nome+(a.cargo?' — '+a.cargo:''):'Nenhuma autoridade cadastrada';}
+function updatePreview(){const a=autoridades[0]||{};const e=$('signaturePreview');e.innerHTML=`<div><div class="preview-name">${escapeHtml((a.nome||'NOME DA AUTORIDADE').toUpperCase())}</div><div class="preview-role">${escapeHtml(a.cargo||'Cargo não informado')}</div>${(a.complemento||cfg.assinaturaComplementar)?`<div class="preview-extra">${escapeHtml(a.complemento||cfg.assinaturaComplementar)}</div>`:''}</div>`;}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
-function getJSON(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
-function uniqueNames(a){return (a||[]).map(x=>String(x).trim()).filter(Boolean).filter((x,i,z)=>z.findIndex(y=>y.toLocaleLowerCase('pt-BR')===x.toLocaleLowerCase('pt-BR'))===i)}
-function cleanAuthorities(a){
-  const out=[];
-  (a||[]).forEach(x=>{
-    if(typeof x==='string') x={nome:x,cargo:''};
-    const nome=String(x?.nome||'').trim(), cargo=String(x?.cargo||'').trim(), complemento=String(x?.complemento||'').trim();
-    if(nome && !out.some(y=>y.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))
-      out.push({nome,cargo,complemento});
-  });
-  return out;
-}
-function derive(){
-  const h=getJSON(HEADER_KEY)||{},f=getJSON(FOOTER_KEY)||{},l=getJSON(LAUDO_KEY)||{},
-        legacyDelegados=getJSON(DELEGADOS_KEY), legacyCargo=localStorage.getItem(CARGO_KEY),
-        authV2=getJSON(AUTHORITIES_KEY);
-  let autoridades=cleanAuthorities(authV2);
-  if(!autoridades.length){
-    const nomes=Array.isArray(legacyDelegados)&&legacyDelegados.length?legacyDelegados:(l.delegado?[l.delegado]:DEF.autoridades.map(x=>x.nome));
-    autoridades=uniqueNames(nomes).map((nome,i)=>({nome,cargo:(i===0?(legacyCargo||l.cargo||'Delegado de Polícia'):'Delegado de Polícia'),complemento:''}));
-  }
-  return {...DEF,...l,
-    estadoHeader:h.estado||l.estadoHeader||DEF.estadoHeader,
-    secretaria:h.secretaria||l.secretaria||DEF.secretaria,
-    departamento:h.departamento||l.departamento||DEF.departamento,
-    subdivisao:h.subdivisao||l.subdivisao||DEF.subdivisao,
-    unidade:h.unidade||l.unidade||DEF.unidade,
-    endereco:(f.endereco||l.endereco||DEF.endereco).replace(/,\s*Mamborê\s*-\s*PR\s*,\s*87\.340-000$/i,''),
-    email:f.email||l.email||DEF.email,fone:f.fone||l.fone||DEF.fone,site:f.site||l.site||DEF.site,
-    autoridades,
-    assinaturaComplementar:(getJSON(GENERAL_KEY)||{}).assinaturaComplementar||'',
-    apjs:Array.isArray(l.apjs)&&l.apjs.length?l.apjs:DEF.apjs
-  };
-}
-function load(){const g=getJSON(GENERAL_KEY)||{};const base=derive();return {...base,...g,autoridades:cleanAuthorities(g.autoridades||base.autoridades)}}
+function rowButton(txt,cls,fn){const b=document.createElement('button');b.type='button';b.className=cls||'secondary';b.textContent=txt;b.onclick=fn;return b}
+function renderAuthorities(){const box=$('delegados');box.innerHTML='';autoridades.forEach((a,i)=>{const row=document.createElement('div');row.className='rowitem'+(i===0?' default':'');const info=document.createElement('div');info.className='rowinfo';info.innerHTML=`<div class="rowname">${i===0?'★ ':''}${escapeHtml(a.nome)}</div><div class="rowrole">${escapeHtml(a.cargo||'Cargo não informado')}</div>${a.complemento?`<div class="rowextra">${escapeHtml(a.complemento)}</div>`:''}`;const acts=document.createElement('div');acts.className='rowactions';acts.append(rowButton('Definir padrão','secondary',()=>{if(i>0){const x=autoridades.splice(i,1)[0];autoridades.unshift(x);renderAuthorities();updateSummary();updatePreview();}}),rowButton('Editar','secondary',()=>{const nome=prompt('Nome da autoridade:',a.nome);if(nome===null)return;const cargo=prompt('Cargo:',a.cargo||'Delegado de Polícia');if(cargo===null)return;const complemento=prompt('Assinatura complementar (opcional):',a.complemento||'');if(complemento===null)return;if(nome.trim()){autoridades[i]={nome:nome.trim(),cargo:cargo.trim(),complemento:complemento.trim()};renderAuthorities();updateSummary();updatePreview();}}),rowButton('↑','secondary',()=>{if(i>0){[autoridades[i-1],autoridades[i]]=[autoridades[i],autoridades[i-1]];renderAuthorities();updateSummary();updatePreview();}}),rowButton('↓','secondary',()=>{if(i<autoridades.length-1){[autoridades[i+1],autoridades[i]]=[autoridades[i],autoridades[i+1]];renderAuthorities();updateSummary();updatePreview();}}),rowButton('Excluir','danger',()=>{if(autoridades.length<=1)return alert('Mantenha ao menos uma autoridade cadastrada.');if(confirm('Excluir '+a.nome+'?')){autoridades.splice(i,1);renderAuthorities();updateSummary();updatePreview();}}));row.append(info,acts);box.appendChild(row);})}
+function renderServers(){const box=$('servidores');box.innerHTML='';servidores.forEach((s,i)=>{const row=document.createElement('div');row.className='rowitem';const info=document.createElement('div');info.className='rowinfo';info.innerHTML=`<div class="rowname">${escapeHtml(s.nome)}</div><div class="rowrole">${escapeHtml(s.cargo||'Cargo não informado')}</div>`;const acts=document.createElement('div');acts.className='rowactions';acts.append(rowButton('Editar','secondary',()=>{const nome=prompt('Nome do servidor:',s.nome);if(nome===null)return;const cargo=prompt('Cargo:',s.cargo||'APJ - Agente de Polícia Judiciária');if(cargo===null)return;if(nome.trim()){servidores[i]={nome:nome.trim(),cargo:cargo.trim()};renderServers();}}),rowButton('↑','secondary',()=>{if(i>0){[servidores[i-1],servidores[i]]=[servidores[i],servidores[i-1]];renderServers();}}),rowButton('↓','secondary',()=>{if(i<servidores.length-1){[servidores[i+1],servidores[i]]=[servidores[i],servidores[i+1]];renderServers();}}),rowButton('Excluir','danger',()=>{if(confirm('Excluir '+s.nome+'?')){servidores.splice(i,1);renderServers();}}));row.append(info,acts);box.appendChild(row);})}
 
-let cfg=load(), autoridades=cleanAuthorities(cfg.autoridades||DEF.autoridades), apjs=uniqueNames(cfg.apjs||DEF.apjs);
+$('addDelegado').onclick=()=>{const nome=$('novoDelegado').value.trim(),cargo=$('novoCargo').value;if(!nome)return alert('Informe o nome da autoridade.');if(autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Essa autoridade já está cadastrada.');autoridades.push({nome,cargo,complemento:''});if(!servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))servidores.push({nome,cargo});$('novoDelegado').value='';renderAuthorities();renderServers();updateSummary();updatePreview();};
+$('addServidor').onclick=()=>{const nome=$('novoServidor').value.trim(),cargo=$('novoServidorCargo').value;if(!nome)return alert('Informe o nome do servidor.');if(servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Esse servidor já está cadastrado.');servidores.push({nome,cargo});if(/^Delegad[oa]/i.test(cargo)&&!autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))autoridades.push({nome,cargo,complemento:''});$('novoServidor').value='';renderServers();renderAuthorities();updateSummary();updatePreview();};
 
-function currentAuthority(){return autoridades[0]||{nome:'',cargo:'',complemento:''}}
-function updateSummary(){
-  const a=currentAuthority();
-  $('summaryMain').textContent=[cfg.unidade||'Unidade não informada',cfg.cidade?('· '+cfg.cidade+'/'+(cfg.uf||'')):''].join(' ');
-  $('summarySub').textContent=a.nome?('Autoridade padrão: '+a.nome+(a.cargo?' — '+a.cargo:'')):'Nenhuma autoridade cadastrada';
-}
-function updatePreview(){
-  const a=currentAuthority(), box=$('signaturePreview'); box.innerHTML='';
-  const wrap=document.createElement('div');
-  const n=document.createElement('div'); n.className='preview-name'; n.textContent=(a.nome||'NOME DA AUTORIDADE').toUpperCase();
-  const c=document.createElement('div'); c.className='preview-role'; c.textContent=a.cargo||'Cargo não informado';
-  wrap.append(n,c);
-  const extra=(a.complemento||cfg.assinaturaComplementar||'').trim();
-  if(extra){const e=document.createElement('div');e.className='preview-extra';e.textContent=extra;wrap.appendChild(e);}
-  box.appendChild(wrap);
-}
-function renderAuthorities(){
-  const box=$('delegados');box.innerHTML='';
-  autoridades.forEach((a,i)=>{
-    const row=document.createElement('div');row.className='authority'+(i===0?' default':'');
-    const top=document.createElement('div');top.className='authority-top';
-    const info=document.createElement('div');info.className='authority-info';
-    const nm=document.createElement('div');nm.className='authority-name';nm.textContent=(i===0?'★ ':'')+a.nome;
-    const cr=document.createElement('div');cr.className='authority-role';cr.textContent=a.cargo||'Cargo não informado';
-    info.append(nm,cr);
-    if(a.complemento){const ex=document.createElement('div');ex.className='authority-extra';ex.textContent=a.complemento;info.appendChild(ex);}
-    const acts=document.createElement('div');acts.className='authority-actions';
-    const def=document.createElement('button');def.type='button';def.className='secondary';def.textContent='Definir padrão';def.disabled=i===0;
-    def.onclick=()=>{const x=autoridades.splice(i,1)[0];autoridades.unshift(x);render();};
-    const ed=document.createElement('button');ed.type='button';ed.className='secondary';ed.textContent='Editar';
-    ed.onclick=()=>{
-      const nome=prompt('Nome da autoridade:',a.nome); if(nome===null)return;
-      const cargo=prompt('Cargo:',a.cargo||''); if(cargo===null)return;
-      const complemento=prompt('Assinatura complementar (opcional):',a.complemento||''); if(complemento===null)return;
-      if(nome.trim()){autoridades[i]={nome:nome.trim(),cargo:cargo.trim(),complemento:complemento.trim()};render();}
-    };
-    const up=document.createElement('button');up.type='button';up.className='secondary';up.textContent='↑';up.title='Mover para cima';up.disabled=i===0;
-    up.onclick=()=>{[autoridades[i-1],autoridades[i]]=[autoridades[i],autoridades[i-1]];render();};
-    const down=document.createElement('button');down.type='button';down.className='secondary';down.textContent='↓';down.title='Mover para baixo';down.disabled=i===autoridades.length-1;
-    down.onclick=()=>{[autoridades[i+1],autoridades[i]]=[autoridades[i],autoridades[i+1]];render();};
-    const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Excluir';
-    del.onclick=()=>{if(autoridades.length<=1)return alert('Mantenha ao menos uma autoridade cadastrada.');if(confirm('Excluir '+a.nome+'?')){autoridades.splice(i,1);render();}};
-    acts.append(def,ed,up,down,del);top.append(info,acts);row.appendChild(top);box.appendChild(row);
-  });
-}
-function renderApjs(){
-  const box=$('apjs');box.innerHTML='';
-  apjs.forEach((n,i)=>{
-    const row=document.createElement('div');row.className='apj-item';
-    const sp=document.createElement('span');sp.textContent=n;
-    const ed=document.createElement('button');ed.type='button';ed.className='secondary';ed.textContent='Editar';
-    ed.onclick=()=>{const v=prompt('Nome do APJ:',n);if(v&&v.trim()){apjs[i]=v.trim();apjs=uniqueNames(apjs);renderApjs();}};
-    const up=document.createElement('button');up.type='button';up.className='secondary';up.textContent='↑';up.disabled=i===0;
-    up.onclick=()=>{[apjs[i-1],apjs[i]]=[apjs[i],apjs[i-1]];renderApjs();};
-    const down=document.createElement('button');down.type='button';down.className='secondary';down.textContent='↓';down.disabled=i===apjs.length-1;
-    down.onclick=()=>{[apjs[i+1],apjs[i]]=[apjs[i],apjs[i+1]];renderApjs();};
-    const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Excluir';
-    del.onclick=()=>{if(confirm('Excluir '+n+'?')){apjs.splice(i,1);renderApjs();}};
-    row.append(sp,ed,up,down,del);box.appendChild(row);
-  });
-}
-function render(){
-  ['estadoHeader','secretaria','departamento','subdivisao','unidade','cidade','uf','endereco','cep','email','fone','site','assinaturaComplementar'].forEach(k=>$(k).value=cfg[k]||'');
-  renderAuthorities();renderApjs();updateSummary();updatePreview();
-}
-function maskCep(v){const d=String(v).replace(/\D/g,'').slice(0,8);return d.length>5?d.slice(0,2)+'.'+d.slice(2,5)+'-'+d.slice(5):d.length>2?d.slice(0,2)+'.'+d.slice(2):d}
-function read(){
-  for(const k of ['estadoHeader','secretaria','departamento','subdivisao','unidade','cidade','uf','endereco','cep','email','fone','site','assinaturaComplementar'])cfg[k]=$(k).value.trim();
-  cfg.uf=(cfg.uf||'PR').toUpperCase().slice(0,2); cfg.cep=maskCep(cfg.cep);
-  cfg.estado=(cfg.estadoHeader||'ESTADO DO PARANÁ').replace(/^ESTADO DO\s+/i,'').replace(/^ESTADO DE\s+/i,'')||'Paraná';
-  cfg.autoridades=cleanAuthorities(autoridades); cfg.apjs=uniqueNames(apjs);
-  return cfg;
-}
-function validate(){
-  read(); let ok=true;
-  $('email').classList.remove('field-error');
-  if(cfg.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cfg.email)){ $('email').classList.add('field-error'); ok=false; alert('Verifique o e-mail institucional informado.'); }
-  if(!cfg.autoridades.length){ok=false;alert('Cadastre ao menos uma autoridade.');}
-  if(cfg.autoridades.some(a=>!a.cargo)){if(!confirm('Há autoridade sem cargo informado. Deseja salvar mesmo assim?'))ok=false;}
-  return ok;
-}
-function status(t){$('status').textContent=t;$('status').classList.add('show');setTimeout(()=>$('status').classList.remove('show'),5000)}
-function apply(){
-  if(!validate())return;
-  const a=cfg.autoridades[0]||{nome:'',cargo:'Delegado de Polícia'};
-  localStorage.setItem(GENERAL_KEY,JSON.stringify(cfg));
-  localStorage.setItem(GENERAL_REV_KEY,String(Date.now()));
-  // A Configuração Geral redefine o padrão de toda a Central.
-  // Configurações específicas podem ser feitas novamente depois, dentro de cada módulo.
-  MODULE_OVERRIDE_KEYS.forEach(k=>localStorage.removeItem(k));
-  localStorage.setItem(AUTHORITIES_KEY,JSON.stringify(cfg.autoridades));
-  localStorage.setItem(HEADER_KEY,JSON.stringify({estado:cfg.estadoHeader,secretaria:cfg.secretaria,departamento:cfg.departamento,subdivisao:cfg.subdivisao,unidade:cfg.unidade}));
-  const footerAddress=[cfg.endereco,[cfg.cidade,cfg.uf].filter(Boolean).join(' - '),cfg.cep].filter(Boolean).join(', ');
-  localStorage.setItem(FOOTER_KEY,JSON.stringify({endereco:footerAddress,email:cfg.email,fone:cfg.fone,site:cfg.site}));
-  // Compatibilidade com módulos existentes: nomes continuam no formato antigo e o cargo acompanha a autoridade padrão.
-  localStorage.setItem(DELEGADOS_KEY,JSON.stringify(cfg.autoridades.map(x=>x.nome)));
-  localStorage.setItem(CARGO_KEY,a.cargo||'Delegado de Polícia');
-  const cityId='geral_'+(cfg.cidade||'cidade').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'_').toLowerCase();
-  let cities=getJSON(CIDADES_KEY);if(!Array.isArray(cities))cities=[];
-  const city={id:cityId,nome:cfg.cidade,endereco:cfg.endereco,email:cfg.email,telefone:cfg.fone};
-  const pos=cities.findIndex(x=>x.id===cityId||String(x.nome||'').toLocaleLowerCase('pt-BR')===cfg.cidade.toLocaleLowerCase('pt-BR'));
-  if(pos>=0)cities[pos]={...cities[pos],...city};else cities.unshift(city);
-  localStorage.setItem(CIDADES_KEY,JSON.stringify(cities));localStorage.setItem(CIDADE_SEL_KEY,cityId);
-  const laudo={
-    estadoHeader:cfg.estadoHeader,estado:cfg.estado,secretaria:cfg.secretaria,departamento:cfg.departamento,
-    subdivisao:cfg.subdivisao,unidade:cfg.unidade,unidadeTexto:'Delegacia de Polícia',
-    unidadeCurta:cfg.unidade.replace(/^DELEGACIA DE POLÍCIA CIVIL DE\s+/i,'Delegacia de '),
-    cidade:cfg.cidade,uf:cfg.uf,delegado:a.nome||'',cargo:a.cargo||'Delegado de Polícia',
-    assinaturaComplementar:a.complemento||cfg.assinaturaComplementar||'',
-    endereco:cfg.endereco,cep:cfg.cep,email:cfg.email,fone:cfg.fone,site:cfg.site,apjs:cfg.apjs,
-    autoridades:cfg.autoridades
-  };
-  localStorage.setItem(LAUDO_KEY,JSON.stringify(laudo));
-  updateSummary();updatePreview();
-  status('Configuração Geral aplicada. A unidade, cabeçalho, rodapé, autoridades e dados institucionais foram sincronizados com os módulos integrados. Alterações feitas depois dentro de um módulo valerão somente para aquele módulo.');
-}
-$('addDelegado').onclick=()=>{
-  const nome=$('novoDelegado').value.trim(), cargo=$('novoCargo').value.trim();
-  if(!nome)return alert('Informe o nome da autoridade.');
-  if(autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Essa autoridade já está cadastrada.');
-  autoridades.push({nome,cargo,complemento:''});$('novoDelegado').value='';$('novoCargo').value='';render();
-};
-$('addApj').onclick=()=>{const v=$('novoApj').value.trim();if(v){apjs=uniqueNames([...apjs,v]);$('novoApj').value='';renderApjs();}};
-$('save').onclick=apply;
-$('reset').onclick=()=>{
-  if(!confirm('Isso substituirá a configuração atual pelos dados padrão de Mamborê. Deseja continuar?'))return;
-  cfg=JSON.parse(JSON.stringify(DEF));autoridades=cleanAuthorities(DEF.autoridades);apjs=[...DEF.apjs];render();apply();
-};
-$('export').onclick=()=>{read();const b=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='CONFIGURACAO_GERAL_PCPR.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
-$('importBtn').onclick=()=>$('importFile').click();
-$('importFile').onchange=async e=>{
-  const f=e.target.files?.[0];if(!f)return;
-  try{
-    const x=JSON.parse(await f.text());cfg={...DEF,...x};
-    if(Array.isArray(x.autoridades))autoridades=cleanAuthorities(x.autoridades);
-    else if(Array.isArray(x.delegados))autoridades=uniqueNames(x.delegados).map((nome,i)=>({nome,cargo:i===0?(x.cargo||'Delegado de Polícia'):'Delegado de Polícia',complemento:''}));
-    else autoridades=cleanAuthorities(DEF.autoridades);
-    apjs=uniqueNames(x.apjs||DEF.apjs);render();apply();
-  }catch(err){alert('Arquivo de configuração inválido.')}
-  e.target.value='';
-};
-$('cep').addEventListener('input',e=>e.target.value=maskCep(e.target.value));
-$('uf').addEventListener('input',e=>e.target.value=e.target.value.replace(/[^a-z]/gi,'').toUpperCase().slice(0,2));
-['unidade','cidade','uf','assinaturaComplementar'].forEach(id=>$(id).addEventListener('input',()=>{read();updateSummary();updatePreview();}));
-render();
+async function resizeLogo(file){if(!file)return'';return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=reject;r.onload=()=>{const im=new Image();im.onerror=reject;im.onload=()=>{const max=700,scale=Math.min(1,max/im.width,max/im.height),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*scale));c.height=Math.max(1,Math.round(im.height*scale));c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/png'));};im.src=r.result;};r.readAsDataURL(file);})}
+$('pickLogo').onclick=()=>$('logoFile').click();$('logoFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{cfg.logo=await resizeLogo(f);$('logoPreview').src=cfg.logo;$('logoSource').textContent='Logo personalizado da Configuração Geral';}catch(_){alert('Não foi possível ler essa imagem.')}e.target.value='';};
+$('clearLogo').onclick=()=>{cfg.logo='';$('logoPreview').src=ORIGINAL_LOGO;$('logoSource').textContent='Brasão original';};
+
+$('restoreHeader').onclick=()=>{['estadoHeader','secretaria','departamento','subdivisao','unidade','cidade','uf'].forEach(id=>$(id).value=DEF[id]||'');status('Cabeçalho original restaurado no formulário. Clique em Salvar para aplicar.');};
+$('restoreLogo').onclick=$('clearLogo').onclick;
+$('restoreFooter').onclick=()=>{['logradouro','numero','bairro','cep','email','fone','site'].forEach(id=>$(id).value=DEF[id]||'');status('Rodapé original restaurado no formulário. Clique em Salvar para aplicar.');};
+$('restoreAuthorities').onclick=()=>{autoridades=clone(DEF.autoridades);renderAuthorities();updateSummary();updatePreview();status('Autoridades originais restauradas no formulário.');};
+$('restoreServers').onclick=()=>{servidores=clone(DEF.servidores);renderServers();status('Servidores originais restaurados no formulário.');};
+
+$('save').onclick=()=>{const c=readForm();if(!c.unidade||!c.cidade||!c.uf)return status('Preencha unidade, cidade e UF.',true);if(c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))return status('Verifique o e-mail institucional.',true);cfg=API.save(c);fill();status('Configuração Geral salva e sincronizada. Personalizações específicas dos módulos foram preservadas.');};
+$('reset').onclick=()=>{if(!confirm('Deseja realmente restaurar a configuração original da Central PCPR? As configurações gerais personalizadas serão substituídas. As configurações específicas dos módulos e os dados operacionais não serão apagados.'))return;cfg=API.reset();fill();status('Configuração Geral original restaurada.');};
+$('export').onclick=()=>{const c=readForm(),b=new Blob([JSON.stringify(c,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='CONFIGURACAO_GERAL_PCPR_v2.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1200);};
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text());cfg=API.normalize(x.config||x);fill();status('Configuração importada no formulário. Clique em Salvar para aplicar em toda a Central.');}catch(_){status('Arquivo de configuração inválido.',true)}e.target.value='';};
+$('cep').addEventListener('input',e=>e.target.value=maskCep(e.target.value));$('uf').addEventListener('input',e=>e.target.value=e.target.value.replace(/[^a-z]/gi,'').toUpperCase().slice(0,2));
+['unidade','cidade','uf','assinaturaComplementar'].forEach(id=>$(id).addEventListener('input',()=>{cfg={...cfg,[id]:$(id).value};updateSummary();updatePreview();}));
+API.onChange(c=>{cfg=c;fill();status('Configuração Geral atualizada em outra aba.');});
+fill();
 })();
 </script>
 </body></html>

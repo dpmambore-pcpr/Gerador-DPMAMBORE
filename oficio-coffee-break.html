@@ -24,6 +24,7 @@
 @media(max-width:980px){.layout{grid-template-columns:1fr}.preview-card{position:static}}@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.topin{align-items:flex-start;flex-direction:column}.statusbar{grid-template-columns:1fr}.tabs{overflow:auto}.card{padding:14px}}
 @media print{body{background:white}.top,.security,.tabs,.formcol,.preview-head,.check{display:none!important}.wrap{margin:0;padding:0;max-width:none}.layout{display:block}.preview-card{border:0;padding:0;box-shadow:none}.paper-wrap{border:0;padding:0;background:white;overflow:visible}.paper-wrap canvas{width:210mm!important;height:297mm!important;box-shadow:none;max-width:none}@page{size:A4;margin:0}}
 </style>
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <header class="top"><div class="topin"><div><h1>Ofício - Solicitação de Coffee Break</h1><p>Gerador baseado no modelo oficial fornecido · ODT e PDF</p></div><div class="badge">PCPR · GERADOR LOCAL</div></div></header>
@@ -54,7 +55,7 @@
 </section>
 
 <section id="panel-config" class="card panel">
-<div class="section-title"><h2>Configurações permanentes</h2><span class="mini">salvas localmente</span></div>
+<div class="section-title"><h2>Configurações permanentes</h2><span class="mini">salvas localmente</span></div><div class="security" id="cfgSource" style="margin-bottom:12px"></div>
 <div class="config-block"><h3>Cabeçalho</h3><div class="grid">
 <div class="field full"><label>Brasão / imagem do cabeçalho</label><div class="uploadrow"><img id="crestPreview" class="crest-preview" alt="Prévia do brasão"><button id="trocarBrasao" class="btn secondary" type="button">SELECIONAR IMAGEM</button><button id="removerBrasao" class="btn secondary" type="button">USAR BRASÃO ORIGINAL</button><input id="brasaoFile" class="hidden" type="file" accept="image/*"></div></div>
 <div class="field full"><label for="cfgEstado">Linha 1 - Estado</label><input id="cfgEstado"></div>
@@ -73,7 +74,7 @@
 </div></div>
 <div class="config-block"><h3>Responsável pelo documento</h3><div class="grid"><div class="field full"><label for="cfgResponsavel">Nome</label><input id="cfgResponsavel"></div><div class="field full"><label for="cfgCargo">Cargo</label><select id="cfgCargo"><option>Delegado de Polícia</option><option>Delegada de Polícia</option></select></div></div></div>
 <div class="config-block"><h3>Tratamento do destinatário</h3><div class="field"><label for="cfgTratamento">Forma de tratamento</label><select id="cfgTratamento"><option value="original">MODELO ORIGINAL</option><option value="delegado">DELEGADO</option><option value="delegada">DELEGADA</option></select><small>“Modelo original” preserva literalmente a expressão existente no documento-base.</small></div></div>
-<div class="actions"><button id="salvarConfig" class="btn primary">SALVAR CONFIGURAÇÕES</button><button id="restaurarConfig" class="btn secondary">RESTAURAR PADRÃO</button></div><div id="cfgMsg" class="msg"></div>
+<div class="actions"><button id="salvarConfig" class="btn primary">SALVAR CONFIGURAÇÕES DESTE MÓDULO</button><button id="usarGeral" class="btn gold" type="button">USAR CONFIGURAÇÃO GERAL</button><button id="restaurarConfig" class="btn secondary">RESTAURAR PADRÃO ORIGINAL</button></div><div id="cfgMsg" class="msg"></div>
 </section>
 </div>
 
@@ -153,17 +154,34 @@ function pdfFromJpeg(jpeg,w,h){const pageW=595.276,pageH=841.89,chunks=[],offs=[
 async function pdfBytes(){const probs=validate(true);if(probs.length)throw new Error(probs.join(' '));await renderPreview();const c=$('preview'),url=c.toDataURL('image/jpeg',0.96),jpg=dataUrlBytes(url);return pdfFromJpeg(jpg,c.width,c.height);}
 async function doOdt(){try{setMsg('Gerando ODT...');const b=await odtBytes();download(b,safeName()+'.odt','application/vnd.oasis.opendocument.text');setMsg('ODT gerado com sucesso.','ok')}catch(e){setMsg(e.message||String(e),'err')}}
 async function doPdf(){try{setMsg('Gerando PDF...');const b=await pdfBytes();download(b,safeName()+'.pdf','application/pdf');setMsg('PDF gerado com sucesso.','ok')}catch(e){setMsg(e.message||String(e),'err')}}
-function readCfg(){try{const x=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(x&&typeof x==='object')cfg={...DEFAULT_CFG,...x};}catch(e){cfg={...DEFAULT_CFG}}}
+function generalToCfg(){
+ const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};
+ const a=(Array.isArray(g.autoridades)&&g.autoridades[0])||{};
+ return {...DEFAULT_CFG,
+  estado:g.estadoHeader||DEFAULT_CFG.estado,secretaria:g.secretaria||DEFAULT_CFG.secretaria,
+  departamento:g.departamento||DEFAULT_CFG.departamento,subdivisao:g.subdivisao||DEFAULT_CFG.subdivisao,
+  unidade:g.unidade||DEFAULT_CFG.unidade,municipio:g.cidade||DEFAULT_CFG.municipio,uf:g.uf||DEFAULT_CFG.uf,
+  logradouro:g.logradouro||DEFAULT_CFG.logradouro,numero:g.numero||DEFAULT_CFG.numero,cep:g.cep||DEFAULT_CFG.cep,
+  municipioUf:[g.cidade||DEFAULT_CFG.municipio,g.uf||DEFAULT_CFG.uf].filter(Boolean).join(' - '),
+  email:g.email||DEFAULT_CFG.email,telefone:g.fone||DEFAULT_CFG.telefone,site:g.site||DEFAULT_CFG.site,
+  responsavel:a.nome||DEFAULT_CFG.responsavel,cargo:a.cargo||DEFAULT_CFG.cargo,crestData:g.logo||''};
+}
+function hasSpecificCfg(){return !!localStorage.getItem(CFG_KEY)}
+function updateCfgSource(){const e=$('cfgSource');if(!e)return;e.innerHTML=hasSpecificCfg()?'<b>Configuração personalizada neste módulo.</b> Ela tem prioridade sobre a Configuração Geral.':'<b>Usando Configuração Geral da Central.</b> Alterações feitas na Configuração Geral são herdadas automaticamente.';}
+function readCfg(){cfg=generalToCfg();try{const x=JSON.parse(localStorage.getItem(CFG_KEY)||'null');if(x&&typeof x==='object')cfg={...cfg,...x};}catch(e){}updateCfgSource();}
 function cfgToForm(){const map={cfgEstado:'estado',cfgSecretaria:'secretaria',cfgDepartamento:'departamento',cfgSubdivisao:'subdivisao',cfgUnidade:'unidade',cfgMunicipio:'municipio',cfgUf:'uf',cfgLogradouro:'logradouro',cfgNumero:'numero',cfgCep:'cep',cfgMunicipioUf:'municipioUf',cfgEmail:'email',cfgTelefone:'telefone',cfgSite:'site',cfgResponsavel:'responsavel',cfgCargo:'cargo',cfgTratamento:'tratamento'};Object.entries(map).forEach(([id,k])=>{$(id).value=cfg[k]??''});$('crestPreview').src=cfg.crestData||'data:image/png;base64,'+CREST_B64;$('crestPreview').style.objectPosition='center';}
 function formToCfg(){cfg={...cfg,estado:$('cfgEstado').value.trim(),secretaria:$('cfgSecretaria').value.trim(),departamento:$('cfgDepartamento').value.trim(),subdivisao:$('cfgSubdivisao').value.trim(),unidade:$('cfgUnidade').value.trim(),municipio:$('cfgMunicipio').value.trim(),uf:$('cfgUf').value.trim().toUpperCase(),logradouro:$('cfgLogradouro').value.trim(),numero:$('cfgNumero').value.trim(),cep:$('cfgCep').value.trim(),municipioUf:$('cfgMunicipioUf').value.trim(),email:$('cfgEmail').value.trim(),telefone:$('cfgTelefone').value.trim(),site:$('cfgSite').value.trim(),responsavel:$('cfgResponsavel').value.trim(),cargo:$('cfgCargo').value,tratamento:$('cfgTratamento').value};}
-async function saveCfg(){formToCfg();try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));setCfgMsg('Configurações salvas neste navegador.','ok')}catch(e){setCfgMsg('Não foi possível salvar as configurações: '+e.message,'err')}await renderPreview();}
-async function restoreCfg(){if(!confirm('Restaurar exatamente os dados do modelo original?'))return;cfg={...DEFAULT_CFG};try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){}cfgToForm();setCfgMsg('Padrão original restaurado.','ok');await renderPreview();}
+async function saveCfg(){formToCfg();try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));setCfgMsg('Configuração específica deste módulo salva.','ok');updateCfgSource()}catch(e){setCfgMsg('Não foi possível salvar as configurações: '+e.message,'err')}await renderPreview();}
+async function useGeneralCfg(){if(!confirm('Remover a personalização deste módulo e voltar a usar a Configuração Geral da Central?'))return;localStorage.removeItem(CFG_KEY);cfg=generalToCfg();cfgToForm();updateCfgSource();setCfgMsg('Configuração específica removida. O módulo voltou a usar a Configuração Geral.','ok');await renderPreview();}
+async function restoreCfg(){if(!confirm('Restaurar exatamente os dados originais deste módulo? Isso criará uma configuração específica local.'))return;cfg={...DEFAULT_CFG};try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}catch(e){}cfgToForm();updateCfgSource();setCfgMsg('Padrão original deste módulo restaurado.','ok');await renderPreview();}
 async function crestFile(file){if(!file)return;const url=URL.createObjectURL(file);try{const im=await loadImage(url),c=document.createElement('canvas'),max=500,r=Math.min(max/im.width,max/im.height,1);c.width=Math.max(1,Math.round(im.width*r));c.height=Math.max(1,Math.round(im.height*r));c.getContext('2d').drawImage(im,0,0,c.width,c.height);cfg.crestData=c.toDataURL('image/png');$('crestPreview').src=cfg.crestData;$('crestPreview').style.objectPosition='center';await renderPreview();}finally{URL.revokeObjectURL(url)}}
 function bind(){document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+b.dataset.tab));});
  const officeIds=['oficioNumero','sequencia','dataOficio','dataEvento','horario','localEvento','endereco','numeroEndereco','bairro','cidadeEvento','quantidade'];officeIds.forEach(id=>$(id).addEventListener('input',()=>{if(id==='cidadeEvento')$(id).value=$(id).value.toUpperCase();if(id==='horario'&&digits($(id).value).length===4)$(id).value=formatTime($(id).value);renderPreview();}));
  $('oficioNumero').addEventListener('blur',()=>{$('oficioNumero').value=formatOficio($('oficioNumero').value);renderPreview()});$('sequencia').addEventListener('blur',()=>{$('sequencia').value=formatSequence($('sequencia').value);renderPreview()});$('horario').addEventListener('blur',()=>{$('horario').value=formatTime($('horario').value);renderPreview()});
- document.querySelectorAll('#panel-config input,#panel-config select').forEach(e=>e.addEventListener('input',async()=>{formToCfg();await renderPreview()}));$('trocarBrasao').onclick=()=>$('brasaoFile').click();$('brasaoFile').onchange=e=>{crestFile(e.target.files&&e.target.files[0]);e.target.value=''};$('removerBrasao').onclick=async()=>{cfg.crestData='';$('crestPreview').src='data:image/png;base64,'+CREST_B64;await renderPreview()};$('salvarConfig').onclick=saveCfg;$('restaurarConfig').onclick=restoreCfg;
+ document.querySelectorAll('#panel-config input,#panel-config select').forEach(e=>e.addEventListener('input',async()=>{formToCfg();await renderPreview()}));$('trocarBrasao').onclick=()=>$('brasaoFile').click();$('brasaoFile').onchange=e=>{crestFile(e.target.files&&e.target.files[0]);e.target.value=''};$('removerBrasao').onclick=async()=>{cfg.crestData='';$('crestPreview').src='data:image/png;base64,'+CREST_B64;await renderPreview()};$('salvarConfig').onclick=saveCfg;$('usarGeral').onclick=useGeneralCfg;$('restaurarConfig').onclick=restoreCfg;
  $('baixarOdt').onclick=doOdt;$('baixarPdf').onclick=doPdf;$('gerarDocumento').onclick=()=>$('formato').value==='pdf'?doPdf():doOdt();$('limpar').onclick=()=>{['oficioNumero','sequencia','dataEvento','horario','localEvento','endereco','numeroEndereco','bairro','cidadeEvento','quantidade'].forEach(id=>$(id).value='');$('dataOficio').value=todayLocal();document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));setMsg('');renderPreview();};}
-readCfg();cfgToForm();$('dataOficio').value=todayLocal();bind();Promise.all([new Promise(r=>paperImg.complete?r():paperImg.onload=r)]).then(renderPreview);
+readCfg();cfgToForm();$('dataOficio').value=todayLocal();bind();
+if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(!hasSpecificCfg()){cfg=generalToCfg();cfgToForm();updateCfgSource();renderPreview();}});
+Promise.all([new Promise(r=>paperImg.complete?r():paperImg.onload=r)]).then(renderPreview);
 </script>
 </body></html>

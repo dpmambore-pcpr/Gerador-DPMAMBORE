@@ -157,6 +157,7 @@ footer{color:var(--suave) !important;}
 @media(max-width:680px){header{padding:18px 16px !important;}header h1{font-size:20px !important;}}
 </style>
 
+<script src="pcpr-config.js?v=2.7"></script>
 </head>
 <body>
 <header>
@@ -341,7 +342,7 @@ footer{color:var(--suave) !important;}
 <div class="card">
   <h2 style="cursor:pointer" id="tglCfg">Configuração avançada da unidade ▸ <span style="text-transform:none;font-weight:400;color:var(--suave);letter-spacing:0">ajustes locais e compatibilidade</span></h2>
   <div id="boxCfg" class="hide">
-    <div class="aviso">Preencha os dados da sua unidade e clique em <b>Baixar versão personalizada</b>. O arquivo gerado já abre configurado — basta distribuí-lo.</div>
+    <div class="aviso"><b id="cfgFonte">Fonte ativa: Configuração Geral da Central.</b><br>Os campos abaixo continuam disponíveis para uma personalização específica deste módulo. A prioridade é: configuração específica do módulo → Configuração Geral → padrão original.</div>
     <div class="form">
       <label>Nome da unidade<input type="text" id="cfUnidade"></label>
       <label>Subtítulo (tela)<input type="text" id="cfSub"></label>
@@ -374,6 +375,8 @@ footer{color:var(--suave) !important;}
     <div class="linha" style="margin-top:16px">
       <button id="btnVersao">Baixar versão personalizada (.html)</button>
       <button class="sec" id="btnAplicaCfg">Aplicar só nesta sessão</button>
+      <button class="sec" id="btnUsaGeral">Usar Configuração Geral</button>
+      <button class="sec" id="btnRestauraOriginal">Restaurar padrão original</button>
       <button class="sec" id="btnExpCfg">Exportar configuração (.json)</button>
       <button class="sec" id="btnImpCfg">Importar configuração (.json)</button>
       <input type="file" id="fileCfg" class="hide" accept=".json">
@@ -404,16 +407,16 @@ var CFG_PADRAO = {
     "16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO",
     "DELEGACIA DE POLÍCIA DE MAMBORÊ"],
   rodape: ["Av. Augusto Mendes dos Santos, 997, Mamborê - PR, 87340-000",
-    "Email: dpmambore@pc.pr.gov.br – Fone/Fax: (44) 3568-1341 – www.policiacivil.pr.gov.br"],
+    "Email: dpmambore@pc.pr.gov.br – Fone/Fax: (44) 3865-1341 – www.policiacivil.pr.gov.br"],
   cidade: "Mamborê/PR",
   emailUnidade: "dpmambore@pc.pr.gov.br",
   emailDelegado: "del.asromao@pc.pr.gov.br",
   assinante: "Anderson Sérgio Romão",
   cargo: "Delegado de Polícia Civil",
   agentes: [
-    {nome:"Tiago Henrique Lemes",  email:"apj.thlemes@pc.pr.gov.br",    fone:"(44) 3568-1341"},
-    {nome:"Paulo Henrique Vilaça", email:"apj.phsvilaca@pc.pr.gov.br",  fone:"(44) 3568-1341"},
-    {nome:"Thiago Couto",          email:"apj.thiagocouto@pc.pr.gov.br",fone:"(44) 3568-1341"}
+    {nome:"Tiago Henrique Lemes",  email:"apj.thlemes@pc.pr.gov.br",    fone:"(44) 3865-1341"},
+    {nome:"Paulo Henrique Vilaça", email:"apj.phsvilaca@pc.pr.gov.br",  fone:"(44) 3865-1341"},
+    {nome:"Thiago Couto",          email:"apj.thiagocouto@pc.pr.gov.br",fone:"(44) 3865-1341"}
   ],
   crimes: ["estelionato (art. 171, caput, do Código Penal)",
     "estelionato mediante fraude eletrônica (art. 171, §2º-A, do Código Penal)",
@@ -428,22 +431,61 @@ var CFG_PADRAO = {
   brasao: null, brasaoL: 70, brasaoA: 85
 };
 var CFG = {};
+var CFG_FONTE = (typeof window !== "undefined" && window.CFG_UNIDADE) ? "especifica" : "geral";
+function logoBase64(v){
+  var x=String(v||"").trim();
+  var m=x.match(/^data:image\/[^;]+;base64,(.+)$/i);
+  return m?m[1]:x;
+}
+function cfgGeralResolvida(){
+  var out={}; Object.keys(CFG_PADRAO).forEach(function(k){
+    var v=CFG_PADRAO[k]; out[k]=Array.isArray(v)?JSON.parse(JSON.stringify(v)):v;
+  });
+  try{
+    var g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():(JSON.parse(localStorage.getItem(GENERAL_CFG_KEY)||'null')||{});
+    var a0=(Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null);
+    if(a0&&typeof a0==='object'){out.assinante=a0.nome||out.assinante;out.cargo=a0.cargo||out.cargo;}
+    else if(Array.isArray(g.delegados)&&g.delegados.length)out.assinante=g.delegados[0]||out.assinante;
+    out.cargo=(a0&&a0.cargo)||g.cargo||localStorage.getItem(CARGO_AUTORIDADE_KEY)||out.cargo;
+    if(g.unidade)out.unidade=g.unidade;
+    if(g.subdivisao)out.subtitulo=g.subdivisao;
+    if(g.cidade)out.cidade=g.cidade+(g.uf?'/'+g.uf:'');
+    if(g.email){out.emailUnidade=g.email;out.emailDelegado=g.email;}
+    if(g.logo)out.brasao=logoBase64(g.logo);
+    if(g.endereco||g.cep||g.email||g.fone||g.site){
+      var r1=[g.endereco,g.bairro,g.cidade&&g.uf?(g.cidade+' - '+g.uf):g.cidade,g.cep].filter(Boolean).join(', ');
+      var r2=[g.email?('Email: '+g.email):'',g.fone?('Fone/Fax: '+g.fone):'',g.site||''].filter(Boolean).join(' – ');
+      out.rodape=[r1,r2].filter(Boolean);
+    }
+    if(g.estadoHeader||g.secretaria||g.departamento||g.subdivisao||g.unidade){
+      out.cabecalho=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean).map(function(x){return String(x).toUpperCase();});
+    }
+    var generalAgents=(Array.isArray(g.servidores)?g.servidores:[]).filter(function(x){return x&&/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(String(x.cargo||''));});
+    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'APJ - Agente de Polícia Judiciária'};});
+    if(generalAgents.length){
+      var antigos=CFG_PADRAO.agentes,map={};antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
+      out.agentes=generalAgents.map(function(x){var n=String(x.nome||x||''),a=map[n.toLocaleLowerCase('pt-BR')]||{};return {nome:n,email:a.email||'',fone:a.fone||g.fone||''};});
+    }
+  }catch(_){}
+  if(!out.brasao)out.brasao=BRASAO_B64;
+  return out;
+}
 (function(){
   var p = (typeof window !== "undefined" && window.CFG_UNIDADE) ? window.CFG_UNIDADE : {};
   try{
-    var g=JSON.parse(localStorage.getItem(GENERAL_CFG_KEY)||'null')||{};
-    var av2=JSON.parse(localStorage.getItem('pcpr.autoridades.v2')||'null');
-    var a0=(Array.isArray(av2)&&av2.length?av2[0]:(Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null));
+    var g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():(JSON.parse(localStorage.getItem(GENERAL_CFG_KEY)||'null')||{});
+    var a0=(Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null);
     if(a0&&typeof a0==='object'){
       if(!p.assinante)p.assinante=a0.nome||'';
       if(!p.cargo)p.cargo=a0.cargo||'';
     }else if(!p.assinante && Array.isArray(g.delegados) && g.delegados.length)p.assinante=g.delegados[0];
-    if(!p.cargo)p.cargo=localStorage.getItem(CARGO_AUTORIDADE_KEY)||g.cargo||'';
+    if(!p.cargo)p.cargo=(a0&&a0.cargo)||g.cargo||localStorage.getItem(CARGO_AUTORIDADE_KEY)||'';
     if(g.unidade&&!p.unidade)p.unidade=g.unidade;
     if(g.subdivisao&&!p.subtitulo)p.subtitulo=g.subdivisao;
     if(g.cidade&&!p.cidade)p.cidade=g.cidade+(g.uf?'/'+g.uf:'');
     if(g.email&&!p.emailUnidade)p.emailUnidade=g.email;
     if(g.email&&!p.emailDelegado)p.emailDelegado=g.email;
+    if(g.logo&&!p.brasao)p.brasao=logoBase64(g.logo);
     if(g.endereco||g.cep||g.email||g.fone||g.site){
       var r1=[g.endereco,g.cep].filter(Boolean).join(', ');
       var r2=[g.email?('Email: '+g.email):'',g.fone?('Fone: '+g.fone):'',g.site||''].filter(Boolean).join(' – ');
@@ -452,13 +494,11 @@ var CFG = {};
     if(g.estadoHeader||g.secretaria||g.departamento||g.subdivisao||g.unidade){
       p.cabecalho=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean).map(function(s){return String(s).toUpperCase();});
     }
-    if(Array.isArray(g.apjs)&&g.apjs.length){
-      var antigos=(p.agentes||CFG_PADRAO.agentes),map={};
-      antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
-      p.agentes=g.apjs.map(function(n){
-        var a=map[String(n).toLocaleLowerCase('pt-BR')];
-        return a||{nome:n,email:g.email||CFG_PADRAO.emailUnidade,fone:g.fone||''};
-      });
+    var generalAgents=(Array.isArray(g.servidores)?g.servidores:[]).filter(function(x){return x&&/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(String(x.cargo||''));});
+    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'APJ - Agente de Polícia Judiciária'};});
+    if(generalAgents.length&&!p.agentes){
+      var antigos=CFG_PADRAO.agentes,map={};antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
+      p.agentes=generalAgents.map(function(x){var n=String(x.nome||x||''),a=map[n.toLocaleLowerCase('pt-BR')]||{};return {nome:n,email:a.email||'',fone:a.fone||g.fone||''};});
     }
   }catch(_){}
   Object.keys(CFG_PADRAO).forEach(function(k){
@@ -1982,6 +2022,15 @@ function cfgAplicaNaTela(){
   if(a && !a.dataset.tocado) a.value = CFG.assinante;
   if(c && !c.dataset.tocado) c.value = CFG.cargo;
 }
+function cfgAtualizaFonte(){
+  var e=document.getElementById("cfgFonte"); if(!e)return;
+  if(CFG_FONTE==="especifica")e.textContent="Fonte ativa: CONFIGURAÇÃO ESPECÍFICA deste módulo.";
+  else if(CFG_FONTE==="original")e.textContent="Fonte ativa: PADRÃO ORIGINAL deste módulo.";
+  else e.textContent="Fonte ativa: CONFIGURAÇÃO GERAL da Central.";
+}
+function cfgAtualizaTudo(){
+  CACHE_JPEG=null;cfgPreencheForm();cfgAplicaNaTela();cfgAtualizaFonte();renderCrimes();renderAgentes();renderOperadoras();renderBancos();atualizaDestinos();
+}
 function linhasDe(id){
   return document.getElementById(id).value.split("\n")
     .map(function(l){ return l.trim(); }).filter(function(l){ return l; });
@@ -2012,7 +2061,7 @@ function cfgLeForm(){
   var ags = linhasDe("cfAgentes").map(function(l){
     var p = l.split(";").map(function(s){ return s.trim(); });
     return {nome: p[0] || "", email: p[1] || "", fone: p[2] || ""};
-  }).filter(function(a){ return a.nome && a.email; });
+  }).filter(function(a){ return a.nome; });
   return {
     unidade: v("cfUnidade") || CFG_PADRAO.unidade,
     subtitulo: v("cfSub"), cidade: v("cfCidade"), emailUnidade: v("cfEmail"),
@@ -2034,9 +2083,10 @@ function msgCfg(t, cor){ var e = document.getElementById("msgCfg"); e.innerHTML 
 function cfgAplica(){
   var novo = cfgLeForm();
   Object.keys(novo).forEach(function(k){ CFG[k] = novo[k]; });
+  CFG_FONTE="especifica";
   CACHE_JPEG = null;
-  cfgAplicaNaTela(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos();
-  msgCfg("Configuração aplicada nesta sessão. Para não repetir, baixe a versão personalizada.", "var(--ok)");
+  cfgAplicaNaTela(); cfgAtualizaFonte(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos();
+  msgCfg("Configuração específica aplicada nesta sessão. A Configuração Geral permanece preservada.", "var(--ok)");
 }
 function cfgTrocaBrasao(file){
   var img = new Image(), url = URL.createObjectURL(file);
@@ -2083,9 +2133,9 @@ function cfgImportaJSON(file){
       Object.keys(CFG_PADRAO).forEach(function(k){
         if(j[k] !== undefined && j[k] !== null && j[k] !== "") CFG[k] = j[k];
       });
-      CACHE_JPEG = null;
-      cfgPreencheForm(); cfgAplicaNaTela(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos();
-      msgCfg("Configuração importada.", "var(--ok)");
+      CFG_FONTE="especifica"; CACHE_JPEG = null;
+      cfgPreencheForm(); cfgAplicaNaTela(); cfgAtualizaFonte(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos();
+      msgCfg("Configuração específica importada para este módulo.", "var(--ok)");
     }catch(e){ msgCfg("Arquivo de configuração inválido.", "var(--erro)"); }
   });
 }
@@ -2100,6 +2150,14 @@ document.getElementById("btnCfgTopo").onclick = function(){
   document.getElementById("boxCfg").scrollIntoView({behavior:"smooth", block:"start"});
 };
 document.getElementById("btnAplicaCfg").onclick = cfgAplica;
+document.getElementById("btnUsaGeral").onclick = function(){
+  if(!confirm("Voltar a usar a Configuração Geral da Central neste módulo? Os ajustes específicos desta sessão serão descartados."))return;
+  var n=cfgGeralResolvida();Object.keys(CFG_PADRAO).forEach(function(k){CFG[k]=n[k]});CFG_FONTE="geral";cfgAtualizaTudo();msgCfg("Este módulo voltou a usar a Configuração Geral da Central.","var(--ok)");
+};
+document.getElementById("btnRestauraOriginal").onclick = function(){
+  if(!confirm("Restaurar o padrão ORIGINAL deste módulo nesta sessão? A Configuração Geral não será alterada."))return;
+  Object.keys(CFG_PADRAO).forEach(function(k){var v=CFG_PADRAO[k];CFG[k]=Array.isArray(v)?JSON.parse(JSON.stringify(v)):v;});CFG.brasao=BRASAO_B64;CFG_FONTE="original";cfgAtualizaTudo();msgCfg("Padrão original deste módulo restaurado nesta sessão.","var(--ok)");
+};
 document.getElementById("btnVersao").onclick = cfgBaixaVersao;
 document.getElementById("btnExpCfg").onclick = cfgExportaJSON;
 document.getElementById("btnImpCfg").onclick = function(){ document.getElementById("fileCfg").click(); };
@@ -2121,7 +2179,11 @@ document.getElementById("fAgente").onchange = function(){ atualizaIniciais(); at
 setTimeout(function(){if(typeof atualizaConferencia==="function")atualizaConferencia();},0);
 document.getElementById("fEmailExtra").oninput = atualizaDestinos;
 document.getElementById("fIniciais").oninput = function(){ this.dataset.tocado = "1"; };
-cfgPreencheForm(); cfgAplicaNaTela(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos(); trocaTipo();
+cfgPreencheForm(); cfgAplicaNaTela(); cfgAtualizaFonte(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos(); trocaTipo();
+if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(function(){
+  if(CFG_FONTE!=="geral")return;
+  var n=cfgGeralResolvida();Object.keys(CFG_PADRAO).forEach(function(k){CFG[k]=n[k]});cfgAtualizaTudo();
+});
 </script>
 </body>
 </html>
