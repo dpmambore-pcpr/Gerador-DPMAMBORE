@@ -98,7 +98,7 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
 .page-content .sign{width:100%!important;margin:14mm 0 25mm 0!important;text-align:center!important;font-weight:bold!important}
 .page-content .sign b{display:inline-block;text-align:center!important}
 @media(max-width:760px){.desc-item{grid-template-columns:1fr!important}.desc-item .remove{align-self:auto}}
-</style><script src="pcpr-config.js?v=2.7.4"></script>
+</style><script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive.js?v=2.8.4"></script>
 </head><body>
 <header><h1>OFÍCIO À PERÍCIA</h1><p>Gerador integrado à Central de Ofícios · os dados permanecem neste navegador</p></header>
 <main><div class="grid">
@@ -124,7 +124,7 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
 <label>Delegado<select id="cfgDelegado"></select></label><label>Cargo<input id="cfgCargo" placeholder="Ex.: Delegado de Polícia"></label>
 <label class="full">Adicionar delegado<div class="row" style="margin-top:4px"><input id="novoDelegado" placeholder="Nome completo do Delegado"><button id="addDelegado" class="btn sec" type="button">+ Adicionar</button><button id="removeDelegado" class="btn danger" type="button">Remover selecionado</button></div></label>
 </div><div class="row" style="margin-top:9px"><button id="saveCfg" class="btn sec" type="button">Salvar configuração deste módulo</button><button id="reloadCfg" class="btn gold" type="button">Usar Configuração Geral</button><button id="restoreCfg" class="btn sec" type="button">Restaurar padrão original</button></div></details>
-<div class="row" style="margin-top:15px"><button id="printBtn" class="btn gold" type="button">Imprimir / Salvar PDF</button><button id="odtBtn" class="btn" type="button">Baixar ODT</button><button id="clearBtn" class="btn sec" type="button">Limpar campos</button></div><div id="status" class="status"></div>
+<div class="row" style="margin-top:15px"><button id="printBtn" class="btn gold" type="button">Imprimir / Salvar PDF</button><button id="driveBtn" class="btn" type="button">☁ ENVIAR PARA PASTA</button><button id="odtBtn" class="btn" type="button">Baixar ODT</button><button id="clearBtn" class="btn sec" type="button">Limpar campos</button></div><div id="status" class="status"></div>
 </section>
 <section class="panel preview"><h2 class="print-hide">Pré-visualização</h2><div class="doc-wrap"><article id="doc" class="doc"></article></div></section>
 </div></main>
@@ -215,7 +215,18 @@ $('bo').addEventListener('input',e=>{const d=e.target.value.replace(/\D/g,'').sl
 $('addDesc').onclick=()=>{addDesc();render()};
 $('saveCfg').onclick=()=>{uiToCfg();localStorage.setItem(CFG_KEY,JSON.stringify(cfg));updateCfgSource();$('status').textContent='Configuração específica da Perícia salva neste navegador.';render()}; $('reloadCfg').onclick=()=>{if(!confirm('Remover a personalização da Perícia e voltar a usar a Configuração Geral?'))return;localStorage.removeItem(CFG_KEY);cfg=deriveCfg();cfgToUi();updateCfgSource();render();$('status').textContent='A Perícia voltou a usar a Configuração Geral.'}; $('restoreCfg').onclick=()=>{if(!confirm('Restaurar o padrão ORIGINAL deste módulo? Isso criará uma configuração específica local.'))return;cfg={...DEF,delegados:[...DEF.delegados],delegado:DEF.delegados[0]};localStorage.setItem(CFG_KEY,JSON.stringify(cfg));cfgToUi();updateCfgSource();render();$('status').textContent='Padrão original da Perícia restaurado.'};
 $('addDelegado').onclick=addDelegado;$('removeDelegado').onclick=removeDelegado;$('novoDelegado').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addDelegado()}});
-$('printBtn').onclick=()=>window.print(); $('clearBtn').onclick=()=>{if(!confirm('Limpar os campos deste ofício?'))return;['ip','seq','autosIp','autosCautelar','bo','delito','vitimas','investigados'].forEach(id=>$(id).value='');$('descs').innerHTML='';addDesc();setToday();render()};
+async function sendDrivePericia(){
+ const btn=$('driveBtn');
+ try{
+  if(!window.PCPRDrive)throw new Error('Integração com Google Drive não carregada.');
+  render();btn.disabled=true;btn.textContent='ENVIANDO...';$('status').textContent='Gerando PDF para assinatura...';
+  const ip=parseIP(val('ip'));
+  const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:cfg.delegado,fileName:'OFICIO_PERICIA_'+(ip.n||'IP')+'_'+(ip.ano||'')+'.pdf',elements:[$('doc')]});
+  $('status').textContent='PDF enviado para a pasta de assinatura de '+r.authority.nome+'.';
+ }catch(e){if(!(e&&e.cancelled))$('status').textContent=e.message||String(e)}
+ finally{btn.disabled=false;btn.textContent='☁ ENVIAR PARA PASTA'}
+}
+$('printBtn').onclick=()=>window.print(); $('driveBtn').onclick=sendDrivePericia; $('clearBtn').onclick=()=>{if(!confirm('Limpar os campos deste ofício?'))return;['ip','seq','autosIp','autosCautelar','bo','delito','vitimas','investigados'].forEach(id=>$(id).value='');$('descs').innerHTML='';addDesc();setToday();render()};
 function setToday(){const n=new Date();const y=n.getFullYear(),m=String(n.getMonth()+1).padStart(2,'0'),d=String(n.getDate()).padStart(2,'0');$('data').value=`${y}-${m}-${d}`}
 // ZIP writer sem compressão para gerar ODT localmente
 const te=new TextEncoder(); function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0} function u16(n){return [n&255,(n>>>8)&255]} function u32(n){return [n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}

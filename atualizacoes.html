@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.3</span>
+      <span class="version">VERSÃO ATUAL · v2.8.4</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,8 +62,20 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.3">
-        <div class="item-head"><span class="item-ver">v2.8.3</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.8.4">
+        <div class="item-head"><span class="item-ver">v2.8.4</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">ASSINATURA</span><span class="badge">ATUAL</span></div>
+        <h3>Envio para assinatura em todos os documentos da Autoridade Policial</h3>
+        <ul>
+          <li>O botão <b>Enviar para pasta</b> foi ampliado para os geradores cujos documentos são assinados por Delegado(a): Coffee Break, Ofício de Diária, Oitiva em Penitenciária, Perícia e Justificativa do Fundo Rotativo, além do gerador de Ofícios que já possuía a integração.</li>
+          <li>Documentos assinados somente por APJ/servidor não receberam o botão, preservando o fluxo específico de cada módulo.</li>
+          <li>Centralizado o envio ao Google Drive para reutilizar a pasta configurada por autoridade, com confirmação do destino, renovação de autenticação quando necessária e nova seleção da pasta em caso de perda de acesso.</li>
+          <li>Nos módulos que não possuíam geração interna de PDF em bytes, a Central cria o PDF visual a partir da prévia e o envia diretamente para a pasta da autoridade.</li>
+          <li>Atualizado o cache do PWA para <b>v2.8.4</b>.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.8.3">
+        <div class="item-head"><span class="item-ver">v2.8.3</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">OFÍCIOS</span></div>
         <h3>Pastas de assinatura por autoridade no Google Drive</h3>
         <ul>
           <li>Adicionada configuração local de pasta para assinatura no Google Drive, individual por autoridade e por navegador.</li>
@@ -324,7 +336,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.8.3';
+  const CURRENT_VERSION='2.8.4';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 

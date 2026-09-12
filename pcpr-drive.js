@@ -92,6 +92,113 @@ async function uploadFile(bytes,name,mimeType,folderId,settings,accessToken){
   if(!res.ok){const m=data&&data.error&&data.error.message?data.error.message:('HTTP '+res.status);const e=new Error('Google Drive: '+m);e.status=res.status;throw e;}
   return data;
 }
+
+function getGeneralConfig(){
+  if(global.PCPRConfig&&typeof global.PCPRConfig.get==='function')return global.PCPRConfig.get();
+  try{return JSON.parse(localStorage.getItem('pcpr.configGeralUnidade.v1')||'{}')||{}}catch(_){return{}}
+}
+function saveGeneralConfig(cfg){
+  if(global.PCPRConfig&&typeof global.PCPRConfig.save==='function')return global.PCPRConfig.save(cfg);
+  localStorage.setItem('pcpr.configGeralUnidade.v1',JSON.stringify(cfg));return cfg;
+}
+function safeFileName(v){
+  return clean(v||'documento.pdf').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^-+|-+$/g,'')||'documento.pdf';
+}
+function savePickedFolder(cfg,authorityName,picked){
+  const target=fold(authorityName);
+  cfg={...(cfg||{})};
+  cfg.autoridades=(Array.isArray(cfg.autoridades)?cfg.autoridades:[]).map(a=>{
+    if(fold(a&&a.nome)!==target)return a;
+    const id=clean(picked&&picked.id)||extractFolderId(a.driveFolderId||a.driveFolderUrl);
+    return {...a,driveFolderId:id,driveFolderUrl:(picked&&picked.url)||folderUrl(id),driveFolderName:clean(picked&&picked.name)||clean(a.driveFolderName),driveFolderAuthorized:true};
+  });
+  return saveGeneralConfig(cfg);
+}
+async function prepareDestination(authorityName,options){
+  options=options||{};
+  let cfg=getGeneralConfig(),a=findAuthority(authorityName,cfg);
+  if(!a)throw new Error('A autoridade "'+clean(authorityName)+'" não está cadastrada na Configuração Geral da Central.');
+  let id=extractFolderId(a.driveFolderId||a.driveFolderUrl);
+  if(!id)throw new Error('Nenhuma pasta do Google Drive foi configurada para '+a.nome+'. Abra Configuração Geral → Google Drive e cole o link da pasta para assinatura.');
+  const d=normalizeDrive(cfg.drive);
+  if(!d.clientId||!d.apiKey)throw new Error('A integração Google Drive ainda não está completa. Abra Configuração Geral → Google Drive → Configuração técnica e preencha OAuth Client ID e API Key.');
+  let accessToken='';
+  if(options.forcePicker||!a.driveFolderAuthorized){
+    const picked=await pickFolder(d,id);
+    cfg=savePickedFolder(cfg,a.nome,picked);
+    a=findAuthority(a.nome,cfg)||a;
+    id=extractFolderId(a.driveFolderId||picked.id);
+    accessToken=picked.accessToken||'';
+  }
+  if(!accessToken)accessToken=await getAccessToken(d,false);
+  return {cfg,authority:a,folderId:id,drive:d,accessToken,folderName:a.driveFolderName||'Pasta configurada'};
+}
+async function uploadPdfForAuthority(opts){
+  opts=opts||{};
+  const authorityName=clean(opts.authorityName);
+  if(!authorityName)throw new Error('Não foi possível identificar o Delegado responsável pelo documento.');
+  let dest=await prepareDestination(authorityName,{forcePicker:!!opts.forcePicker});
+  const filename=safeFileName(opts.fileName||'documento.pdf').replace(/\.pdf$/i,'')+'.pdf';
+  if(opts.confirm!==false){
+    const ok=global.confirm('Enviar PDF para assinatura?\n\nAutoridade: '+dest.authority.nome+'\nPasta: '+dest.folderName+'\nArquivo: '+filename);
+    if(!ok){const e=new Error('Envio cancelado.');e.cancelled=true;throw e;}
+  }
+  let bytes=opts.bytes;
+  if(typeof bytes==='function')bytes=await bytes();
+  if(!bytes)throw new Error('Não foi possível gerar o PDF para envio.');
+  let result;
+  try{
+    result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+  }catch(e){
+    if(e&&e.status===401){
+      clearToken();dest.accessToken=await getAccessToken(dest.drive,true);
+      result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+    }else if(e&&(e.status===403||e.status===404)&&!opts.forcePicker){
+      const picked=await pickFolder(dest.drive,dest.folderId);
+      const cfg=savePickedFolder(dest.cfg,dest.authority.nome,picked);
+      dest.authority=findAuthority(dest.authority.nome,cfg)||dest.authority;
+      dest.folderId=extractFolderId(dest.authority.driveFolderId||picked.id);
+      dest.accessToken=picked.accessToken||await getAccessToken(dest.drive,false);
+      result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+    }else throw e;
+  }
+  return {...result,folderId:dest.folderId,folderUrl:folderUrl(dest.folderId),authority:dest.authority,filename};
+}
+async function ensurePdfLibraries(){
+  if(!global.html2canvas)await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas');
+  if(!global.jspdf?.jsPDF)await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','jspdf');
+  if(!global.html2canvas||!global.jspdf?.jsPDF)throw new Error('Não foi possível carregar o gerador de PDF.');
+}
+function normalizeElements(input){
+  if(!input)return[];
+  if(typeof input==='string')return [...document.querySelectorAll(input)];
+  if(input instanceof Element)return[input];
+  if(Array.isArray(input)||input instanceof NodeList)return [...input].filter(x=>x instanceof Element);
+  return[];
+}
+async function elementsToPdfBlob(elements,options){
+  options=options||{};await ensurePdfLibraries();
+  const els=normalizeElements(elements);if(!els.length)throw new Error('A pré-visualização do documento não foi encontrada.');
+  const {jsPDF}=global.jspdf;
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+  for(let i=0;i<els.length;i++){
+    if(i)pdf.addPage('a4','portrait');
+    const el=els[i];
+    const canvas=await global.html2canvas(el,{scale:options.scale||2,useCORS:true,allowTaint:false,backgroundColor:options.backgroundColor||'#ffffff',logging:false,imageTimeout:15000,scrollX:0,scrollY:-global.scrollY});
+    const img=canvas.toDataURL('image/jpeg',options.quality||0.94);
+    const pw=210,ph=297,ratio=canvas.width/canvas.height;
+    let w=pw,h=w/ratio;if(h>ph){h=ph;w=h*ratio}
+    const x=(pw-w)/2,y=(ph-h)/2;
+    pdf.addImage(img,'JPEG',x,y,w,h,undefined,'FAST');
+  }
+  return pdf.output('blob');
+}
+async function uploadElementsPdfForAuthority(opts){
+  opts=opts||{};
+  const bytes=await elementsToPdfBlob(opts.elements,opts.pdfOptions);
+  return uploadPdfForAuthority({...opts,bytes});
+}
+
 function clearToken(){token=null;tokenExp=0;}
-global.PCPRDrive={SCOPE,extractFolderId,folderUrl,normalizeDrive,findAuthority,getAccessToken,pickFolder,uploadFile,clearToken};
+global.PCPRDrive={SCOPE,extractFolderId,folderUrl,normalizeDrive,findAuthority,getAccessToken,pickFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
 })(window);

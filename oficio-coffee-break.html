@@ -24,7 +24,7 @@
 @media(max-width:980px){.layout{grid-template-columns:1fr}.preview-card{position:static}}@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.topin{align-items:flex-start;flex-direction:column}.statusbar{grid-template-columns:1fr}.tabs{overflow:auto}.card{padding:14px}}
 @media print{body{background:white}.top,.security,.tabs,.formcol,.preview-head,.check{display:none!important}.wrap{margin:0;padding:0;max-width:none}.layout{display:block}.preview-card{border:0;padding:0;box-shadow:none}.paper-wrap{border:0;padding:0;background:white;overflow:visible}.paper-wrap canvas{width:210mm!important;height:297mm!important;box-shadow:none;max-width:none}@page{size:A4;margin:0}}
 </style>
-<script src="pcpr-config.js?v=2.7.4"></script>
+<script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive.js?v=2.8.4"></script>
 </head>
 <body>
 <header class="top"><div class="topin"><div><h1>Ofício - Solicitação de Coffee Break</h1><p>Gerador baseado no modelo oficial fornecido · ODT e PDF</p></div><div class="badge">PCPR · GERADOR LOCAL</div></div></header>
@@ -50,7 +50,7 @@
 </div>
 <div class="statusbar"><div class="stat"><span>Ofício</span><strong id="sOficio">-</strong></div><div class="stat"><span>Evento</span><strong id="sEvento">-</strong></div><div class="stat"><span>Preenchimento</span><strong id="sCampos">0/11</strong></div></div>
 <div class="grid"><div class="field"><label for="formato">Formato</label><select id="formato"><option value="odt">ODT - LibreOffice</option><option value="pdf">PDF</option></select></div></div>
-<div class="actions"><button id="gerarDocumento" class="btn primary">GERAR DOCUMENTO</button><button id="baixarOdt" class="btn secondary">BAIXAR ODT</button><button id="baixarPdf" class="btn secondary">BAIXAR PDF</button><button id="limpar" class="btn danger">LIMPAR CAMPOS</button></div>
+<div class="actions"><button id="gerarDocumento" class="btn primary">GERAR DOCUMENTO</button><button id="baixarOdt" class="btn secondary">BAIXAR ODT</button><button id="baixarPdf" class="btn secondary">BAIXAR PDF</button><button id="enviarDrive" class="btn secondary">☁ ENVIAR PARA PASTA</button><button id="limpar" class="btn danger">LIMPAR CAMPOS</button></div>
 <div id="msg" class="msg" aria-live="polite"></div>
 </section>
 
@@ -155,6 +155,17 @@ function pdfFromJpeg(jpeg,w,h){const pageW=595.276,pageH=841.89,chunks=[],offs=[
 async function pdfBytes(){const probs=validate(true);if(probs.length)throw new Error(probs.join(' '));await renderPreview();const c=$('preview'),url=c.toDataURL('image/jpeg',0.96),jpg=dataUrlBytes(url);return pdfFromJpeg(jpg,c.width,c.height);}
 async function doOdt(){try{setMsg('Gerando ODT...');const b=await odtBytes();download(b,safeName()+'.odt','application/vnd.oasis.opendocument.text');setMsg('ODT gerado com sucesso.','ok')}catch(e){setMsg(e.message||String(e),'err')}}
 async function doPdf(){try{setMsg('Gerando PDF...');const b=await pdfBytes();download(b,safeName()+'.pdf','application/pdf');setMsg('PDF gerado com sucesso.','ok')}catch(e){setMsg(e.message||String(e),'err')}}
+async function doDrive(){
+ const btn=$('enviarDrive');
+ try{
+  if(!window.PCPRDrive)throw new Error('Integração com Google Drive não carregada.');
+  btn.disabled=true;btn.textContent='ENVIANDO...';setMsg('Gerando PDF para assinatura...');
+  const b=await pdfBytes();
+  const r=await PCPRDrive.uploadPdfForAuthority({authorityName:cfg.responsavel,fileName:safeName()+'.pdf',bytes:b});
+  setMsg('PDF enviado para a pasta de assinatura de '+r.authority.nome+'.','ok');
+ }catch(e){if(!(e&&e.cancelled))setMsg(e.message||String(e),'err')}
+ finally{btn.disabled=false;btn.textContent='☁ ENVIAR PARA PASTA'}
+}
 function generalToCfg(){
  const g=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};
  const a=(Array.isArray(g.autoridades)&&g.autoridades[0])||{};
@@ -180,7 +191,7 @@ function bind(){document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{docu
  const officeIds=['oficioNumero','sequencia','dataOficio','dataEvento','horario','localEvento','endereco','numeroEndereco','bairro','cidadeEvento','quantidade'];officeIds.forEach(id=>$(id).addEventListener('input',()=>{if(id==='cidadeEvento')$(id).value=$(id).value.toUpperCase();if(id==='horario'&&digits($(id).value).length===4)$(id).value=formatTime($(id).value);renderPreview();}));
  $('oficioNumero').addEventListener('blur',()=>{$('oficioNumero').value=formatOficio($('oficioNumero').value);renderPreview()});$('sequencia').addEventListener('blur',()=>{$('sequencia').value=formatSequence($('sequencia').value);renderPreview()});$('horario').addEventListener('blur',()=>{$('horario').value=formatTime($('horario').value);renderPreview()});
  document.querySelectorAll('#panel-config input,#panel-config select').forEach(e=>e.addEventListener('input',async()=>{formToCfg();await renderPreview()}));$('trocarBrasao').onclick=()=>$('brasaoFile').click();$('brasaoFile').onchange=e=>{crestFile(e.target.files&&e.target.files[0]);e.target.value=''};$('removerBrasao').onclick=async()=>{cfg.crestData='';$('crestPreview').src='data:image/png;base64,'+CREST_B64;await renderPreview()};$('salvarConfig').onclick=saveCfg;$('usarGeral').onclick=useGeneralCfg;$('restaurarConfig').onclick=restoreCfg;
- $('baixarOdt').onclick=doOdt;$('baixarPdf').onclick=doPdf;$('gerarDocumento').onclick=()=>$('formato').value==='pdf'?doPdf():doOdt();$('limpar').onclick=()=>{['oficioNumero','sequencia','dataEvento','horario','localEvento','endereco','numeroEndereco','bairro','cidadeEvento','quantidade'].forEach(id=>$(id).value='');$('dataOficio').value=todayLocal();document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));setMsg('');renderPreview();};}
+ $('baixarOdt').onclick=doOdt;$('baixarPdf').onclick=doPdf;$('enviarDrive').onclick=doDrive;$('gerarDocumento').onclick=()=>$('formato').value==='pdf'?doPdf():doOdt();$('limpar').onclick=()=>{['oficioNumero','sequencia','dataEvento','horario','localEvento','endereco','numeroEndereco','bairro','cidadeEvento','quantidade'].forEach(id=>$(id).value='');$('dataOficio').value=todayLocal();document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));setMsg('');renderPreview();};}
 readCfg();cfgToForm();$('dataOficio').value=todayLocal();bind();
 if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(!hasSpecificCfg()){cfg=generalToCfg();cfgToForm();updateCfgSource();renderPreview();}});
 Promise.all([new Promise(r=>paperImg.complete?r():paperImg.onload=r)]).then(renderPreview);

@@ -29,7 +29,7 @@ sobre o modelo oficial fornecido, sem envio do conteúdo do documento a serviço
 @media(max-width:480px){.paper{transform:scale(.55);margin-bottom:-134mm}}
 @page{size:A4 portrait;margin:0}@media print{body{background:#fff}.top,.security,.formcol,.preview-head,.preview-note,#viewCert,#viewCfg{display:none!important}.wrap{max-width:none;padding:0;margin:0}#viewJust{display:block!important}.layout{display:block}.preview-card{position:static;border:0;padding:0;margin:0;box-shadow:none}.paper-wrap{padding:0;background:#fff;border:0;overflow:visible}.paper{box-shadow:none;transform:none!important;margin:0!important;width:210mm;min-height:297mm}}
 </style>
-<script src="pcpr-config.js?v=2.7.4"></script>
+<script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive.js?v=2.8.4"></script>
 </head>
 <body>
 <div class="top"><div class="top-inner"><div class="title">FUNDO ROTATIVO</div><button class="tab active" id="tabJust" type="button">Justificativa</button><button class="tab" id="tabCert" type="button">Certidões</button><button class="cfg-top" id="openCfg" type="button">⚙ Configurações</button><div class="subtitle">Central PCPR · justificativa baseada no modelo oficial fornecido · processamento e armazenamento local</div></div></div>
@@ -68,7 +68,7 @@ sobre o modelo oficial fornecido, sem envio do conteúdo do documento a serviço
 <div class="field full"><label>Ressalta-se...</label><textarea id="ressalta" placeholder="Complete o trecho iniciado por “Ressalta-se...”."></textarea></div>
 <div class="field full"><label>Data do documento</label><input id="dataDoc" type="date"><small>Vem preenchida com a data atual e pode ser alterada.</small></div>
 </div>
-<div class="actions"><button class="btn secondary" id="btnVisualizar" type="button">VISUALIZAR</button><button class="btn" id="btnOdt" type="button">GERAR DOCUMENTO (ODT)</button><button class="btn gold" id="btnPrint" type="button">IMPRIMIR / SALVAR PDF</button><button class="btn danger" id="btnLimpar" type="button">LIMPAR CAMPOS</button></div>
+<div class="actions"><button class="btn secondary" id="btnVisualizar" type="button">VISUALIZAR</button><button class="btn" id="btnOdt" type="button">GERAR DOCUMENTO (ODT)</button><button class="btn gold" id="btnPrint" type="button">IMPRIMIR / SALVAR PDF</button><button class="btn" id="btnDrive" type="button">☁ ENVIAR PARA PASTA</button><button class="btn danger" id="btnLimpar" type="button">LIMPAR CAMPOS</button></div>
 <div class="msg" id="msg"></div>
 </div>
 </div>
@@ -152,6 +152,7 @@ function switchMain(which){$('viewJust').classList.toggle('active',which==='just
 $('tabJust').onclick=()=>switchMain('just');$('tabCert').onclick=()=>{setCertStatus('');renderCerts();switchMain('cert')};$('openCfg').onclick=()=>{fillCfg();switchMain('cfg')};$('closeCfg').onclick=()=>switchMain('just');
 $('btnVisualizar').onclick=()=>{renderPreview();document.querySelector('.preview-card')?.scrollIntoView({behavior:'smooth',block:'start'})};
 $('btnPrint').onclick=()=>{const d=collect(),m=validate(d);if(m.length){$('msg').className='msg err';$('msg').textContent='Preencha os campos obrigatórios antes de imprimir: '+m.join(', ')+'.';return}renderPreview();window.print()};
+$('btnDrive').onclick=async()=>{const d=collect(),m=validate(d),btn=$('btnDrive');if(m.length){$('msg').className='msg err';$('msg').textContent='Preencha os campos obrigatórios antes de enviar: '+m.join(', ')+'.';return}try{if(!window.PCPRDrive)throw new Error('Integração com Google Drive não carregada.');renderPreview();btn.disabled=true;btn.textContent='ENVIANDO...';$('msg').className='msg';$('msg').textContent='Gerando PDF para assinatura...';const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:d.delegado,fileName:'JUSTIFICATIVA_FUNDO_ROTATIVO_NF_'+d.nf+'.pdf',elements:[$('paper')]});$('msg').className='msg ok';$('msg').textContent='PDF enviado para a pasta de assinatura de '+r.authority.nome+'.'}catch(e){if(!(e&&e.cancelled)){$('msg').className='msg err';$('msg').textContent=e.message||String(e)}}finally{btn.disabled=false;btn.textContent='☁ ENVIAR PARA PASTA'}};
 $('btnLimpar').onclick=()=>{if(!confirm('Limpar todos os campos da justificativa?'))return;document.querySelectorAll('#viewJust input:not([readonly]),#viewJust textarea').forEach(x=>x.value='');$('pagamento').value='cartao';$('justEspecieWrap').classList.remove('show');$('dataDoc').value=todayISO();$('cidadeUf').value=activeCfg().cidadeUf||DEFAULT_CFG.cidadeUf;setCertStatus('');$('msg').textContent='';renderPreview()};
 
 function fillCfg(){const c=activeCfg();$('cfgCidadeUf').value=c.cidadeUf||'';$('cfgDelegado').value=c.delegado||'';$('cfgCargo').value=c.cargo||'';$('cfgSource').textContent=configSourceText();$('cfgMsg').textContent=''}
