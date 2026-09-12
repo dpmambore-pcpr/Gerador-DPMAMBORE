@@ -1,4 +1,4 @@
-# Central PCPR v2.8.4 — PWA
+# Central PCPR v2.8.5 — PWA
 
 Esta versão está preparada para instalação como Progressive Web App (PWA).
 
@@ -27,7 +27,11 @@ As preferências e dados salvos pelos módulos continuam no armazenamento local 
 
 ## Conteúdo desta versão
 
-A Central v2.8.4 preserva o módulo **ERB / Antenas v9.7.0** e atualiza o cache do PWA para distribuição da nova versão aos dispositivos instalados.
+A Central v2.8.5 preserva o módulo **ERB / Antenas v9.7.0** e atualiza o cache do PWA para distribuição da nova versão aos dispositivos instalados.
+
+## v2.8.5 — correção de envio ao Google Drive
+
+Corrige o carregamento de uma versão antiga de `pcpr-drive.js` pelo cache do PWA, que causava `uploadElementsPdfForAuthority is not a function`. O helper do Drive ganhou nome versionado (`pcpr-drive-v285.js`) e o Service Worker passou a priorizar a rede para HTML/JS quando online.
 
 
 ## Google Drive / assinatura

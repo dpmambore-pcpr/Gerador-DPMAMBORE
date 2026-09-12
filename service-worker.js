@@ -1,45 +1,47 @@
-const CACHE_VERSION='pcpr-central-v2.8.4';
+const CACHE_VERSION='pcpr-central-v2.8.5';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
-  "./",
-  "./MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt",
-  "./apple-touch-icon-precomposed.png",
-  "./apple-touch-icon.png",
-  "./atualizacoes.html",
-  "./auto-arrecadacao.html",
-  "./brasao-padrao.png",
-  "./configuracoes.html",
-  "./consulta-operadora.html",
-  "./contato-dp-pr.html",
-  "./contatos.html",
-  "./diario-bordo.html",
-  "./envelope-busca.html",
-  "./erb.html",
-  "./favicon.png",
-  "./filtro-ip.html",
-  "./fundo-rotativo-certidoes.html",
-  "./fundo-rotativo.html",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./imei.html",
-  "./index.html",
-  "./laudo-lesoes.html",
-  "./manifest.webmanifest",
-  "./offline.html",
-  "./oficio-coffee-break.html",
-  "./oficio-diaria.html",
-  "./oficios-core.html",
-  "./oficios.html",
-  "./oitiva-penitenciaria.html",
-  "./papel-pericia.png",
-  "./pcpr-config.js",
-  "./pcpr-drive.js",
-  "./pericia.html",
-  "./pwa.js",
-  "./qrcode.html",
-  "./reconhecimento-fotografico.html",
-  "./relatorio-viagem.html"
+  './',
+  './MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt',
+  './apple-touch-icon-precomposed.png',
+  './apple-touch-icon.png',
+  './atualizacoes.html',
+  './auto-arrecadacao.html',
+  './brasao-padrao.png',
+  './configuracoes.html',
+  './consulta-operadora.html',
+  './contato-dp-pr.html',
+  './contatos.html',
+  './diario-bordo.html',
+  './envelope-busca.html',
+  './erb.html',
+  './favicon.png',
+  './filtro-ip.html',
+  './fundo-rotativo-certidoes.html',
+  './fundo-rotativo.html',
+  './icon-192.png',
+  './icon-512.png',
+  './imei.html',
+  './index.html',
+  './laudo-lesoes.html',
+  './manifest.webmanifest',
+  './offline.html',
+  './oficio-coffee-break.html',
+  './oficio-diaria.html',
+  './oficios-core.html',
+  './oficios.html',
+  './oitiva-penitenciaria.html',
+  './papel-pericia.png',
+  './pcpr-config.js',
+  './pcpr-drive.js',
+  './pcpr-drive-v285.js',
+  './pericia.html',
+  './pwa.js',
+  './pwa-v285.js',
+  './qrcode.html',
+  './reconhecimento-fotografico.html',
+  './relatorio-viagem.html'
 ];
 const STATIC_CDN_HOSTS=new Set(['cdn.jsdelivr.net','unpkg.com']);
 self.addEventListener('install',event=>{
@@ -58,16 +60,38 @@ self.addEventListener('activate',event=>{
   })());
 });
 self.addEventListener('message',event=>{if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();});
+async function fallbackLocal(cache,request){
+  return (await cache.match(request))||(await cache.match(request,{ignoreSearch:true}));
+}
 async function networkFirst(request){
   const cache=await caches.open(STATIC_CACHE);
-  try{const fresh=await fetch(request);if(fresh&&fresh.ok)cache.put(request,fresh.clone());return fresh;}
-  catch(err){const cached=await cache.match(request,{ignoreSearch:true});if(cached)return cached;if(request.mode==='navigate')return cache.match('./offline.html');throw err;}
+  try{
+    const fresh=await fetch(request,{cache:'no-store'});
+    if(fresh&&fresh.ok)cache.put(request,fresh.clone());
+    return fresh;
+  }catch(err){
+    const cached=await fallbackLocal(cache,request);
+    if(cached)return cached;
+    if(request.mode==='navigate')return cache.match('./offline.html');
+    throw err;
+  }
 }
 async function cacheFirstLocal(request){
   const cache=await caches.open(STATIC_CACHE);
-  const cached=await cache.match(request,{ignoreSearch:true});
-  if(cached){fetch(request).then(r=>{if(r&&r.ok)cache.put(request,r.clone());}).catch(()=>{});return cached;}
-  const fresh=await fetch(request);if(fresh&&fresh.ok)cache.put(request,fresh.clone());return fresh;
+  const exact=await cache.match(request);
+  if(exact){
+    fetch(request).then(r=>{if(r&&r.ok)cache.put(request,r.clone());}).catch(()=>{});
+    return exact;
+  }
+  try{
+    const fresh=await fetch(request);
+    if(fresh&&fresh.ok)cache.put(request,fresh.clone());
+    return fresh;
+  }catch(err){
+    const fallback=await cache.match(request,{ignoreSearch:true});
+    if(fallback)return fallback;
+    throw err;
+  }
 }
 async function staleWhileRevalidateCdn(request){
   const cache=await caches.open(CDN_CACHE);const cached=await cache.match(request);
@@ -76,7 +100,12 @@ async function staleWhileRevalidateCdn(request){
 }
 self.addEventListener('fetch',event=>{
   const req=event.request;if(req.method!=='GET')return;const url=new URL(req.url);
-  if(url.origin===self.location.origin){if(req.mode==='navigate')event.respondWith(networkFirst(req));else event.respondWith(cacheFirstLocal(req));return;}
+  if(url.origin===self.location.origin){
+    const path=url.pathname.toLowerCase();
+    const mustBeFresh=req.mode==='navigate'||/\.(?:html?|js|json|webmanifest)$/.test(path);
+    event.respondWith(mustBeFresh?networkFirst(req):cacheFirstLocal(req));
+    return;
+  }
   if(STATIC_CDN_HOSTS.has(url.hostname))event.respondWith(staleWhileRevalidateCdn(req));
   // Consultas externas, APIs, mapas e formulários não são armazenados pelo Service Worker.
 });

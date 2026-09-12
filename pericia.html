@@ -98,7 +98,7 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
 .page-content .sign{width:100%!important;margin:14mm 0 25mm 0!important;text-align:center!important;font-weight:bold!important}
 .page-content .sign b{display:inline-block;text-align:center!important}
 @media(max-width:760px){.desc-item{grid-template-columns:1fr!important}.desc-item .remove{align-self:auto}}
-</style><script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive.js?v=2.8.4"></script>
+</style><script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive-v285.js?v=2.8.5"></script>
 </head><body>
 <header><h1>OFÍCIO À PERÍCIA</h1><p>Gerador integrado à Central de Ofícios · os dados permanecem neste navegador</p></header>
 <main><div class="grid">
@@ -221,7 +221,7 @@ async function sendDrivePericia(){
   if(!window.PCPRDrive)throw new Error('Integração com Google Drive não carregada.');
   render();btn.disabled=true;btn.textContent='ENVIANDO...';$('status').textContent='Gerando PDF para assinatura...';
   const ip=parseIP(val('ip'));
-  const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:cfg.delegado,fileName:'OFICIO_PERICIA_'+(ip.n||'IP')+'_'+(ip.ano||'')+'.pdf',elements:[$('doc')]});
+  if(typeof PCPRDrive.uploadElementsPdfForAuthority!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:cfg.delegado,fileName:'OFICIO_PERICIA_'+(ip.n||'IP')+'_'+(ip.ano||'')+'.pdf',elements:[$('doc')]});
   $('status').textContent='PDF enviado para a pasta de assinatura de '+r.authority.nome+'.';
  }catch(e){if(!(e&&e.cancelled))$('status').textContent=e.message||String(e)}
  finally{btn.disabled=false;btn.textContent='☁ ENVIAR PARA PASTA'}

@@ -51,7 +51,7 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 .security-note b{color:#244b3e}
 @media print{.security-note{display:none!important}}
 
-</style><script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive.js?v=2.8.4"></script>
+</style><script src="pcpr-config.js?v=2.8.4"></script><script src="pcpr-drive-v285.js?v=2.8.5"></script>
 </head>
 <body>
 <header><h1>Gerador de Ofício — Oitiva em Unidade Penal</h1><p>Agendamento de oitiva por videoconferência · Novo modelo institucional · cidade configurável</p></header>
@@ -297,7 +297,7 @@ async function enviarOitivaDrive(){
   if(!window.PCPRDrive)throw new Error('Integração com Google Drive não carregada.');
   update();btn.disabled=true;btn.textContent='Enviando...';
   const numero=$('oficio').value.trim()||'SEM_NUMERO';
-  const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:$('delegado').value,fileName:'OFICIO_OITIVA_'+numero+'_'+nomePessoaOuvidaArquivo()+'.pdf',elements:[document.querySelector('.previewWrap .paper')]});
+  if(typeof PCPRDrive.uploadElementsPdfForAuthority!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');const r=await PCPRDrive.uploadElementsPdfForAuthority({authorityName:$('delegado').value,fileName:'OFICIO_OITIVA_'+numero+'_'+nomePessoaOuvidaArquivo()+'.pdf',elements:[document.querySelector('.previewWrap .paper')]});
   alert('PDF enviado para a pasta de assinatura de '+r.authority.nome+'.');
  }catch(e){if(!(e&&e.cancelled))alert(e.message||String(e))}
  finally{btn.disabled=false;btn.textContent='☁ Enviar para pasta'}
