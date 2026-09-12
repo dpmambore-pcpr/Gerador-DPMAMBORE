@@ -365,6 +365,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
       <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
       <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
       <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
+      <button class="module-tab" data-key="fundorotativo" type="button">Fundo Rotativo</button>
       <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
       <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
       <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
@@ -437,6 +438,11 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
         <div class="card-title">ERB / Antenas</div>
         <div class="card-desc">Mapeamento de ERBs, azimute, distância e relatório.</div>
       </button>
+      <button class="module-card" type="button" data-open-module="fundorotativo">
+        <div class="card-top"><div class="card-icon">FR</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Fundo Rotativo</div>
+        <div class="card-desc">Justificativas, certidões e documentos do Fundo Rotativo.</div>
+      </button>
       <button class="module-card" type="button" data-open-module="filtroip">
         <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
         <div class="card-title">Filtro IP</div>
@@ -477,7 +483,8 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=1.4"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=2.0"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=1.5-20260905"></iframe>
-  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=9.0.4"></iframe>
+  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=9.0.5"></iframe>
+  <iframe id="frameFundoRotativo" class="module-frame" title="Fundo Rotativo" data-src="fundo-rotativo-certidoes.html?v=1.0"></iframe>
   <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=1.2"></iframe>
   <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=1.1"></iframe>
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=2.0"></iframe>
@@ -551,6 +558,7 @@ const modules={
   imei:{frame:document.getElementById('frameImei'),tab:document.querySelector('[data-key="imei"]'),min:900},
   operadora:{frame:document.getElementById('frameOperadora'),tab:document.querySelector('[data-key="operadora"]'),min:820},
   erb:{frame:document.getElementById('frameErb'),tab:document.querySelector('[data-key="erb"]'),min:900},
+  fundorotativo:{frame:document.getElementById('frameFundoRotativo'),tab:document.querySelector('[data-key="fundorotativo"]'),min:900},
   filtroip:{frame:document.getElementById('frameFiltroIp'),tab:document.querySelector('[data-key="filtroip"]'),min:900},
   qrcode:{frame:document.getElementById('frameQrCode'),tab:document.querySelector('[data-key="qrcode"]'),min:820},
   envelopebusca:{frame:document.getElementById('frameEnvelopeBusca'),tab:document.querySelector('[data-key="envelopebusca"]'),min:1180},
@@ -570,6 +578,7 @@ function trackModule(key){
       imei:'consulta_imei',
       operadora:'consulta_operadora',
       erb:'erb_antenas',
+      fundorotativo:'fundo_rotativo',
       filtroip:'filtro_ip',
       qrcode:'gerador_qrcode',
       envelopebusca:'envelope_busca',
@@ -624,7 +633,7 @@ const homeBtn=document.getElementById('homeBtn');
 
 const MODULE_LABELS={
   atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
-  imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas',
+  imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas', fundorotativo:'Fundo Rotativo',
   filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
 };
 const RECENT_KEY='pcprCentralRecentModulesV2';

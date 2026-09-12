@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v9.0.4 — PCPR</title>
+<title>Análise de ERBs e Antenas v9.0.5 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -86,6 +86,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .mapwrap.pick-point #map{cursor:crosshair!important}.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
 .capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo{display:none!important}
+.import-dropzone{margin-top:8px;border:2px dashed #8aa89b;border-radius:10px;padding:16px 12px;text-align:center;background:#f4f8f5;color:#40534c;font-size:10.5px;font-weight:850;line-height:1.45}.import-dropzone strong{display:block;color:#183a31;font-size:12px;margin-bottom:3px}
+.file-drop-overlay{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;background:rgba(9,22,17,.78);backdrop-filter:blur(2px);pointer-events:none}.file-drop-overlay.show{display:flex}.file-drop-card{min-width:min(520px,86vw);max-width:720px;border:2px dashed #d8bd71;border-radius:16px;padding:30px 24px;text-align:center;background:#f7f4ea;color:#17202a;box-shadow:0 20px 60px rgba(0,0,0,.35)}.file-drop-card b{display:block;font-size:20px;color:#183a31;margin-bottom:6px}.file-drop-card span{font-size:12px;color:#59645f;line-height:1.5}
 .presentation .sidebar{display:none}.presentation .app{grid-template-columns:1fr}.presentation .topbar{left:10px}.presentation .coordbar{left:10px}
 
 .analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
@@ -132,7 +134,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v9.0.4</small></h1><p>Lotes · TIM automático · Auditoria SHA-256 · Heatmap · Trajeto · GeoJSON/KML</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v9.0.5</small></h1><p>Lotes · TIM automático · Auditoria SHA-256 · Heatmap · Trajeto · GeoJSON/KML</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
@@ -301,6 +303,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   </div>
 </main>
 </div>
+
+<div class="file-drop-overlay" id="fileDropOverlay" aria-hidden="true"><div class="file-drop-card"><b>Solte o arquivo para analisar</b><span>PDF, XLSX, XLS, CSV ou TXT · o sistema tentará identificar automaticamente VOZ ou DADOS/CONEXÕES pelo conteúdo.</span></div></div>
 
 <div class="drawerback" id="drawerBack">
   <div class="drawer">
@@ -844,13 +848,19 @@ function openDrawer(kind,preset={}){
     body.innerHTML=`<div class="field"><label>Tipo dos dados</label><select id="fImportType"><option value="VOZ">VOZ</option><option value="DADOS">DADOS / CONEXÃO</option><option value="MISTO">MISTO</option></select></div>
       ${importLotField}
       <div class="field"><label>Arquivo</label><input id="fImportFile" type="file" accept=".xlsx,.xls,.csv,.txt,.pdf" multiple></div>
+      <div class="import-dropzone" id="fImportDrop"><strong>Ou arraste e solte o arquivo aqui</strong>Também é possível soltar o arquivo diretamente sobre o mapa/tela. PDF, XLSX, XLS, CSV e TXT são aceitos. Relatórios TIM são classificados automaticamente como VOZ ou DADOS/CONEXÕES pelo conteúdo.</div>
       <div class="muted"><b>Planilha TIM:</b> se o XLSX contiver as abas “Extrato Conexões” e “Dados de Antena”, basta selecionar o arquivo: o sistema filtra IPv6 válido, remove duplicatas, cruza PRIMEIRA/ÚLTIMA CGI/ERB com latitude, longitude, azimute, local e cidade e <b>plota automaticamente no mapa</b>. PDF de conexões TIM também é reconhecido automaticamente pelo conteúdo e cruza os registros IPv6 com a tabela DADOS DE ANTENA. Para outros formatos, a auditoria normal permanece disponível.</div>
-      <div id="importAudit" class="auditbox"><div class="muted">Selecione o(s) arquivo(s). A análise será iniciada automaticamente; também é possível usar o botão <b>Analisar arquivos</b>.</div></div>
+      <div id="importAudit" class="auditbox"><div class="muted">Selecione ou arraste o(s) arquivo(s). A análise será iniciada automaticamente; também é possível usar o botão <b>Analisar arquivos</b>.</div></div>
       <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn gold" id="doAnalyzeImport">Analisar arquivos</button><button class="btn primary" id="doImport" disabled>Importar</button></div>`;
     if(preset.type)$('fImportType').value=preset.type;
-    $('fImportFile').onchange=()=>{ pendingImport=[]; $('doImport').disabled=true; if($('fImportFile').files.length) previewSelectedFiles(); };
-    $('doAnalyzeImport').onclick=previewSelectedFiles;
+    $('fImportFile').onchange=()=>{ droppedImportFiles=[]; pendingImport=[]; $('doImport').disabled=true; if($('fImportFile').files.length) previewSelectedFiles(); };
+    $('doAnalyzeImport').onclick=()=>previewSelectedFiles();
     $('doImport').onclick=()=>processPendingImport(false);
+    if(Array.isArray(preset.droppedFiles)&&preset.droppedFiles.length){
+      droppedImportFiles=[...preset.droppedFiles];
+      const dz=$('fImportDrop');if(dz)dz.innerHTML=`<strong>${droppedImportFiles.length} arquivo(s) recebido(s)</strong>${droppedImportFiles.map(f=>esc(f.name)).join('<br>')}`;
+      setTimeout(()=>previewSelectedFiles(droppedImportFiles),0);
+    }
   }else if(kind==='filter'){
     title.textContent='Filtros';
     body.innerHTML=`<div class="grid2"><div class="field"><label>Dia</label><select id="filterDate"></select></div><div class="field"><label>Cidade da ERB</label><select id="filterCity"></select></div></div>
@@ -1760,6 +1770,7 @@ function parseTimVoiceStructured(struct){
   return{recognized:true,target,request,protocol,process,operator,antennas,calls,hasAntennaSection,antennaSectionEmpty};
 }
 let pendingImport=[];
+let droppedImportFiles=[];
 function importTimVoiceResult(parsed,file,lotId,fileMeta={}){
   const antMap=new Map(parsed.antennas.map(a=>[a.cgi,a])),mappedCallIndexes=new Set();
   let created=0,unresolvedCgi=0;const parser='TIM_VOZ_PDF',importedAt=fileMeta.importedAt||new Date().toISOString(),lot=lotById(lotId);
@@ -1775,8 +1786,8 @@ function importTimVoiceResult(parsed,file,lotId,fileMeta={}){
   if(lot){const noAntenna=parsed.antennas.length===0;lot.importInfo={format:'PDF VOZ',parser,callsTotal:parsed.calls.length,mappedCalls:mappedCallIndexes.size,antennas:parsed.antennas.length,summary:`${parsed.calls.length} chamada(s) · ${mappedCallIndexes.size} com ERB mapeável · ${parsed.antennas.length} antena(s)`,note:noAntenna?(parsed.antennaSectionEmpty?'PDF TIM reconhecido. O documento informa expressamente que não foram encontrados registros em DADOS DE ANTENA; sem latitude/longitude/azimute não é possível desenhar ERBs no mapa.':'PDF TIM reconhecido, porém sem cadastro de antenas utilizável para obter coordenadas/azimute.'):(mappedCallIndexes.size===0?'Há dados de antena, mas nenhuma CGI dos eventos pôde ser vinculada automaticamente.':'PDF reconhecido e analisado automaticamente.'),rawCalls:parsed.calls,unmappedCalls:parsed.calls.filter(c=>![c.firstCgi,c.lastCgi].some(Boolean)||![c.firstCgi,c.lastCgi].filter(Boolean).some(cgi=>antMap.has(cgi))),files:[{...fileMeta,parser}],fileHash:fileMeta.hash||''};}
   return{created,mappedCalls:mappedCallIndexes.size,totalCalls:parsed.calls.length,antennas:parsed.antennas.length,unresolvedCgi};
 }
-async function previewSelectedFiles(){
-  const files=[...$('fImportFile').files];if(!files.length)return status('Selecione ao menos um arquivo.',true);
+async function previewSelectedFiles(filesOverride=null){
+  const files=filesOverride&&filesOverride.length?[...filesOverride]:(droppedImportFiles.length?[...droppedImportFiles]:[...$('fImportFile').files]);if(!files.length)return status('Selecione ou arraste ao menos um arquivo.',true);
   const type=$('fImportType').value;
   pendingImport=[];$('doImport').disabled=true;
   $('importAudit').innerHTML='<div class="muted">Analisando arquivos...</div>';
@@ -1888,11 +1899,25 @@ async function processPendingImport(auto=false){
         const r=importRows(p.rows,lotId,p.type||type,p.analysis,p.file,p.fileMeta||{});totalAdded+=r.added;totalBad+=r.bad;processed++;
       }
     }
-    pendingImport=[];closeDrawer();redraw(true);
+    pendingImport=[];droppedImportFiles=[];closeDrawer();redraw(true);
     if(totalAdded)status(auto?`TIM importada automaticamente: ${totalAdded} ponto(s)/setor(es) plotado(s) no mapa.`:`${totalAdded} registro(s) mapeável(is) importado(s) em ${processed} arquivo(s).`);
     else if(totalRecognizedCalls)status(`PDF reconhecido: ${totalRecognizedCalls} chamada(s) registradas na auditoria, mas sem dados de ERB/antena para plotar no mapa.`);
     else status('Nenhum registro mapeável foi importado.',true);
   }catch(e){console.error(e);status('Não foi possível processar o lote.',true)}
+}
+
+function hasDraggedFiles(e){
+  try{return Array.from(e.dataTransfer?.types||[]).includes('Files')}catch(_){return false}
+}
+function acceptedImportFiles(fileList){
+  const allowed=new Set(['pdf','xlsx','xls','csv','txt']);
+  return [...(fileList||[])].filter(f=>allowed.has(String(f.name||'').split('.').pop().toLowerCase()));
+}
+function openDroppedImport(fileList){
+  const files=acceptedImportFiles(fileList);
+  if(!files.length){status('Arquivo não suportado para importação de ERB. Use PDF, XLSX, XLS, CSV ou TXT.',true);return}
+  if(files.length!==[...(fileList||[])].length)status('Alguns arquivos foram ignorados por formato não suportado.',true);
+  openDrawer('import',{type:'MISTO',droppedFiles:files});
 }
 
 function updateGeo(openPanel=true){
@@ -1919,7 +1944,7 @@ function startTimeline(){
 function stepTimeline(delta){const t=trajectoryData();if(!t.length)return status('Não há trajeto cronológico.',true);state.trajectoryVisible=true;drawTimelineLayers();state.trajectoryIndex=Math.max(0,Math.min(t.length-1,(state.trajectoryIndex||0)+delta));const x=t[state.trajectoryIndex];focusEvent(x.ev.id);map.setView([x.ev.lat,x.ev.lng],15)}
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:'9.0.4',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection}}
+function snapshot(){return{version:'9.0.5',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection}}
 function applySnapshot(o){
   state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];
   state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO';if(e.az!=null&&Number.isFinite(Number(e.az)))e.az=normAz(Number(e.az));if(!e.sourceFile&&e.source)e.sourceFile=e.source});
@@ -2009,7 +2034,7 @@ async function runSelfTest(){
   try{add('KML',typeof exportKml==='function','Google Earth/QGIS')}catch(e){add('KML',false,e.message)}
   try{add('Ranking / coincidências',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','análise')}catch(e){add('Ranking / coincidências',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
-  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.0.4';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.0.5';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
 function setHeatMode(mode){state.heatMode=['normal','heat','both'].includes(mode)?mode:'normal';redraw();status(state.heatMode==='normal'?'Mapa normal.':state.heatMode==='heat'?'Mapa de calor ativado.':'Mapa normal + calor ativado.')}
 function openAnalysisPanel(){document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b.dataset.side==='analysis'));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-analysis').classList.add('active');renderAnalysis();}
@@ -2054,7 +2079,7 @@ $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers()};$('selectTrajectoryBtn').onclick=openTrajectorySelector;$('removeTrajectoryBtn').onclick=removeTrajectory;$('selectTrajectoryInline').onclick=openTrajectorySelector;$('removeTrajectoryInline').onclick=removeTrajectory;$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
 $('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('prevTimeline').onclick=()=>stepTimeline(-1);$('nextTimeline').onclick=()=>stepTimeline(1);$('fitTimeline').onclick=fitTrajectory;$('geoBtn').onclick=()=>updateGeo(true);$('analysisPanelBtn').onclick=openAnalysisPanel;$('heatNormal').onclick=()=>setHeatMode('normal');$('heatOnly').onclick=()=>setHeatMode('heat');$('heatBoth').onclick=()=>setHeatMode('both');$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v9_0_4.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v9_0_5.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
 $('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;$('geoJsonExport').onclick=exportGeoJson;$('kmlExport').onclick=exportKml;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
@@ -2062,6 +2087,12 @@ $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textCont
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(poiPickMode)cancelPoiPick();closeDrawer();$('geoPanel').classList.remove('show')}});
 window.addEventListener('resize',()=>setTimeout(()=>map.invalidateSize(),80));
+let fileDragDepth=0;
+document.addEventListener('dragenter',e=>{if(!hasDraggedFiles(e))return;e.preventDefault();fileDragDepth++;$('fileDropOverlay')?.classList.add('show')});
+document.addEventListener('dragover',e=>{if(!hasDraggedFiles(e))return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';$('fileDropOverlay')?.classList.add('show')});
+document.addEventListener('dragleave',e=>{if(!hasDraggedFiles(e))return;fileDragDepth=Math.max(0,fileDragDepth-1);if(!fileDragDepth)$('fileDropOverlay')?.classList.remove('show')});
+document.addEventListener('drop',e=>{if(!hasDraggedFiles(e))return;e.preventDefault();fileDragDepth=0;$('fileDropOverlay')?.classList.remove('show');openDroppedImport(e.dataTransfer?.files||[])});
+window.addEventListener('blur',()=>{fileDragDepth=0;$('fileDropOverlay')?.classList.remove('show')});
 redraw();
 })();
 </script>
