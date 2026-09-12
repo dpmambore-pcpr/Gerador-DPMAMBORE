@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v9.6.0 — PCPR</title>
+<title>Análise de ERBs e Antenas v9.7.0 — PCPR</title>
 
 <style data-bundled="leaflet.css">/* required styles */
 
@@ -997,7 +997,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v9.6.0</small></h1><p>Filtros múltiplos de alvos, IMEIs e operadoras · cidades, horários e antenas</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v9.7.0</small></h1><p>Satélite com ruas e nomes · filtros múltiplos · seleção de antenas</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> arquivos são processados neste navegador. O projeto é salvo automaticamente. Use <b>Copiar link do projeto</b> para abrir este mesmo projeto depois. O mapa de fundo precisa de internet.</div>
@@ -1137,6 +1137,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
           <button class="dropitem" data-base="street">Ruas</button>
           <button class="dropitem" data-base="dark">Escuro</button>
           <button class="dropitem" data-base="satellite">Satélite</button>
+          <button class="dropitem" data-base="hybrid" title="Imagem de satélite com ruas, rodovias e nomes de cidades">Satélite com ruas e nomes</button>
           <button class="dropitem" data-base="blank">Sem mapa-base</button>
           <div class="dropsep"></div>
           <div class="drop-caption">Nomes das antenas no mapa</div>
@@ -1375,8 +1376,20 @@ function traceText(ev){return [ev.sourceFile||ev.source||'',ev.parser||'',ev.sou
 const map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:true}).setView([-24.317,-52.529],13);
 map.attributionControl.setPrefix(false);
 function ofm(style){if(!L.maplibreGL||!window.maplibregl)return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});return L.maplibreGL({style:`https://tiles.openfreemap.org/styles/${style}`,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true}})}
-const bases={clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics e outros'}),blank:L.layerGroup()};
+function satelliteTiles(){return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,zIndex:1,crossOrigin:'anonymous',attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics e outros'})}
+const bases={
+  clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),satellite:satelliteTiles(),
+  hybrid:L.layerGroup([
+    satelliteTiles(),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,zIndex:2,crossOrigin:'anonymous',attribution:'Ruas: © Esri, HERE, Garmin, &copy; OpenStreetMap contributors'}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,zIndex:3,crossOrigin:'anonymous',attribution:'Nomes e limites: © Esri, HERE, Garmin, &copy; OpenStreetMap contributors e comunidade GIS'})
+  ]),
+  blank:L.layerGroup()
+};
 let activeBase=bases.clean.addTo(map);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
+function syncBaseControls(){
+  document.querySelectorAll('[data-base]').forEach(b=>{const selected=b.dataset.base===cfg.base;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
+}
 
 const sectorG=L.layerGroup().addTo(map),markerG=L.layerGroup().addTo(map),poiG=L.layerGroup().addTo(map),pathG=L.layerGroup().addTo(map),seqG=L.layerGroup().addTo(map),geoG=L.layerGroup().addTo(map),heatFallbackG=L.layerGroup().addTo(map);
 let heatLayer=null;
@@ -3832,7 +3845,7 @@ function projectDb(){
 }
 async function dbRead(store,key,all=false){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly'),req=all?tx.objectStore(store).getAll():tx.objectStore(store).get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function dbWriteProject(data){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['projects','meta'],'readwrite');tx.objectStore('projects').put(data);tx.objectStore('meta').put({projectId:data.projectId,updated:data.updated},LAST_PROJECT_KEY);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação interrompida'))})}
-function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.6.0',filterSchema:3,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
+function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.7.0',filterSchema:3,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
 function validateSnapshot(o){
   if(!o||typeof o!=='object'||!Array.isArray(o.lots)||!Array.isArray(o.events)||!Array.isArray(o.pois))throw new Error('Arquivo sem estrutura de projeto ERB (lotes, registros e pontos).');
   const idOk=v=>typeof v==='string'&&/^[a-zA-Z0-9_.-]{1,120}$/.test(v);
@@ -3852,7 +3865,7 @@ function applySnapshot(o){
     pruneEmptyImportedLots();
     if(o.cfg){for(const k of ['showLabels','showPath','showSeq'])if(typeof o.cfg[k]==='boolean')cfg[k]=o.cfg[k];for(const k of ['defaultDist','defaultMargin'])if(Number.isFinite(o.cfg[k])&&o.cfg[k]>0)cfg[k]=o.cfg[k];if(bases[o.cfg.base])cfg.base=o.cfg.base}
     cfg.labelMode=o.cfg?.labelMode==='citySector'?'citySector':'code';syncLabelControls();
-    map.removeLayer(activeBase);activeBase=bases[cfg.base]||bases.clean;activeBase.addTo(map);
+    map.removeLayer(activeBase);activeBase=bases[cfg.base]||bases.clean;activeBase.addTo(map);syncBaseControls();
     $('projectName').value=o.name||'';state.activeLotId=state.lots.some(l=>l.id===o.activeLotId)?o.activeLotId:state.lots[0]?.id||null;
     $('filterPill').classList.toggle('show',filtersActive());redraw(!o.mapView);
     if(o.mapView&&validGeoEvent({...o.mapView,lng:o.mapView.lng,az:0})&&Number.isFinite(o.mapView.zoom))map.setView([o.mapView.lat,o.mapView.lng],Math.max(1,Math.min(22,o.mapView.zoom)),{animate:false});
@@ -4048,7 +4061,7 @@ async function runSelfTest(){
   try{add('KML',typeof exportKml==='function','Google Earth/QGIS')}catch(e){add('KML',false,e.message)}
   try{add('Ranking / coincidências',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','análise')}catch(e){add('Ranking / coincidências',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
-  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.6.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.7.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
 function setHeatMode(mode){state.heatMode=['normal','heat','both'].includes(mode)?mode:'normal';redraw();status(state.heatMode==='normal'?'Mapa normal.':state.heatMode==='heat'?'Mapa de calor ativado.':'Mapa normal + calor ativado.')}
 function openAnalysisPanel(){document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b.dataset.side==='analysis'));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-analysis').classList.add('active');renderAnalysis();}
@@ -4088,7 +4101,7 @@ document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openDrawer(x.d
 document.querySelectorAll('[data-import-kind]').forEach(x=>x.onclick=()=>openDrawer('import',{type:x.dataset.importKind}));
 document.querySelectorAll('[data-label-mode]').forEach(x=>x.onclick=()=>setLabelMode(x.dataset.labelMode));
 $('selectRankAntennas')?.addEventListener('click',()=>openDrawer('filter'));
-document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLayer(activeBase);cfg.base=x.dataset.base;activeBase=bases[cfg.base];activeBase.addTo(map);autosave()});
+document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLayer(activeBase);cfg.base=x.dataset.base;activeBase=bases[cfg.base];activeBase.addTo(map);syncBaseControls();autosave()});
 document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b===x));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-'+x.dataset.side).classList.add('active');if(x.dataset.side==='links')renderSavedLinks()});
 $('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
 $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
@@ -4115,7 +4128,7 @@ document.addEventListener('dragover',e=>{if(!hasDraggedFiles(e))return;e.prevent
 document.addEventListener('dragleave',e=>{if(!hasDraggedFiles(e))return;fileDragDepth=Math.max(0,fileDragDepth-1);if(!fileDragDepth)$('fileDropOverlay')?.classList.remove('show')});
 document.addEventListener('drop',e=>{if(!hasDraggedFiles(e))return;e.preventDefault();fileDragDepth=0;$('fileDropOverlay')?.classList.remove('show');openDroppedImport(e.dataTransfer?.files||[])});
 window.addEventListener('blur',()=>{fileDragDepth=0;$('fileDropOverlay')?.classList.remove('show')});
-syncLabelControls();
+syncLabelControls();syncBaseControls();
 renderSavedLinks();
 redraw();
 initializePersistence();
