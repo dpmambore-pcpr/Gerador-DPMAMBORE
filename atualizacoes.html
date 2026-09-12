@@ -49,7 +49,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.2</span>
+      <span class="version">VERSÃO ATUAL · v2.8.3</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,8 +62,20 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.2">
-        <div class="item-head"><span class="item-ver">v2.8.2</span><span class="item-date">12/09/2026</span><span class="tag improve">ATUALIZAÇÃO</span><span class="tag new">ERB</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.8.3">
+        <div class="item-head"><span class="item-ver">v2.8.3</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+        <h3>Pastas de assinatura por autoridade no Google Drive</h3>
+        <ul>
+          <li>Adicionada configuração local de pasta para assinatura no Google Drive, individual por autoridade e por navegador.</li>
+          <li>O link da pasta pode ser colado manualmente na Configuração Geral; a Central extrai e salva o ID sem inserir destinos fixos no HTML público.</li>
+          <li>Incluído fluxo opcional de autorização pelo Google Picker com escopo <b>drive.file</b> e botão <b>Enviar PDF para assinatura</b> no gerador de Ofícios.</li>
+          <li>Tokens de acesso não são gravados no localStorage nem no cache do PWA.</li>
+          <li>Atualizado o cache do PWA para <b>v2.8.3</b>.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.8.2">
+        <div class="item-head"><span class="item-ver">v2.8.2</span><span class="item-date">12/09/2026</span><span class="tag improve">ATUALIZAÇÃO</span><span class="tag new">ERB</span></div>
         <h3>ERB / Antenas atualizada para v9.7.0</h3>
         <ul>
           <li>Substituído o módulo <b>ERB / Antenas v9.6.0</b> pela versão mais recente enviada, <b>v9.7.0</b>.</li>
@@ -312,7 +324,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.8.2';
+  const CURRENT_VERSION='2.8.3';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 

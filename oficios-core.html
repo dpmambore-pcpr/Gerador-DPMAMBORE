@@ -45,6 +45,7 @@ button.sec:hover{background:var(--claro)}
 .aviso b{color:var(--alerta)}
 .mono{font-family:Consolas,monospace}
 #msg{font-size:13px;margin-top:10px;color:var(--suave)}
+#driveStatus{font-size:11.5px;margin-top:8px;color:var(--suave);line-height:1.45}#driveStatus.ok{color:var(--ok);font-weight:700}#driveStatus.err{color:var(--erro)}#driveStatus a{color:inherit;font-weight:800}
 .folha{background:#fff;border:1px solid var(--borda);padding:34px 42px;font-family:Arial,Helvetica,sans-serif;
   font-size:13px;line-height:1.5;max-width:780px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .folha p{margin:0 0 6px}
@@ -157,7 +158,8 @@ footer{color:var(--suave) !important;}
 @media(max-width:680px){header{padding:18px 16px !important;}header h1{font-size:20px !important;}}
 </style>
 
-<script src="pcpr-config.js?v=2.7.4"></script>
+<script src="pcpr-config.js?v=2.8.3"></script>
+<script src="pcpr-drive.js?v=2.8.3"></script>
 </head>
 <body>
 <header>
@@ -329,9 +331,11 @@ footer{color:var(--suave) !important;}
     <button id="btnPrev">Pré-visualizar</button>
     <button id="btnOdt">Baixar .odt</button>
     <button id="btnPdf">Baixar .pdf</button>
+    <button id="btnDrive">☁ Enviar PDF para assinatura</button>
     <button class="sec" id="btnZip">Pacote .zip (ODT + PDF)</button>
   </div>
   <div id="msg"></div>
+  <div id="driveStatus">O destino do Google Drive é definido por autoridade na Configuração Geral da Central.</div>
 </div>
 
 <div class="card hide" id="cardPrev">
@@ -1808,11 +1812,49 @@ function documentosComPreflight(){
   return comAssinatura(montaDocumentos());
 }
 
+
+// ===================== Google Drive / assinatura =====================
+function driveStatus(t,cls){var e=document.getElementById("driveStatus");if(!e)return;e.className=cls||"";e.innerHTML=t;}
+function driveCfgGeral(){try{return (window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};}catch(_){return {};}}
+function driveAutoridadeAtual(cfg){
+  var nome=val("fAssin")||CFG.assinante||"";
+  return window.PCPRDrive&&PCPRDrive.findAuthority?PCPRDrive.findAuthority(nome,cfg):null;
+}
+function driveSalvaPastaAutoridade(cfg,nome,picked){
+  if(!cfg||!Array.isArray(cfg.autoridades))return cfg;
+  var alvo=window.PCPRDrive&&PCPRDrive.findAuthority?PCPRDrive.findAuthority(nome,cfg):null;if(!alvo)return cfg;
+  cfg.autoridades=cfg.autoridades.map(function(a){
+    if(String(a.nome||"").trim().toLocaleLowerCase('pt-BR')!==String(alvo.nome||"").trim().toLocaleLowerCase('pt-BR'))return a;
+    return Object.assign({},a,{driveFolderId:picked.id||a.driveFolderId||"",driveFolderUrl:picked.url||PCPRDrive.folderUrl(picked.id||a.driveFolderId||""),driveFolderName:picked.name||a.driveFolderName||"",driveFolderAuthorized:true});
+  });
+  return PCPRConfig.save(cfg);
+}
+function pdfBytesPromise(blocos){return new Promise(function(resolve,reject){try{blocosParaPDF(blocos,function(bytes){if(bytes)resolve(bytes);else reject(new Error("Não foi possível montar o PDF."));});}catch(e){reject(e);}});}
+async function preparaDestinoDrive(){
+  if(!window.PCPRDrive)throw new Error("Módulo do Google Drive não foi carregado.");
+  var cfg=driveCfgGeral(),nome=val("fAssin")||CFG.assinante||"";
+  var a=driveAutoridadeAtual(cfg);
+  if(!a)throw new Error("O assinante “"+nome+"” não corresponde a uma autoridade cadastrada na Configuração Geral. Cadastre ou selecione a autoridade antes de enviar.");
+  var folderId=PCPRDrive.extractFolderId(a.driveFolderId||a.driveFolderUrl);
+  if(!folderId)throw new Error("Nenhuma pasta do Google Drive foi configurada para "+a.nome+". Abra Configuração Geral → Google Drive e cole o link da pasta para assinatura.");
+  var d=PCPRDrive.normalizeDrive(cfg.drive);
+  if(!d.clientId||!d.apiKey)throw new Error("A pasta está cadastrada, mas a integração Google ainda não está completa. Abra Configuração Geral → Google Drive → Configuração técnica e preencha OAuth Client ID e API Key.");
+  if(!a.driveFolderAuthorized){
+    driveStatus("Primeiro envio: autorize a pasta no Google para limitar o acesso somente ao destino escolhido.");
+    var picked=await PCPRDrive.pickFolder(d,folderId);
+    if(picked.id!==folderId&&!confirm("A pasta selecionada no Google é diferente da pasta cadastrada. Deseja substituir o destino de "+a.nome+" pela pasta selecionada?"))throw new Error("Envio cancelado para conferência da pasta.");
+    cfg=driveSalvaPastaAutoridade(cfg,a.nome,picked);a=driveAutoridadeAtual(cfg);folderId=PCPRDrive.extractFolderId(a.driveFolderId||picked.id);
+  }
+  return {cfg:cfg,authority:a,folderId:folderId,drive:d};
+}
+
 // ===================== ações =====================
 function seguro(fn){
   return function(){
-    try{ fn(); }
-    catch(e){ msg(typeof e === "string" ? e : ("Falha: " + (e.message || e)), "var(--erro)"); }
+    try{
+      var r=fn();
+      if(r&&typeof r.then==="function")r.catch(function(e){msg(typeof e === "string" ? e : ("Falha: " + (e.message || e)), "var(--erro)");});
+    }catch(e){ msg(typeof e === "string" ? e : ("Falha: " + (e.message || e)), "var(--erro)"); }
   };
 }
 document.getElementById("btnPrev").onclick = seguro(function(){
@@ -1848,6 +1890,35 @@ document.getElementById("btnPdf").onclick = seguro(function(){
     });
   })();
 });
+document.getElementById("btnDrive").onclick = seguro(async function(){
+  var destino=await preparaDestinoDrive();
+  var docs=documentosComPreflight();
+  var pasta=destino.authority.driveFolderName||destino.authority.driveFolderId||"pasta configurada";
+  if(!confirm("Enviar "+docs.length+" PDF(s) para assinatura?\n\nAutoridade: "+destino.authority.nome+"\nPasta: "+pasta+"\n\nOs arquivos serão enviados ao Google Drive somente após sua confirmação."))throw "Envio cancelado.";
+  var btn=document.getElementById("btnDrive");btn.disabled=true;btn.textContent="Enviando…";
+  driveStatus("Conectando ao Google Drive…");
+  try{
+    var accessToken=await PCPRDrive.getAccessToken(destino.drive,false),enviados=[];
+    for(var i=0;i<docs.length;i++){
+      driveStatus("Gerando e enviando "+(i+1)+" de "+docs.length+": "+esc(docs[i].arquivo)+".pdf");
+      var bytes=await pdfBytesPromise(docs[i].blocos);
+      var r;
+      try{r=await PCPRDrive.uploadFile(bytes,docs[i].arquivo+".pdf","application/pdf",destino.folderId,destino.drive,accessToken);}
+      catch(e){
+        if(e&&e.status===401){PCPRDrive.clearToken();accessToken=await PCPRDrive.getAccessToken(destino.drive,true);r=await PCPRDrive.uploadFile(bytes,docs[i].arquivo+".pdf","application/pdf",destino.folderId,destino.drive,accessToken);}
+        else if(e&&e.status===403){
+          destino.authority.driveFolderAuthorized=false;
+          throw new Error("O Google recusou o acesso à pasta. Volte à Configuração Geral e clique em “Autorizar pasta” para esta autoridade.");
+        }else throw e;
+      }
+      enviados.push(r);
+    }
+    var link=PCPRDrive.folderUrl(destino.folderId);
+    driveStatus("✓ "+enviados.length+" PDF(s) enviado(s) para assinatura de "+esc(destino.authority.nome)+". <a href=\""+link+"\" target=\"_blank\" rel=\"noopener\">Abrir pasta no Drive</a>","ok");
+    msg(enviados.length+" PDF(s) enviado(s) ao Google Drive para assinatura.","var(--ok)");
+  }finally{btn.disabled=false;btn.textContent="☁ Enviar PDF para assinatura";}
+});
+
 document.getElementById("btnZip").onclick = seguro(function(){
   var docs = documentosComPreflight(), arqs = [], i = 0;
   docs.forEach(function(d){ arqs.push({name:"odt/" + d.arquivo + ".odt", data: blocosParaODT(d.blocos)}); });

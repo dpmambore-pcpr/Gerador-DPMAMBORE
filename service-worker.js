@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v2.8.2';
+const CACHE_VERSION='pcpr-central-v2.8.3';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -34,6 +34,7 @@ const CORE_FILES=[
   "./oitiva-penitenciaria.html",
   "./papel-pericia.png",
   "./pcpr-config.js",
+  "./pcpr-drive.js",
   "./pericia.html",
   "./pwa.js",
   "./qrcode.html",

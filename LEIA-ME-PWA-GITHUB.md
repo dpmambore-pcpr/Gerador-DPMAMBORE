@@ -1,4 +1,4 @@
-# Central PCPR v2.8.2 — PWA
+# Central PCPR v2.8.3 — PWA
 
 Esta versão está preparada para instalação como Progressive Web App (PWA).
 
@@ -27,4 +27,9 @@ As preferências e dados salvos pelos módulos continuam no armazenamento local 
 
 ## Conteúdo desta versão
 
-A Central v2.8.2 incorpora o módulo **ERB / Antenas v9.7.0** e atualiza o cache do PWA para distribuição da nova versão aos dispositivos instalados.
+A Central v2.8.3 incorpora o módulo **ERB / Antenas v9.7.0** e atualiza o cache do PWA para distribuição da nova versão aos dispositivos instalados.
+
+
+## Google Drive / assinatura
+
+A v2.8.3 acrescenta configuração local por autoridade para pasta de assinatura no Google Drive. O HTML distribuído não contém pasta de nenhuma Delegacia. Cada instalação cola o próprio link e autoriza a pasta pelo Google Picker. O envio direto de PDF usa OAuth no navegador e não salva senha nem token de acesso. Para ativar, preencha na Configuração Geral o OAuth Client ID, a API Key do Google Picker e, opcionalmente, o Project Number/App ID do projeto Google Cloud.

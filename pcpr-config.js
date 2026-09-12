@@ -5,7 +5,7 @@ const KEY='pcpr.configGeralUnidade.v1';
 const REV_KEY='pcpr.configGeralRev.v2';
 const CHANNEL='pcpr-config-geral-v2';
 const DEFAULT={
-  versao:3,estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
+  versao:4,estadoHeader:'ESTADO DO PARANÁ',estado:'Paraná',
   secretaria:'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',
   departamento:'DEPARTAMENTO DE POLÍCIA CIVIL',
   subdivisao:'16ª SUBDIVISÃO POLICIAL DE CAMPO MOURÃO',
@@ -15,7 +15,8 @@ const DEFAULT={
   endereco:'Av. Augusto Mendes dos Santos, 997',cep:'87.340-000',
   email:'dpmambore@pc.pr.gov.br',fone:'(44) 3865-1341',site:'www.policiacivil.pr.gov.br',
   logo:'',assinaturaComplementar:'',
-  autoridades:[{nome:'Anderson Sérgio Romão',cargo:'Delegado de Polícia',complemento:''}],
+  autoridades:[{nome:'Anderson Sérgio Romão',cargo:'Delegado de Polícia',complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false}],
+  drive:{clientId:'',apiKey:'',appId:'',scope:'https://www.googleapis.com/auth/drive.file'},
   servidores:[
     {nome:'Anderson Sérgio Romão',cargo:'Delegado de Polícia'},
     {nome:'Thiago Gonzaga da Silva Couto',cargo:'APJ - Agente de Polícia Judiciária'},
@@ -32,7 +33,8 @@ function uniqueByName(arr){
   (Array.isArray(arr)?arr:[]).forEach(x=>{
     if(typeof x==='string')x={nome:x,cargo:''};
     const nome=cleanName(x&&x.nome),cargo=cleanName(x&&x.cargo),complemento=cleanName(x&&x.complemento);
-    if(nome && !out.some(y=>y.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))out.push({nome,cargo,complemento});
+    const driveFolderUrl=cleanName(x&&x.driveFolderUrl),driveFolderId=cleanName(x&&x.driveFolderId),driveFolderName=cleanName(x&&x.driveFolderName),driveFolderAuthorized=!!(x&&x.driveFolderAuthorized);
+    if(nome && !out.some(y=>y.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))out.push({nome,cargo,complemento,driveFolderUrl,driveFolderId,driveFolderName,driveFolderAuthorized});
   });
   return out;
 }
@@ -50,6 +52,8 @@ function normalize(raw){
   c.endereco=[c.logradouro,c.numero].filter(Boolean).join(', ')||cleanName(c.endereco)||DEFAULT.endereco;
   c.cep=cleanName(c.cep)||DEFAULT.cep; c.email=cleanName(c.email); c.fone=cleanName(c.fone); c.site=cleanName(c.site);
   c.logo=cleanName(c.logo); c.assinaturaComplementar=cleanName(c.assinaturaComplementar);
+  const d=(c.drive&&typeof c.drive==='object')?c.drive:{};
+  c.drive={clientId:cleanName(d.clientId),apiKey:cleanName(d.apiKey),appId:cleanName(d.appId),scope:'https://www.googleapis.com/auth/drive.file'};
   c.autoridades=uniqueByName(c.autoridades);
   let servidores=uniqueByName(c.servidores);
   if(!servidores.length){
@@ -63,7 +67,7 @@ function normalize(raw){
     if(!c.servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===a.nome.toLocaleLowerCase('pt-BR')))c.servidores.unshift({nome:a.nome,cargo:a.cargo||'Delegado de Polícia'});
   }
   c.apjs=c.servidores.filter(x=>/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(x.cargo||'')).map(x=>x.nome);
-  c.versao=3; return c;
+  c.versao=4; return c;
 }
 function deriveLegacy(){
   const h=readJSON('pcpr.oitivaPenal.institucional.v1')||{};
