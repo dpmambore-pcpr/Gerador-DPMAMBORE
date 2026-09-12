@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v8.4 — PCPR</title>
+<title>Análise de ERBs e Antenas v9.0.4 — PCPR</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,6 +26,7 @@ usuário aciona essa função.
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script>window.addEventListener('DOMContentLoaded',()=>{if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'});</script>
 
 <style>
@@ -115,6 +116,11 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .routearrow{background:rgba(255,255,255,.94);border:1px solid #111;border-radius:50%;width:22px!important;height:22px!important;display:grid!important;place-items:center;font-weight:950;color:#111;box-shadow:0 1px 5px rgba(0,0,0,.3)}
 .routearrow span{display:block;line-height:18px;font-size:14px;transform-origin:center}
 .timeitem .routecity{color:#e3c979;font-weight:850}
+.route-stepmeta{margin-top:5px;padding-top:5px;border-top:1px solid #29483b;color:#a9bbb2;font-size:8.2px;line-height:1.4}
+.route-move{color:#f0d890;font-weight:850}.route-warn{color:#d6bb75;font-size:8px}
+.heat-legend{position:absolute;z-index:915;right:10px;bottom:50px;width:270px;background:rgba(7,15,12,.96);border:1px solid #456858;border-radius:9px;padding:8px 9px;box-shadow:var(--shadow);font-size:8.8px;color:#d9e5df;display:none}.heat-legend.show{display:block}.heat-legend b{color:#f0d890}.heat-scale{height:8px;border-radius:999px;margin:6px 0;background:linear-gradient(90deg,#244cff,#31c96d,#ffe34d,#ff4d2e)}
+.tracebox{border:1px solid #345747;border-radius:8px;background:#0a1712;padding:8px;margin-top:8px;font-size:8.7px;line-height:1.5;color:#a9bbb2;word-break:break-word}.tracebox b{color:#e8d9aa}
+.checkboxline{display:flex;align-items:center;gap:7px;border:1px solid #29483b;border-radius:8px;background:#0b1712;padding:8px}.checkboxline input{width:auto}.checkboxline label{margin:0;cursor:pointer}
 
 @media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar{width:92%}}
 @media print{.sec{display:none!important}}
@@ -126,7 +132,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v8.4</small></h1><p>Lotes · Voz/Dados · Auditoria · Timeline · Comparação · Relatório</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v9.0.4</small></h1><p>Lotes · TIM automático · Auditoria SHA-256 · Heatmap · Trajeto · GeoJSON/KML</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> projetos/lotes salvos ficam somente neste navegador. Arquivos importados são processados localmente. <b>Auditoria antes da importação</b> informa linhas válidas/ignoradas e, quando possível, a operadora detectada.</div>
@@ -211,8 +217,20 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
       </div>
 
       <button class="toolbtn" id="filterBtn">Filtros</button>
-      <button class="toolbtn" id="timelineBtn">Trajeto / tempo</button>
-      <button class="toolbtn" id="geoBtn">Interseção</button>
+      <div class="menu">
+        <button class="toolbtn">Análise</button>
+        <div class="dropdown">
+          <button class="dropitem" id="timelineBtn">Trajeto cronológico</button>
+          <button class="dropitem" id="selectTrajectoryBtn">Selecionar trajeto desejado</button>
+          <button class="dropitem" id="removeTrajectoryBtn">Remover trajeto</button>
+          <button class="dropitem" id="analysisPanelBtn">Ranking / coincidências</button>
+          <button class="dropitem" id="geoBtn">Interseção de setores</button>
+          <div class="dropsep"></div>
+          <button class="dropitem" id="heatNormal">Mapa normal</button>
+          <button class="dropitem" id="heatOnly">Mapa de calor / incidência</button>
+          <button class="dropitem" id="heatBoth">Mapa normal + calor</button>
+        </div>
+      </div>
       <span class="filterpill" id="filterPill">FILTRO ATIVO</span>
     </div>
 
@@ -244,6 +262,9 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
         <div class="dropdown">
           <button class="dropitem" id="pngMap">PNG do mapa</button>
           <button class="dropitem" id="pdfReport">Relatório PDF</button>
+          <div class="dropsep"></div>
+          <button class="dropitem" id="geoJsonExport">GeoJSON</button>
+          <button class="dropitem" id="kmlExport">KML / Google Earth</button>
         </div>
       </div>
 
@@ -256,14 +277,17 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
   <div class="timelinebar" id="timelinebar">
     <div class="timelinehead">
-      <div class="row"><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button></div>
+      <div class="row"><button class="btn outline small" id="prevTimeline">◀ Anterior</button><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="nextTimeline">Próximo ▶</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button><button class="btn gold small" id="selectTrajectoryInline">Selecionar trajeto</button><button class="btn danger small" id="removeTrajectoryInline">Remover trajeto</button></div>
       <button class="btn outline small" id="closeTimeline">Fechar</button>
     </div>
     <div class="route-summary" id="routeSummary"></div>
+    <div class="muted" id="trajectorySelectionInfo" style="margin-bottom:4px"></div>
     <div class="muted" id="timelineInfo"></div>
     <div class="timeitems" id="timeitems" style="margin-top:7px"></div>
     <div class="route-note">Trajeto cronológico estimado a partir da sequência de ERBs/CGIs após os filtros aplicados. A linha entre antenas serve para visualizar a ordem de utilização das ERBs e <b>não representa percurso GPS, via efetivamente utilizada ou posição exata do terminal</b>.</div>
   </div>
+
+  <div class="heat-legend" id="heatLegend"><b>MAPA DE CALOR / INCIDÊNCIA</b><div class="heat-scale"></div><div>Intensidade representa recorrência de utilização da ERB nos registros filtrados. Não representa localização exata do terminal.</div></div>
 
   <div class="geo" id="geoPanel">
     <h3>INTERSEÇÃO — ÁREA DE CONVERGÊNCIA ESTIMADA</h3><div class="muted" style="margin:-3px 0 8px">Inferência geométrica dos setores visíveis; não representa a posição exata do aparelho.</div>
@@ -298,8 +322,9 @@ const COLORS=['#2f81f7','#f85149','#a371f7','#3fb950','#d29922','#39c5cf','#f778
 const state={
   lots:[],events:[],pois:[],
   activeLotId:null,focusEventId:null,
-  filters:{start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:''},
-  onlyGeo:false,playing:false
+  filters:{start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:'',movementOnly:false},
+  onlyGeo:false,playing:false,heatMode:'normal',trajectoryIndex:0,trajectoryVisible:false,
+  trajectorySelection:{enabled:false,lotIds:[],cgis:[]}
 };
 const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean'};
 const PROJECT_PREFIX='pcpr.erb.v7.project.';
@@ -347,6 +372,28 @@ function validGeoEvent(ev){
 }
 function projectName(){return $('projectName').value.trim()||'Projeto ERB'}
 function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
+function haversineKm(a,b){
+  const R=6371.0088,toRad=x=>x*Math.PI/180;
+  const p1=toRad(Number(a.lat)),p2=toRad(Number(b.lat)),dp=toRad(Number(b.lat)-Number(a.lat)),dl=toRad(Number(b.lng)-Number(a.lng));
+  const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+function formatDuration(ms){
+  if(!Number.isFinite(ms)||ms<0)return '—';
+  const s=Math.round(ms/1000),d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);
+  return [d?d+'d':'',h?h+'h':'',m||(!d&&!h)?String(m).padStart(h||d?2:1,'0')+'min':''].filter(Boolean).join(' ');
+}
+async function sha256File(file){
+  try{
+    if(!globalThis.crypto?.subtle)return '';
+    const buf=await file.arrayBuffer(),hash=await crypto.subtle.digest('SHA-256',buf);
+    return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){console.error('Falha SHA-256',e);return ''}
+}
+async function buildFileMeta(file){return{name:file.name,size:file.size,type:file.type||'',hash:await sha256File(file),importedAt:new Date().toISOString()}}
+function parserName(kind){return({timVoice:'TIM_VOZ_PDF',timDataPdf:'TIM_CONEXOES_PDF',timDataXlsx:'TIM_CONEXOES_XLSX',rows:'GENERIC_TABULAR'}[kind]||String(kind||'UNKNOWN').toUpperCase())}
+function xmlEsc(v){return String(v??'').replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c]))}
+function traceText(ev){return [ev.sourceFile||ev.source||'',ev.parser||'',ev.sourceSheet?('aba '+ev.sourceSheet):'',ev.sourcePage?('p. '+ev.sourcePage):'',ev.sourceRow?('linha '+ev.sourceRow):'',ev.fileHash?('SHA-256 '+ev.fileHash):''].filter(Boolean).join(' · ')}
 
 const map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:true}).setView([-24.317,-52.529],13);
 map.attributionControl.setPrefix(false);
@@ -354,7 +401,8 @@ function ofm(style){return L.maplibreGL({style:`https://tiles.openfreemap.org/st
 const bases={clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),blank:L.layerGroup()};
 let activeBase=bases.clean.addTo(map);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
 
-const sectorG=L.layerGroup().addTo(map),markerG=L.layerGroup().addTo(map),poiG=L.layerGroup().addTo(map),pathG=L.layerGroup().addTo(map),seqG=L.layerGroup().addTo(map),geoG=L.layerGroup().addTo(map);
+const sectorG=L.layerGroup().addTo(map),markerG=L.layerGroup().addTo(map),poiG=L.layerGroup().addTo(map),pathG=L.layerGroup().addTo(map),seqG=L.layerGroup().addTo(map),geoG=L.layerGroup().addTo(map),heatFallbackG=L.layerGroup().addTo(map);
+let heatLayer=null;
 let legend=null,playTimer=null;
 
 function filteredEvents(){
@@ -421,6 +469,7 @@ function eventPopup(group){
     ${ev.ipv6?'<br>IPv6: '+esc(ev.ipv6):''}
     ${address?'<br>Endereço/obs.: '+esc(address):''}
     ${ev.obs&&ev.obs!==address?'<br>Observação: '+esc(ev.obs):''}
+    ${traceText(ev)?'<br><span style="font-size:9px;color:#666">Rastreabilidade: '+esc(traceText(ev))+'</span>':''}
     <br><b>${group.length} registro(s) neste setor</b>
     ${rows}${group.length>40?'<br>… e mais '+(group.length-40):''}
     <div class="popup-actions">
@@ -439,8 +488,18 @@ function timelineData(){
 function routeKey(ev){
   return [ev.lotId||'',ev.cgi||ev.cellid||'',Number(ev.lat).toFixed(6),Number(ev.lng).toFixed(6),Number(ev.az).toFixed(1)].join('|');
 }
+function trajectorySourceData(){
+  let src=timelineData();
+  const sel=state.trajectorySelection||{};
+  if(sel.enabled){
+    const lots=new Set(Array.isArray(sel.lotIds)?sel.lotIds:[]),cgis=new Set(Array.isArray(sel.cgis)?sel.cgis:[]);
+    if(lots.size)src=src.filter(x=>lots.has(x.ev.lotId));
+    if(cgis.size)src=src.filter(x=>cgis.has(String(x.ev.cgi||x.ev.cellid||'').trim()));
+  }
+  return src;
+}
 function trajectoryData(){
-  const src=timelineData(),out=[];
+  const src=trajectorySourceData(),out=[];
   src.forEach(x=>{
     const last=out[out.length-1];
     if(last&&routeKey(last.ev)===routeKey(x.ev)){
@@ -448,6 +507,62 @@ function trajectoryData(){
     }else out.push({ev:x.ev,d:x.d,end:x.d,events:[x.ev],lastEv:x.ev});
   });
   return out;
+}
+function trajectorySelectionLabel(){
+  const sel=state.trajectorySelection||{};
+  if(!sel.enabled)return 'Trajeto: todos os documentos/lotes visíveis após os filtros.';
+  const lots=(sel.lotIds||[]).map(id=>lotById(id)?.name).filter(Boolean);
+  const cgis=(sel.cgis||[]).filter(Boolean);
+  const a=lots.length?`${lots.length} documento(s)/lote(s): ${lots.join(' · ')}`:'nenhum documento/lote selecionado';
+  return `Trajeto selecionado — ${a}${cgis.length?` · ${cgis.length} CGI/ERB específica(s)`:''}.`;
+}
+function removeTrajectory(){
+  clearInterval(playTimer);state.playing=false;state.trajectoryVisible=false;state.trajectoryIndex=0;
+  pathG.clearLayers();seqG.clearLayers();$('timelinebar')?.classList.remove('show');
+  status('Trajeto removido do mapa. A seleção foi preservada para uma nova análise.');
+}
+function clearTrajectorySelection(){
+  state.trajectorySelection={enabled:false,lotIds:[],cgis:[]};state.trajectoryIndex=0;
+}
+function openTrajectorySelector(){
+  const candidates=state.lots.filter(l=>l.visible!==false&&lotEvents(l.id).some(e=>validGeoEvent(e)&&parseDate(e.datetime)));
+  if(!candidates.length)return status('Não há documentos/lotes com ERBs e data/hora para montar trajeto.',true);
+  const current=state.trajectorySelection||{enabled:false,lotIds:[],cgis:[]};
+  const defaultLots=current.enabled&&current.lotIds?.length?new Set(current.lotIds):new Set(candidates.map(l=>l.id));
+  const defaultCgis=new Set(current.enabled&&Array.isArray(current.cgis)?current.cgis:[]);
+  const erbMap=new Map();
+  state.events.filter(e=>validGeoEvent(e)&&parseDate(e.datetime)).forEach(e=>{
+    const cgi=String(e.cgi||e.cellid||'').trim();if(!cgi)return;
+    if(!erbMap.has(cgi))erbMap.set(cgi,{cgi,name:e.name||e.station||cgi,city:e.city||'',lots:new Set()});
+    erbMap.get(cgi).lots.add(e.lotId);
+  });
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Selecionar trajeto desejado';
+  $('drawerBody').innerHTML=`<div class="analysis-note">Escolha quais <b>documentos/lotes</b> devem participar do mesmo trajeto cronológico. Opcionalmente, marque CGI/ERBs específicas. O trajeto respeita também os filtros de data, cidade, horário e demais filtros já aplicados.</div>
+    <div class="field"><label>Documentos / lotes</label><div id="trajLotList">${candidates.map(l=>{const file=l.importInfo?.files?.[0]?.name||'';return `<label class="checkboxline" style="margin:5px 0"><input type="checkbox" data-trajlot="${esc(l.id)}" ${defaultLots.has(l.id)?'checked':''}><span><b>${esc(l.name)}</b> · ${lotEvents(l.id).length} registro(s)${file?`<br><span class="muted">${esc(file)}</span>`:''}</span></label>`}).join('')}</div></div>
+    <div class="row"><button class="btn outline small" id="trajLotsAll">Selecionar todos</button><button class="btn outline small" id="trajLotsNone">Desmarcar todos</button></div>
+    <details style="margin-top:10px"><summary>ERBs/CGIs específicas — opcional</summary><div class="muted" style="margin:6px 0">Se nenhuma CGI/ERB for marcada, serão usadas todas as ERBs dos documentos selecionados.</div><div id="trajCgiList" style="max-height:240px;overflow:auto">${[...erbMap.values()].sort((a,b)=>a.cgi.localeCompare(b.cgi)).map(x=>`<label class="checkboxline" style="margin:5px 0"><input type="checkbox" data-trajcgi="${esc(x.cgi)}" ${defaultCgis.has(x.cgi)?'checked':''}><span><b>${esc(x.cgi)}</b>${x.name&&x.name!==x.cgi?' · '+esc(x.name):''}${x.city?' · '+esc(x.city):''}</span></label>`).join('')}</div></details>
+    <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn outline" id="trajClearSelection">Usar todos os visíveis</button><button class="btn primary" id="trajApplySelection">Aplicar e mostrar trajeto</button></div>`;
+  $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
+  $('trajLotsAll').onclick=()=>$('drawerBody').querySelectorAll('[data-trajlot]').forEach(x=>x.checked=true);
+  $('trajLotsNone').onclick=()=>$('drawerBody').querySelectorAll('[data-trajlot]').forEach(x=>x.checked=false);
+  $('trajClearSelection').onclick=()=>{clearTrajectorySelection();state.trajectoryVisible=true;closeDrawer();$('timelinebar').classList.add('show');redraw();fitTrajectory();status('Trajeto configurado para todos os documentos/lotes visíveis.')};
+  $('trajApplySelection').onclick=()=>{
+    const lotIds=[...$('drawerBody').querySelectorAll('[data-trajlot]:checked')].map(x=>x.dataset.trajlot);
+    if(!lotIds.length)return status('Selecione pelo menos um documento/lote para o trajeto.',true);
+    const cgis=[...$('drawerBody').querySelectorAll('[data-trajcgi]:checked')].map(x=>x.dataset.trajcgi);
+    state.trajectorySelection={enabled:true,lotIds,cgis};state.trajectoryVisible=true;state.trajectoryIndex=0;
+    closeDrawer();$('timelinebar').classList.add('show');redraw();fitTrajectory();status(`Trajeto aplicado com ${lotIds.length} documento(s)/lote(s)${cgis.length?' e '+cgis.length+' CGI/ERB(s) específica(s)':''}.`);
+  };
+}
+function trajectoryMetrics(t){
+  let totalKm=0;
+  const legs=[];
+  for(let i=1;i<t.length;i++){
+    const a=t[i-1],b=t[i],km=haversineKm(a.ev,b.ev),ms=b.d-a.end;
+    const hours=ms>0?ms/3600000:NaN,apparent=Number.isFinite(hours)&&hours>0?km/hours:NaN;
+    totalKm+=km;legs.push({from:i-1,to:i,km,ms,apparent});
+  }
+  return{totalKm,legs};
 }
 function bearingBetween(a,b){
   const p1=a.lat*Math.PI/180,p2=b.lat*Math.PI/180,dl=(b.lng-a.lng)*Math.PI/180;
@@ -461,9 +576,11 @@ function fitTrajectory(){
   if(pts.length===1)map.setView(pts[0],15);else map.fitBounds(pts,{padding:[45,45],maxZoom:15});
 }
 function redraw(fit=false){
-  sectorG.clearLayers();markerG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();geoG.clearLayers();
+  sectorG.clearLayers();markerG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();geoG.clearLayers();heatFallbackG.clearLayers();
+  if(heatLayer){try{map.removeLayer(heatLayer)}catch(e){}heatLayer=null}
   const groups=sectorGroups(),bounds=[];
-  if(!state.onlyGeo){
+  const showNormal=state.heatMode!=='heat';
+  if(!state.onlyGeo&&showNormal){
     groups.forEach((group,gi)=>{
       const ev=group[0],lot=lotById(ev.lotId),color=lot?.color||COLORS[gi%COLORS.length],s=sector(ev);
       const dim=group.every(x=>x.displayMode==='dim');
@@ -473,20 +590,37 @@ function redraw(fit=false){
       if(cfg.showLabels)m.bindTooltip(`${ev.station||ev.name||'ERB'}${group.length>1?' ×'+group.length:''}`,{permanent:true,direction:'top',offset:[0,-8],className:'erb-label'});
       s.ll.forEach(p=>bounds.push(p));
     });
-  }
+  }else groups.forEach(g=>bounds.push([g[0].lat,g[0].lng]));
   state.pois.forEach(p=>{
+    if(!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lng)))return;
     const ic=L.divIcon({className:'poiicon',html:poiSymbol(p.type),iconSize:[25,25],iconAnchor:[12,12]});
     L.marker([p.lat,p.lng],{icon:ic}).addTo(poiG).bindTooltip(p.name,{permanent:true,direction:'right',className:'erb-label'})
       .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.type)}<br>${fmt(p.lat)} / ${fmt(p.lng)}${p.datetime?'<br>'+esc(p.datetime):''}${p.obs?'<br>'+esc(p.obs):''}`);
     bounds.push([p.lat,p.lng]);
   });
-  drawTimelineLayers();renderLegend();renderSidebar();updateGeo(false);
+  drawHeatmap(groups);drawTimelineLayers();renderLegend();renderSidebar();updateGeo(false);
   if(fit&&bounds.length)map.fitBounds(bounds,{padding:[38,38],maxZoom:16});
   autosave();
 }
+function drawHeatmap(groups=sectorGroups()){
+  const on=state.heatMode==='heat'||state.heatMode==='both';
+  $('heatLegend')?.classList.toggle('show',on);
+  if(!on||!groups.length)return;
+  const aggregated=new Map();
+  groups.forEach(g=>{const ev=g[0],k=`${Number(ev.lat).toFixed(6)}|${Number(ev.lng).toFixed(6)}`;const x=aggregated.get(k)||{lat:ev.lat,lng:ev.lng,n:0};x.n+=g.length;aggregated.set(k,x)});
+  const max=Math.max(...[...aggregated.values()].map(x=>x.n),1),pts=[...aggregated.values()].map(x=>[x.lat,x.lng,Math.max(.12,x.n/max)]);
+  if(typeof L.heatLayer==='function'){
+    heatLayer=L.heatLayer(pts,{radius:34,blur:24,maxZoom:17,minOpacity:.28}).addTo(map);
+  }else{
+    // Fallback local quando Leaflet.heat não carregar: círculos proporcionais à incidência.
+    [...aggregated.values()].forEach(x=>L.circleMarker([x.lat,x.lng],{radius:8+20*Math.sqrt(x.n/max),weight:1,opacity:.65,fillOpacity:.24}).addTo(heatFallbackG).bindTooltip(`${x.n} registro(s)`));
+  }
+}
 function drawTimelineLayers(){
-  const t=trajectoryData();
-  if(cfg.showPath&&t.length>1){
+  pathG.clearLayers();seqG.clearLayers();
+  const t=trajectoryData(),metrics=trajectoryMetrics(t);
+  const showRoute=Boolean(state.trajectoryVisible);
+  if(showRoute&&cfg.showPath&&t.length>1){
     const pts=t.map(x=>[x.ev.lat,x.ev.lng]);
     L.polyline(pts,{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.82}).addTo(pathG);
     const maxArrows=60,step=Math.max(1,Math.ceil((t.length-1)/maxArrows));
@@ -497,27 +631,30 @@ function drawTimelineLayers(){
       L.marker(mid,{icon:ic,interactive:false}).addTo(pathG);
     }
   }
-  if(cfg.showSeq)t.forEach((x,i)=>{
+  if(showRoute&&cfg.showSeq)t.forEach((x,i)=>{
     const ic=L.divIcon({className:'seqicon',html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
     L.marker([x.ev.lat,x.ev.lng],{icon:ic}).addTo(seqG);
   });
   const uniqueErbs=new Set(t.map(x=>x.ev.cgi||x.ev.cellid||routeKey(x.ev))).size;
   const cities=[...new Set(t.map(x=>String(x.ev.city||'').trim()).filter(Boolean))];
   const transitions=Math.max(0,t.length-1);
-  $('timelineInfo').textContent=t.length?`${t.length} etapa(s) cronológica(s) · ${transitions} transição(ões)`:'sem eventos com data/hora';
+  $('timelineInfo').textContent=t.length?`${t.length} etapa(s) cronológica(s) · ${transitions} transição(ões) · ${metrics.totalKm.toFixed(2).replace('.',',')} km em linha reta entre ERBs`:'sem eventos com data/hora';
+  if($('trajectorySelectionInfo'))$('trajectorySelectionInfo').textContent=trajectorySelectionLabel();
   if($('routeSummary'))$('routeSummary').innerHTML=t.length?[
     `<span class="route-chip">${uniqueErbs} ERB(s)</span>`,
     `<span class="route-chip">${cities.length} cidade(s)</span>`,
+    `<span class="route-chip">${metrics.totalKm.toFixed(2).replace('.',',')} km somados</span>`,
     `<span class="route-chip">${esc(t[0].d.toLocaleString('pt-BR'))} → ${esc(t[t.length-1].end.toLocaleString('pt-BR'))}</span>`
   ].join(''):'';
   $('timeitems').innerHTML=t.map((x,i)=>{
-    const ev=x.ev,city=String(ev.city||'').trim(),count=x.events.length;
+    const ev=x.ev,city=String(ev.city||'').trim(),count=x.events.length,leg=i?metrics.legs[i-1]:null;
     const period=x.end&&x.end.getTime()!==x.d.getTime()?`${x.d.toLocaleString('pt-BR')} → ${x.end.toLocaleString('pt-BR')}`:x.d.toLocaleString('pt-BR');
-    return `<div class="timeitem" data-time="${ev.id}"><b>${i+1}. ${esc(ev.name||ev.station||ev.cgi||'ERB')}</b><br>${esc(period)}${city?`<br><span class="routecity">${esc(city)}</span>`:''}${ev.cgi?`<br>CGI: ${esc(ev.cgi)}`:''}<br><span class="muted">${esc(lotById(ev.lotId)?.name||'')}${count>1?' · '+count+' registros consecutivos':''}</span></div>`;
+    const move=leg?`<div class="route-stepmeta"><span class="route-move">↳ ${leg.km.toFixed(2).replace('.',',')} km · ${formatDuration(leg.ms)}</span>${Number.isFinite(leg.apparent)?`<br>Velocidade aparente entre ERBs: ${leg.apparent.toFixed(1).replace('.',',')} km/h`:''}<br><span class="route-warn">Linha reta/indicador temporal; não representa rota física ou velocidade real.</span></div>`:'';
+    const trace=traceText(ev);
+    return `<div class="timeitem" data-time="${ev.id}"><b>${i+1}. ${esc(ev.name||ev.station||ev.cgi||'ERB')}</b><br>${esc(period)}${city?`<br><span class="routecity">${esc(city)}</span>`:''}${ev.cgi?`<br>CGI: ${esc(ev.cgi)}`:''}${Number.isFinite(Number(ev.az))?` · Az. ${Number(ev.az).toFixed(0)}°`:''}<br><span class="muted">${esc(lotById(ev.lotId)?.name||'')}${count>1?' · '+count+' registros consecutivos':''}</span>${trace?`<div class="route-stepmeta">${esc(trace)}</div>`:''}${move}</div>`;
   }).join('');
-  document.querySelectorAll('[data-time]').forEach(el=>el.onclick=()=>focusEvent(el.dataset.time));
+  document.querySelectorAll('[data-time]').forEach(el=>el.onclick=()=>{const idx=[...document.querySelectorAll('[data-time]')].indexOf(el);state.trajectoryIndex=Math.max(0,idx);focusEvent(el.dataset.time)});
 }
-
 function focusEvent(id){
   const ev=state.events.find(e=>e.id===id);if(!ev)return;
   state.focusEventId=id;map.setView([ev.lat,ev.lng],15);
@@ -623,18 +760,18 @@ function setGroupMode(ids,mode){
 
 function openLotAudit(id){
   const l=lotById(id);if(!l)return;
-  const a=l.importInfo||{};
+  const a=l.importInfo||{},files=Array.isArray(a.files)?a.files:(l.sourceFile?[{name:l.sourceFile,hash:a.fileHash||'',parser:a.parser||''}]:[]);
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Auditoria do lote';
   const reasons=a.reasons?Object.entries(a.reasons).map(([k,v])=>`<li>${v} — ${esc(k)}</li>`).join(''):'';
   $('drawerBody').innerHTML=`<div class="item"><div class="itemname">${esc(l.name)}</div><div class="itemmeta">${esc(a.format||'Importação')} · ${esc(l.operator||a.detectedOperator||'operadora não identificada')}<br>${esc(a.summary||'')}</div></div>
   <div class="analysis-grid"><div class="analysis-kpi"><span>Válidas / chamadas</span><b>${a.validRows??a.callsTotal??'—'}</b></div><div class="analysis-kpi"><span>Ignoradas</span><b>${a.ignoredRows??'—'}</b></div><div class="analysis-kpi"><span>ERBs indexadas</span><b>${a.antennas??'—'}</b></div><div class="analysis-kpi"><span>Mapeadas</span><b>${a.mappedCalls??lotEvents(id).length}</b></div></div>
+  ${files.length?`<details open><summary>Rastreabilidade dos arquivos (${files.length})</summary>${files.map(f=>`<div class="tracebox"><b>Arquivo:</b> ${esc(f.name||'—')}<br><b>Parser:</b> ${esc(f.parser||a.parser||'—')}<br><b>Tamanho:</b> ${Number.isFinite(Number(f.size))?Number(f.size).toLocaleString('pt-BR')+' bytes':'—'}<br><b>Importado em:</b> ${esc(f.importedAt?new Date(f.importedAt).toLocaleString('pt-BR'):'—')}<br><b>SHA-256:</b> ${esc(f.hash||'indisponível')}</div>`).join('')}</details>`:''}
   ${a.note?`<div class="analysis-note">${esc(a.note)}</div>`:''}${reasons?`<div class="field"><label>Motivos das linhas ignoradas</label><ul class="muted">${reasons}</ul></div>`:''}
   ${a.timData?`<details open><summary>Resumo TIM — IPv6 / CGI-ERB</summary><div class="analysis-grid" style="margin-top:8px"><div class="analysis-kpi"><span>Linhas no tráfego</span><b>${a.timData.totalTraffic}</b></div><div class="analysis-kpi"><span>IPv6 válido</span><b>${a.timData.ipv6ValidCount}</b></div><div class="analysis-kpi"><span>Após deduplicação</span><b>${a.timData.dedupRows}</b></div><div class="analysis-kpi"><span>Duplicatas removidas</span><b>${a.timData.duplicates}</b></div><div class="analysis-kpi"><span>Match PRIMEIRA</span><b>${a.timData.matchFirst}</b></div><div class="analysis-kpi"><span>Match ÚLTIMA</span><b>${a.timData.matchLast}</b></div><div class="analysis-kpi"><span>Não localizadas</span><b>${a.timData.unmatchedOccurrences}</b></div><div class="analysis-kpi"><span>Antenas sem coordenada válida</span><b>${a.timData.antennaCoordInvalid}</b></div></div><div class="itemmeta">Tráfego: ${esc(a.timData.trafficSheet)}<br>Antenas: ${esc(a.timData.antennaSheet)}</div>${Array.isArray(a.timData.uniqueUnmatched)&&a.timData.uniqueUnmatched.length?`<div class="field" style="margin-top:8px"><label>CGI/ERB não localizadas (${a.timData.uniqueUnmatched.length} únicas)</label><div class="muted">${esc(a.timData.uniqueUnmatched.join(' · '))}</div></div>`:'<div class="analysis-note">Todas as CGI/ERB informadas foram encontradas na base de antenas.</div>'}</details>`:''}
-  ${Array.isArray(a.rawCalls)&&a.rawCalls.length?`<details open><summary>Chamadas reconhecidas (${a.rawCalls.length})</summary><div style="overflow:auto;margin-top:7px"><table style="width:100%;border-collapse:collapse;font-size:8.5px"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Data/hora</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Evento/Central</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Origem</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Destino</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">CGI/ERB</th></tr></thead><tbody>${a.rawCalls.slice(0,50).map(c=>`<tr><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.datetime||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.code,c.central].filter(Boolean).join(' / ')||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.origin||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.destination||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.firstCgi,c.lastCgi].filter(Boolean).join(' → ')||'—')}</td></tr>`).join('')}</tbody></table></div></details>`:''}
+  ${Array.isArray(a.rawCalls)&&a.rawCalls.length?`<details><summary>Chamadas reconhecidas (${a.rawCalls.length})</summary><div style="overflow:auto;margin-top:7px"><table style="width:100%;border-collapse:collapse;font-size:8.5px"><thead><tr><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Data/hora</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Evento/Central</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Origem</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">Destino</th><th style="text-align:left;padding:4px;border-bottom:1px solid #345346">CGI/ERB</th></tr></thead><tbody>${a.rawCalls.slice(0,80).map(c=>`<tr><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.datetime||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.code,c.central].filter(Boolean).join(' / ')||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.origin||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc(c.destination||'—')}</td><td style="padding:4px;border-bottom:1px solid #233d32">${esc([c.firstCgi,c.lastCgi].filter(Boolean).join(' → ')||'—')}</td></tr>`).join('')}</tbody></table></div></details>`:''}
   <div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;
   $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
 }
-
 function fitLot(id){
   const pts=[];lotEvents(id).filter(validGeoEvent).forEach(ev=>sector(ev).ll.forEach(p=>pts.push(p)));
   if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Lote sem registros.',true)
@@ -642,6 +779,8 @@ function fitLot(id){
 function deleteLot(id){
   const l=lotById(id);if(!l||!confirm(`Excluir o lote "${l.name}" e seus registros?`))return;
   state.lots=state.lots.filter(x=>x.id!==id);state.events=state.events.filter(e=>e.lotId!==id);
+  if(state.trajectorySelection?.lotIds)state.trajectorySelection.lotIds=state.trajectorySelection.lotIds.filter(x=>x!==id);
+  if(state.trajectorySelection?.enabled&&!state.trajectorySelection.lotIds.length)clearTrajectorySelection();
   if(state.activeLotId===id)state.activeLotId=state.lots[0]?.id||null;redraw()
 }
 function updateFilterOptions(){
@@ -726,6 +865,7 @@ function openDrawer(kind,preset={}){
       </div>
       <div class="grid2"><div class="field"><label>Tipo</label><select id="filterType"><option value="">Todos</option><option value="VOZ">VOZ</option><option value="DADOS">DADOS</option><option value="MISTO">MISTO</option></select></div><div class="field"><label>Operadora</label><select id="filterOperator"></select></div></div>
       <div class="field"><label>Lote</label><select id="filterLot"></select></div>
+      <div class="field"><div class="checkboxline"><input id="filterMovement" type="checkbox" ${state.filters.movementOnly?'checked':''}><label for="filterMovement">Somente mudanças efetivas de ERB no trajeto</label></div><div class="muted" style="margin-top:4px">Afeta a visualização cronológica, removendo permanências consecutivas na mesma ERB.</div></div>
       <div class="drawerfoot"><button class="btn danger" id="clearFilters">Limpar filtros</button><button class="btn primary" id="applyFilters">Aplicar</button></div>`;
     $('filterType').value=state.filters.type;updateFilterOptions();
     body.querySelectorAll('[data-daypart]').forEach(b=>{b.classList.toggle('active',b.dataset.daypart===(state.filters.daypart||''));b.onclick=()=>{body.querySelectorAll('[data-daypart]').forEach(x=>x.classList.remove('active'));b.classList.add('active');body.dataset.daypart=b.dataset.daypart}});
@@ -832,13 +972,12 @@ function savePoi(){
   closeDrawer();redraw(true);status('Ponto adicionado.')
 }
 function applyFilters(){
-  state.filters={start:$('filterStart').value,end:$('filterEnd').value,date:$('filterDate')?.value||'',city:$('filterCity')?.value||'',type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value,daypart:$('drawerBody').dataset.daypart||''};
+  state.filters={start:$('filterStart').value,end:$('filterEnd').value,date:$('filterDate')?.value||'',city:$('filterCity')?.value||'',type:$('filterType').value,operator:$('filterOperator').value,lotId:$('filterLot').value,daypart:$('drawerBody').dataset.daypart||'',movementOnly:Boolean($('filterMovement')?.checked)};
   $('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));closeDrawer();redraw(true);status('Filtros aplicados.')
 }
 function clearFilters(){
-  state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:''};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
+  state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:'',movementOnly:false};$('filterPill').classList.remove('show');closeDrawer();redraw(true);status('Filtros removidos.')
 }
-
 function normHead(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
 const ALIASES={
   nome:['nome','erb','antena','estacaoerb','site'],estacao:['estacao','station','nomeerb'],setor:['setor','sector'],
@@ -909,10 +1048,22 @@ function timCoord(v,isLat){
 }
 function timValidIpv6(v){
   const x=String(v??'').replace(/[\u00a0\u200b-\u200d\ufeff\s]/g,'').toLowerCase();
-  if(!x||x==='.'||x==='-'||x==='0'||x==='::')return false;
-  const parts=x.split(':');
-  if(parts.length>1&&parts.every(p=>p===''||/^0+$/.test(p)))return false;
-  return true;
+  if(!x||x==='.'||x==='-'||x==='0'||x==='::'||x==='0:0:0:0:0:0:0:0')return false;
+  if(!/^[0-9a-f:]+$/i.test(x)||!x.includes(':'))return false;
+  // Validação estrutural real de IPv6. Isso impede que horários (18:22:50)
+  // ou fragmentos de IPv6 quebrados pelo PDF sejam aceitos como endereço completo.
+  if((x.match(/::/g)||[]).length>1)return false;
+  if(x.includes('::')){
+    const [a,b]=x.split('::');
+    const left=a?a.split(':'):[],right=b?b.split(':'):[];
+    if(left.length+right.length>=8)return false; // :: precisa representar ao menos um grupo
+    if(![...left,...right].every(g=>/^[0-9a-f]{1,4}$/i.test(g)))return false;
+  }else{
+    const parts=x.split(':');
+    if(parts.length!==8||!parts.every(g=>/^[0-9a-f]{1,4}$/i.test(g)))return false;
+  }
+  const expanded=x.replace(/:/g,'').replace(/0/g,'');
+  return expanded.length>0;
 }
 function timTrafficCanon(h){
   const n=timHead(h);
@@ -1000,7 +1151,8 @@ function parseTimDataWorkbook(wb,fileName=''){
   const totalTraffic=dataRows.length;
   const filtered=[];let ipv6ValidCount=0,duplicates=0;
   const seen=new Set();
-  for(const r of dataRows){
+  for(let dataIndex=0;dataIndex<dataRows.length;dataIndex++){
+    const r=dataRows[dataIndex];
     const get=k=>th.map[k]!=null?r[th.map[k]]:'';
     const ipv6=String(get('ipv6')??'').trim();
     if(!timValidIpv6(ipv6))continue;
@@ -1014,7 +1166,7 @@ function parseTimDataWorkbook(wb,fileName=''){
       msisdn:String(get('msisdn')??'').trim(),serviceId:String(get('serviceId')??'').trim(),ipv4:String(get('ipv4')??'').trim(),ipv6,
       uplink,downlink,portaInicio:String(get('portaInicio')??'').trim(),portaFim:String(get('portaFim')??'').trim(),
       horaInicio:String(get('horaInicio')??'').trim(),horaFim:String(get('horaFim')??'').trim(),
-      primeiraCgi:timCleanCgi(get('primeiraCgi')),ultimaCgi:timCleanCgi(get('ultimaCgi'))
+      primeiraCgi:timCleanCgi(get('primeiraCgi')),ultimaCgi:timCleanCgi(get('ultimaCgi')),sourceRow:th.idx+2+dataIndex
     };
     const dedup=[o.msisdn,o.ipv6,o.horaInicio,o.primeiraCgi,o.ultimaCgi].join('\u001f');
     if(seen.has(dedup)){duplicates++;continue}seen.add(dedup);filtered.push(o);
@@ -1044,8 +1196,9 @@ function parseTimDataWorkbook(wb,fileName=''){
     matchFirst,matchLast,mappableFirst,mappableLast,rowsMappable,unmatchedOccurrences:unmatchedOccurrences.length,uniqueUnmatched:[...uniqueUnmatched],missingKeys,msisdns
   };
 }
-function importTimDataWorkbook(parsed,file,lotId){
+function importTimDataWorkbook(parsed,file,lotId,fileMeta={}){
   const lot=lotById(lotId);if(!lot)return{created:0,rows:0};
+  const parser=parsed.sourceKind==='PDF'?'TIM_CONEXOES_PDF':'TIM_CONEXOES_XLSX',importedAt=fileMeta.importedAt||new Date().toISOString();
   lot.type='DADOS';lot.operator='TIM';lot.sourceFile=file.name;
   if(parsed.msisdns.length===1)lot.name=`DADOS TIM — ${parsed.msisdns[0]}`;
   else if(!lot.name||/^DADOS\s+—/i.test(lot.name))lot.name=`DADOS TIM — ${file.name.replace(/\.[^.]+$/,'')}`;
@@ -1060,54 +1213,45 @@ function importTimDataWorkbook(parsed,file,lotId){
       if(!ep.cgi)continue;
       const ant=parsed.antennaMap.get(ep.cgi);
       if(!ant||!Number.isFinite(ant.lat)||!Number.isFinite(ant.lng)||!Number.isFinite(ant.az))continue;
-      // PRIMEIRA e ÚLTIMA iguais: no mapa basta uma ocorrência por conexão para não dobrar artificialmente a incidência.
       if(plotted.has(ep.cgi))continue;plotted.add(ep.cgi);rowPlot=true;
-      const same=o.primeiraCgi&&o.primeiraCgi===o.ultimaCgi;
-      const role=same?'PRIMEIRA E ÚLTIMA':ep.side;
+      const same=o.primeiraCgi&&o.primeiraCgi===o.ultimaCgi,role=same?'ÚNICA':ep.side;
       const place=[ant.local,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · ');
       const trafficBits=[o.msisdn?`MSISDN ${o.msisdn}`:'',o.ipv6?`IPv6 ${o.ipv6}`:'',o.horaFim&&ep.side==='PRIMEIRA'?`fim ${o.horaFim}`:''].filter(Boolean).join(' · ');
       state.events.push({
         id:uid(),lotId,name:ant.name||ep.cgi,station:ant.name||ep.cgi,sector:'',lat:ant.lat,lng:ant.lng,az:ant.az,
-        dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',
-        address:place,city:ant.city||'',datetime:ep.datetime,eventType:'DADOS',operator:'TIM',tech:'',cellid:'',cgi:ep.cgi,
-        origin:o.msisdn,destination:'',imei:'',ipv6:o.ipv6,source:file.name,
-        obs:`${role} CGI/ERB · ${trafficBits}`.trim(),visible:true,displayMode:'normal'
+        dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:place,city:ant.city||'',
+        datetime:ep.datetime,eventType:'DADOS',operator:'TIM',tech:'',cellid:'',cgi:ep.cgi,origin:o.msisdn,destination:'',imei:'',ipv6:o.ipv6,
+        source:file.name,sourceFile:file.name,sourceType:parsed.sourceKind||'XLSX',parser,fileHash:fileMeta.hash||'',importedAt,role,
+        sourceSheet:parsed.sourceKind==='PDF'?'':parsed.trafficSheet,sourcePage:o.sourcePage||'',sourceRow:o.sourceRow||'',
+        obs:`${same?'PRIMEIRA E ÚLTIMA':ep.side} CGI/ERB · ${trafficBits}`.trim(),visible:true,displayMode:'normal'
       });created++;
     }
     if(rowPlot)rowsWithPlot++;
   }
   lot.importInfo={
-    format:parsed.sourceKind==='PDF'?'PDF DADOS TIM':'XLSX DADOS TIM',detectedOperator:'TIM',totalRows:parsed.totalTraffic,validRows:parsed.filteredRows.length,
+    format:parsed.sourceKind==='PDF'?'PDF DADOS TIM':'XLSX DADOS TIM',parser,detectedOperator:'TIM',totalRows:parsed.totalTraffic,validRows:parsed.filteredRows.length,
     ignoredRows:Math.max(0,parsed.totalTraffic-parsed.ipv6ValidCount)+parsed.duplicates,antennas:parsed.antennas,mappedCalls:rowsWithPlot,
     summary:`${parsed.totalTraffic} linha(s) no extrato · ${parsed.ipv6ValidCount} com IPv6 válido · ${parsed.filteredRows.length} após deduplicação · ${rowsWithPlot} conexão(ões) com ERB plotável`,
     note:`Fonte: ${parsed.trafficSheet} + ${parsed.antennaSheet}. Match PRIMEIRA: ${parsed.matchFirst}/${parsed.filteredRows.length}; ÚLTIMA: ${parsed.matchLast}/${parsed.filteredRows.length}. ERBs não localizadas: ${parsed.unmatchedOccurrences} ocorrência(s).`,
+    files:[{...fileMeta,parser}],fileHash:fileMeta.hash||'',
     timData:{totalTraffic:parsed.totalTraffic,ipv6ValidCount:parsed.ipv6ValidCount,dedupRows:parsed.filteredRows.length,duplicates:parsed.duplicates,matchFirst:parsed.matchFirst,matchLast:parsed.matchLast,mappableFirst:parsed.mappableFirst,mappableLast:parsed.mappableLast,unmatchedOccurrences:parsed.unmatchedOccurrences,uniqueUnmatched:parsed.uniqueUnmatched,missingKeys:parsed.missingKeys,trafficSheet:parsed.trafficSheet,antennaSheet:parsed.antennaSheet,antennaCoordInvalid:parsed.antennaCoordInvalid}
   };
   return{created,rows:parsed.filteredRows.length,rowsWithPlot};
 }
-/* ===== FIM TIM XLSX ===== */
-
-function importRows(rows,lotId,type,analysis=null){
-  const a=analysis||analyzeRows(rows,type),lot=lotById(lotId);
+function importRows(rows,lotId,type,analysis=null,file=null,fileMeta={}){
+  const a=analysis||analyzeRows(rows,type),lot=lotById(lotId),parser=file?.name?.toLowerCase().endsWith('.csv')?'GENERIC_CSV':file?.name?.toLowerCase().endsWith('.txt')?'GENERIC_TXT':'GENERIC_XLSX';
   let added=0;
   for(const r of a.validRows){
-    const o=r.o,dt=o.datahora||[o.data,o.hora].filter(Boolean).join(' ');
-    const dist=parseNum(o.distancia);
+    const o=r.o,dt=o.datahora||[o.data,o.hora].filter(Boolean).join(' '),dist=parseNum(o.distancia);
     state.events.push({id:uid(),lotId,name:o.nome||o.estacao||`ERB ${state.events.length+1}`,station:o.estacao||'',sector:o.setor||'',lat:r.lat,lng:r.lng,az:normAz(r.az),
       dist:Number.isFinite(dist)&&dist>0?dist:cfg.defaultDist,margin:parseNum(o.margem)||cfg.defaultMargin,datetime:dt,eventType:(o.tipo||type||'').toUpperCase(),
       operator:o.operadora||a.operator||'',tech:o.tecnologia||'',cellid:o.cellid||'',enodeb:o.enodeb||'',lactac:o.lactac||'',imei:o.imei||'',origin:o.origem||'',destination:o.destino||'',
-      source:o.fonte||'',page:o.pagina||'',obs:o.obs||'',radiusSource:Number.isFinite(dist)&&dist>0?'INFORMADO NO ARQUIVO':'ESTIMADO (PADRÃO)',visible:true,displayMode:'normal'});added++
+      source:o.fonte||file?.name||'',sourceFile:file?.name||'',sourceType:file?.name?.split('.').pop()?.toUpperCase()||'',parser,fileHash:fileMeta.hash||'',importedAt:fileMeta.importedAt||new Date().toISOString(),sourceRow:r.rowIndex!=null?r.rowIndex+1:'',page:o.pagina||'',obs:o.obs||'',radiusSource:Number.isFinite(dist)&&dist>0?'INFORMADO NO ARQUIVO':'ESTIMADO (PADRÃO)',visible:true,displayMode:'normal'});added++
   }
   if(lot){
     if(!lot.operator&&a.operator)lot.operator=a.operator;
-    lot.importInfo={
-      ...(lot.importInfo||{}),
-      format:lot.importInfo?.format||'PLANILHA/TEXTO',
-      totalRows:a.dataRows,validRows:a.valid,ignoredRows:a.ignored,
-      reasons:a.reasons,detectedOperator:a.operator,
-      summary:`${a.valid} linha(s) válida(s) · ${a.ignored} ignorada(s)${a.operator?' · '+a.operator+' detectada':''}`,
-      note:a.ignored?('Ignoradas: '+Object.entries(a.reasons).map(([k,v])=>`${v} ${k}`).join(' · ')):'Auditoria concluída sem linhas rejeitadas.'
-    };
+    lot.importInfo={...(lot.importInfo||{}),format:lot.importInfo?.format||'PLANILHA/TEXTO',parser,totalRows:a.dataRows,validRows:a.valid,ignoredRows:a.ignored,reasons:a.reasons,detectedOperator:a.operator,
+      summary:`${a.valid} linha(s) válida(s) · ${a.ignored} ignorada(s)${a.operator?' · '+a.operator+' detectada':''}`,note:a.ignored?('Ignoradas: '+Object.entries(a.reasons).map(([k,v])=>`${v} ${k}`).join(' · ')):'Auditoria concluída sem linhas rejeitadas.',files:file?[{...fileMeta,parser}]:[]};
   }
   return{added,bad:a.ignored,reasons:a.reasons,operator:a.operator}
 }
@@ -1141,6 +1285,172 @@ function bucketRow(row,bounds){
 function firstMatch(s,re){const m=String(s||'').match(re);return m?m[0]:''}
 function normalizePdfDate(s){const m=String(s||'').match(/\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/);return m?m[0]:''}
 
+function rxEscape(s){return String(s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+
+/* ===== RECONSTRUÇÃO INTELIGENTE POR ASSINATURA DO CAMPO =====
+   O PDF não é tratado como uma sequência rígida de linhas. Campos estruturados são
+   reconstruídos pela sua assinatura: CGI = 3-2-5-5 dígitos; IPv6 = endereço válido;
+   coordenadas = par decimal geograficamente válido; data e azimute = padrões próprios. */
+function timFindCgiMatchesLoose(text){
+  const src=String(text||'').replace(/[‐‑‒–—−]/g,'-');
+  const found=[];
+  const push=(m)=>{
+    const cgi=`${m[1]}-${m[2]}-${m[3]}-${m[4]}`;
+    // No Brasil o MCC é 724. Formas sem hífen só são aceitas com 724 para evitar
+    // confundir telefones/IMEIs com CGI. Com hífen, a assinatura 3-2-5-5 basta.
+    found.push({cgi,index:m.index,end:m.index+m[0].length,raw:m[0]});
+  };
+  let m;
+  const strict=/\b(\d{3})\s*-\s*(\d{2})\s*-\s*(\d{5})\s*-\s*(\d{5})\b/g;
+  while((m=strict.exec(src)))push(m);
+  const spaced=/\b(724)\s+(\d{2})\s+(\d{5})\s+(\d{5})\b/g;
+  while((m=spaced.exec(src)))push(m);
+  const compact=/\b(724)(\d{2})(\d{5})(\d{5})\b/g;
+  while((m=compact.exec(src)))push(m);
+  found.sort((a,b)=>a.index-b.index||b.raw.length-a.raw.length);
+  const out=[];
+  for(const x of found){
+    const prev=out[out.length-1];
+    if(prev&&x.cgi===prev.cgi&&Math.abs(x.index-prev.index)<4)continue;
+    out.push(x);
+  }
+  return out;
+}
+function timFindCgisLoose(text){
+  const seen=new Set(),out=[];
+  for(const x of timFindCgiMatchesLoose(text))if(!seen.has(x.cgi)){seen.add(x.cgi);out.push(x.cgi)}
+  return out;
+}
+function timFirstCgiLoose(text){return timFindCgisLoose(text)[0]||''}
+
+function timExtractWrappedIpv6(text){
+  const tokens=String(text||'').split(/\s+/).map(t=>t.replace(/^[,;()[\]{}]+|[,;()[\]{}]+$/g,'')).filter(Boolean);
+  for(let i=0;i<tokens.length;i++){
+    const first=tokens[i];
+    if(!first.includes(':')||!/^[0-9A-Fa-f:]+$/.test(first))continue;
+    let joined='';
+    for(let j=i;j<Math.min(tokens.length,i+9);j++){
+      const t=tokens[j];
+      if(!/^[0-9A-Fa-f:]+$/.test(t))break;
+      // Fragmentos sem ':' só podem ser continuação de um grupo hexadecimal (máx. 4).
+      // Isso impede anexar UPLINK/DOWNLINK, telefone, porta ou data ao IPv6.
+      if(!t.includes(':')&&t.length>4)break;
+      joined+=t;
+      if(timValidIpv6(joined))return joined;
+      // Um candidato de IPv6 não deve crescer indefinidamente.
+      if(joined.length>48)break;
+    }
+  }
+  // Fallback por janela de caracteres: remove apenas espaços/quebras entre grupos e
+  // procura um endereço completo. Útil quando o PDF divide um mesmo grupo hexadecimal.
+  const lines=String(text||'').split(/\r?\n/);
+  for(let i=0;i<lines.length;i++){
+    let acc='';
+    for(let j=i;j<Math.min(lines.length,i+5);j++){
+      const frag=lines[j].trim();
+      if(!frag||!/^[0-9A-Fa-f:]+$/.test(frag))break;
+      acc+=frag;
+      if(timValidIpv6(acc))return acc;
+      if(acc.length>48)break;
+    }
+  }
+  return'';
+}
+
+function timSignatureLatLng(block){
+  const vals=[];
+  for(const m of String(block||'').matchAll(/-?\d{1,3}[.,]\d{4,}/g)){
+    const n=Number(m[0].replace(',','.'));
+    if(Number.isFinite(n))vals.push({n,index:m.index,raw:m[0]});
+  }
+  for(let i=0;i<vals.length;i++){
+    const a=vals[i];if(a.n<-90||a.n>90)continue;
+    for(let j=i+1;j<Math.min(vals.length,i+4);j++){
+      const b=vals[j];if(b.n<-180||b.n>180)continue;
+      return{lat:a.n,lng:b.n,latIndex:a.index,lngIndex:b.index,lngEnd:b.index+b.raw.length};
+    }
+  }
+  return{lat:NaN,lng:NaN,latIndex:-1,lngIndex:-1,lngEnd:-1};
+}
+function timSignatureAzimuth(block,afterIndex=0){
+  const s=String(block||''),tail=s.slice(Math.max(0,afterIndex));
+  let m=tail.match(/\b(\d{1,3}(?:[.,]\d+)?)\s*[°º]/);
+  if(m){const n=Number(m[1].replace(',','.'));if(Number.isFinite(n)&&n>=0&&n<=360)return{az:normAz(n),index:afterIndex+m.index,end:afterIndex+m.index+m[0].length}}
+  // Alguns extratores perdem o símbolo °. Nesse caso aceitamos uma linha isolada 0..360
+  // somente depois da data, para não confundir CEP, data ou parte do endereço.
+  const lines=tail.split(/\n+/);let offset=0;
+  for(const line of lines){
+    const t=line.trim(),mm=t.match(/^(\d{1,3}(?:[.,]\d+)?)$/);
+    if(mm){const n=Number(mm[1].replace(',','.'));if(Number.isFinite(n)&&n>=0&&n<=360)return{az:normAz(n),index:afterIndex+offset,end:afterIndex+offset+line.length}}
+    offset+=line.length+1;
+  }
+  return{az:NaN,index:-1,end:-1};
+}
+function timSignatureAntennaRecords(struct){
+  const full=Array.isArray(struct?.pageTexts)&&struct.pageTexts.length?struct.pageTexts.join('\n'):String(struct?.text||'');
+  let pos=full.search(/DADOS\s+DE\s+ANTENA/i);
+  if(pos<0)pos=full.search(/CGI\s*\/?\s*ERB\s+LATITUDE/i);
+  if(pos<0)return[];
+  const region=full.slice(pos),anchors=timFindCgiMatchesLoose(region),out=[];
+  for(let i=0;i<anchors.length;i++){
+    const a=anchors[i],end=i+1<anchors.length?anchors[i+1].index:region.length;
+    const block=region.slice(a.index,end);
+    const coord=timSignatureLatLng(block);
+    if(!Number.isFinite(coord.lat)||!Number.isFinite(coord.lng))continue;
+    const dateM=block.match(/\d{2}\/\d{2}\/\d{4}/),date=dateM?dateM[0]:'';
+    const afterDate=dateM?dateM.index+dateM[0].length:Math.max(coord.lngEnd,0);
+    const azR=timSignatureAzimuth(block,afterDate);
+    if(!Number.isFinite(azR.az))continue;
+    // Metadados começam depois do azimute. Cabeçalhos/fragmentos vazios são ignorados.
+    const tail=block.slice(azR.end>=0?azR.end:afterDate).split(/\n+/).map(cleanPdfText).filter(Boolean)
+      .filter(x=>!/^CGI\/?ERB|^LATITUDE$|^LONGITUDE$|^DATA IN[IÍ]CIO$|^AZIMUTE$/i.test(x));
+    let state='',cep='',city='';
+    const si=tail.findIndex(x=>/^[A-Z]{2}$/.test(x));
+    if(si>=0){
+      state=tail[si];cep=tail[si+1]||'';city=tail[si-1]||'';
+      if(city.length===1&&si>=2)city=(tail[si-2]+city).trim();
+    }else{
+      const joined=tail.join(' '),sm=joined.match(/(?:^|\s)([A-Z]{2})\s+(\d{5}-?\d{3})(?:\s|$)/);
+      if(sm){state=sm[1];cep=sm[2]}
+    }
+    out.push({cgi:a.cgi,lat:coord.lat,lng:coord.lng,az:azR.az,startDate:date,
+      name:tail[0]||a.cgi,local:tail[1]||'',address:tail[1]||'',neighborhood:tail[2]||'',city,state,cep});
+  }
+  // Deduplica pela CGI, priorizando registro completo.
+  const map=new Map();
+  for(const a of out){const p=map.get(a.cgi);if(!p||(!p.city&&a.city))map.set(a.cgi,a)}
+  return[...map.values()];
+}
+function timTextAntennaRecords(struct){return timSignatureAntennaRecords(struct)}
+
+function timTextConnectionRecords(struct,target){
+  target=String(target||'').trim();if(!/^\d{8,15}$/.test(target))return{totalTraffic:0,ipv6ValidCount:0,duplicates:0,filteredRows:[]};
+  const pages=Array.isArray(struct?.pageTexts)&&struct.pageTexts.length?struct.pageTexts:[String(struct?.text||'')];
+  const raw=[];let totalTraffic=0,ipv6ValidCount=0;
+  const targetRx=new RegExp('(?='+rxEscape(target)+')','g');
+  for(let pi=0;pi<pages.length;pi++){
+    const parts=String(pages[pi]||'').split(targetRx);
+    for(const part0 of parts){
+      if(!part0.startsWith(target))continue;
+      const part=part0;
+      if(!/CONEX[AÃ]O/i.test(part))continue;
+      const cgis=timFindCgisLoose(part);
+      if(!cgis.length)continue;
+      totalTraffic++;
+      const ipv6=timExtractWrappedIpv6(part);
+      if(!timValidIpv6(ipv6))continue;
+      ipv6ValidCount++;
+      const dates=[...part.matchAll(/\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/g)].map(m=>m[0]);
+      const tipoMatch=part.match(/CONEX[AÃ]O\s*\(\s*(GPRS|CGNAT)\s*\)/i);
+      const ipv4=(part.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/)||[])[0]||'';
+      raw.push({msisdn:target,serviceId:'',ipv4,ipv6,portaInicio:'',portaFim:'',uplink:'',downlink:'',horaInicio:dates[0]||'',horaFim:dates.length>=3?dates[2]:(dates[1]||dates[0]||''),primeiraCgi:cgis[0]||'',ultimaCgi:cgis[1]||cgis[0]||'',tipo:tipoMatch?`CONEXÃO (${tipoMatch[1].toUpperCase()})`:'CONEXÃO',sourcePage:pi+1});
+    }
+  }
+  const seen=new Set(),filteredRows=[];let duplicates=0;
+  for(const o of raw){const key=[o.msisdn,o.ipv6,o.horaInicio,o.primeiraCgi,o.ultimaCgi].join('\u001f');if(seen.has(key)){duplicates++;continue}seen.add(key);filteredRows.push(o)}
+  return{totalTraffic,ipv6ValidCount,duplicates,filteredRows};
+}
+
 async function readPdfStructured(file){
   const data=new Uint8Array(await file.arrayBuffer());
   const pdf=await pdfjsLib.getDocument({data}).promise;
@@ -1151,7 +1461,7 @@ async function readPdfStructured(file){
     pages.push(rows);
     textParts.push(tc.items.map(x=>cleanPdfText(x.str)).filter(Boolean).join('\n'));
   }
-  return{pdf,pages,text:textParts.join('\n')};
+  return{pdf,pages,pageTexts:textParts,text:textParts.join('\n')};
 }
 
 
@@ -1167,8 +1477,8 @@ function parseTimPdfAntennas(struct){
     for(const row of rows){
       const c=bucketRow(row,bounds);
       const rowText=cleanPdfText(row.items.map(x=>x.text).join(' '));
-      let cgi=firstMatch(c[0],/\d{3}-\d{2}-\d{5}-\d+/);
-      if(!cgi)cgi=firstMatch(rowText,/\d{3}-\d{2}-\d{5}-\d+/);
+      let cgi=timFirstCgiLoose(c[0]);
+      if(!cgi)cgi=timFirstCgiLoose(rowText);
       if(!cgi){
         // A coluna CIDADE às vezes quebra "UMUARAMA" em duas linhas: "UMUARAM" + "A".
         const non=c.filter(x=>String(x||'').trim()).length;
@@ -1206,6 +1516,14 @@ function parseTimPdfAntennas(struct){
       }
     }
   }
+  // Parser textual complementar: sempre roda, inclusive quando o parser geométrico
+  // encontrou apenas parte das ERBs. Ele reconstrói registros que o PDF quebrou em
+  // duas ou mais linhas (CGI+latitude em uma linha; longitude+azimute na seguinte).
+  for(const a of timTextAntennaRecords(struct)){
+    const old=antennas.find(x=>x.cgi===a.cgi);
+    if(!old){seen.add(a.cgi);antennas.push(a);continue}
+    for(const k of ['name','local','address','neighborhood','city','state','cep','startDate'])if(!old[k]&&a[k])old[k]=a[k];
+  }
   return antennas;
 }
 function parseTimDataPdfStructured(struct,fileName=''){
@@ -1227,16 +1545,17 @@ function parseTimDataPdfStructured(struct,fileName=''){
   const filtered=[];const seen=new Set();let totalTraffic=0,ipv6ValidCount=0,duplicates=0;
   // Colunas da tabela "Relatório de Conexões" TIM.
   const bounds=[76,99,125,153,175,244,269,293,340,382,423,460,496,532];
-  for(const rows of (struct.pages||[])){
+  for(let pageIndex=0;pageIndex<(struct.pages||[]).length;pageIndex++){
+    const rows=struct.pages[pageIndex];
     for(const row of rows){
       const c=bucketRow(row,bounds);
       const rowText=cleanPdfText(row.items.map(x=>x.text).join(' '));
       let msisdn=firstMatch(c[0],/\b\d{10,13}\b/);
-      let primeira=timCleanCgi(firstMatch(c[12],/\d{3}-\d{2}-\d{5}-\d+/));
-      let ultima=timCleanCgi(firstMatch(c[13],/\d{3}-\d{2}-\d{5}-\d+/));
+      let primeira=timFirstCgiLoose(c[12]);
+      let ultima=timFirstCgiLoose(c[13]);
       let tipo=cleanPdfText(c[14]);
       if(!msisdn||!primeira||!ultima){
-        const cgis=[...rowText.matchAll(/\d{3}-\d{2}-\d{5}-\d+/g)].map(m=>m[0]);
+        const cgis=timFindCgisLoose(rowText);
         if(!msisdn)msisdn=firstMatch(rowText,/\b\d{10,13}\b/);
         if(!primeira)primeira=timCleanCgi(cgis[0]||'');
         if(!ultima)ultima=timCleanCgi(cgis[1]||cgis[0]||'');
@@ -1246,8 +1565,8 @@ function parseTimDataPdfStructured(struct,fileName=''){
       totalTraffic++;
       let ipv6=cleanPdfText(c[5]);
       if(!timValidIpv6(ipv6)){
-        const m6=rowText.match(/\b[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{0,4}){2,}\b/);
-        ipv6=m6?m6[0]:ipv6;
+        const candidate6=rowText.split(/\s+/).map(x=>x.replace(/^[,;]+|[,;]+$/g,'')).find(t=>timValidIpv6(t));
+        ipv6=candidate6||ipv6;
       }
       if(!timValidIpv6(ipv6))continue;
       ipv6ValidCount++;
@@ -1257,11 +1576,21 @@ function parseTimDataPdfStructured(struct,fileName=''){
       const o={
         msisdn,serviceId:cleanPdfText(c[1]),ipv4:cleanPdfText(c[2]),ipv6,
         portaInicio:cleanPdfText(c[3]),portaFim:cleanPdfText(c[4]),uplink:cleanPdfText(c[6]),downlink:cleanPdfText(c[7]),
-        horaInicio,horaFim,primeiraCgi:primeira,ultimaCgi:ultima,tipo
+        horaInicio,horaFim,primeiraCgi:primeira,ultimaCgi:ultima,tipo,sourcePage:pageIndex+1
       };
       const key=[o.msisdn,o.ipv6,o.horaInicio,o.primeiraCgi,o.ultimaCgi].join('\u001f');
       if(seen.has(key)){duplicates++;continue}seen.add(key);filtered.push(o);
     }
+  }
+
+  // Segundo estágio: reconstrói cada registro pelo MSISDN. Esse estágio é independente
+  // da posição X/Y das células e suporta IPv6, TIPO e demais campos quebrados em várias
+  // linhas físicas pelo gerador de PDF da TIM. Quando consegue reconhecer registros,
+  // ele prevalece sobre a leitura geométrica (que permanece como fallback).
+  const logical=timTextConnectionRecords(struct,target);
+  if(logical.totalTraffic>0){
+    totalTraffic=logical.totalTraffic;ipv6ValidCount=logical.ipv6ValidCount;duplicates=logical.duplicates;
+    filtered.splice(0,filtered.length,...logical.filteredRows);
   }
 
   let matchFirst=0,matchLast=0,mappableFirst=0,mappableLast=0,rowsMappable=0;
@@ -1319,7 +1648,7 @@ function parseTimVoiceStructured(struct){
     for(let i=0;i<rows.length-1;i++){
       const a=bucketRow(rows[i],[180,280,380,555,705]);
       const b=bucketRow(rows[i+1],[180,280,380,555,705]);
-      const cgi=firstMatch(a[0],/\d{3}-\d{2}-\d{5}-\d+/);
+      const cgi=timFirstCgiLoose(a[0]);
       const lat=parseCoord(a[1],true),lng=parseCoord(b[1],false);
       const az=parseNum(firstMatch(b[2],/\d{1,3}(?:[.,]\d+)?/));
       if(cgi&&Number.isFinite(lat)&&Number.isFinite(lng)&&Number.isFinite(az)&&!antSeen.has(cgi)){
@@ -1354,6 +1683,15 @@ function parseTimVoiceStructured(struct){
     }
   }
 
+  // Camada de assinatura: complementa SEMPRE o parser geométrico/textual anterior.
+  // Assim, se uma CGI, coordenada ou azimute estiverem quebrados em linhas distintas,
+  // o registro ainda é reconstruído pela estrutura do campo.
+  for(const sig of timSignatureAntennaRecords(struct)){
+    const old=antennas.find(x=>x.cgi===sig.cgi);
+    if(!old){antSeen.add(sig.cgi);antennas.push(sig);continue}
+    for(const k of ['name','address','neighborhood','city','state','cep','startDate'])if(!old[k]&&sig[k])old[k]=sig[k];
+  }
+
   const calls=[];
   const callCodes=new Set(['MOC','MTC','CF','RCF','SSP']);
   for(const rows of (struct.pages||[])){
@@ -1364,8 +1702,8 @@ function parseTimVoiceStructured(struct){
       if(!callCodes.has(code)||!dt||!/CHAMADA/i.test(a[7]||''))continue;
 
       const b=i+1<rows.length?bucketRow(rows[i+1],[140,245,350,450,550,675,735]):Array(8).fill('');
-      const firstCgi=firstMatch(a[4],/\d{3}-\d{2}-\d{5}-\d+/);
-      const lastCgi=firstMatch(b[4],/\d{3}-\d{2}-\d{5}-\d+/);
+      const firstCgi=timFirstCgiLoose(a[4]);
+      const lastCgi=timFirstCgiLoose(b[4]);
       const imeiOrigin=firstMatch(a[3],/\b\d{15}\b/);
       const imeiDestination=firstMatch(b[3],/\b\d{15}\b/);
       const origin=firstMatch(a[1],/\b\d{10,13}\b/);
@@ -1396,8 +1734,7 @@ function parseTimVoiceStructured(struct){
       seg.forEach(x=>{for(const m of x.matchAll(/\b\d{10,13}\b/g))phones.push(m[0])});
       const imeis=[];
       seg.forEach(x=>{for(const m of x.matchAll(/\b\d{15}\b/g))imeis.push(m[0])});
-      const cgis=[];
-      seg.forEach(x=>{for(const m of x.matchAll(/\d{3}-\d{2}-\d{5}-\d+/g))cgis.push(m[0])});
+      const cgis=timFindCgisLoose(seg.join('\n'));
       const dates=[];
       seg.forEach(x=>{for(const m of x.matchAll(/\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}/g))dates.push(m[0])});
       const central=(seg.find(x=>/^[A-Z0-9]{3,12}$/i.test(x)&&!/^\d+$/.test(x))||'');
@@ -1422,66 +1759,22 @@ function parseTimVoiceStructured(struct){
 
   return{recognized:true,target,request,protocol,process,operator,antennas,calls,hasAntennaSection,antennaSectionEmpty};
 }
-function importTimVoiceResult(parsed,file,lotId){
-  const antMap=new Map(parsed.antennas.map(a=>[a.cgi,a]));
-  const mappedCallIndexes=new Set();
-  let created=0,unresolvedCgi=0;
-
-  const lot=lotById(lotId);
-  if(lot){
-    if(!lot.operator&&parsed.operator)lot.operator=parsed.operator;
-    if((!lot.name||/^VOZ\s+—/i.test(lot.name))&&parsed.target)lot.name=`VOZ — ${parsed.target}`;
-    lot.type='VOZ';
-    lot.sourceFile=file.name;
-    lot.targetLine=parsed.target;
-    lot.protocol=parsed.protocol;
-    lot.process=parsed.process;
-  }
-
+let pendingImport=[];
+function importTimVoiceResult(parsed,file,lotId,fileMeta={}){
+  const antMap=new Map(parsed.antennas.map(a=>[a.cgi,a])),mappedCallIndexes=new Set();
+  let created=0,unresolvedCgi=0;const parser='TIM_VOZ_PDF',importedAt=fileMeta.importedAt||new Date().toISOString(),lot=lotById(lotId);
+  if(lot){if(!lot.operator&&parsed.operator)lot.operator=parsed.operator;if((!lot.name||/^VOZ\s+—/i.test(lot.name))&&parsed.target)lot.name=`VOZ — ${parsed.target}`;lot.type='VOZ';lot.sourceFile=file.name;lot.targetLine=parsed.target;lot.protocol=parsed.protocol;lot.process=parsed.process;}
   parsed.calls.forEach((call,ci)=>{
-    const cgis=[...new Set([call.firstCgi,call.lastCgi].filter(Boolean))];
-    if(!cgis.length)return;
-    let callMapped=false;
+    const cgis=[...new Set([call.firstCgi,call.lastCgi].filter(Boolean))];if(!cgis.length)return;let callMapped=false;
     cgis.forEach((cgi,idx)=>{
-      const ant=antMap.get(cgi);
-      if(!ant){unresolvedCgi++;return}
-      callMapped=true;
-      state.events.push({
-        id:uid(),lotId,
-        name:ant.name||cgi,station:ant.name||cgi,sector:'',
-        lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:[ant.address,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · '),city:ant.city||'',
-        datetime:call.datetime,eventType:'VOZ',operator:parsed.operator||'',
-        tech:'',cellid:'',cgi,callCode:call.code,central:call.central,duration:call.duration,
-        origin:call.origin,destination:call.destination,
-        imeiOrigin:call.imeiOrigin,imeiDestination:call.imeiDestination,
-        imei:call.imeiOrigin||call.imeiDestination||'',
-        source:file.name,
-        obs:`${idx===0&&call.firstCgi===cgi?'Primeira CGI/ERB':'Última CGI/ERB'}${ant.address?' · '+ant.address:''}${ant.city?' · '+ant.city:''}`,
-        visible:true,displayMode:'normal'
-      });created++;
-    });
-    if(callMapped)mappedCallIndexes.add(ci);
+      const ant=antMap.get(cgi);if(!ant){unresolvedCgi++;return}callMapped=true;
+      const same=call.firstCgi&&call.firstCgi===call.lastCgi,role=same?'ÚNICA':(idx===0&&call.firstCgi===cgi?'PRIMEIRA':'ÚLTIMA');
+      state.events.push({id:uid(),lotId,name:ant.name||cgi,station:ant.name||cgi,sector:'',lat:ant.lat,lng:ant.lng,az:ant.az,dist:cfg.defaultDist,margin:cfg.defaultMargin,radiusSource:'ESTIMADO (PADRÃO — OPERADORA NÃO INFORMOU)',address:[ant.address,ant.neighborhood,ant.city,ant.state,ant.cep].filter(Boolean).join(' · '),city:ant.city||'',datetime:call.datetime,eventType:'VOZ',operator:parsed.operator||'',tech:'',cellid:'',cgi,callCode:call.code,central:call.central,duration:call.duration,origin:call.origin,destination:call.destination,imeiOrigin:call.imeiOrigin,imeiDestination:call.imeiDestination,imei:call.imeiOrigin||call.imeiDestination||'',source:file.name,sourceFile:file.name,sourceType:'PDF',parser,fileHash:fileMeta.hash||'',importedAt,role,sourcePage:call.page||'',obs:`${role} CGI/ERB${ant.address?' · '+ant.address:''}${ant.city?' · '+ant.city:''}`,visible:true,displayMode:'normal'});created++;
+    });if(callMapped)mappedCallIndexes.add(ci);
   });
-
-  if(lot){
-    const noAntenna=parsed.antennas.length===0;
-    lot.importInfo={
-      format:'PDF VOZ',
-      callsTotal:parsed.calls.length,
-      mappedCalls:mappedCallIndexes.size,
-      antennas:parsed.antennas.length,
-      summary:`${parsed.calls.length} chamada(s) · ${mappedCallIndexes.size} com ERB mapeável · ${parsed.antennas.length} antena(s)`,
-      note:noAntenna
-        ?(parsed.antennaSectionEmpty?'PDF TIM reconhecido. O documento informa expressamente que não foram encontrados registros em DADOS DE ANTENA; sem latitude/longitude/azimute não é possível desenhar ERBs no mapa.':'PDF TIM reconhecido, porém sem cadastro de antenas utilizável para obter coordenadas/azimute.')
-        :(mappedCallIndexes.size===0?'Há dados de antena, mas nenhuma CGI dos eventos pôde ser vinculada automaticamente.':'PDF reconhecido e analisado automaticamente.'),
-      rawCalls:parsed.calls,
-      unmappedCalls:parsed.calls.filter(c=>![c.firstCgi,c.lastCgi].some(Boolean)||![c.firstCgi,c.lastCgi].filter(Boolean).some(cgi=>antMap.has(cgi)))
-    };
-  }
+  if(lot){const noAntenna=parsed.antennas.length===0;lot.importInfo={format:'PDF VOZ',parser,callsTotal:parsed.calls.length,mappedCalls:mappedCallIndexes.size,antennas:parsed.antennas.length,summary:`${parsed.calls.length} chamada(s) · ${mappedCallIndexes.size} com ERB mapeável · ${parsed.antennas.length} antena(s)`,note:noAntenna?(parsed.antennaSectionEmpty?'PDF TIM reconhecido. O documento informa expressamente que não foram encontrados registros em DADOS DE ANTENA; sem latitude/longitude/azimute não é possível desenhar ERBs no mapa.':'PDF TIM reconhecido, porém sem cadastro de antenas utilizável para obter coordenadas/azimute.'):(mappedCallIndexes.size===0?'Há dados de antena, mas nenhuma CGI dos eventos pôde ser vinculada automaticamente.':'PDF reconhecido e analisado automaticamente.'),rawCalls:parsed.calls,unmappedCalls:parsed.calls.filter(c=>![c.firstCgi,c.lastCgi].some(Boolean)||![c.firstCgi,c.lastCgi].filter(Boolean).some(cgi=>antMap.has(cgi))),files:[{...fileMeta,parser}],fileHash:fileMeta.hash||''};}
   return{created,mappedCalls:mappedCallIndexes.size,totalCalls:parsed.calls.length,antennas:parsed.antennas.length,unresolvedCgi};
 }
-
-let pendingImport=[];
 async function previewSelectedFiles(){
   const files=[...$('fImportFile').files];if(!files.length)return status('Selecione ao menos um arquivo.',true);
   const type=$('fImportType').value;
@@ -1489,6 +1782,7 @@ async function previewSelectedFiles(){
   $('importAudit').innerHTML='<div class="muted">Analisando arquivos...</div>';
   try{
     for(const file of files){
+      const fileMeta=await buildFileMeta(file);
       const ext=file.name.split('.').pop().toLowerCase();
       if(ext==='pdf'){
         const struct=await readPdfStructured(file);
@@ -1496,14 +1790,14 @@ async function previewSelectedFiles(){
         // A detecção é feita pelo conteúdo, independentemente do tipo escolhido na interface.
         const dataPdf=parseTimDataPdfStructured(struct,file.name);
         if(dataPdf){
-          pendingImport.push({file,kind:'timDataPdf',parsed:dataPdf,type:'DADOS',analysis:{operator:'TIM',valid:dataPdf.filteredRows.length,ignored:Math.max(0,dataPdf.totalTraffic-dataPdf.ipv6ValidCount)+dataPdf.duplicates,antennas:dataPdf.antennas,mappedEstimate:dataPdf.rowsMappable,totalTraffic:dataPdf.totalTraffic,ipv6ValidCount:dataPdf.ipv6ValidCount,matchFirst:dataPdf.matchFirst,matchLast:dataPdf.matchLast,unmatchedOccurrences:dataPdf.unmatchedOccurrences,uniqueUnmatched:dataPdf.uniqueUnmatched,trafficSheet:dataPdf.trafficSheet,antennaSheet:dataPdf.antennaSheet}});
+          pendingImport.push({file,fileMeta,kind:'timDataPdf',parsed:dataPdf,type:'DADOS',analysis:{operator:'TIM',valid:dataPdf.filteredRows.length,ignored:Math.max(0,dataPdf.totalTraffic-dataPdf.ipv6ValidCount)+dataPdf.duplicates,antennas:dataPdf.antennas,mappedEstimate:dataPdf.rowsMappable,totalTraffic:dataPdf.totalTraffic,ipv6ValidCount:dataPdf.ipv6ValidCount,matchFirst:dataPdf.matchFirst,matchLast:dataPdf.matchLast,unmatchedOccurrences:dataPdf.unmatchedOccurrences,uniqueUnmatched:dataPdf.uniqueUnmatched,trafficSheet:dataPdf.trafficSheet,antennaSheet:dataPdf.antennaSheet}});
         }else{
           const parsed=parseTimVoiceStructured(struct);
           if(parsed){
             const callsWithCgi=parsed.calls.filter(c=>[c.firstCgi,c.lastCgi].some(Boolean)).length;
-            pendingImport.push({file,kind:'timVoice',parsed,type:'VOZ',analysis:{operator:parsed.operator||'TIM',valid:parsed.calls.length,ignored:0,antennas:parsed.antennas.length,mappedEstimate:callsWithCgi,antennaSectionEmpty:parsed.antennaSectionEmpty}});
+            pendingImport.push({file,fileMeta,kind:'timVoice',parsed,type:'VOZ',analysis:{operator:parsed.operator||'TIM',valid:parsed.calls.length,ignored:0,antennas:parsed.antennas.length,mappedEstimate:callsWithCgi,antennaSectionEmpty:parsed.antennaSectionEmpty}});
           }else{
-            pendingImport.push({file,kind:'unsupportedPdf',type,analysis:{operator:'',valid:0,ignored:1,note:'PDF lido, mas não foi possível identificar automaticamente o layout pelos títulos/campos extraídos. Verifique se o arquivo é um relatório de voz/dados TIM ou de outra operadora.'}});
+            pendingImport.push({file,fileMeta,kind:'unsupportedPdf',type,analysis:{operator:'',valid:0,ignored:1,note:'PDF lido, mas não foi possível identificar automaticamente o layout pelos títulos/campos extraídos. Verifique se o arquivo é um relatório de voz/dados TIM ou de outra operadora.'}});
           }
         }
         continue;
@@ -1513,8 +1807,8 @@ async function previewSelectedFiles(){
         const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
         const tim=parseTimDataWorkbook(wb,file.name);
         if(tim){
-          if(tim.valid)pendingImport.push({file,kind:'timDataXlsx',parsed:tim,type:'DADOS',analysis:{operator:'TIM',valid:tim.filteredRows.length,ignored:Math.max(0,tim.totalTraffic-tim.ipv6ValidCount)+tim.duplicates,antennas:tim.antennas,mappedEstimate:tim.rowsMappable,totalTraffic:tim.totalTraffic,ipv6ValidCount:tim.ipv6ValidCount,matchFirst:tim.matchFirst,matchLast:tim.matchLast,unmatchedOccurrences:tim.unmatchedOccurrences,uniqueUnmatched:tim.uniqueUnmatched,trafficSheet:tim.trafficSheet,antennaSheet:tim.antennaSheet}});
-          else pendingImport.push({file,kind:'timDataInvalid',type:'DADOS',analysis:{operator:'TIM',valid:0,ignored:1,note:tim.error+(tim.sheetNames?.length?' Abas existentes: '+tim.sheetNames.join(' | '):'')}});
+          if(tim.valid)pendingImport.push({file,fileMeta,kind:'timDataXlsx',parsed:tim,type:'DADOS',analysis:{operator:'TIM',valid:tim.filteredRows.length,ignored:Math.max(0,tim.totalTraffic-tim.ipv6ValidCount)+tim.duplicates,antennas:tim.antennas,mappedEstimate:tim.rowsMappable,totalTraffic:tim.totalTraffic,ipv6ValidCount:tim.ipv6ValidCount,matchFirst:tim.matchFirst,matchLast:tim.matchLast,unmatchedOccurrences:tim.unmatchedOccurrences,uniqueUnmatched:tim.uniqueUnmatched,trafficSheet:tim.trafficSheet,antennaSheet:tim.antennaSheet}});
+          else pendingImport.push({file,fileMeta,kind:'timDataInvalid',type:'DADOS',analysis:{operator:'TIM',valid:0,ignored:1,note:tim.error+(tim.sheetNames?.length?' Abas existentes: '+tim.sheetNames.join(' | '):'')}});
           continue;
         }
         const ws=wb.Sheets[wb.SheetNames[0]];
@@ -1523,11 +1817,11 @@ async function previewSelectedFiles(){
         const text=await file.text(),lines=text.split(/\r?\n/).filter(Boolean),d=detectDelim(lines[0]||'');
         rows=lines.map(x=>splitLine(x,d));
       }else{
-        pendingImport.push({file,kind:'unsupported',type,analysis:{operator:'',valid:0,ignored:1,note:'Formato não suportado.'}});
+        pendingImport.push({file,fileMeta,kind:'unsupported',type,analysis:{operator:'',valid:0,ignored:1,note:'Formato não suportado.'}});
         continue;
       }
       const a=analyzeRows(rows,type);a.operator=a.operator||detectOperatorFromRows(rows,file.name);
-      pendingImport.push({file,kind:'rows',rows,type,analysis:a});
+      pendingImport.push({file,fileMeta,kind:'rows',rows,type,analysis:a});
     }
     renderImportAudit();
     // TIM com dados suficientes é processada imediatamente após a seleção.
@@ -1544,7 +1838,11 @@ async function previewSelectedFiles(){
       }
     }
   }catch(e){
-    console.error(e);pendingImport=[];$('importAudit').innerHTML='<div class="auditwarn">Falha ao analisar os arquivos.</div>';status('Não foi possível interpretar o arquivo.',true);
+    console.error('Falha na importação/análise de arquivo:',e);
+    pendingImport=[];
+    const msg=String(e&&e.message||e||'erro desconhecido');
+    if($('importAudit'))$('importAudit').innerHTML=`<div class="auditwarn"><b>Falha ao analisar o arquivo.</b><br>${esc(msg)}</div>`;
+    status('Não foi possível interpretar o arquivo: '+msg,true);
   }
 }
 function renderImportAudit(){
@@ -1567,7 +1865,7 @@ function renderImportAudit(){
     }
     else if(p.kind==='rows')meta=`Linhas de dados: ${a.dataRows} · válidas: ${a.valid} · ignoradas: ${a.ignored}${a.operator?' · operadora detectada: '+a.operator:''}${a.ignored?' · '+Object.entries(a.reasons).map(([k,v])=>v+' '+k).join(' · '):''}`;
     else meta=a.note||'Arquivo sem mapeamento automático.';
-    return `<div class="auditfile"><b>${esc(p.file.name)}</b><div class="auditmeta ${good?'auditok':'auditwarn'}">${esc(meta)}</div></div>`;
+    return `<div class="auditfile"><b>${esc(p.file.name)}</b><div class="auditmeta ${good?'auditok':'auditwarn'}">${esc(meta)}</div><div class="auditmeta">SHA-256: ${esc(p.fileMeta?.hash||'indisponível')} · ${Number(p.fileMeta?.size||0).toLocaleString('pt-BR')} bytes</div></div>`;
   }).join('')||'<div class="muted">Nenhum arquivo analisado.</div>';
   $('doImport').disabled=!can;
   status('Auditoria concluída. Revise antes de processar.');
@@ -1583,11 +1881,11 @@ async function processPendingImport(auto=false){
       const forceNewTim=auto&&(p.kind==='timDataXlsx'||p.kind==='timDataPdf'||p.kind==='timVoice');
       const lotId=ensureImportLot(p.type||type,(pendingImport.length>1||forceNewTim)?'__new':requestedLot);
       if(p.kind==='timDataXlsx'||p.kind==='timDataPdf'){
-        const r=importTimDataWorkbook(p.parsed,p.file,lotId);totalAdded+=r.created;processed++;
+        const r=importTimDataWorkbook(p.parsed,p.file,lotId,p.fileMeta||{});totalAdded+=r.created;processed++;
       }else if(p.kind==='timVoice'){
-        const r=importTimVoiceResult(p.parsed,p.file,lotId);totalAdded+=r.created;totalRecognizedCalls+=r.totalCalls;processed++;
+        const r=importTimVoiceResult(p.parsed,p.file,lotId,p.fileMeta||{});totalAdded+=r.created;totalRecognizedCalls+=r.totalCalls;processed++;
       }else if(p.kind==='rows'){
-        const r=importRows(p.rows,lotId,p.type||type,p.analysis);totalAdded+=r.added;totalBad+=r.bad;processed++;
+        const r=importRows(p.rows,lotId,p.type||type,p.analysis,p.file,p.fileMeta||{});totalAdded+=r.added;totalBad+=r.bad;processed++;
       }
     }
     pendingImport=[];closeDrawer();redraw(true);
@@ -1614,15 +1912,19 @@ function updateGeo(openPanel=true){
 }
 function startTimeline(){
   const t=trajectoryData();if(!t.length)return status('Não há eventos com data/hora para montar o trajeto.',true);
-  $('timelinebar').classList.add('show');clearInterval(playTimer);let i=0;
-  const step=()=>{focusEvent(t[i].ev.id);map.setView([t[i].ev.lat,t[i].ev.lng],15);i++;if(i>=t.length){clearInterval(playTimer);state.playing=false}};
+  state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers();clearInterval(playTimer);let i=0;
+  const step=()=>{state.trajectoryIndex=i;focusEvent(t[i].ev.id);map.setView([t[i].ev.lat,t[i].ev.lng],15);i++;if(i>=t.length){clearInterval(playTimer);state.playing=false}};
   step();state.playing=true;playTimer=setInterval(step,1500)
 }
+function stepTimeline(delta){const t=trajectoryData();if(!t.length)return status('Não há trajeto cronológico.',true);state.trajectoryVisible=true;drawTimelineLayers();state.trajectoryIndex=Math.max(0,Math.min(t.length-1,(state.trajectoryIndex||0)+delta));const x=t[state.trajectoryIndex];focusEvent(x.ev.id);map.setView([x.ev.lat,x.ev.lng],15)}
 function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
-function snapshot(){return{version:'8.4',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg}}
+function snapshot(){return{version:'9.0.4',name:projectName(),updated:new Date().toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:state.filters,cfg,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection}}
 function applySnapshot(o){
-  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO'});state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:'',...(o.filters||{})};
+  state.lots=Array.isArray(o.lots)?o.lots:[];state.events=Array.isArray(o.events)?o.events:[];
+  state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO';if(e.az!=null&&Number.isFinite(Number(e.az)))e.az=normAz(Number(e.az));if(!e.sourceFile&&e.source)e.sourceFile=e.source});
+  state.pois=Array.isArray(o.pois)?o.pois:[];state.filters={start:'',end:'',date:'',city:'',type:'',operator:'',lotId:'',daypart:'',movementOnly:false,...(o.filters||{})};state.heatMode=['normal','heat','both'].includes(o.heatMode)?o.heatMode:'normal';
+  state.trajectorySelection=o.trajectorySelection&&typeof o.trajectorySelection==='object'?{enabled:Boolean(o.trajectorySelection.enabled),lotIds:Array.isArray(o.trajectorySelection.lotIds)?o.trajectorySelection.lotIds:[],cgis:Array.isArray(o.trajectorySelection.cgis)?o.trajectorySelection.cgis:[]}:{enabled:false,lotIds:[],cgis:[]};state.trajectoryVisible=false;
   $('projectName').value=o.name||'';state.activeLotId=state.lots[0]?.id||null;$('filterPill').classList.toggle('show',Object.values(state.filters).some(Boolean));redraw(true)
 }
 function saveProject(){
@@ -1646,83 +1948,71 @@ async function captureMap(){
   finally{document.body.classList.remove('capture')}
 }
 async function exportPng(){try{status('Gerando PNG...');const c=await captureMap();c.toBlob(b=>saveBlob(b,'mapa_ERB.png'),'image/png');status('PNG gerado.')}catch(e){console.error(e);status('Falha ao gerar PNG.',true)}}
+function visibleTrajectoryLine(){const t=trajectoryData();return t.length>1?t.map(x=>[Number(x.ev.lng),Number(x.ev.lat)]):[]}
+function exportGeoJson(){
+  const features=filteredEvents().map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[Number(e.lng),Number(e.lat)]},properties:{name:e.name||e.station||'',cgi:e.cgi||e.cellid||'',azimuth:Number(e.az),city:e.city||'',datetime:e.datetime||'',lot:lotById(e.lotId)?.name||'',operator:currentOperator(e),file:e.sourceFile||e.source||'',parser:e.parser||'',imei:e.imei||'',ipv6:e.ipv6||'',role:e.role||'',fileHash:e.fileHash||''}}));
+  state.pois.filter(p=>Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng))).forEach(p=>features.push({type:'Feature',geometry:{type:'Point',coordinates:[Number(p.lng),Number(p.lat)]},properties:{name:p.name,type:p.type,poi:true,datetime:p.datetime||'',obs:p.obs||''}}));
+  const line=visibleTrajectoryLine();if(line.length>1)features.push({type:'Feature',geometry:{type:'LineString',coordinates:line},properties:{trajectory:true,note:'Sequência cronológica entre ERBs; não representa percurso físico.'}});
+  saveBlob(new Blob([JSON.stringify({type:'FeatureCollection',name:projectName(),generatedAt:new Date().toISOString(),features},null,2)],{type:'application/geo+json'}),'erb_visivel.geojson');status('GeoJSON gerado.');
+}
+function exportKml(){
+  const placemarks=filteredEvents().map(e=>`<Placemark><name>${xmlEsc(e.name||e.station||e.cgi||'ERB')}</name><description><![CDATA[CGI/ERB: ${esc(e.cgi||e.cellid||'—')}<br>Cidade: ${esc(e.city||'—')}<br>Data/hora: ${esc(e.datetime||'—')}<br>Azimute: ${Number(e.az).toFixed(1)}°<br>Lote: ${esc(lotById(e.lotId)?.name||'—')}<br>Arquivo: ${esc(e.sourceFile||e.source||'—')}<br>Parser: ${esc(e.parser||'—')}]]></description><Point><coordinates>${Number(e.lng)},${Number(e.lat)},0</coordinates></Point></Placemark>`).join('');
+  const line=visibleTrajectoryLine();const traj=line.length>1?`<Placemark><name>Trajeto cronológico entre ERBs</name><description>Ligação temporal entre estações; não representa percurso físico efetivamente realizado pelo terminal.</description><LineString><tessellate>1</tessellate><coordinates>${line.map(c=>c.join(',')+',0').join(' ')}</coordinates></LineString></Placemark>`:'';
+  const kml=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${xmlEsc(projectName())}</name>${placemarks}${traj}</Document></kml>`;
+  saveBlob(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}),'erb_visivel.kml');status('KML gerado.');
+}
 async function exportPdf(){
   const fe=filteredEvents();if(!fe.length)return status('Não há registros visíveis.',true);
   try{
     status('Gerando relatório PDF...');
     const c=await captureMap(),img=c.toDataURL('image/jpeg',.92),{jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),M=14,W=210;
-    const rank=analysisRanking(),coinc=coincidenceGroups(),t=timelineData();
-    const first=t[0]?.d,last=t[t.length-1]?.d;
-    const est=fe.filter(e=>String(e.radiusSource||'').includes('ESTIMADO')||!e.radiusSource).length;
-    const day={Madrugada:0,Manhã:0,Tarde:0,Noite:0};
-    t.forEach(x=>{const h=x.d.getHours();if(h<6)day.Madrugada++;else if(h<12)day.Manhã++;else if(h<18)day.Tarde++;else day.Noite++});
-
-    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,16);
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(`Projeto: ${projectName()}`,M,22);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`,M,27);
-
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('1. RESUMO INVESTIGATIVO',M,36);
-    doc.setFont('helvetica','normal');doc.setFontSize(8.2);
-    const summary=[
-      `Registros visíveis: ${fe.length} · ERBs/setores únicos: ${rank.length} · Lotes visíveis: ${new Set(fe.map(e=>e.lotId)).size}`,
-      `Período: ${first?first.toLocaleString('pt-BR'):'—'} a ${last?last.toLocaleString('pt-BR'):'—'}`,
-      `Coincidências de ERB/setor entre lotes: ${coinc.length}`,
-      `Setores com raio estimado/padrão: ${est} de ${fe.length} registros`,
-      `Distribuição por horário — madrugada: ${day.Madrugada}; manhã: ${day.Manhã}; tarde: ${day.Tarde}; noite: ${day.Noite}.`
-    ];
-    doc.text(summary,M,42,{maxWidth:W-2*M,lineHeightFactor:1.45});
-
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('2. RANKING DAS ERBs / SETORES',M,67);
-    doc.autoTable({startY:71,margin:{left:M,right:M},styles:{fontSize:7,cellPadding:1.4},head:[['#','ERB / setor','Incid.','%','Lat.','Long.','Az.','Lotes']],body:rank.slice(0,20).map((x,i)=>[i+1,x.ev.name||x.ev.station||x.ev.cgi||'ERB',x.events.length,(x.events.length*100/fe.length).toFixed(1)+'%',x.ev.lat.toFixed(6),x.ev.lng.toFixed(6),x.ev.az.toFixed(1)+'°',x.lots.size])});
-    let y=doc.lastAutoTable.finalY+7;
-    doc.setFont('helvetica','normal');doc.setFontSize(7.4);
-    doc.text('Nota: a área de cobertura desenhada é uma representação cartográfica do setor e do raio disponível. Quando o raio não consta do arquivo, o sistema identifica o valor como estimado/padrão. A incidência em uma ERB não representa, isoladamente, a posição exata do terminal.',M,y,{maxWidth:W-2*M});
-
-    doc.addPage();
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('3. MAPA DOS REGISTROS VISÍVEIS',M,15);
-    const p=doc.getImageProperties(img),r=Math.min((W-2*M)/p.width,150/p.height);doc.addImage(img,'JPEG',M,21,p.width*r,p.height*r);
-
-    doc.addPage();
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. REGISTROS',M,15);
-    doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.2,cellPadding:1.2},head:[['#','Lote','ERB','Lat.','Long.','Az.','Raio','Fonte raio','Data/hora','Operadora','CGI/ERB','IMEI']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',(e.dist||0).toFixed(2)+' km',e.radiusSource||'',e.datetime||'',currentOperator(e),e.cgi||e.cellid||'',e.imei||''])});
-    doc.save('relatorio_ERB_v8_1.pdf');status('PDF gerado.');
+    const rank=analysisRanking(),coinc=coincidenceGroups(),t=trajectoryData(),metrics=trajectoryMetrics(t),times=timelineData(),first=times[0]?.d,last=times[times.length-1]?.d;
+    const est=fe.filter(e=>String(e.radiusSource||'').includes('ESTIMADO')||!e.radiusSource).length,day={Madrugada:0,Manhã:0,Tarde:0,Noite:0};
+    times.forEach(x=>{const h=x.d.getHours();if(h<6)day.Madrugada++;else if(h<12)day.Manhã++;else if(h<18)day.Tarde++;else day.Noite++});
+    const files=[];const seen=new Set();state.lots.forEach(l=>(l.importInfo?.files||[]).forEach(f=>{const k=(f.hash||'')+'|'+(f.name||'');if(!seen.has(k)){seen.add(k);files.push(f)}}));
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('RELATÓRIO DE ANÁLISE CARTOGRÁFICA DE ERBs',M,16);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.text(`Projeto: ${projectName()}`,M,22);doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`,M,27);
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('1. RESUMO INVESTIGATIVO',M,36);doc.setFont('helvetica','normal');doc.setFontSize(8.2);
+    doc.text([`Registros visíveis: ${fe.length} · ERBs/setores únicos: ${rank.length} · Lotes visíveis: ${new Set(fe.map(e=>e.lotId)).size}`,`Período: ${first?first.toLocaleString('pt-BR'):'—'} a ${last?last.toLocaleString('pt-BR'):'—'}`,`Coincidências entre lotes: ${coinc.length} · Setores com raio estimado/padrão: ${est}/${fe.length}`,`Distribuição por horário — madrugada: ${day.Madrugada}; manhã: ${day.Manhã}; tarde: ${day.Tarde}; noite: ${day.Noite}.`],M,42,{maxWidth:W-2*M,lineHeightFactor:1.45});
+    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('2. RANKING DAS ERBs / SETORES',M,67);doc.autoTable({startY:71,margin:{left:M,right:M},styles:{fontSize:7,cellPadding:1.4},head:[['#','ERB / setor','Incid.','%','Cidade','Az.','Lotes']],body:rank.slice(0,20).map((x,i)=>[i+1,x.ev.name||x.ev.station||x.ev.cgi||'ERB',x.events.length,(x.events.length*100/fe.length).toFixed(1)+'%',x.ev.city||'',x.ev.az.toFixed(1)+'°',x.lots.size])});
+    doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('3. DESLOCAMENTO CRONOLÓGICO',M,15);
+    doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.6,cellPadding:1.2},head:[['#','Data/hora','ERB / CGI','Cidade','Az.','Dist. anterior','Intervalo']],body:t.slice(0,150).map((x,i)=>{const leg=i?metrics.legs[i-1]:null;return[i+1,x.d.toLocaleString('pt-BR'),x.ev.cgi||x.ev.name||'',x.ev.city||'',Number(x.ev.az).toFixed(0)+'°',leg?leg.km.toFixed(2)+' km':'—',leg?formatDuration(leg.ms):'—']})});
+    let yy=doc.lastAutoTable.finalY+6;doc.setFont('helvetica','normal');doc.setFontSize(7.2);doc.text(`Distância acumulada em linha reta entre ERBs consecutivas: ${metrics.totalKm.toFixed(2)} km. A linha cronológica não representa rota física, posição GPS ou velocidade real do terminal.`,M,yy,{maxWidth:W-2*M});
+    doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('4. MAPA DOS REGISTROS VISÍVEIS',M,15);const p=doc.getImageProperties(img),r=Math.min((W-2*M)/p.width,150/p.height);doc.addImage(img,'JPEG',M,21,p.width*r,p.height*r);
+    doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('5. REGISTROS',M,15);doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6,cellPadding:1.1},head:[['#','Lote','ERB','Cidade','Lat.','Long.','Az.','Data/hora','CGI/ERB','Arquivo']],body:fe.map((e,i)=>[i+1,lotById(e.lotId)?.name||'',e.name||e.station||'',e.city||'',e.lat.toFixed(6),e.lng.toFixed(6),e.az.toFixed(1)+'°',e.datetime||'',e.cgi||e.cellid||'',e.sourceFile||e.source||''])});
+    doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('6. RASTREABILIDADE DOS ARQUIVOS ANALISADOS',M,15);doc.autoTable({startY:20,margin:{left:M,right:M},styles:{fontSize:6.5,cellPadding:1.2},head:[['Arquivo','Parser','Tamanho','SHA-256']],body:(files.length?files:[{name:'—',parser:'—',size:'',hash:'Nenhum hash registrado em projeto legado'}]).map(f=>[f.name||'—',f.parser||'—',f.size?Number(f.size).toLocaleString('pt-BR')+' bytes':'—',f.hash||'indisponível'])});
+    doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('7. LIMITAÇÕES TÉCNICAS',M,15);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('A utilização de determinada ERB indica vínculo técnico do terminal com aquela estação/setor no registro analisado, não correspondendo, isoladamente, à localização exata do aparelho. Os setores e trajetos apresentados constituem representações cartográficas e cronológicas para auxílio analítico. Distâncias são calculadas em linha reta entre coordenadas de ERBs e não equivalem ao percurso efetivamente realizado.',M,22,{maxWidth:W-2*M,lineHeightFactor:1.5});
+    doc.save('relatorio_ERB_v9_0.pdf');status('PDF gerado.');
   }catch(e){console.error(e);status('Falha ao gerar PDF.',true)}
 }
-
-
-
-function runSelfTest(){
-  const tests=[];
-  const add=(name,ok,detail='')=>tests.push({name,ok:Boolean(ok),detail});
-  try{add('Leaflet / mapa',Boolean(window.L||typeof L!=='undefined')&&Boolean(map),'biblioteca e instância do mapa');}catch(e){add('Leaflet / mapa',false,e.message)}
-  try{add('Turf / geoespacial',typeof turf!=='undefined'&&typeof turf.polygon==='function','operações de interseção');}catch(e){add('Turf / geoespacial',false,e.message)}
-  try{add('XLSX',typeof XLSX!=='undefined'&&typeof XLSX.read==='function','importação de planilhas');}catch(e){add('XLSX',false,e.message)}
-  try{add('PDF.js',typeof pdfjsLib!=='undefined'&&typeof pdfjsLib.getDocument==='function','leitura de PDF');}catch(e){add('PDF.js',false,e.message)}
-  try{add('html2canvas',typeof html2canvas==='function','captura do mapa');}catch(e){add('html2canvas',false,e.message)}
-  try{add('jsPDF',Boolean(window.jspdf?.jsPDF),'relatório PDF');}catch(e){add('jsPDF',false,e.message)}
-  try{
-    const k='pcpr.erb.selftest';localStorage.setItem(k,'ok');const ok=localStorage.getItem(k)==='ok';localStorage.removeItem(k);
-    add('Armazenamento local',ok,'salvar projetos neste navegador');
-  }catch(e){add('Armazenamento local',false,e.message)}
-  try{add('Coordenadas',Math.abs(parseCoord('24 18 0 S',true)+24.3)<1e-9,'parser decimal/DMS');}catch(e){add('Coordenadas',false,e.message)}
-  try{
-    const test={lat:-24.3,lng:-52.5,az:90,dist:0.5,margin:45};const sg=sector(test);
-    add('Geometria de setor',Array.isArray(sg.ll)&&sg.ll.length>20&&Boolean(sg.geo),'cone/área cartográfica');
-  }catch(e){add('Geometria de setor',false,e.message)}
-  try{add('Auditoria de importação',typeof analyzeRows==='function'&&typeof previewSelectedFiles==='function'&&typeof processPendingImport==='function','prévia e processamento de arquivos');}catch(e){add('Auditoria de importação',false,e.message)}
-  try{add('TIM XLSX automático',typeof parseTimDataWorkbook==='function'&&typeof importTimDataWorkbook==='function','Extrato Conexões + Dados de Antena + IPv6 + CGI/ERB');}catch(e){add('TIM XLSX automático',false,e.message)}
-  try{add('TIM PDF conexões',typeof parseTimDataPdfStructured==='function'&&typeof parseTimPdfAntennas==='function','PDF de conexões + IPv6 + CGI/ERB + Dados de Antena');}catch(e){add('TIM PDF conexões',false,e.message)}
-  try{add('Análise / ranking',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','ranking e comparação entre lotes');}catch(e){add('Análise / ranking',false,e.message)}
+async function runSelfTest(){
+  const tests=[];const add=(name,ok,detail='')=>tests.push({name,ok:Boolean(ok),detail});
+  try{add('Leaflet / mapa',Boolean(window.L)&&Boolean(map),'biblioteca e instância do mapa')}catch(e){add('Leaflet / mapa',false,e.message)}
+  try{add('Turf / geoespacial',typeof turf!=='undefined'&&typeof turf.polygon==='function','interseção e geometria')}catch(e){add('Turf / geoespacial',false,e.message)}
+  try{add('XLSX',typeof XLSX!=='undefined'&&typeof XLSX.read==='function','planilhas')}catch(e){add('XLSX',false,e.message)}
+  try{add('PDF.js',typeof pdfjsLib!=='undefined'&&typeof pdfjsLib.getDocument==='function','PDF')}catch(e){add('PDF.js',false,e.message)}
+  try{add('html2canvas',typeof html2canvas==='function','captura')}catch(e){add('html2canvas',false,e.message)}
+  try{add('jsPDF',Boolean(window.jspdf?.jsPDF),'relatório PDF')}catch(e){add('jsPDF',false,e.message)}
+  try{add('Heatmap',typeof L.heatLayer==='function'||Boolean(heatFallbackG),'Leaflet.heat ou fallback local')}catch(e){add('Heatmap',false,e.message)}
+  try{const k='pcpr.erb.selftest';localStorage.setItem(k,'ok');const ok=localStorage.getItem(k)==='ok';localStorage.removeItem(k);add('Armazenamento local',ok,'projetos')}catch(e){add('Armazenamento local',false,e.message)}
+  try{const sample=new Blob(['PCPR']);sample.name='teste.txt';const h=await sha256File(sample);add('SHA-256',/^[a-f0-9]{64}$/.test(h),'crypto.subtle')}catch(e){add('SHA-256',false,e.message)}
+  try{add('Coordenadas',Math.abs(parseCoord('24 18 0 S',true)+24.3)<1e-9&&validGeoEvent({lat:-24.3,lng:-52.5,az:90})&&!validGeoEvent({lat:32589,lng:410140,az:0}),'DMS e limites geográficos')}catch(e){add('Coordenadas',false,e.message)}
+  try{add('Azimute',normAz(370)===10&&normAz(-10)===350,'normalização 0–359°')}catch(e){add('Azimute',false,e.message)}
+  try{const d=haversineKm({lat:-24.3,lng:-52.5},{lat:-24.31,lng:-52.51});add('Haversine',d>1&&d<2,'distância geodésica')}catch(e){add('Haversine',false,e.message)}
+  try{const sg=sector({lat:-24.3,lng:-52.5,az:90,dist:.5,margin:45});add('Geometria de setor',sg.ll.length>20&&Boolean(sg.geo),'cone cartográfico')}catch(e){add('Geometria de setor',false,e.message)}
+  try{add('Parsers TIM',typeof parseTimVoiceStructured==='function'&&typeof parseTimDataPdfStructured==='function'&&typeof parseTimDataWorkbook==='function','voz PDF + conexões PDF/XLSX')}catch(e){add('Parsers TIM',false,e.message)}
+  try{const w=timExtractWrappedIpv6('2804:0214:904E:CA48:00\n00:0000:0000:0000');add('IPv6 TIM quebrado em linhas',w==='2804:0214:904E:CA48:0000:0000:0000:0000',w||'não reconstruído')}catch(e){add('IPv6 TIM quebrado em linhas',false,e.message)}
+  try{const c=timFirstCgiLoose('724-04-\n00683-\n19247');add('CGI TIM quebrada em linhas',c==='724-04-00683-19247',c||'não reconstruída')}catch(e){add('CGI TIM quebrada em linhas',false,e.message)}
+  try{const a=timSignatureAntennaRecords({text:'DADOS DE ANTENA\n724-04-\n00683-19247 -25,385049\n-49,138823\n27/06/2025\n250°\n4G-COSM01-07-C\nPRESIDENTE JUSCELINO KUBITSCHEK\nJARDIM SANTA MONICA\nCOLOMBO\nPR\n83412-590'});add('Assinatura de ERB multilinha',a.length===1&&a[0].cgi==='724-04-00683-19247'&&a[0].lat===-25.385049&&a[0].lng===-49.138823&&a[0].az===250,a.length?`${a[0].cgi} · ${a[0].lat}, ${a[0].lng} · ${a[0].az}°`:'não reconstruída')}catch(e){add('Assinatura de ERB multilinha',false,e.message)}
+  try{add('Auditoria',typeof buildFileMeta==='function'&&typeof openLotAudit==='function','hash e rastreabilidade')}catch(e){add('Auditoria',false,e.message)}
+  try{add('Trajeto',typeof trajectoryData==='function'&&typeof trajectoryMetrics==='function'&&typeof openTrajectorySelector==='function'&&typeof removeTrajectory==='function','ordem cronológica + seleção de documentos/ERBs + remoção')}catch(e){add('Trajeto',false,e.message)}
+  try{add('GeoJSON',typeof exportGeoJson==='function','exportação geográfica')}catch(e){add('GeoJSON',false,e.message)}
+  try{add('KML',typeof exportKml==='function','Google Earth/QGIS')}catch(e){add('KML',false,e.message)}
+  try{add('Ranking / coincidências',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','análise')}catch(e){add('Ranking / coincidências',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
-  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo';
-  $('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>
-    ${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓':'✕'} ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}
-    <div class="analysis-note">${fail?'Há dependências indisponíveis ou algum teste falhou. Verifique antes de usar em produção.':'Todos os testes executáveis nesta sessão foram aprovados.'}</div>
-    <div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;
-  $('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
-  status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.0.4';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
-
+function setHeatMode(mode){state.heatMode=['normal','heat','both'].includes(mode)?mode:'normal';redraw();status(state.heatMode==='normal'?'Mapa normal.':state.heatMode==='heat'?'Mapa de calor ativado.':'Mapa normal + calor ativado.')}
+function openAnalysisPanel(){document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b.dataset.side==='analysis'));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-analysis').classList.add('active');renderAnalysis();}
 function closeAllMenus(except=null){
   document.querySelectorAll('.menu.open').forEach(m=>{
     if(m!==except)m.classList.remove('open');
@@ -1761,12 +2051,12 @@ document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLay
 document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b===x));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-'+x.dataset.side).classList.add('active')});
 $('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
 $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
-$('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{$('timelinebar').classList.toggle('show');drawTimelineLayers()};$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
-$('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('fitTimeline').onclick=fitTrajectory;$('geoBtn').onclick=()=>updateGeo(true);$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
+$('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers()};$('selectTrajectoryBtn').onclick=openTrajectorySelector;$('removeTrajectoryBtn').onclick=removeTrajectory;$('selectTrajectoryInline').onclick=openTrajectorySelector;$('removeTrajectoryInline').onclick=removeTrajectory;$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
+$('playTimeline').onclick=startTimeline;$('stopTimeline').onclick=stopTimeline;$('prevTimeline').onclick=()=>stepTimeline(-1);$('nextTimeline').onclick=()=>stepTimeline(1);$('fitTimeline').onclick=fitTrajectory;$('geoBtn').onclick=()=>updateGeo(true);$('analysisPanelBtn').onclick=openAnalysisPanel;$('heatNormal').onclick=()=>setHeatMode('normal');$('heatOnly').onclick=()=>setHeatMode('heat');$('heatBoth').onclick=()=>setHeatMode('both');$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
 $('geoOnly').onclick=()=>{state.onlyGeo=!state.onlyGeo;$('geoOnly').textContent=state.onlyGeo?'Mostrar setores':'Somente interseção';redraw()};
-$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v8_1.json');
+$('fitAll').onclick=fitAll;$('saveProject').onclick=saveProject;$('openProjects').onclick=()=>openDrawer('projects');$('selfTest').onclick=runSelfTest;$('exportJson').onclick=()=>saveBlob(new Blob([JSON.stringify(snapshot(),null,2)],{type:'application/json'}),'projeto_ERB_v9_0_4.json');
 $('importJson').onchange=async e=>{try{const o=JSON.parse(await e.target.files[0].text());state.currentProjectId=null;applySnapshot(o);$('projectState').textContent='não salva';status('Projeto JSON carregado.')}catch(_){status('JSON inválido.',true)}e.target.value=''};
-$('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;
+$('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;$('geoJsonExport').onclick=exportGeoJson;$('kmlExport').onclick=exportKml;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
 $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
