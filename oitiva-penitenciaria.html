@@ -59,7 +59,7 @@ button.secondary{background:#f4efe2;color:var(--ink);border-color:#cdbd95}button
 <main>
 <section class="leftcol">
 <div class="card"><h2>Dados do ofício</h2><div class="form">
-<label>Nº do ofício<input id="oficio" placeholder="Ex.: 258595/2024/2008/2026 - MCR"></label>
+<label>Nº do ofício<input id="oficio" autocomplete="off" placeholder="Ex.: 5626252026012026WPM → 562625.2026.01/2026 - WPM"></label>
 <label>Data do ofício<input id="dataOficio" type="date"></label>
 <label class="full">Nº dos autos<input id="autos" placeholder="Ex.: 0001234-56.2026.8.16.0107"></label>
 <label class="full">Pesquisar unidade penal<input id="unitSearch" autocomplete="off" placeholder="Digite nome, cidade ou sigla..."></label>
@@ -211,10 +211,49 @@ function renderDelegateList(){const box=$('delegadoList');box.innerHTML='';deleg
 function renderUnitResults(){const q=norm($('unitSearch').value.trim()),box=$('unitResults');if(!q){box.style.display='none';box.innerHTML='';return}const m=UNITS.map((u,i)=>({u,i})).filter(x=>norm(x.u.sigla+' '+x.u.nome+' '+x.u.grupo).includes(q)).slice(0,40);box.innerHTML='';m.forEach(x=>{const row=document.createElement('div');row.className='result';const b=document.createElement('strong');b.textContent=x.u.sigla+' — '+x.u.nome;const sm=document.createElement('small');sm.textContent=x.u.grupo+(x.u.email?' · '+x.u.email:' · e-mail não informado na relação enviada');row.append(b,sm);row.onclick=()=>selectUnit(x.i);box.appendChild(row)});if(!m.length){const row=document.createElement('div');row.className='result';row.textContent='Nenhuma unidade encontrada.';box.appendChild(row)}box.style.display='block'}
 function selectUnit(i){const u=UNITS[i];$('unitIndex').value=i;$('unitSearch').value=u.sigla+' — '+u.nome;$('unitResults').style.display='none';$('unitEmail').textContent=u.email||'E-mail não informado na relação enviada.';$('copyEmail').disabled=!u.email;update()}
 async function copy(t){try{await navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
+function formatOficioOitiva(v){
+  const raw=String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  const digits=(raw.match(/\d/g)||[]).join('');
+  const ident=(raw.match(/[A-Z]/g)||[]).join('').slice(0,12);
+  if(digits.length<=10)return digits+(ident?' - '+ident:'');
+  const prefix=digits.slice(0,-10);
+  const ano1=digits.slice(-10,-6);
+  const seq=digits.slice(-6,-4);
+  const ano2=digits.slice(-4);
+  return prefix+'.'+ano1+'.'+seq+'/'+ano2+(ident?' - '+ident:'');
+}
+function formatAutosCnj(v){
+  const d=String(v||'').replace(/\D/g,'').slice(0,20);
+  let out=d.slice(0,7);
+  if(d.length>7)out+='-'+d.slice(7,9);
+  if(d.length>9)out+='.'+d.slice(9,13);
+  if(d.length>13)out+='.'+d.slice(13,14);
+  if(d.length>14)out+='.'+d.slice(14,16);
+  if(d.length>16)out+='.'+d.slice(16,20);
+  return out;
+}
+function formatRg(v){
+  const raw=String(v||'').toUpperCase().replace(/[^0-9X]/g,'').slice(0,10);
+  if(raw.length<3)return raw;
+  const dv=raw.slice(-1);
+  let body=raw.slice(0,-1);
+  const groups=[];
+  while(body.length>3){groups.unshift(body.slice(-3));body=body.slice(0,-3)}
+  if(body)groups.unshift(body);
+  return groups.join('.')+'-'+dv;
+}
+function applyMaskInput(id,formatter){
+  const el=$(id);if(!el)return;
+  el.addEventListener('input',()=>{const v=formatter(el.value);if(el.value!==v)el.value=v;update()});
+  el.addEventListener('blur',()=>{el.value=formatter(el.value);update()});
+}
 function officeText(){const u=getUnit(),cid=getCidade(),nome=$('nomePessoa').value.trim().toUpperCase(),link=$('linkOitiva').value.trim();return 'Ofício nº '+$('oficio').value.trim()+'\\n'+cid.nome+'/PR, '+dateExtenso($('dataOficio').value)+'\\n\\nAssunto: AGENDAMENTO DE OITIVA\\nRef. Autos n° '+$('autos').value.trim()+'\\n\\nAo (À) Senhor (a) Diretor (a)\\n\\nSolicito o agendamento da oitiva de '+nome+', RG n° '+$('rg').value.trim()+', para o dia '+dateBR($('dataOitiva').value)+', às '+timeBR($('horaOitiva').value)+', a ser realizada por meio do link:\\n'+link+'\\n\\nAgradeço desde já a atenção e aguardo a confirmação do agendamento.\\n\\nAtenciosamente,\\n\\n'+$('delegado').value+'\\n'+($('cargoAutoridade').value||cargoAutoridade())+'\\n\\nAo (À) Senhor (a) Diretor (a)\\n'+(u?u.nome.toUpperCase():'UNIDADE PENAL')}
 function update(){const u=getUnit(),cid=getCidade(),link=$('linkOitiva').value.trim();$('pOficio').textContent=$('oficio').value.trim()||'________________________';$('pDataOficio').textContent=dateExtenso($('dataOficio').value);$('pCidadeData').textContent=cid.nome+'/'+(cid.uf||((window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get().uf:'PR')||'PR')+',';$('pHeaderEstado').textContent=oitivaInst.estado;$('pHeaderSecretaria').textContent=oitivaInst.secretaria;$('pHeaderDepartamento').textContent=oitivaInst.departamento;$('pHeaderSubdivisao').textContent=oitivaInst.subdivisao;$('pHeaderUnit').textContent=oitivaInst.unidade;$('pAutos').textContent=$('autos').value.trim()||'________________';$('pUnidade').textContent=(u?u.nome:'UNIDADE PENAL').toUpperCase();$('pNome').textContent=($('nomePessoa').value.trim()||'NOME DA PESSOA').toUpperCase();$('pRg').textContent=$('rg').value.trim()||'__________';$('pDataOitiva').textContent=dateBR($('dataOitiva').value);$('pHora').textContent=timeBR($('horaOitiva').value);$('pLink').textContent=link||'https://meet.google.com/...';$('pLink').href=link||'#';$('pDelegado').textContent=$('delegado').value||'';$('pCargo').textContent=$('cargoAutoridade').value||cargoAutoridade();$('pFooterAddress').textContent=cid.endereco||cid.nome+' - PR';const parts=[];if(cid.email)parts.push('Email: '+cid.email);if(cid.telefone)parts.push('Fone/Fax: '+cid.telefone);const gg=(window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};parts.push(cid.site||gg.site||'www.policiacivil.pr.gov.br');$('pFooterContact').textContent=parts.join(' – ');const ci=document.querySelector('.crest'),ov=getOitivaOverride();if(ci)ci.src=ov.logoMode==='original'?OITIVA_ORIGINAL_CREST:(gg.logo||OITIVA_ORIGINAL_CREST)}
 $('dataOficio').value=localDateISO();
-['oficio','dataOficio','autos','nomePessoa','rg','dataOitiva','horaOitiva','linkOitiva'].forEach(id=>$(id).addEventListener('input',update));
+applyMaskInput('oficio',formatOficioOitiva);
+applyMaskInput('autos',formatAutosCnj);
+applyMaskInput('rg',formatRg);
+['dataOficio','nomePessoa','dataOitiva','horaOitiva','linkOitiva'].forEach(id=>$(id).addEventListener('input',update));
 $('delegado').addEventListener('change',update);$('cargoAutoridade').value=cargoAutoridade();$('cargoAutoridade').addEventListener('input',()=>{saveCargo($('cargoAutoridade').value);update()});
 $('cidade').addEventListener('change',()=>{localStorage.setItem(CIDADE_SEL_KEY,$('cidade').value);update()});
 $('unitSearch').addEventListener('input',()=>{$('unitIndex').value='';$('unitEmail').textContent='Selecione uma unidade penal.';$('copyEmail').disabled=true;renderUnitResults();update()});
