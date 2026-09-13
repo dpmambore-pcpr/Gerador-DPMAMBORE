@@ -232,6 +232,50 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   }
 }
 
+
+/* ===== CABEÇALHO OTIMIZADO — MAIS ESPAÇO ÚTIL ===== */
+.nav-topbar{width:100%;display:grid;grid-template-columns:minmax(300px,430px) minmax(280px,1fr) minmax(280px,360px);align-items:start;gap:14px 18px}
+.brand{width:auto!important;display:flex;align-items:flex-start;gap:11px;margin-right:0}
+.brand-stack{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.brand-mainline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.nav-label{margin-right:0;font-size:13px}
+.configured-unit{max-width:240px}
+.system-mini{width:auto!important;margin-right:0;font-size:10px;justify-content:flex-start!important;padding-left:0;gap:8px}
+.credit-origin{width:auto;text-align:center;align-self:center;padding-top:0}
+.credit-origin strong{font-size:11px}
+.credit-origin small{font-size:9px;margin-top:4px}
+.nav-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:0}
+.nav-clock{margin-left:0;border-left:1px solid rgba(255,255,255,.18);padding:3px 0 3px 12px;gap:10px}
+.clock-text{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.08}
+.clock-topline{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.clock-time{font-size:20px}
+.clock-date{margin-top:3px;font-size:10px}
+.version-badge{min-height:24px;padding:0 8px;font-size:10px}
+.nav-data-right{display:flex;justify-content:flex-end;width:100%;font-size:10px;font-weight:800;color:#e7d9b3;letter-spacing:.4px;text-transform:uppercase}
+.nav-data-right .local-data{gap:6px}
+#dataComemorativa{margin-top:4px}
+.tabs-row{margin-top:6px}
+body:not(.home-mode).nav-collapsed .module-nav .nav-topbar,
+body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!important}
+@media(max-width:1180px){
+  .nav-topbar{grid-template-columns:minmax(280px,1fr) minmax(240px,1fr);grid-template-areas:'brand side' 'credit credit'}
+  .brand{grid-area:brand}
+  .credit-origin{grid-area:credit}
+  .nav-side{grid-area:side}
+}
+@media(max-width:760px){
+  .nav-topbar{grid-template-columns:1fr;grid-template-areas:'brand' 'credit' 'side';gap:10px}
+  .brand{width:100%!important}
+  .brand-mainline{gap:8px}
+  .configured-unit{max-width:100%}
+  .credit-origin{text-align:left}
+  .nav-side{align-items:flex-start}
+  .nav-clock{width:100%;border-left:0;border-top:1px solid rgba(255,255,255,.12);padding:8px 0 0;justify-content:flex-start}
+  .clock-text,.clock-date{align-items:flex-start;text-align:left}
+  .clock-topline{justify-content:flex-start}
+  .nav-data-right{justify-content:flex-start}
+}
+
 </style>
 
 <!-- Google Analytics 4 — Central PCPR -->
@@ -352,6 +396,63 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 .pwa-update-toast button{margin-left:8px;border:1px solid #183a31;border-radius:7px;background:#285748;color:#fff;padding:6px 9px;font-weight:800;cursor:pointer}
 @media(max-width:650px){.pwa-install-row{align-items:stretch}.pwa-install-btn{width:100%}.pwa-install-hint{text-align:center}}
 </style>
+
+<style id="header-compact-reflow-css">
+/* ===== REFLUXO FINAL DO CABEÇALHO ===== */
+.nav-topbar{width:100%;display:grid;grid-template-columns:minmax(300px,430px) minmax(280px,1fr) minmax(280px,360px);align-items:start;gap:14px 18px}
+.brand{width:auto!important;display:flex!important;align-items:flex-start!important;gap:11px;margin-right:0}
+.brand-stack{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.brand-mainline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.nav-label{margin-right:0;font-size:13px}
+.configured-unit{max-width:240px}
+.system-mini#systemMini{width:auto!important;margin-right:0;justify-content:flex-start!important;text-align:left;font-size:10px;gap:8px;padding-left:0}
+.credit-origin{width:auto;text-align:center;align-self:center;padding-top:0}
+.credit-origin strong{font-size:11px}
+.credit-origin small{font-size:9px;margin-top:4px}
+.nav-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:0}
+.nav-clock{margin-left:0;display:flex;align-items:center;gap:10px;padding:3px 0 3px 12px;border-left:1px solid rgba(255,255,255,.18);width:auto;justify-content:flex-end}
+.clock-text{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.08}
+.clock-topline{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.clock-time{font-size:20px}
+.clock-date{margin-top:3px;font-size:10px}
+.version-badge{min-height:24px;padding:0 8px;font-size:10px}
+.nav-data-right{display:flex;justify-content:flex-end;width:100%;font-size:10px;font-weight:800;color:#e7d9b3;letter-spacing:.4px;text-transform:uppercase}
+.nav-data-right .local-data{gap:6px}
+#dataComemorativa{margin-top:4px}
+.tabs-row{margin-top:6px}
+body:not(.home-mode).nav-collapsed .module-nav .nav-topbar,
+body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!important}
+@media(max-width:1180px){
+  .nav-topbar{grid-template-columns:minmax(280px,1fr) minmax(240px,1fr);grid-template-areas:'brand side' 'credit credit'}
+  .brand{grid-area:brand}
+  .credit-origin{grid-area:credit}
+  .nav-side{grid-area:side}
+}
+@media(max-width:760px){
+  .nav-topbar{grid-template-columns:1fr;grid-template-areas:'brand' 'credit' 'side';gap:10px}
+  .brand{width:100%!important}
+  .brand-mainline{gap:8px}
+  .configured-unit{max-width:100%}
+  .credit-origin{text-align:left}
+  .nav-side{align-items:flex-start}
+  .nav-clock{width:100%;border-left:0;border-top:1px solid rgba(255,255,255,.12);padding:8px 0 0;justify-content:flex-start}
+  .clock-text,.clock-date{align-items:flex-start;text-align:left}
+  .clock-topline{justify-content:flex-start}
+  .nav-data-right{justify-content:flex-start}
+}
+</style>
+
+<style id="clock-version-separation-css">
+/* Versão — relógio — hora, em uma única linha */
+.nav-clock{padding-top:2px;padding-bottom:2px}
+.clock-topline{flex-wrap:nowrap;gap:8px}
+.clock-separator{color:rgba(244,231,189,.72);font-size:15px;font-weight:700;line-height:1}
+.clock-icon.compact{width:27px;height:27px;flex:0 0 27px;border-color:rgba(197,162,83,.58);font-size:13px}
+.clock-time{white-space:nowrap}
+@media(max-width:760px){
+  .clock-topline{flex-wrap:wrap}
+}
+</style>
 <script src="pcpr-core.js?v=3.0.1"></script>
 <script src="pwa.js?v=3.0.1" defer></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
@@ -359,16 +460,38 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v3.0.1 · 13/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
-    <div class="credit-line credit-origin">
-  <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
-  <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
-</div>
+    <div class="nav-topbar">
+      <div class="brand">
+        <div class="brand-mark">PCPR</div>
+        <div class="brand-stack">
+          <div class="brand-mainline">
+            <span class="nav-label">Geradores PCPR</span>
+            <span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span>
+          </div>
+          <div class="system-mini" id="systemMini" aria-label="Informações do sistema">
+            <span class="system-online">Central operacional</span>
+          </div>
+        </div>
+      </div>
+      <div class="credit-line credit-origin">
+        <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
+        <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
+      </div>
+      <div class="nav-side">
+        <div class="nav-clock" aria-label="Versão, data e hora atuais">
+          <div class="clock-text">
+            <div class="clock-topline">
+              <span class="version-badge" id="centralVersion">v3.0.1 · 13/09/2026</span>
+              <span class="clock-separator" aria-hidden="true">—</span>
+              <span class="clock-icon compact" aria-hidden="true">◷</span>
+              <div class="clock-time" id="liveClock">--:--:--</div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-data-right"><span class="local-data">🔒 Dados neste dispositivo</span></div>
+      </div>
+    </div>
 <div id="dataComemorativa" class="data-comemorativa" aria-live="polite"></div>
-<div class="system-mini" id="systemMini" aria-label="Informações do sistema">
-  <span class="system-online">Central operacional</span>
-  <span class="local-data">🔒 Dados neste dispositivo</span>
-</div>
 
     <button type="button" class="mobile-main-menu-toggle" id="mobileMainMenuToggle"
       aria-expanded="true" aria-controls="mainTabsRow" title="Recolher ou mostrar o menu da Central">
