@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v2.8.9: simplificação da integração Google para compartilhamento entre DPs -->
 <!-- v2.8.8: nome obrigatório dos documentos -->
 <!-- v2.8.7: autorização silenciosa do Google Drive -->
 <!-- v2.8.6: correção do Drive -->
@@ -53,7 +54,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.8</span>
+      <span class="version">VERSÃO ATUAL · v2.8.9</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -66,7 +67,12 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.8">
+      <article class="item latest" data-version="2.8.9">
+        <div class="item-head"><span class="item-ver">v2.8.9</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">COMPARTILHAMENTO ENTRE DPs</span><span class="badge">ATUAL</span></div>
+        <div class="item-body">A Configuração Geral passa a mostrar a integração Google em modo simplificado. Cada DP informa somente o link da própria pasta. OAuth Client ID, API Key e Project Number ficam em Configuração avançada. Foram adicionados exportar/importar somente a integração Google e o botão SOLICITAR KEY / ID, sem compartilhar pastas, senhas ou tokens.</div>
+      </article>
+
+      <article class="item" data-version="2.8.8">
         <div class="item-head"><span class="item-ver">v2.8.8</span><span class="item-date">12/09/2026</span><span class="tag new">DOCUMENTOS</span><span class="tag improve">NOME OBRIGATÓRIO</span><span class="badge">ATUAL</span></div>
         <h3>Campo NOME DOC obrigatório em todos os geradores de documentos</h3>
         <ul>

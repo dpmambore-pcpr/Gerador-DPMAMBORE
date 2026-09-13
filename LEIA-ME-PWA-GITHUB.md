@@ -53,3 +53,7 @@ A v2.8.4 amplia o botão **Enviar para pasta** aos geradores de Coffee Break, Of
 ## v2.8.8 — Nome obrigatório dos documentos
 
 Todos os geradores de documentos exibem o campo **NOME DOC** antes das ações de saída. Sem preenchê-lo, a Central bloqueia salvar/baixar, imprimir em PDF e enviar para a nuvem. O nome digitado é usado no arquivo final e a extensão é acrescentada automaticamente.
+
+## v2.8.9 — Google Drive simplificado para outras DPs
+
+A Configuração Geral separa a integração técnica da Central das pastas de cada unidade. OAuth Client ID, API Key e Project Number ficam recolhidos em **Configuração avançada / usar credenciais próprias**. O responsável pode exportar somente esses três identificadores em `INTEGRACAO_GOOGLE_CENTRAL_PCPR.json`; outra DP importa esse arquivo e depois informa apenas o link da sua própria pasta e autoriza com a própria conta Google. O botão **SOLICITAR KEY / ID** copia uma mensagem pronta para pedir esse arquivo ao responsável. Nenhuma senha, Client Secret, token ou pasta de outra DP é incluída no arquivo de integração.

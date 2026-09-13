@@ -29,7 +29,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 .status{margin-top:10px;padding:9px 11px;border-radius:8px;background:#edf4ef;color:#204b3e;font-size:12px;display:none}.status.show{display:block}.status.err{background:#fff2f2;color:#8f3037;border:1px solid #ddb8bb}
 .sticky-save{position:fixed;left:0;right:0;bottom:0;background:rgba(17,24,32,.97);border-top:3px solid var(--gold);padding:9px 14px;z-index:30}.sticky-inner{max-width:1220px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}.sticky-text{color:#ddd6c7;font-size:11px}.sticky-text b{color:#fff}
 .badge{display:inline-flex;align-items:center;border:1px solid #c8d9cf;background:#edf5f0;color:#285748;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800}
-.drive-grid{display:grid;grid-template-columns:1fr;gap:10px}.drive-authority{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf9f6}.drive-authority-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}.drive-authority-name{font-size:13px;font-weight:800;color:#1d2b27}.drive-authority-role{font-size:11px;color:var(--muted);margin-top:2px}.drive-folder-status{font-size:10.5px;margin-top:6px;color:#52635c;overflow-wrap:anywhere}.drive-folder-status.ok{color:var(--ok);font-weight:700}.drive-folder-status.warn{color:#8a5a00}.drive-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.drive-actions button{min-height:32px;font-size:11px}.technical{border:1px dashed #cdbd95;border-radius:9px;padding:10px;background:#fffaf0;margin-top:10px}.technical summary{cursor:pointer;font-size:11.5px;font-weight:800;color:#5d4b22}.technical .grid{margin-top:10px}
+.drive-grid{display:grid;grid-template-columns:1fr;gap:10px}.drive-authority{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf9f6}.drive-authority-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}.drive-authority-name{font-size:13px;font-weight:800;color:#1d2b27}.drive-authority-role{font-size:11px;color:var(--muted);margin-top:2px}.drive-folder-status{font-size:10.5px;margin-top:6px;color:#52635c;overflow-wrap:anywhere}.drive-folder-status.ok{color:var(--ok);font-weight:700}.drive-folder-status.warn{color:#8a5a00}.drive-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.drive-actions button{min-height:32px;font-size:11px}.technical{border:1px dashed #cdbd95;border-radius:9px;padding:10px;background:#fffaf0;margin-top:10px}.technical summary{cursor:pointer;font-size:11.5px;font-weight:800;color:#5d4b22}.technical .grid{margin-top:10px}.drive-app-status{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #cbd9d2;border-radius:10px;padding:11px 13px;background:#f8fbf9;margin-bottom:10px}.drive-app-status.bad{border-color:#dfc2a2;background:#fff8ee}.drive-state{display:flex;align-items:center;gap:8px;font-size:12px;color:#24483d}.drive-state-dot{width:10px;height:10px;border-radius:50%;background:#a86516;box-shadow:0 0 0 3px rgba(168,101,22,.12)}.drive-app-status.ok .drive-state-dot{background:#2f7a55;box-shadow:0 0 0 3px rgba(47,122,85,.12)}.drive-state small{display:block;color:var(--muted);font-weight:400;margin-top:2px}.drive-share-actions{display:flex;gap:7px;flex-wrap:wrap}.drive-share-actions button{min-height:32px;font-size:11px}.request-note{display:none;border-left:4px solid var(--gold);background:#fffaf0;padding:9px 11px;margin:8px 0 10px;font-size:11px;line-height:1.45;color:#5d4b22}.request-note.show{display:block}
 @media(max-width:780px){.grid,.grid3,.backup-grid,.logo-row{grid-template-columns:1fr}.full{grid-column:auto}.rowitem{flex-direction:column}.sticky-text{display:none}}
 @media print{.sticky-save{display:none!important}}
 </style>
@@ -95,17 +95,19 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 </section>
 
 <section class="card">
-<div class="section-head"><h2>5. Google Drive — pastas para assinatura</h2><span class="badge">OPCIONAL</span></div>
-<div class="integration" style="margin-bottom:10px"><b>Configuração individual por Delegacia:</b> nenhuma pasta fica gravada no HTML distribuído. Cada computador cola o link da pasta de cada autoridade e salva localmente. Para envio direto do PDF com acesso limitado, clique em <b>Autorizar pasta</b> uma vez; a Central usa o Google Picker e não salva senha nem token de acesso.</div>
+<div class="section-head"><h2>5. Google Drive — assinatura de documentos</h2><span class="badge">OPCIONAL</span></div>
+<div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe a integração da Central ou use a configuração avançada.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="exportDriveTechBtn" class="secondary" type="button">EXPORTAR INTEGRAÇÃO GOOGLE</button><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR KEY / ID</button></div></div>
+<div class="request-note" id="driveRequestNote"><b>Para outra DP:</b> solicite ao responsável pela Central PCPR o arquivo de integração Google. Depois use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b>. A unidade não precisa criar outro Google Cloud; após importar, cada DP informa somente o link da própria pasta e autoriza com a própria conta Google.</div>
+<div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> informe somente a pasta que receberá os documentos da autoridade. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador e não alteram as pastas das demais unidades.</div>
 <div class="drive-grid" id="driveAuthorities"></div>
-<details class="technical">
-<summary>Configuração técnica do Google (preencher uma vez neste navegador)</summary>
+<details class="technical" id="driveAdvanced">
+<summary>Configuração avançada / usar credenciais próprias</summary>
 <div class="grid">
 <label class="full">OAuth Client ID<input id="driveClientId" placeholder="xxxxxxxxxxxx-xxxxxxxx.apps.googleusercontent.com"></label>
 <label class="full">API Key do Google Picker<input id="driveApiKey" placeholder="AIza..."></label>
 <label class="full">Project Number / App ID<input id="driveAppId" placeholder="Ex.: 123456789012"></label>
 </div>
-<div class="note">Esses dados identificam o aplicativo no Google; não são senha da conta. A API Key deve ser restringida ao endereço do GitHub Pages. O acesso solicitado pela Central é <b>drive.file</b>, limitado aos itens autorizados pelo usuário.</div>
+<div class="note">Esses três dados pertencem à aplicação Google da Central. Não informe Client Secret, senha, token ou código de recuperação. A API Key deve permanecer restrita ao domínio publicado e às APIs utilizadas.</div>
 </details>
 </section>
 
@@ -116,15 +118,15 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="backup-box"><h3>Restaurar configuração original</h3><p>Restaura somente a Configuração Geral. Não apaga formulários, históricos, projetos nem personalizações específicas dos módulos.</p><button id="reset" class="danger" type="button">Restaurar configuração original</button></div>
 </div>
 <div class="actions" style="margin-top:12px"><button id="saveBottom" class="gold" type="button" style="min-width:260px">SALVAR CONFIGURAÇÃO GERAL</button></div>
-<div class="note">Use este botão antes de sair desta tela. Ele salva também OAuth Client ID, API Key, Project Number e os links das pastas das autoridades.</div>
+<div class="note">Use este botão antes de sair desta tela. Ele salva a integração Google disponível neste navegador e os links das pastas das autoridades.</div>
 <div class="status" id="status"></div>
 </section>
 </main>
 
 <div class="sticky-save"><div class="sticky-inner"><div class="sticky-text"><b>Configuração Geral da Central:</b> cabeçalho, brasão, rodapé, autoridade e servidores serão reutilizados pelos módulos integrados.</div><button id="save" class="gold" type="button">Salvar e aplicar em toda a Central</button></div></div>
 
-<script src="pcpr-config.js?v=2.8.4"></script>
-<script src="pcpr-drive-v287.js?v=2.8.7"></script>
+<script src="pcpr-config.js?v=2.8.9"></script>
+<script src="pcpr-drive-v287.js?v=2.8.9"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -150,7 +152,7 @@ function fill(){
   ['estadoHeader','secretaria','departamento','subdivisao','unidade','cidade','uf','logradouro','numero','bairro','cep','email','fone','site','assinaturaComplementar'].forEach(id=>$(id).value=cfg[id]||'');
   $('driveClientId').value=cfg.drive?.clientId||'';$('driveApiKey').value=cfg.drive?.apiKey||'';$('driveAppId').value=cfg.drive?.appId||'';
   $('logoPreview').src=cfg.logo||ORIGINAL_LOGO;$('logoSource').textContent=cfg.logo?'Logo personalizado da Configuração Geral':'Brasão original';
-  renderAuthorities();renderServers();renderDriveAuthorities();updateSummary();updatePreview();
+  renderAuthorities();renderServers();renderDriveAuthorities();updateDriveIntegrationStatus();updateSummary();updatePreview();
 }
 function updateSummary(){const a=autoridades[0]||{};$('summaryMain').textContent=(cfg.unidade||'Unidade não informada')+(cfg.cidade?' · '+cfg.cidade+'/'+(cfg.uf||''):'');$('summarySub').textContent=a.nome?'Autoridade padrão: '+a.nome+(a.cargo?' — '+a.cargo:''):'Nenhuma autoridade cadastrada';}
 function updatePreview(){const a=autoridades[0]||{};const e=$('signaturePreview');e.innerHTML=`<div><div class="preview-name">${escapeHtml((a.nome||'NOME DA AUTORIDADE').toUpperCase())}</div><div class="preview-role">${escapeHtml(a.cargo||'Cargo não informado')}</div>${(a.complemento||cfg.assinaturaComplementar)?`<div class="preview-extra">${escapeHtml(a.complemento||cfg.assinaturaComplementar)}</div>`:''}</div>`;}
@@ -164,9 +166,19 @@ function persistDriveOnly(message){
   const base=API.get();
   const next={...base,drive:{clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim(),scope:'https://www.googleapis.com/auth/drive.file'},autoridades:normalizeAuthorities(autoridades)};
   cfg=API.save(next);
+  updateDriveIntegrationStatus();
   if(message)status(message);
   return cfg;
 }
+function currentDriveTech(){return {clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim(),scope:'https://www.googleapis.com/auth/drive.file'}}
+function driveTechReady(d){d=d||currentDriveTech();return !!(d.clientId&&d.apiKey&&d.appId)}
+function updateDriveIntegrationStatus(){
+  const d=currentDriveTech(),box=$('driveAppStatus'),txt=$('driveAppStatusText'),sub=$('driveAppStatusSub');if(!box||!txt||!sub)return;
+  if(driveTechReady(d)){box.classList.add('ok');box.classList.remove('bad');txt.textContent='Integração Google: disponível';sub.textContent='A Central já possui OAuth, API Key e Project Number neste navegador. Cada DP precisa informar somente a própria pasta.';}
+  else{box.classList.remove('ok');box.classList.add('bad');txt.textContent='Integração Google não configurada';sub.textContent='Importe a integração da Central ou abra a configuração avançada para informar credenciais próprias.';}
+}
+function downloadJson(data,name){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
+function normalizeDriveImport(x){x=(x&&typeof x==='object')?x:{};const d=(x.drive&&typeof x.drive==='object')?x.drive:x;return {clientId:String(d.clientId||'').trim(),apiKey:String(d.apiKey||'').trim(),appId:String(d.appId||d.projectNumber||'').trim(),scope:'https://www.googleapis.com/auth/drive.file'}}
 function renderDriveAuthorities(){
   const box=$('driveAuthorities');if(!box)return;box.innerHTML='';
   autoridades.forEach((a,i)=>{
@@ -190,7 +202,7 @@ function renderDriveAuthorities(){
     const drive={clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim()};
     const id=window.PCPRDrive?.extractFolderId(a.driveFolderId||a.driveFolderUrl)||'';
     if(!id)return status('Cole primeiro o link válido da pasta desta autoridade.',true);
-    if(!drive.clientId||!drive.apiKey)return status('Preencha OAuth Client ID e API Key na Configuração técnica do Google antes de autorizar a pasta.',true);
+    if(!drive.clientId||!drive.apiKey||!drive.appId)return status('A integração Google ainda não está disponível neste navegador. Importe a integração da Central ou abra Configuração avançada.',true);
     b.disabled=true;b.textContent='Abrindo Google…';
     try{
       const picked=await window.PCPRDrive.pickFolder(drive,id);
@@ -201,7 +213,11 @@ function renderDriveAuthorities(){
   });
 }
 
-['driveClientId','driveApiKey','driveAppId'].forEach(id=>$(id).addEventListener('change',()=>persistDriveOnly('Configuração técnica do Google salva neste navegador.')));
+['driveClientId','driveApiKey','driveAppId'].forEach(id=>{$(id).addEventListener('input',updateDriveIntegrationStatus);$(id).addEventListener('change',()=>persistDriveOnly('Configuração técnica do Google salva neste navegador.'));});
+$('exportDriveTechBtn').onclick=()=>{const d=currentDriveTech();if(!driveTechReady(d))return status('Preencha OAuth Client ID, API Key e Project Number na Configuração avançada antes de exportar a integração.',true);downloadJson({schema:'pcpr-central-google-drive-v1',app:'Central PCPR',drive:d},'INTEGRACAO_GOOGLE_CENTRAL_PCPR.json');status('Arquivo de integração Google exportado. Ele contém somente os identificadores técnicos da aplicação, sem pasta de nenhuma DP e sem token de acesso.');};
+$('importDriveTechBtn').onclick=()=>$('importDriveTechFile').click();
+$('importDriveTechFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text()),d=normalizeDriveImport(x);if(!driveTechReady(d))throw new Error('Arquivo sem OAuth Client ID, API Key ou Project Number.');$('driveClientId').value=d.clientId;$('driveApiKey').value=d.apiKey;$('driveAppId').value=d.appId;persistDriveOnly();updateDriveIntegrationStatus();status('Integração Google importada e salva. Agora informe somente o link da pasta de cada autoridade.');}catch(err){status(err.message||'Arquivo de integração Google inválido.',true)}e.target.value='';};
+$('requestDriveTechBtn').onclick=async()=>{const note=$('driveRequestNote');note.classList.toggle('show');const msg='Olá. Solicito o arquivo de integração Google da Central PCPR (OAuth Client ID, API Key restrita e Project Number/App ID) para habilitar o envio de documentos ao Google Drive nesta unidade. Não é necessário enviar Client Secret, senha ou token.';try{await navigator.clipboard.writeText(msg);status('Texto de solicitação copiado. Envie ao responsável pela Central PCPR.');}catch(_){status('Use a orientação exibida abaixo para solicitar a integração ao responsável pela Central PCPR.');}};
 $('addDelegado').onclick=()=>{const nome=$('novoDelegado').value.trim(),cargo=$('novoCargo').value;if(!nome)return alert('Informe o nome da autoridade.');if(autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Essa autoridade já está cadastrada.');autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});if(!servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))servidores.push({nome,cargo});$('novoDelegado').value='';renderAuthorities();renderServers();renderDriveAuthorities();updateSummary();updatePreview();};
 $('addServidor').onclick=()=>{const nome=$('novoServidor').value.trim(),cargo=$('novoServidorCargo').value;if(!nome)return alert('Informe o nome do servidor.');if(servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Esse servidor já está cadastrado.');servidores.push({nome,cargo});if(/^Delegad[oa]/i.test(cargo)&&!autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});$('novoServidor').value='';renderServers();renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();};
 
@@ -215,7 +231,7 @@ $('restoreFooter').onclick=()=>{['logradouro','numero','bairro','cep','email','f
 $('restoreAuthorities').onclick=()=>{autoridades=clone(DEF.autoridades);renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();status('Autoridades originais restauradas no formulário.');};
 $('restoreServers').onclick=()=>{servidores=clone(DEF.servidores);renderServers();status('Servidores originais restaurados no formulário.');};
 
-function saveAll(){const c=readForm();if(!c.unidade||!c.cidade||!c.uf)return status('Preencha unidade, cidade e UF.',true);if(c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))return status('Verifique o e-mail institucional.',true);cfg=API.save(c);fill();status('Configuração Geral salva e sincronizada, incluindo credenciais técnicas e destinos de assinatura do Google Drive deste navegador. Personalizações específicas dos módulos foram preservadas.');}
+function saveAll(){const c=readForm();if(!c.unidade||!c.cidade||!c.uf)return status('Preencha unidade, cidade e UF.',true);if(c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))return status('Verifique o e-mail institucional.',true);cfg=API.save(c);fill();status('Configuração Geral salva e sincronizada, incluindo integração Google e destinos de assinatura deste navegador. Personalizações específicas dos módulos foram preservadas.');}
 $('save').onclick=saveAll;$('saveBottom').onclick=saveAll;
 $('reset').onclick=()=>{if(!confirm('Deseja realmente restaurar a configuração original da Central PCPR? As configurações gerais personalizadas serão substituídas. As configurações específicas dos módulos e os dados operacionais não serão apagados.'))return;cfg=API.reset();fill();status('Configuração Geral original restaurada.');};
 $('export').onclick=()=>{const c=readForm(),b=new Blob([JSON.stringify(c,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='CONFIGURACAO_GERAL_PCPR_v2.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1200);};
