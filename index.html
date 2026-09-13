@@ -352,14 +352,14 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 .pwa-update-toast button{margin-left:8px;border:1px solid #183a31;border-radius:7px;background:#285748;color:#fff;padding:6px 9px;font-weight:800;cursor:pointer}
 @media(max-width:650px){.pwa-install-row{align-items:stretch}.pwa-install-btn{width:100%}.pwa-install-hint{text-align:center}}
 </style>
-<script src="pcpr-core.js?v=3.0.0"></script>
-<script src="pwa.js?v=3.0.0" defer></script>
-<script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-core.js?v=3.0.1"></script>
+<script src="pwa.js?v=3.0.1" defer></script>
+<script src="pcpr-config.js?v=3.0.1"></script>
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v3.0.0 · 12/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v3.0.1 · 13/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line credit-origin">
   <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
   <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
@@ -377,7 +377,10 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
+
+      <button class="module-tab" data-key="googleanalise" type="button">Análise Google</button>
       <button class="module-tab" data-key="historico" type="button">Histórico de Documentos</button>
+      <button class="module-tab" data-key="transcritor" type="button">Transcritor</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
       <button class="module-tab" data-key="contatodppr" type="button">Contatos DP PR</button>
       <button class="module-tab" data-key="contatos" type="button">Contatos Institucionais</button>
@@ -390,8 +393,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
       <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
       <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
       <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
-       <button class="module-tab" data-key="transcritor" type="button">Transcritor</button>
-       <button class="module-tab" data-key="googleanalise" type="button">Análise Google</button>
+
       <a class="module-tab external-link" id="suggestionsNav" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" title="Formulário externo do Google Forms — não envie dados sigilosos">💡 Sugestões · externo ↗</a>
     </div>
   </div>
@@ -415,7 +417,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
           </div>
-          <div class="home-version" id="homeVersion">CENTRAL PCPR · v3.0.0</div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v3.0.1</div>
         </div>
         <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
         <details class="security-details">
@@ -429,13 +431,29 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
         <div class="card-title">Atualizações</div>
         <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
       </button>
+
+      <button class="module-card" type="button" data-open-module="googleanalise">
+        <div class="card-top"><div class="card-icon">GG</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Analisador de Respostas Google</div>
+        <div class="card-desc">Cruza IMEI, Android ID, aparelhos, contas Google, datas de criação, logins e vínculos investigativos.</div>
+        <div class="card-subtags"><span class="card-subtag">IMEI</span><span class="card-subtag">ANDROID ID</span><span class="card-subtag">CONTAS</span><span class="card-subtag">LINHA DO TEMPO</span></div>
+      </button>
+      
       <button class="module-card" type="button" data-open-module="historico">
         <div class="card-top"><div class="card-icon">HD</div><div class="card-arrow">›</div></div>
         <div class="card-title">Histórico de Documentos</div>
         <div class="card-desc">Registros locais de documentos gerados e enviados para assinatura no Google Drive.</div>
         <div class="card-subtags"><span class="card-subtag">GERADOS</span><span class="card-subtag">ENVIADOS</span><span class="card-subtag">LOCAL</span></div>
       </button>
-      <button class="module-card" type="button" data-open-module="configuracoes">
+      
+<button class="module-card" type="button" data-open-module="transcritor">
+        <div class="card-top"><div class="card-icon">AV</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Transcritor de Áudio e Vídeo</div>
+        <div class="card-desc">Transcrição local em lote com Whisper, texto original, terceira pessoa e formato de depoimento.</div>
+        <div class="card-subtags"><span class="card-subtag">ÁUDIO</span><span class="card-subtag">VÍDEO</span><span class="card-subtag">WHISPER</span><span class="card-subtag">LOCAL</span></div>
+      </button>
+      
+<button class="module-card" type="button" data-open-module="configuracoes">
         <div class="card-top"><div class="card-icon">CF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Configurações</div>
         <div class="card-desc">Dados da unidade, autoridades, cargo, APJs e preferências compartilhadas.</div>
@@ -496,19 +514,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
         <div class="card-title">QR Code</div>
         <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
       </button>
-      <button class="module-card" type="button" data-open-module="transcritor">
-        <div class="card-top"><div class="card-icon">AV</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Transcritor de Áudio e Vídeo</div>
-        <div class="card-desc">Transcrição local em lote com Whisper, texto original, terceira pessoa e formato de depoimento.</div>
-        <div class="card-subtags"><span class="card-subtag">ÁUDIO</span><span class="card-subtag">VÍDEO</span><span class="card-subtag">WHISPER</span><span class="card-subtag">LOCAL</span></div>
-      </button>
-      <button class="module-card" type="button" data-open-module="googleanalise">
-        <div class="card-top"><div class="card-icon">GG</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Analisador de Respostas Google</div>
-        <div class="card-desc">Cruza IMEI, Android ID, aparelhos, contas Google, datas de criação, logins e vínculos investigativos.</div>
-        <div class="card-subtags"><span class="card-subtag">IMEI</span><span class="card-subtag">ANDROID ID</span><span class="card-subtag">CONTAS</span><span class="card-subtag">LINHA DO TEMPO</span></div>
-      </button>
-      <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard" aria-label="Abrir formulário externo de sugestões no Google Forms">
+<a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard" aria-label="Abrir formulário externo de sugestões no Google Forms">
         <span class="card-badge">FORMULÁRIO EXTERNO · GOOGLE FORMS</span>
         <div class="card-top"><div class="card-icon">SG</div><div class="card-arrow">↗</div></div>
         <div class="card-title">Sugira melhorias para a Central PCPR</div>
@@ -534,17 +540,17 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.0.0"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.0.0"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.0.1"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
-  <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.1.0"></iframe>
   <iframe id="frameGoogleAnalise" class="module-frame" title="Analisador de Respostas Google" data-src="analisador-google.html?v=1.0.0"></iframe>
+  <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.1.0"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION=window.PCPRCore?.VERSION||'3.0.0';
-const CENTRAL_VERSION_DATE=window.PCPRCore?.VERSION_DATE||'12/09/2026';
+const CENTRAL_VERSION=window.PCPRCore?.VERSION||'3.0.1';
+const CENTRAL_VERSION_DATE=window.PCPRCore?.VERSION_DATE||'13/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
 const homeVersion=document.getElementById('homeVersion');
@@ -613,8 +619,8 @@ const modules={
   contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850},
   atualizacoes:{frame:document.getElementById('frameAtualizacoes'),tab:document.querySelector('[data-key="atualizacoes"]'),min:900},
   historico:{frame:document.getElementById('frameHistorico'),tab:document.querySelector('[data-key="historico"]'),min:900},
-  transcritor:{frame:document.getElementById('frameTranscritor'),tab:document.querySelector('[data-key="transcritor"]'),min:980},
-  googleanalise:{frame:document.getElementById('frameGoogleAnalise'),tab:document.querySelector('[data-key="googleanalise"]'),min:980}
+  googleanalise:{frame:document.getElementById('frameGoogleAnalise'),tab:document.querySelector('[data-key="googleanalise"]'),min:980},
+  transcritor:{frame:document.getElementById('frameTranscritor'),tab:document.querySelector('[data-key="transcritor"]'),min:980}
 };
 const loading=document.getElementById('loading');
 
@@ -636,8 +642,8 @@ function trackModule(key){
       contatos:'diretorio_contatos',
       atualizacoes:'sobre_atualizacoes',
       historico:'historico_documentos',
-      transcritor:'transcritor_audio_video',
-      googleanalise:'analisador_respostas_google'
+      googleanalise:'analisador_respostas_google',
+      transcritor:'transcritor_audio_video'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
   }catch(e){}
@@ -687,7 +693,7 @@ const homeBtn=document.getElementById('homeBtn');
 const MODULE_LABELS={
   atualizacoes:'Atualizações', historico:'Histórico de Documentos', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas', fundorotativo:'Fundo Rotativo',
-  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', transcritor:'Transcritor de Áudio e Vídeo', googleanalise:'Analisador de Respostas Google'
+  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', googleanalise:'Analisador de Respostas Google', transcritor:'Transcritor de Áudio e Vídeo'
 };
 const RECENT_KEY='pcprCentralRecentModulesV2';
 const UPDATE_SEEN_KEY='pcprCentralUpdatesSeenVersion';
@@ -939,8 +945,8 @@ if(!document.getElementById('backTop')){
     lesoes:'lesão laudo exame corpo delito ferimento apj',
     oficios:'ofício oficio diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
     qrcode:'qr link url código codigo',
-    transcritor:'transcrição transcricao áudio audio vídeo video whisper depoimento terceira pessoa fala gravação gravacao mp3 mp4 wav m4a',
-    googleanalise:'google resposta ofício oficio imei android id conta gmail subscriber device profile aparelho celular data criação criacao login vínculo vinculo investigação investigacao'
+    googleanalise:'google resposta ofício oficio imei android id conta gmail subscriber device profile aparelho celular data criação criacao login vínculo vinculo investigação investigacao',
+    transcritor:'transcrição transcricao áudio audio vídeo video whisper depoimento terceira pessoa fala gravação gravacao mp3 mp4 wav m4a'
   };
   document.querySelectorAll('.module-card[data-open-module]').forEach(card=>{
     const key=card.dataset.openModule;
