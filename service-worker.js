@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v2.8.10';
+const CACHE_VERSION='pcpr-central-v3.0.0';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -23,6 +23,7 @@ const CORE_FILES=[
   './icon-192.png',
   './icon-512.png',
   './imei.html',
+  './historico-documentos.html',
   './index.html',
   './laudo-lesoes.html',
   './manifest.webmanifest',
@@ -33,16 +34,12 @@ const CORE_FILES=[
   './oficios.html',
   './oitiva-penitenciaria.html',
   './papel-pericia.png',
+  './pcpr-core.js',
   './pcpr-config.js',
   './pcpr-drive.js',
-  './pcpr-drive-v285.js',
-  './pcpr-drive-v287.js',
-  './pcpr-docname-v288.js',
+  './pcpr-documento.js',
   './pericia.html',
   './pwa.js',
-  './pwa-v285.js',
-  './pwa-v286.js',
-  './pwa-v288.js',
   './qrcode.html',
   './reconhecimento-fotografico.html',
   './relatorio-viagem.html'

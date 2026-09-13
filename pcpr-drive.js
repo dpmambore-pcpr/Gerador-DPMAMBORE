@@ -1,10 +1,12 @@
 (function(global){
 'use strict';
-const VERSION='2.8.6';
+const VERSION='3.0.0';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
 function clean(v){return String(v??'').trim()}
+function historyAdd(entry){try{const h=global.PCPRCore&&global.PCPRCore.history;if(h&&typeof h.add==='function')h.add(entry)}catch(_){}}
+function currentDocType(){try{return global.PCPRCore&&typeof global.PCPRCore.moduleName==='function'?global.PCPRCore.moduleName():(clean(document.title)||'Documento')}catch(_){return 'Documento'}}
 function fold(v){return clean(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR')}
 function extractFolderId(input){
   const s=clean(input); if(!s)return '';
@@ -58,22 +60,47 @@ async function ensureGoogleLibraries(withPicker){
     await new Promise((resolve,reject)=>{try{global.gapi.load('picker',{callback:resolve,onerror:()=>reject(new Error('Não foi possível carregar o Google Picker.'))});}catch(e){reject(e)}});
   }
 }
+function requestAccessTokenOnce(d,promptValue){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const finishReject=(err)=>{if(settled)return;settled=true;reject(err instanceof Error?err:new Error(String(err||'Falha na autenticação Google.')))};
+    const cb=(resp)=>{
+      if(settled)return;
+      if(resp&&resp.error){finishReject(new Error(resp.error_description||resp.error));return;}
+      if(!resp||!resp.access_token){finishReject(new Error('O Google não retornou um token de acesso.'));return;}
+      settled=true;
+      token=resp.access_token;
+      tokenExp=Date.now()+((Number(resp.expires_in)||3300)*1000);
+      resolve(token);
+    };
+    const errCb=(e)=>finishReject(new Error((e&&e.type)||'Falha na autenticação Google.'));
+    try{
+      if(!tokenClient||tokenClientId!==d.clientId){
+        tokenClient=global.google.accounts.oauth2.initTokenClient({client_id:d.clientId,scope:SCOPE,callback:cb,error_callback:errCb});
+        tokenClientId=d.clientId;
+      }else{
+        tokenClient.callback=cb;
+        tokenClient.error_callback=errCb;
+      }
+      // prompt vazio reaproveita a sessão/permissão já concedida sem exibir
+      // novamente seleção de conta e consentimento quando o Google permitir.
+      tokenClient.requestAccessToken({prompt:promptValue});
+    }catch(e){finishReject(e)}
+  });
+}
 async function getAccessToken(settings,forcePrompt){
   const d=normalizeDrive(settings);if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');
   if(token&&Date.now()<tokenExp-60000&&!forcePrompt)return token;
   await ensureGoogleLibraries(false);
-  return new Promise((resolve,reject)=>{
-    const cb=(resp)=>{
-      if(resp&&resp.error){reject(new Error(resp.error_description||resp.error));return;}
-      if(!resp||!resp.access_token){reject(new Error('O Google não retornou um token de acesso.'));return;}
-      token=resp.access_token;tokenExp=Date.now()+((Number(resp.expires_in)||3300)*1000);resolve(token);
-    };
-    try{
-      if(!tokenClient||tokenClientId!==d.clientId){tokenClient=global.google.accounts.oauth2.initTokenClient({client_id:d.clientId,scope:SCOPE,callback:cb,error_callback:e=>reject(new Error((e&&e.type)||'Falha na autenticação Google.'))});tokenClientId=d.clientId;}
-      else tokenClient.callback=cb;
-      tokenClient.requestAccessToken({prompt:forcePrompt||!token?'consent':''});
-    }catch(e){reject(e)}
-  });
+  // Primeiro tenta obter um novo token silenciosamente. Isto é essencial porque
+  // cada aba/módulo da Central roda em um iframe diferente e perde o token em memória.
+  try{
+    return await requestAccessTokenOnce(d,'');
+  }catch(silentError){
+    // Só abre a interface do Google quando a sessão/permissão realmente exigir.
+    // Em uso normal, após a primeira autorização, este trecho não é executado.
+    return await requestAccessTokenOnce(d,'consent');
+  }
 }
 async function pickFolder(settings,startFolderId){
   const d=normalizeDrive(settings);if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');if(!d.apiKey)throw new Error('API Key do Google Picker não configurada.');
@@ -161,33 +188,41 @@ async function prepareDestination(authorityName,options){
 async function uploadPdfForAuthority(opts){
   opts=opts||{};
   const authorityName=clean(opts.authorityName);
-  let dest=await prepareDestination(authorityName,{forcePicker:!!opts.forcePicker});
   const filename=safeFileName(opts.fileName||'documento.pdf').replace(/\.pdf$/i,'')+'.pdf';
-  if(opts.confirm!==false){
-    const ok=global.confirm('Enviar PDF para assinatura?\n\nAutoridade: '+dest.authority.nome+'\nPasta: '+dest.folderName+'\nArquivo: '+filename);
-    if(!ok){const e=new Error('Envio cancelado.');e.cancelled=true;throw e;}
-  }
-  let bytes=opts.bytes;
-  if(typeof bytes==='function')bytes=await bytes();
-  if(!bytes)throw new Error('Não foi possível gerar o PDF para envio.');
-  let result;
+  let dest=null;
   try{
-    result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+    dest=await prepareDestination(authorityName,{forcePicker:!!opts.forcePicker});
+    if(opts.confirm!==false){
+      const ok=global.confirm('Enviar PDF para assinatura?\n\nAutoridade: '+dest.authority.nome+'\nPasta: '+dest.folderName+'\nArquivo: '+filename);
+      if(!ok){const e=new Error('Envio cancelado.');e.cancelled=true;throw e;}
+    }
+    let bytes=opts.bytes;
+    if(typeof bytes==='function')bytes=await bytes();
+    if(!bytes)throw new Error('Não foi possível gerar o PDF para envio.');
+    let result;
+    try{
+      result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+    }catch(e){
+      if(e&&e.status===401){
+        clearToken();dest.accessToken=await getAccessToken(dest.drive,true);
+        result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+      }else if(e&&(e.status===403||e.status===404)&&!opts.forcePicker){
+        const picked=await pickFolder(dest.drive,dest.folderId);
+        const cfg=savePickedFolder(dest.cfg,dest.authority.nome,picked);
+        dest.authority=findAuthority(dest.authority.nome,cfg)||dest.authority;
+        dest.folderId=extractFolderId(dest.authority.driveFolderId||picked.id);
+        dest.accessToken=picked.accessToken||await getAccessToken(dest.drive,false);
+        result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
+      }else throw e;
+    }
+    historyAdd({tipo:currentDocType(),nomeDoc:filename.replace(/\.pdf$/i,''),arquivo:filename,autoridade:clean(dest.authority&&dest.authority.nome),acao:'ENVIADO_DRIVE',formato:'PDF',pasta:clean(dest.folderName),resultado:'Sucesso',url:clean(result&&result.webViewLink),fileId:clean(result&&result.id)});
+    return {...result,folderId:dest.folderId,folderUrl:folderUrl(dest.folderId),authority:dest.authority,filename};
   }catch(e){
-    if(e&&e.status===401){
-      clearToken();dest.accessToken=await getAccessToken(dest.drive,true);
-      result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
-    }else if(e&&(e.status===403||e.status===404)&&!opts.forcePicker){
-      const picked=await pickFolder(dest.drive,dest.folderId);
-      const cfg=savePickedFolder(dest.cfg,dest.authority.nome,picked);
-      dest.authority=findAuthority(dest.authority.nome,cfg)||dest.authority;
-      dest.folderId=extractFolderId(dest.authority.driveFolderId||picked.id);
-      dest.accessToken=picked.accessToken||await getAccessToken(dest.drive,false);
-      result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
-    }else throw e;
+    if(!(e&&e.cancelled))historyAdd({tipo:currentDocType(),nomeDoc:filename.replace(/\.pdf$/i,''),arquivo:filename,autoridade:clean(dest&&dest.authority&&dest.authority.nome)||authorityName,acao:'ERRO_DRIVE',formato:'PDF',pasta:clean(dest&&dest.folderName),resultado:'Erro',detalhe:clean(e&&e.message)});
+    throw e;
   }
-  return {...result,folderId:dest.folderId,folderUrl:folderUrl(dest.folderId),authority:dest.authority,filename};
 }
+
 async function ensurePdfLibraries(){
   if(!global.html2canvas)await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas');
   if(!global.jspdf?.jsPDF)await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','jspdf');

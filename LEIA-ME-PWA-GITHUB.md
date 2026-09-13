@@ -1,63 +1,40 @@
-# Central PCPR v2.8.5 — PWA
+# Central PCPR v3.0.0 — PWA
 
-Esta versão está preparada para instalação como Progressive Web App (PWA).
+Esta versão preserva os módulos existentes e acrescenta duas melhorias estruturais: **núcleo compartilhado único** e **Histórico de Documentos**.
 
 ## Publicação no GitHub Pages
 
-1. Envie todo o conteúdo desta pasta para a raiz do repositório.
+1. Envie o conteúdo desta pasta para a raiz do repositório.
 2. No GitHub, abra **Settings → Pages**.
 3. Em **Build and deployment**, escolha **Deploy from a branch**.
-4. Selecione **main** e **/(root)** e salve.
-5. Abra o endereço HTTPS fornecido pelo GitHub Pages.
-6. Chrome/Edge/Android: use **Instalar Central PCPR** quando aparecer.
-7. iPhone/iPad (Safari): **Compartilhar → Adicionar à Tela de Início**.
+4. Selecione **main** e **/(root)**.
+5. Abra o endereço HTTPS do GitHub Pages.
+6. Se a Central já estiver instalada como PWA, aceite **Atualizar agora** quando aparecer.
 
-## Atualizações
+## v3.0.0 — Núcleo compartilhado
 
-Ao publicar uma nova versão, o Service Worker detecta a atualização e a Central pode exibir um aviso para recarregar.
+Os helpers da Central foram consolidados. Os módulos passam a usar a mesma geração:
 
-## Offline
+- `pcpr-core.js` — versão, utilitários e histórico local;
+- `pcpr-config.js` — Configuração Geral;
+- `pcpr-drive.js` — Google Drive e envio para assinatura;
+- `pcpr-documento.js` — NOME DOC, saída de arquivos e registro de geração;
+- `pwa.js` — instalação e atualização do aplicativo.
 
-Os arquivos locais da Central são armazenados no dispositivo após o primeiro carregamento. Recursos que dependem de serviços externos, mapas, bases online ou formulários continuam exigindo internet. Respostas de APIs externas não são armazenadas pelo Service Worker.
+Arquivos antigos paralelos de Drive, PWA e NOME DOC não são mais utilizados. Se estiver atualizando um repositório antigo, exclua os arquivos listados em `ARQUIVOS_PARA_EXCLUIR_V3.txt`.
 
-## Dados locais
+## Histórico de Documentos
 
-As preferências e dados salvos pelos módulos continuam no armazenamento local do navegador (localStorage/IndexedDB). Instalar a PWA não cria banco remoto. Faça backup antes de limpar dados do navegador ou remover o aplicativo.
+A Central ganhou o módulo **Histórico de Documentos**. O registro fica somente no navegador e guarda metadados operacionais, não o conteúdo dos documentos.
 
+São registrados, quando disponíveis: data/hora, tipo do documento, NOME DOC, autoridade, ação, formato, pasta de assinatura e resultado. Envios concluídos ao Google Drive são registrados como **ENVIADO**; falhas de envio também podem aparecer como **ERRO**.
 
-## Conteúdo desta versão
-
-A Central v2.8.5 preserva o módulo **ERB / Antenas v9.7.0** e atualiza o cache do PWA para distribuição da nova versão aos dispositivos instalados.
-
-## v2.8.5 — correção de envio ao Google Drive
-
-Corrige o carregamento de uma versão antiga de `pcpr-drive.js` pelo cache do PWA, que causava `uploadElementsPdfForAuthority is not a function`. O helper do Drive ganhou nome versionado (`pcpr-drive-v285.js`) e o Service Worker passou a priorizar a rede para HTML/JS quando online.
-
+O histórico possui pesquisa, filtros e exportação em CSV/JSON. Limpar o histórico não apaga documentos nem configurações da Central.
 
 ## Google Drive / assinatura
 
-A v2.8.3 acrescentou configuração local por autoridade para pasta de assinatura no Google Drive. O HTML distribuído não contém pasta de nenhuma Delegacia. Cada instalação cola o próprio link e autoriza a pasta pelo Google Picker. O envio direto de PDF usa OAuth no navegador e não salva senha nem token de acesso. Para ativar, preencha na Configuração Geral o OAuth Client ID, a API Key do Google Picker e, opcionalmente, o Project Number/App ID do projeto Google Cloud.
+A integração continua usando OAuth no navegador. Cada DP pode importar `INTEGRACAO_GOOGLE_CENTRAL_PCPR.json`, cadastrar a própria pasta e autorizar com a própria conta Google. Senhas, Client Secret e tokens de acesso não devem ser colocados no GitHub.
 
+## Offline e dados locais
 
-## v2.8.4 — envio para assinatura em todos os documentos da Autoridade Policial
-
-A v2.8.4 amplia o botão **Enviar para pasta** aos geradores de Coffee Break, Ofício de Diária, Oitiva em Penitenciária, Perícia e Justificativa do Fundo Rotativo. O gerador de Ofícios mantém a integração já existente. Módulos assinados somente por APJ/servidor não recebem esse botão. As pastas continuam sendo configuradas localmente por autoridade na Configuração Geral.
-
-
-## v2.8.7
-- Corrige identificação da autoridade de assinatura no Google Drive, inclusive para módulos antigos que enviavam o nome da unidade.
-- A autorização e o link da pasta passam a ser persistidos imediatamente.
-- A seção 6 da Configuração Geral ganhou botão visível “SALVAR CONFIGURAÇÃO GERAL”.
-
-
-## v2.8.8 — Nome obrigatório dos documentos
-
-Todos os geradores de documentos exibem o campo **NOME DOC** antes das ações de saída. Sem preenchê-lo, a Central bloqueia salvar/baixar, imprimir em PDF e enviar para a nuvem. O nome digitado é usado no arquivo final e a extensão é acrescentada automaticamente.
-
-## v2.8.10 — Solicitar KEY / ID por Gmail
-
-O botão **SOLICITAR KEY / ID** abre o Gmail com o destinatário `dpmambore@pc.pr.gov.br`, assunto e mensagem de solicitação já preenchidos. O e-mail também fica visível na Configuração Geral. Se o navegador bloquear a nova aba, a Central tenta abrir o aplicativo de e-mail padrão.
-
-## v2.8.9 — Google Drive simplificado para outras DPs
-
-A Configuração Geral separa a integração técnica da Central das pastas de cada unidade. OAuth Client ID, API Key e Project Number ficam recolhidos em **Configuração avançada / usar credenciais próprias**. O responsável pode exportar somente esses três identificadores em `INTEGRACAO_GOOGLE_CENTRAL_PCPR.json`; outra DP importa esse arquivo e depois informa apenas o link da sua própria pasta e autoriza com a própria conta Google. O botão **SOLICITAR KEY / ID** copia uma mensagem pronta para pedir esse arquivo ao responsável. Nenhuma senha, Client Secret, token ou pasta de outra DP é incluída no arquivo de integração.
+Os arquivos locais da Central são armazenados pelo Service Worker após o primeiro carregamento. Recursos externos continuam exigindo internet. Configurações, projetos, preferências e histórico permanecem no `localStorage`/`IndexedDB` do dispositivo.

@@ -352,13 +352,14 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 .pwa-update-toast button{margin-left:8px;border:1px solid #183a31;border-radius:7px;background:#285748;color:#fff;padding:6px 9px;font-weight:800;cursor:pointer}
 @media(max-width:650px){.pwa-install-row{align-items:stretch}.pwa-install-btn{width:100%}.pwa-install-hint{text-align:center}}
 </style>
-<script src="pwa-v288.js?v=2.8.10" defer></script>
-<script src="pcpr-config.js?v=2.8.4"></script>
+<script src="pcpr-core.js?v=3.0.0"></script>
+<script src="pwa.js?v=3.0.0" defer></script>
+<script src="pcpr-config.js?v=3.0.0"></script>
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.8.10 · 12/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v3.0.0 · 12/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line credit-origin">
   <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
   <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
@@ -376,6 +377,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
+      <button class="module-tab" data-key="historico" type="button">Histórico de Documentos</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
       <button class="module-tab" data-key="contatodppr" type="button">Contatos DP PR</button>
       <button class="module-tab" data-key="contatos" type="button">Contatos Institucionais</button>
@@ -411,12 +413,12 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
           </div>
-          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.8.10</div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v3.0.0</div>
         </div>
         <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
         <details class="security-details">
           <summary>🔒 Segurança e privacidade — dados e preferências permanecem neste dispositivo</summary>
-          <div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências e trabalhos salvos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
+          <div class="security-summary"><b>Segurança e privacidade:</b> esta Central é uma aplicação estática e não possui banco de dados remoto, backend próprio ou servidor institucional conectado. Preferências, trabalhos e o histórico de documentos ficam somente no navegador deste dispositivo. Não há senhas, tokens, chaves de API ou credenciais fixas incorporadas ao código público. Recursos externos, quando existentes, são acionados pelo usuário e não recebem o conteúdo dos formulários da Central. O Google Analytics registra apenas métricas técnicas/de navegação, não o conteúdo digitado nos campos.</div>
         </details>
       </div>
       <div class="module-grid">
@@ -424,6 +426,12 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
         <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
         <div class="card-title">Atualizações</div>
         <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="historico">
+        <div class="card-top"><div class="card-icon">HD</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Histórico de Documentos</div>
+        <div class="card-desc">Registros locais de documentos gerados e enviados para assinatura no Google Drive.</div>
+        <div class="card-subtags"><span class="card-subtag">GERADOS</span><span class="card-subtag">ENVIADOS</span><span class="card-subtag">LOCAL</span></div>
       </button>
       <button class="module-card" type="button" data-open-module="configuracoes">
         <div class="card-top"><div class="card-icon">CF</div><div class="card-arrow">›</div></div>
@@ -500,26 +508,27 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   </section>
 
   <div id="loading" class="loading hide">Carregando…</div>
-  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=2.8.10"></iframe>
-  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=2.8.8"></iframe>
-  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=2.8.8"></iframe>
-  <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=2.7"></iframe>
-  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=2.7"></iframe>
-  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=9.7.0"></iframe>
-  <iframe id="frameFundoRotativo" class="module-frame" title="Fundo Rotativo" data-src="fundo-rotativo-certidoes.html?v=2.8.8"></iframe>
-  <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=2.7"></iframe>
-  <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=2.7"></iframe>
-  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=2.8.8"></iframe>
-  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=2.7"></iframe>
-  <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=2.7"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=2.8.8"></iframe>
+  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=3.0.0"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=3.0.0"></iframe>
+  <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=3.0.0"></iframe>
+  <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=3.0.0"></iframe>
+  <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=3.0.0"></iframe>
+  <iframe id="frameErb" class="module-frame" title="ERB Mapper Pro" data-src="erb.html?v=3.0.0"></iframe>
+  <iframe id="frameFundoRotativo" class="module-frame" title="Fundo Rotativo" data-src="fundo-rotativo-certidoes.html?v=3.0.0"></iframe>
+  <iframe id="frameFiltroIp" class="module-frame" title="Filtro de IPs" data-src="filtro-ip.html?v=3.0.0"></iframe>
+  <iframe id="frameQrCode" class="module-frame" title="Gerador de QR Code" data-src="qrcode.html?v=3.0.0"></iframe>
+  <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.0.0"></iframe>
+  <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
+  <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.0"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.0.0"></iframe>
+  <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
 </main>
 
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='2.8.10';
-const CENTRAL_VERSION_DATE='12/09/2026';
+const CENTRAL_VERSION=window.PCPRCore?.VERSION||'3.0.0';
+const CENTRAL_VERSION_DATE=window.PCPRCore?.VERSION_DATE||'12/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
 const homeVersion=document.getElementById('homeVersion');
@@ -586,7 +595,8 @@ const modules={
   envelopebusca:{frame:document.getElementById('frameEnvelopeBusca'),tab:document.querySelector('[data-key="envelopebusca"]'),min:1180},
   contatodppr:{frame:document.getElementById('frameContatoDpPr'),tab:document.querySelector('[data-key="contatodppr"]'),min:900},
   contatos:{frame:document.getElementById('frameContatos'),tab:document.querySelector('[data-key="contatos"]'),min:850},
-  atualizacoes:{frame:document.getElementById('frameAtualizacoes'),tab:document.querySelector('[data-key="atualizacoes"]'),min:900}
+  atualizacoes:{frame:document.getElementById('frameAtualizacoes'),tab:document.querySelector('[data-key="atualizacoes"]'),min:900},
+  historico:{frame:document.getElementById('frameHistorico'),tab:document.querySelector('[data-key="historico"]'),min:900}
 };
 const loading=document.getElementById('loading');
 
@@ -606,7 +616,8 @@ function trackModule(key){
       envelopebusca:'envelope_busca',
       contatodppr:'contato_dp_pr',
       contatos:'diretorio_contatos',
-      atualizacoes:'sobre_atualizacoes'
+      atualizacoes:'sobre_atualizacoes',
+      historico:'historico_documentos'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
   }catch(e){}
@@ -654,7 +665,7 @@ const homeScreen=document.getElementById('homeScreen');
 const homeBtn=document.getElementById('homeBtn');
 
 const MODULE_LABELS={
-  atualizacoes:'Atualizações', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
+  atualizacoes:'Atualizações', historico:'Histórico de Documentos', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas', fundorotativo:'Fundo Rotativo',
   filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code'
 };
@@ -895,7 +906,8 @@ if(!document.getElementById('backTop')){
 
   // Pesquisa ampliada por sinônimos/termos operacionais.
   const aliases={
-    atualizacoes:'novidades versão histórico mudanças melhoria',
+    atualizacoes:'novidades versão mudanças melhoria',
+    historico:'histórico documentos gerados enviados drive assinatura nome doc',
     configuracoes:'unidade delegacia dp autoridade delegado apj endereço email telefone regional subdivisão',
     contatodppr:'delegacia dp cidade telefone endereço contato unidade policial',
     contatos:'banco empresa instituição email telefone ofício contato',

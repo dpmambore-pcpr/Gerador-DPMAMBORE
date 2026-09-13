@@ -1,0 +1,18 @@
+Ao atualizar um repositório antigo para a Central PCPR v3.0.0, estes arquivos podem ser EXCLUÍDOS do GitHub porque não são mais utilizados:
+
+pcpr-docname-v288.js
+pcpr-drive-v285.js
+pcpr-drive-v286.js
+pcpr-drive-v287.js
+pwa-v285.js
+pwa-v286.js
+pwa-v287.js
+pwa-v288.js
+
+NÃO exclua:
+pcpr-core.js
+pcpr-config.js
+pcpr-drive.js
+pcpr-documento.js
+pwa.js
+service-worker.js

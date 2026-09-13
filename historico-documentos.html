@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Histórico de Documentos — Central PCPR</title>
+<script src="pcpr-core.js?v=3.0.0"></script>
+<style>
+:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70;--red:#9f2f2f;--ok:#2e6a53}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}button,input,select{font:inherit}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 16px 44px}.hero{border-radius:14px;background:linear-gradient(120deg,var(--ink),var(--green2));border-bottom:4px solid var(--gold);padding:18px 20px;color:#fff}.hero h1{margin:3px 0 5px;font-size:25px}.hero p{margin:0;color:#dce4e0;font-size:12px;line-height:1.45}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.stat{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px}.stat b{display:block;font-size:21px;color:var(--green2)}.stat span{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+.tools{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(150px,.7fr) minmax(150px,.7fr) auto auto auto;gap:8px;margin-bottom:12px}.tools input,.tools select{min-height:39px;border:1px solid #c9c3b7;border-radius:8px;background:#fff;padding:0 10px;color:#17202a}.btn{min-height:39px;border:1px solid #a89a77;border-radius:8px;background:#fffaf0;color:#183a31;padding:0 12px;font-weight:900;font-size:10px;cursor:pointer}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{border-color:#d7a8a8;color:var(--red);background:#fff7f7}
+.tablebox{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th{position:sticky;top:0;background:#183a31;color:#fff;text-align:left;font-size:9px;letter-spacing:.45px;text-transform:uppercase;padding:9px 8px}td{border-top:1px solid #ebe7de;padding:9px 8px;font-size:10.5px;vertical-align:top}tbody tr:hover{background:#fbfaf6}.name{font-weight:900;color:#183a31}.muted{color:var(--muted);font-size:9px}.tag{display:inline-flex;border-radius:999px;padding:3px 7px;font-size:8px;font-weight:900;white-space:nowrap}.tag.sent{background:#edf6f1;color:#246148}.tag.gen{background:#eef2f6;color:#315d7b}.tag.err{background:#fff0f0;color:#9f2f2f}.result{font-weight:900;color:var(--ok)}.result.err{color:#9f2f2f}.empty{display:none;text-align:center;padding:38px 12px;color:var(--muted)}.empty.show{display:block}.notice{margin-top:10px;color:var(--muted);font-size:9.5px;line-height:1.4}
+@media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.tools{grid-template-columns:1fr 1fr}.tools .wide{grid-column:1/-1}}@media(max-width:520px){.stats{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr}.tools .wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero"><h1>Histórico de Documentos</h1><p>Registro local de documentos gerados e enviados ao Google Drive. O conteúdo dos documentos não é armazenado neste histórico.</p></section>
+  <div class="stats"><div class="stat"><b id="sTotal">0</b><span>Registros</span></div><div class="stat"><b id="sGerados">0</b><span>Gerados</span></div><div class="stat"><b id="sEnviados">0</b><span>Enviados ao Drive</span></div><div class="stat"><b id="sHoje">0</b><span>Hoje</span></div></div>
+  <div class="tools">
+    <input class="wide" id="q" type="search" placeholder="Pesquisar NOME DOC, tipo, autoridade ou pasta...">
+    <select id="acao"><option value="">Todas as ações</option><option value="GERADO">Gerados</option><option value="ENVIADO_DRIVE">Enviados ao Drive</option><option value="ERRO_DRIVE">Erros de envio</option></select>
+    <select id="tipo"><option value="">Todos os tipos</option></select>
+    <button class="btn" id="csv" type="button">EXPORTAR CSV</button>
+    <button class="btn" id="json" type="button">EXPORTAR JSON</button>
+    <button class="btn danger" id="clear" type="button">LIMPAR</button>
+  </div>
+  <div class="tablebox"><table><thead><tr><th>Data/Hora</th><th>Tipo</th><th>NOME DOC</th><th>Autoridade</th><th>Ação</th><th>Formato</th><th>Pasta</th><th>Resultado</th></tr></thead><tbody id="rows"></tbody></table><div id="empty" class="empty">Nenhum registro encontrado.</div></div>
+  <div class="notice">🔒 Armazenamento local: este histórico fica somente neste navegador/dispositivo, em localStorage. Não guarda o conteúdo dos documentos, senhas ou tokens do Google.</div>
+</div>
+<script>
+(()=>{'use strict';const H=window.PCPRCore.history,$=s=>document.querySelector(s);let data=[];
+const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function fmtDate(iso){try{return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'medium'}).format(new Date(iso))}catch(_){return iso||''}}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function stats(){const today=new Date().toISOString().slice(0,10);$('#sTotal').textContent=data.length;$('#sGerados').textContent=data.filter(x=>x.acao==='GERADO').length;$('#sEnviados').textContent=data.filter(x=>x.acao==='ENVIADO_DRIVE').length;$('#sHoje').textContent=data.filter(x=>String(x.data||'').slice(0,10)===today).length}
+function types(){const sel=$('#tipo'),old=sel.value,arr=[...new Set(data.map(x=>x.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));sel.innerHTML='<option value="">Todos os tipos</option>'+arr.map(x=>`<option>${esc(x)}</option>`).join('');sel.value=arr.includes(old)?old:''}
+function render(){const q=norm($('#q').value),acao=$('#acao').value,tipo=$('#tipo').value;const rows=data.filter(x=>(!acao||x.acao===acao)&&(!tipo||x.tipo===tipo)&&(!q||norm([x.nomeDoc,x.arquivo,x.tipo,x.autoridade,x.pasta,x.resultado].join(' ')).includes(q)));$('#rows').innerHTML=rows.map(x=>`<tr><td>${esc(fmtDate(x.data))}</td><td>${esc(x.tipo)}</td><td><div class="name">${esc(x.nomeDoc||x.arquivo||'—')}</div><div class="muted">${esc(x.arquivo||'')}</div></td><td>${esc(x.autoridade||'—')}</td><td><span class="tag ${x.acao==='ENVIADO_DRIVE'?'sent':(x.acao==='ERRO_DRIVE'?'err':'gen')}">${x.acao==='ENVIADO_DRIVE'?'ENVIADO':(x.acao==='ERRO_DRIVE'?'ERRO':'GERADO')}</span></td><td>${esc(x.formato||'—')}</td><td>${esc(x.pasta||'—')}</td><td class="result ${x.resultado==='Erro'?'err':''}">${esc(x.resultado||'—')}</td></tr>`).join('');$('#empty').classList.toggle('show',rows.length===0)}
+function reload(){data=H.read();stats();types();render()}
+['#q','#acao','#tipo'].forEach(s=>$(s).addEventListener(s==='#q'?'input':'change',render));$('#csv').onclick=()=>H.exportCSV();$('#json').onclick=()=>H.exportJSON();$('#clear').onclick=()=>{if(confirm('Apagar todo o histórico local de documentos deste navegador?'))H.clear()};H.subscribe(reload);reload();})();
+</script>
+</body></html>

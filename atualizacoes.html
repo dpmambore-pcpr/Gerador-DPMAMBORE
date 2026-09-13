@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.0.0: núcleo compartilhado + histórico local de documentos -->
 <!-- v2.8.10: solicitação de KEY/ID integrada ao Gmail -->
 <!-- v2.8.9: simplificação da integração Google para compartilhamento entre DPs -->
 <!-- v2.8.8: nome obrigatório dos documentos -->
@@ -55,7 +56,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.10</span>
+      <span class="version">VERSÃO ATUAL · v3.0.0</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -68,8 +69,20 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.10">
-        <div class="item-head"><span class="item-ver">v2.8.10</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">SOLICITAÇÃO POR GMAIL</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.0.0">
+        <div class="item-head"><span class="item-ver">v3.0.0</span><span class="item-date">12/09/2026</span><span class="tag new">NÚCLEO CENTRAL</span><span class="tag improve">HISTÓRICO</span><span class="badge">ATUAL</span></div>
+        <h3>Núcleo compartilhado e Histórico de Documentos</h3>
+        <ul>
+          <li>Consolidados os arquivos compartilhados da Central em <b>pcpr-core.js</b>, <b>pcpr-config.js</b>, <b>pcpr-drive.js</b>, <b>pcpr-documento.js</b> e <b>pwa.js</b>, todos na mesma versão.</li>
+          <li>Removidos os arquivos antigos paralelos de Drive, PWA e NOME DOC que existiam como v285, v286, v287 e v288, reduzindo conflitos de cache e divergência entre módulos.</li>
+          <li>Novo módulo <b>Histórico de Documentos</b>, com registro local de documentos gerados e PDFs enviados ao Google Drive.</li>
+          <li>O histórico registra data/hora, tipo, NOME DOC, autoridade, ação, formato, pasta e resultado, sem armazenar o conteúdo do documento.</li>
+          <li>Incluídos filtros, pesquisa, contadores e exportação do histórico em CSV ou JSON.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="2.8.10">
+        <div class="item-head"><span class="item-ver">v2.8.10</span><span class="item-date">12/09/2026</span><span class="tag new">GOOGLE DRIVE</span><span class="tag improve">SOLICITAÇÃO POR GMAIL</span></div>
         <div class="item-body">O botão <b>SOLICITAR KEY / ID</b> agora abre o Gmail com o destinatário <b>dpmambore@pc.pr.gov.br</b>, assunto e mensagem de solicitação já preenchidos. O e-mail de contato também fica visível na área de integração. Se a nova aba for bloqueada, a Central tenta abrir o aplicativo de e-mail padrão.</div>
       </article>
 
@@ -79,7 +92,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
       </article>
 
       <article class="item" data-version="2.8.8">
-        <div class="item-head"><span class="item-ver">v2.8.8</span><span class="item-date">12/09/2026</span><span class="tag new">DOCUMENTOS</span><span class="tag improve">NOME OBRIGATÓRIO</span><span class="badge">ATUAL</span></div>
+        <div class="item-head"><span class="item-ver">v2.8.8</span><span class="item-date">12/09/2026</span><span class="tag new">DOCUMENTOS</span><span class="tag improve">NOME OBRIGATÓRIO</span></div>
         <h3>Campo NOME DOC obrigatório em todos os geradores de documentos</h3>
         <ul>
           <li>Adicionado o campo <b>NOME DOC</b> imediatamente antes das ações de salvar, baixar, imprimir em PDF ou enviar para a nuvem.</li>
@@ -93,7 +106,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
         <p>O Google Drive agora tenta reaproveitar silenciosamente a autorização já concedida. A seleção de conta e a tela de consentimento só aparecem novamente quando o próprio Google exigir nova autenticação.</p>
       </article>
       <article class="item" data-version="2.8.6">
-        <div class="item-head"><span class="item-ver">v2.8.6</span><span class="item-date">12/09/2026</span><span class="tag fix">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span><span class="badge">ATUAL</span></div>
+        <div class="item-head"><span class="item-ver">v2.8.6</span><span class="item-date">12/09/2026</span><span class="tag fix">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span></div>
         <h3>Persistência da pasta e identificação correta do Delegado</h3>
         <ul>
           <li>Corrigida a identificação da autoridade quando módulos antigos enviavam o nome da unidade, como <b>Delegacia de Mamborê</b>, em vez do nome do Delegado.</li>
@@ -168,7 +181,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
       </article>
 
       <article class="item" data-version="2.7">
-        <div class="item-head"><span class="item-ver">v2.7</span><span class="item-date">12/09/2026</span><span class="tag improve">MELHORIA</span><span class="badge">ATUAL</span></div>
+        <div class="item-head"><span class="item-ver">v2.7</span><span class="item-date">12/09/2026</span><span class="tag improve">MELHORIA</span></div>
         <h3>Configuração Geral integrada em toda a Central</h3>
         <ul>
           <li>A <b>Configuração Geral da Unidade</b> passa a ser a fonte principal de cabeçalho, brasão/logo, rodapé, autoridade e servidores dos módulos integrados.</li>

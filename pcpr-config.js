@@ -1,6 +1,7 @@
 
 (function(global){
 'use strict';
+const VERSION='3.0.0';
 const KEY='pcpr.configGeralUnidade.v1';
 const REV_KEY='pcpr.configGeralRev.v2';
 const CHANNEL='pcpr-config-geral-v2';
@@ -134,5 +135,5 @@ function onChange(fn){
   let bc=null;try{if('BroadcastChannel' in global){bc=new BroadcastChannel(CHANNEL);bc.onmessage=()=>fn(get())}}catch(_){}
   return ()=>{global.removeEventListener('storage',sh);global.removeEventListener('pcpr:config-changed',eh);try{bc&&bc.close()}catch(_){}};
 }
-global.PCPRConfig={KEY,REV_KEY,DEFAULT:clone(DEFAULT),normalize,get,save,reset,headerLines,footerLines,authority,servers,apjs,onChange,syncLegacy};
+global.PCPRConfig={VERSION,KEY,REV_KEY,DEFAULT:clone(DEFAULT),normalize,get,save,reset,headerLines,footerLines,authority,servers,apjs,onChange,syncLegacy};
 })(window);
