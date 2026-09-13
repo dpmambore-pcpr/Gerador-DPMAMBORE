@@ -43,13 +43,15 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v2.8.6: correção do Drive -->
+
 <div class="wrap">
   <section class="hero">
     <div class="kicker">Central Integrada PCPR</div>
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.5</span>
+      <span class="version">VERSÃO ATUAL · v2.8.6</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -62,8 +64,19 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.5">
-        <div class="item-head"><span class="item-ver">v2.8.5</span><span class="item-date">12/09/2026</span><span class="tag improve">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.8.6">
+        <div class="item-head"><span class="item-ver">v2.8.6</span><span class="item-date">12/09/2026</span><span class="tag fix">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span><span class="badge">ATUAL</span></div>
+        <h3>Persistência da pasta e identificação correta do Delegado</h3>
+        <ul>
+          <li>Corrigida a identificação da autoridade quando módulos antigos enviavam o nome da unidade, como <b>Delegacia de Mamborê</b>, em vez do nome do Delegado.</li>
+          <li>O destino passa a usar a autoridade padrão da Configuração Geral quando o documento é de assinatura da Autoridade Policial e há apenas um Delegado cadastrado ou o valor recebido é institucional.</li>
+          <li>O link e a autorização da pasta do Google Drive passam a ser salvos imediatamente neste navegador após a autorização.</li>
+          <li>Adicionado botão visível <b>SALVAR CONFIGURAÇÃO GERAL</b> ao final da seção 6, incluindo OAuth Client ID, API Key, Project Number e pastas de assinatura.</li>
+          <li>Atualizado o cache do PWA para <b>v2.8.6</b>.</li>
+        </ul>
+      </article>
+      <article class="item" data-version="2.8.5">
+        <div class="item-head"><span class="item-ver">v2.8.5</span><span class="item-date">12/09/2026</span><span class="tag improve">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span></div>
         <ul>
           <li>Corrigido o erro <b>PCPRDrive.uploadElementsPdfForAuthority is not a function</b> em Fundo Rotativo, Perícia, Oitiva e Ofício de Diária.</li>
           <li>O módulo do Drive passa a usar um arquivo versionado próprio para escapar do cache antigo do PWA.</li>

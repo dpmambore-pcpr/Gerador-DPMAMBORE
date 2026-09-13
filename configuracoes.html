@@ -115,6 +115,8 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="backup-box"><h3>Levar configuração para outro computador</h3><p>Exporte um arquivo JSON com cabeçalho, logo, rodapé, autoridades, servidores e destinos de assinatura configurados neste navegador.</p><div class="actions"><button id="export" class="secondary" type="button">Exportar configuração</button><input id="importFile" type="file" accept="application/json,.json" hidden><button id="importBtn" class="secondary" type="button">Importar configuração</button></div></div>
 <div class="backup-box"><h3>Restaurar configuração original</h3><p>Restaura somente a Configuração Geral. Não apaga formulários, históricos, projetos nem personalizações específicas dos módulos.</p><button id="reset" class="danger" type="button">Restaurar configuração original</button></div>
 </div>
+<div class="actions" style="margin-top:12px"><button id="saveBottom" class="gold" type="button" style="min-width:260px">SALVAR CONFIGURAÇÃO GERAL</button></div>
+<div class="note">Use este botão antes de sair desta tela. Ele salva também OAuth Client ID, API Key, Project Number e os links das pastas das autoridades.</div>
 <div class="status" id="status"></div>
 </section>
 </main>
@@ -122,7 +124,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="sticky-save"><div class="sticky-inner"><div class="sticky-text"><b>Configuração Geral da Central:</b> cabeçalho, brasão, rodapé, autoridade e servidores serão reutilizados pelos módulos integrados.</div><button id="save" class="gold" type="button">Salvar e aplicar em toda a Central</button></div></div>
 
 <script src="pcpr-config.js?v=2.8.4"></script>
-<script src="pcpr-drive-v285.js?v=2.8.5"></script>
+<script src="pcpr-drive-v286.js?v=2.8.6"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -158,6 +160,13 @@ function rowButton(txt,cls,fn){const b=document.createElement('button');b.type='
 function renderAuthorities(){const box=$('delegados');box.innerHTML='';autoridades.forEach((a,i)=>{const row=document.createElement('div');row.className='rowitem'+(i===0?' default':'');const info=document.createElement('div');info.className='rowinfo';info.innerHTML=`<div class="rowname">${i===0?'★ ':''}${escapeHtml(a.nome)}</div><div class="rowrole">${escapeHtml(a.cargo||'Cargo não informado')}</div>${a.complemento?`<div class="rowextra">${escapeHtml(a.complemento)}</div>`:''}`;const acts=document.createElement('div');acts.className='rowactions';acts.append(rowButton('Definir padrão','secondary',()=>{if(i>0){const x=autoridades.splice(i,1)[0];autoridades.unshift(x);renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();}}),rowButton('Editar','secondary',()=>{const nome=prompt('Nome da autoridade:',a.nome);if(nome===null)return;const cargo=prompt('Cargo:',a.cargo||'Delegado de Polícia');if(cargo===null)return;const complemento=prompt('Assinatura complementar (opcional):',a.complemento||'');if(complemento===null)return;if(nome.trim()){autoridades[i]={...a,nome:nome.trim(),cargo:cargo.trim(),complemento:complemento.trim()};renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();}}),rowButton('↑','secondary',()=>{if(i>0){[autoridades[i-1],autoridades[i]]=[autoridades[i],autoridades[i-1]];renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();}}),rowButton('↓','secondary',()=>{if(i<autoridades.length-1){[autoridades[i+1],autoridades[i]]=[autoridades[i],autoridades[i+1]];renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();}}),rowButton('Excluir','danger',()=>{if(autoridades.length<=1)return alert('Mantenha ao menos uma autoridade cadastrada.');if(confirm('Excluir '+a.nome+'?')){autoridades.splice(i,1);renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();}}));row.append(info,acts);box.appendChild(row);})}
 function renderServers(){const box=$('servidores');box.innerHTML='';servidores.forEach((s,i)=>{const row=document.createElement('div');row.className='rowitem';const info=document.createElement('div');info.className='rowinfo';info.innerHTML=`<div class="rowname">${escapeHtml(s.nome)}</div><div class="rowrole">${escapeHtml(s.cargo||'Cargo não informado')}</div>`;const acts=document.createElement('div');acts.className='rowactions';acts.append(rowButton('Editar','secondary',()=>{const nome=prompt('Nome do servidor:',s.nome);if(nome===null)return;const cargo=prompt('Cargo:',s.cargo||'APJ - Agente de Polícia Judiciária');if(cargo===null)return;if(nome.trim()){servidores[i]={nome:nome.trim(),cargo:cargo.trim()};renderServers();}}),rowButton('↑','secondary',()=>{if(i>0){[servidores[i-1],servidores[i]]=[servidores[i],servidores[i-1]];renderServers();}}),rowButton('↓','secondary',()=>{if(i<servidores.length-1){[servidores[i+1],servidores[i]]=[servidores[i],servidores[i+1]];renderServers();}}),rowButton('Excluir','danger',()=>{if(confirm('Excluir '+s.nome+'?')){servidores.splice(i,1);renderServers();}}));row.append(info,acts);box.appendChild(row);})}
 
+function persistDriveOnly(message){
+  const base=API.get();
+  const next={...base,drive:{clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim(),scope:'https://www.googleapis.com/auth/drive.file'},autoridades:normalizeAuthorities(autoridades)};
+  cfg=API.save(next);
+  if(message)status(message);
+  return cfg;
+}
 function renderDriveAuthorities(){
   const box=$('driveAuthorities');if(!box)return;box.innerHTML='';
   autoridades.forEach((a,i)=>{
@@ -166,13 +175,16 @@ function renderDriveAuthorities(){
     row.innerHTML=`<div class="drive-authority-head"><div><div class="drive-authority-name">${escapeHtml(a.nome)}</div><div class="drive-authority-role">${escapeHtml(a.cargo||'Cargo não informado')}</div></div><span class="badge">${configured?(authorized?'AUTORIZADA':'LINK SALVO'):'NÃO CONFIGURADA'}</span></div><label>Link da pasta para assinatura<input class="drive-link" data-i="${i}" value="${escapeHtml(a.driveFolderUrl||'')}" placeholder="https://drive.google.com/drive/folders/..."></label><div class="drive-folder-status ${authorized?'ok':configured?'warn':''}">${configured?'ID: '+escapeHtml(a.driveFolderId)+(a.driveFolderName?' · '+escapeHtml(a.driveFolderName):''):'Cole o link da pasta que receberá os PDFs para assinatura.'}</div><div class="drive-actions"><button type="button" class="secondary drive-auth" data-i="${i}">Autorizar pasta</button><button type="button" class="secondary drive-open" data-i="${i}" ${configured?'':'disabled'}>Abrir pasta</button><button type="button" class="danger drive-clear" data-i="${i}" ${configured?'':'disabled'}>Limpar</button></div>`;
     box.appendChild(row);
   });
-  box.querySelectorAll('.drive-link').forEach(inp=>inp.addEventListener('input',()=>{
-    const i=Number(inp.dataset.i),id=window.PCPRDrive?.extractFolderId(inp.value)||'';
-    autoridades[i]={...autoridades[i],driveFolderUrl:inp.value.trim(),driveFolderId:id,driveFolderName:id===autoridades[i].driveFolderId?autoridades[i].driveFolderName:'',driveFolderAuthorized:id===autoridades[i].driveFolderId?autoridades[i].driveFolderAuthorized:false};
-    const st=inp.closest('.drive-authority').querySelector('.drive-folder-status');st.textContent=id?'ID identificado: '+id:'Cole um link válido do Google Drive.';st.className='drive-folder-status '+(id?'warn':'');
-  }));
+  box.querySelectorAll('.drive-link').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const i=Number(inp.dataset.i),oldId=autoridades[i]?.driveFolderId||'',id=window.PCPRDrive?.extractFolderId(inp.value)||'';
+      autoridades[i]={...autoridades[i],driveFolderUrl:inp.value.trim(),driveFolderId:id,driveFolderName:id===oldId?autoridades[i].driveFolderName:'',driveFolderAuthorized:id===oldId?autoridades[i].driveFolderAuthorized:false};
+      const st=inp.closest('.drive-authority').querySelector('.drive-folder-status');st.textContent=id?'ID identificado: '+id:'Cole um link válido do Google Drive.';st.className='drive-folder-status '+(id?'warn':'');
+    });
+    inp.addEventListener('change',()=>{if(window.PCPRDrive?.extractFolderId(inp.value))persistDriveOnly('Link da pasta salvo neste navegador.');});
+  });
   box.querySelectorAll('.drive-open').forEach(b=>b.onclick=()=>{const a=autoridades[Number(b.dataset.i)];if(a?.driveFolderId)window.open(window.PCPRDrive.folderUrl(a.driveFolderId),'_blank','noopener');});
-  box.querySelectorAll('.drive-clear').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i);autoridades[i]={...autoridades[i],driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false};renderDriveAuthorities();});
+  box.querySelectorAll('.drive-clear').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.i);autoridades[i]={...autoridades[i],driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false};persistDriveOnly();renderDriveAuthorities();status('Destino de assinatura removido e salvo.');});
   box.querySelectorAll('.drive-auth').forEach(b=>b.onclick=async()=>{
     const i=Number(b.dataset.i),a=autoridades[i];
     const drive={clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim()};
@@ -184,11 +196,12 @@ function renderDriveAuthorities(){
       const picked=await window.PCPRDrive.pickFolder(drive,id);
       if(picked.id!==id&&!confirm('A pasta selecionada no Google é diferente do link colado. Deseja usar a pasta selecionada?'))return;
       autoridades[i]={...a,driveFolderId:picked.id,driveFolderUrl:picked.url,driveFolderName:picked.name||'',driveFolderAuthorized:true};
-      renderDriveAuthorities();status('Pasta de '+a.nome+' autorizada. Clique em Salvar para aplicar.');
+      persistDriveOnly();renderDriveAuthorities();status('Pasta de '+a.nome+' autorizada e salva neste navegador.');
     }catch(e){status(e.message||String(e),true)}finally{if(document.body.contains(b)){b.disabled=false;b.textContent='Autorizar pasta';}}
   });
 }
 
+['driveClientId','driveApiKey','driveAppId'].forEach(id=>$(id).addEventListener('change',()=>persistDriveOnly('Configuração técnica do Google salva neste navegador.')));
 $('addDelegado').onclick=()=>{const nome=$('novoDelegado').value.trim(),cargo=$('novoCargo').value;if(!nome)return alert('Informe o nome da autoridade.');if(autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Essa autoridade já está cadastrada.');autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});if(!servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))servidores.push({nome,cargo});$('novoDelegado').value='';renderAuthorities();renderServers();renderDriveAuthorities();updateSummary();updatePreview();};
 $('addServidor').onclick=()=>{const nome=$('novoServidor').value.trim(),cargo=$('novoServidorCargo').value;if(!nome)return alert('Informe o nome do servidor.');if(servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Esse servidor já está cadastrado.');servidores.push({nome,cargo});if(/^Delegad[oa]/i.test(cargo)&&!autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});$('novoServidor').value='';renderServers();renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();};
 
@@ -202,7 +215,8 @@ $('restoreFooter').onclick=()=>{['logradouro','numero','bairro','cep','email','f
 $('restoreAuthorities').onclick=()=>{autoridades=clone(DEF.autoridades);renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();status('Autoridades originais restauradas no formulário.');};
 $('restoreServers').onclick=()=>{servidores=clone(DEF.servidores);renderServers();status('Servidores originais restaurados no formulário.');};
 
-$('save').onclick=()=>{const c=readForm();if(!c.unidade||!c.cidade||!c.uf)return status('Preencha unidade, cidade e UF.',true);if(c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))return status('Verifique o e-mail institucional.',true);cfg=API.save(c);fill();status('Configuração Geral salva e sincronizada, incluindo os destinos de assinatura do Google Drive deste navegador. Personalizações específicas dos módulos foram preservadas.');};
+function saveAll(){const c=readForm();if(!c.unidade||!c.cidade||!c.uf)return status('Preencha unidade, cidade e UF.',true);if(c.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email))return status('Verifique o e-mail institucional.',true);cfg=API.save(c);fill();status('Configuração Geral salva e sincronizada, incluindo credenciais técnicas e destinos de assinatura do Google Drive deste navegador. Personalizações específicas dos módulos foram preservadas.');}
+$('save').onclick=saveAll;$('saveBottom').onclick=saveAll;
 $('reset').onclick=()=>{if(!confirm('Deseja realmente restaurar a configuração original da Central PCPR? As configurações gerais personalizadas serão substituídas. As configurações específicas dos módulos e os dados operacionais não serão apagados.'))return;cfg=API.reset();fill();status('Configuração Geral original restaurada.');};
 $('export').onclick=()=>{const c=readForm(),b=new Blob([JSON.stringify(c,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='CONFIGURACAO_GERAL_PCPR_v2.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1200);};
 $('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text());cfg=API.normalize(x.config||x);fill();status('Configuração importada no formulário. Clique em Salvar para aplicar em toda a Central.');}catch(_){status('Arquivo de configuração inválido.',true)}e.target.value='';};

@@ -42,3 +42,9 @@ A v2.8.3 acrescentou configuração local por autoridade para pasta de assinatur
 ## v2.8.4 — envio para assinatura em todos os documentos da Autoridade Policial
 
 A v2.8.4 amplia o botão **Enviar para pasta** aos geradores de Coffee Break, Ofício de Diária, Oitiva em Penitenciária, Perícia e Justificativa do Fundo Rotativo. O gerador de Ofícios mantém a integração já existente. Módulos assinados somente por APJ/servidor não recebem esse botão. As pastas continuam sendo configuradas localmente por autoridade na Configuração Geral.
+
+
+## v2.8.6
+- Corrige identificação da autoridade de assinatura no Google Drive, inclusive para módulos antigos que enviavam o nome da unidade.
+- A autorização e o link da pasta passam a ser persistidos imediatamente.
+- A seção 6 da Configuração Geral ganhou botão visível “SALVAR CONFIGURAÇÃO GERAL”.
