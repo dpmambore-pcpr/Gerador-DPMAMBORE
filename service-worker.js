@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v2.8.7';
+const CACHE_VERSION='pcpr-central-v2.8.8';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -37,10 +37,12 @@ const CORE_FILES=[
   './pcpr-drive.js',
   './pcpr-drive-v285.js',
   './pcpr-drive-v287.js',
+  './pcpr-docname-v288.js',
   './pericia.html',
   './pwa.js',
   './pwa-v285.js',
   './pwa-v286.js',
+  './pwa-v288.js',
   './qrcode.html',
   './reconhecimento-fotografico.html',
   './relatorio-viagem.html'

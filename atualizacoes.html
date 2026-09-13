@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v2.8.8: nome obrigatório dos documentos -->
 <!-- v2.8.7: autorização silenciosa do Google Drive -->
 <!-- v2.8.6: correção do Drive -->
 
@@ -52,7 +53,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v2.8.7</span>
+      <span class="version">VERSÃO ATUAL · v2.8.8</span>
       <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -65,8 +66,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="2.8.7">
-        <div class="item-head"><span class="item-ver">v2.8.7</span><span class="item-date">12/09/2026</span><span class="tag fix">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="2.8.8">
+        <div class="item-head"><span class="item-ver">v2.8.8</span><span class="item-date">12/09/2026</span><span class="tag new">DOCUMENTOS</span><span class="tag improve">NOME OBRIGATÓRIO</span><span class="badge">ATUAL</span></div>
+        <h3>Campo NOME DOC obrigatório em todos os geradores de documentos</h3>
+        <ul>
+          <li>Adicionado o campo <b>NOME DOC</b> imediatamente antes das ações de salvar, baixar, imprimir em PDF ou enviar para a nuvem.</li>
+          <li>O documento não pode ser salvo, baixado, impresso em PDF ou enviado ao Google Drive enquanto o nome estiver vazio.</li>
+          <li>O nome informado passa a ser utilizado no arquivo gerado, preservando automaticamente a extensão correta (.pdf, .odt ou .zip).</li>
+          <li>A regra foi aplicada aos geradores de Ofícios, Coffee Break, Diárias, Oitiva, Perícia, Fundo Rotativo, Diário de Bordo, Relatório de Viagem, Reconhecimento Fotográfico, Laudo de Lesões, Envelope de Busca e Auto de Arrecadação.</li>
+        </ul>
+      </article>
+      <article class="item" data-version="2.8.7">
+        <div class="item-head"><span class="item-ver">v2.8.7</span><span class="item-date">12/09/2026</span><span class="tag fix">CORREÇÃO</span><span class="tag new">GOOGLE DRIVE</span></div>
         <p>O Google Drive agora tenta reaproveitar silenciosamente a autorização já concedida. A seleção de conta e a tela de consentimento só aparecem novamente quando o próprio Google exigir nova autenticação.</p>
       </article>
       <article class="item" data-version="2.8.6">

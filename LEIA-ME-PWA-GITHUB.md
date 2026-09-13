@@ -48,3 +48,8 @@ A v2.8.4 amplia o botão **Enviar para pasta** aos geradores de Coffee Break, Of
 - Corrige identificação da autoridade de assinatura no Google Drive, inclusive para módulos antigos que enviavam o nome da unidade.
 - A autorização e o link da pasta passam a ser persistidos imediatamente.
 - A seção 6 da Configuração Geral ganhou botão visível “SALVAR CONFIGURAÇÃO GERAL”.
+
+
+## v2.8.8 — Nome obrigatório dos documentos
+
+Todos os geradores de documentos exibem o campo **NOME DOC** antes das ações de saída. Sem preenchê-lo, a Central bloqueia salvar/baixar, imprimir em PDF e enviar para a nuvem. O nome digitado é usado no arquivo final e a extensão é acrescentada automaticamente.
