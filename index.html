@@ -352,13 +352,13 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 .pwa-update-toast button{margin-left:8px;border:1px solid #183a31;border-radius:7px;background:#285748;color:#fff;padding:6px 9px;font-weight:800;cursor:pointer}
 @media(max-width:650px){.pwa-install-row{align-items:stretch}.pwa-install-btn{width:100%}.pwa-install-hint{text-align:center}}
 </style>
-<script src="pwa-v288.js?v=2.8.9" defer></script>
+<script src="pwa-v288.js?v=2.8.10" defer></script>
 <script src="pcpr-config.js?v=2.8.4"></script>
 </head>
 <body class="home-mode">
 <nav class="module-nav" aria-label="Módulos dos Geradores PCPR">
   <div class="nav-inner">
-    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.8.9 · 12/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
+    <div class="brand"><div class="brand-mark">PCPR</div><span class="nav-label">Geradores PCPR</span><span class="configured-unit" id="configuredUnit" title="Unidade configurada na Central">📍 DP Mamborê/PR</span><span class="version-badge" id="centralVersion">v2.8.10 · 12/09/2026</span></div><div class="nav-clock" aria-label="Data e hora atuais"><div class="clock-icon" aria-hidden="true">◷</div><div class="clock-text"><div class="clock-time" id="liveClock">--:--:--</div><div class="clock-date" id="liveDate">--/--/----</div></div></div>
     <div class="credit-line credit-origin">
   <strong>Idealizado e desenvolvido na Delegacia de Polícia de Mamborê/PR</strong>
   <small>Desenvolvimento colaborativo • DP Mamborê/PR 🤝</small>
@@ -411,7 +411,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
           </div>
-          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.8.9</div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v2.8.10</div>
         </div>
         <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
         <details class="security-details">
@@ -500,7 +500,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
   </section>
 
   <div id="loading" class="loading hide">Carregando…</div>
-  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=2.8.9"></iframe>
+  <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=2.8.10"></iframe>
   <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=2.8.8"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=2.8.8"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=2.7"></iframe>
@@ -518,7 +518,7 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION='2.8.9';
+const CENTRAL_VERSION='2.8.10';
 const CENTRAL_VERSION_DATE='12/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;

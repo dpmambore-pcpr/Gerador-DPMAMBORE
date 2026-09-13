@@ -54,6 +54,10 @@ A v2.8.4 amplia o botão **Enviar para pasta** aos geradores de Coffee Break, Of
 
 Todos os geradores de documentos exibem o campo **NOME DOC** antes das ações de saída. Sem preenchê-lo, a Central bloqueia salvar/baixar, imprimir em PDF e enviar para a nuvem. O nome digitado é usado no arquivo final e a extensão é acrescentada automaticamente.
 
+## v2.8.10 — Solicitar KEY / ID por Gmail
+
+O botão **SOLICITAR KEY / ID** abre o Gmail com o destinatário `dpmambore@pc.pr.gov.br`, assunto e mensagem de solicitação já preenchidos. O e-mail também fica visível na Configuração Geral. Se o navegador bloquear a nova aba, a Central tenta abrir o aplicativo de e-mail padrão.
+
 ## v2.8.9 — Google Drive simplificado para outras DPs
 
 A Configuração Geral separa a integração técnica da Central das pastas de cada unidade. OAuth Client ID, API Key e Project Number ficam recolhidos em **Configuração avançada / usar credenciais próprias**. O responsável pode exportar somente esses três identificadores em `INTEGRACAO_GOOGLE_CENTRAL_PCPR.json`; outra DP importa esse arquivo e depois informa apenas o link da sua própria pasta e autoriza com a própria conta Google. O botão **SOLICITAR KEY / ID** copia uma mensagem pronta para pedir esse arquivo ao responsável. Nenhuma senha, Client Secret, token ou pasta de outra DP é incluída no arquivo de integração.

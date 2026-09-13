@@ -97,7 +97,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <section class="card">
 <div class="section-head"><h2>5. Google Drive — assinatura de documentos</h2><span class="badge">OPCIONAL</span></div>
 <div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe a integração da Central ou use a configuração avançada.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="exportDriveTechBtn" class="secondary" type="button">EXPORTAR INTEGRAÇÃO GOOGLE</button><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR KEY / ID</button></div></div>
-<div class="request-note" id="driveRequestNote"><b>Para outra DP:</b> solicite ao responsável pela Central PCPR o arquivo de integração Google. Depois use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b>. A unidade não precisa criar outro Google Cloud; após importar, cada DP informa somente o link da própria pasta e autoriza com a própria conta Google.</div>
+<div class="request-note show" id="driveRequestNote"><b>Para outra DP:</b> solicite ao responsável pela Central PCPR o arquivo de integração Google. Depois use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b>. A unidade não precisa criar outro Google Cloud; após importar, cada DP informa somente o link da própria pasta e autoriza com a própria conta Google.<br><b>E-mail para solicitação:</b> dpmambore@pc.pr.gov.br</div>
 <div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> informe somente a pasta que receberá os documentos da autoridade. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador e não alteram as pastas das demais unidades.</div>
 <div class="drive-grid" id="driveAuthorities"></div>
 <details class="technical" id="driveAdvanced">
@@ -217,7 +217,28 @@ function renderDriveAuthorities(){
 $('exportDriveTechBtn').onclick=()=>{const d=currentDriveTech();if(!driveTechReady(d))return status('Preencha OAuth Client ID, API Key e Project Number na Configuração avançada antes de exportar a integração.',true);downloadJson({schema:'pcpr-central-google-drive-v1',app:'Central PCPR',drive:d},'INTEGRACAO_GOOGLE_CENTRAL_PCPR.json');status('Arquivo de integração Google exportado. Ele contém somente os identificadores técnicos da aplicação, sem pasta de nenhuma DP e sem token de acesso.');};
 $('importDriveTechBtn').onclick=()=>$('importDriveTechFile').click();
 $('importDriveTechFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text()),d=normalizeDriveImport(x);if(!driveTechReady(d))throw new Error('Arquivo sem OAuth Client ID, API Key ou Project Number.');$('driveClientId').value=d.clientId;$('driveApiKey').value=d.apiKey;$('driveAppId').value=d.appId;persistDriveOnly();updateDriveIntegrationStatus();status('Integração Google importada e salva. Agora informe somente o link da pasta de cada autoridade.');}catch(err){status(err.message||'Arquivo de integração Google inválido.',true)}e.target.value='';};
-$('requestDriveTechBtn').onclick=async()=>{const note=$('driveRequestNote');note.classList.toggle('show');const msg='Olá. Solicito o arquivo de integração Google da Central PCPR (OAuth Client ID, API Key restrita e Project Number/App ID) para habilitar o envio de documentos ao Google Drive nesta unidade. Não é necessário enviar Client Secret, senha ou token.';try{await navigator.clipboard.writeText(msg);status('Texto de solicitação copiado. Envie ao responsável pela Central PCPR.');}catch(_){status('Use a orientação exibida abaixo para solicitar a integração ao responsável pela Central PCPR.');}};
+$('requestDriveTechBtn').onclick=async()=>{
+  const to='dpmambore@pc.pr.gov.br';
+  const subject='Solicitação de integração Google Drive — Central PCPR';
+  const body=`Olá,
+
+Solicito o arquivo de integração Google da Central PCPR (OAuth Client ID, API Key restrita e Project Number/App ID) para habilitar o envio de documentos ao Google Drive nesta unidade.
+
+Unidade Policial: ______________________________
+Município/PR: _________________________________
+Responsável pela solicitação: __________________
+
+Não é necessário enviar Client Secret, senha ou token.
+
+Atenciosamente.`;
+  const gmail='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  const mailto='mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  const win=window.open(gmail,'_blank');
+  if(win){try{win.opener=null}catch(_){}}
+  else window.location.href=mailto;
+  try{await navigator.clipboard.writeText(body)}catch(_){}
+  status('Gmail aberto com o e-mail dpmambore@pc.pr.gov.br, assunto e mensagem já preenchidos. Se a nova aba não abrir, permita pop-ups para este site.');
+};
 $('addDelegado').onclick=()=>{const nome=$('novoDelegado').value.trim(),cargo=$('novoCargo').value;if(!nome)return alert('Informe o nome da autoridade.');if(autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Essa autoridade já está cadastrada.');autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});if(!servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))servidores.push({nome,cargo});$('novoDelegado').value='';renderAuthorities();renderServers();renderDriveAuthorities();updateSummary();updatePreview();};
 $('addServidor').onclick=()=>{const nome=$('novoServidor').value.trim(),cargo=$('novoServidorCargo').value;if(!nome)return alert('Informe o nome do servidor.');if(servidores.some(s=>s.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))return alert('Esse servidor já está cadastrado.');servidores.push({nome,cargo});if(/^Delegad[oa]/i.test(cargo)&&!autoridades.some(a=>a.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR')))autoridades.push({nome,cargo,complemento:'',driveFolderUrl:'',driveFolderId:'',driveFolderName:'',driveFolderAuthorized:false});$('novoServidor').value='';renderServers();renderAuthorities();renderDriveAuthorities();updateSummary();updatePreview();};
 
