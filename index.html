@@ -499,24 +499,22 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
     </button>
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
-      <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
-
       <button class="module-tab" data-key="googleanalise" type="button">Análise Google</button>
-      <button class="module-tab" data-key="historico" type="button">Histórico de Documentos</button>
-      <button class="module-tab" data-key="transcritor" type="button">Transcritor</button>
+      <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
-      <button class="module-tab" data-key="contatodppr" type="button">Contatos DP PR</button>
-      <button class="module-tab" data-key="contatos" type="button">Contatos Institucionais</button>
       <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
       <button class="module-tab" data-key="operadora" type="button">Consulta Operadora</button>
+      <button class="module-tab" data-key="contatodppr" type="button">Contatos DP PR</button>
+      <button class="module-tab" data-key="contatos" type="button">Contatos Institucionais</button>
       <button class="module-tab" data-key="envelopebusca" type="button">Envelope de Busca</button>
       <button class="module-tab" data-key="erb" type="button">ERB / Antenas</button>
-      <button class="module-tab" data-key="fundorotativo" type="button">Fundo Rotativo</button>
       <button class="module-tab" data-key="filtroip" type="button">Filtro IP</button>
+      <button class="module-tab" data-key="fundorotativo" type="button">Fundo Rotativo</button>
+      <button class="module-tab" data-key="historico" type="button">Histórico de Documentos</button>
       <button class="module-tab" data-key="lesoes" type="button">Laudo de lesões</button>
       <button class="module-tab" data-key="oficios" type="button">Ofícios</button>
       <button class="module-tab" data-key="qrcode" type="button">QR Code</button>
-
+      <button class="module-tab" data-key="transcritor" type="button">Transcritor</button>
       <a class="module-tab external-link" id="suggestionsNav" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" title="Formulário externo do Google Forms — não envie dados sigilosos">💡 Sugestões · externo ↗</a>
     </div>
   </div>
@@ -549,47 +547,21 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         </details>
       </div>
       <div class="module-grid">
-      <button class="module-card update-card" type="button" data-open-module="atualizacoes">
-        <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Atualizações</div>
-        <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
-      </button>
-
       <button class="module-card" type="button" data-open-module="googleanalise">
         <div class="card-top"><div class="card-icon">GG</div><div class="card-arrow">›</div></div>
         <div class="card-title">Analisador de Respostas Google</div>
         <div class="card-desc">Cruza IMEI, Android ID, aparelhos, contas Google, datas de criação, logins e vínculos investigativos.</div>
         <div class="card-subtags"><span class="card-subtag">IMEI</span><span class="card-subtag">ANDROID ID</span><span class="card-subtag">CONTAS</span><span class="card-subtag">LINHA DO TEMPO</span></div>
       </button>
-      
-      <button class="module-card" type="button" data-open-module="historico">
-        <div class="card-top"><div class="card-icon">HD</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Histórico de Documentos</div>
-        <div class="card-desc">Registros locais de documentos gerados e enviados para assinatura no Google Drive.</div>
-        <div class="card-subtags"><span class="card-subtag">GERADOS</span><span class="card-subtag">ENVIADOS</span><span class="card-subtag">LOCAL</span></div>
+      <button class="module-card update-card" type="button" data-open-module="atualizacoes">
+        <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Atualizações</div>
+        <div class="card-desc">Histórico de versões, novidades e melhorias da Central.</div>
       </button>
-      
-<button class="module-card" type="button" data-open-module="transcritor">
-        <div class="card-top"><div class="card-icon">AV</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Transcritor de Áudio e Vídeo</div>
-        <div class="card-desc">Transcrição local em lote com Whisper, texto original, terceira pessoa e formato de depoimento.</div>
-        <div class="card-subtags"><span class="card-subtag">ÁUDIO</span><span class="card-subtag">VÍDEO</span><span class="card-subtag">WHISPER</span><span class="card-subtag">LOCAL</span></div>
-      </button>
-      
 <button class="module-card" type="button" data-open-module="configuracoes">
         <div class="card-top"><div class="card-icon">CF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Configurações</div>
         <div class="card-desc">Dados da unidade, autoridades, cargo, APJs e preferências compartilhadas.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="contatodppr">
-        <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Contatos DP PR</div>
-        <div class="card-desc">Diretório pesquisável das Delegacias do Paraná.</div>
-      </button>
-      <button class="module-card" type="button" data-open-module="contatos">
-        <div class="card-top"><div class="card-icon">CT</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Contatos Institucionais</div>
-        <div class="card-desc">Diretório operacional de instituições, bancos, empresas e serviços.</div>
       </button>
       <button class="module-card" type="button" data-open-module="imei">
         <div class="card-top"><div class="card-icon">IM</div><div class="card-arrow">›</div></div>
@@ -601,6 +573,16 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         <div class="card-title">Consulta Operadora</div>
         <div class="card-desc">Identificação da operadora vinculada ao número informado.</div>
       </button>
+      <button class="module-card" type="button" data-open-module="contatodppr">
+        <div class="card-top"><div class="card-icon">DP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Contatos DP PR</div>
+        <div class="card-desc">Diretório pesquisável das Delegacias do Paraná.</div>
+      </button>
+      <button class="module-card" type="button" data-open-module="contatos">
+        <div class="card-top"><div class="card-icon">CT</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Contatos Institucionais</div>
+        <div class="card-desc">Diretório operacional de instituições, bancos, empresas e serviços.</div>
+      </button>
       <button class="module-card" type="button" data-open-module="envelopebusca">
         <div class="card-top"><div class="card-icon">EB</div><div class="card-arrow">›</div></div>
         <div class="card-title">Envelope de Busca</div>
@@ -611,15 +593,21 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         <div class="card-title">ERB / Antenas</div>
         <div class="card-desc">Mapeamento de ERBs, azimute, distância e relatório.</div>
       </button>
+      <button class="module-card" type="button" data-open-module="filtroip">
+        <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Filtro IP</div>
+        <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
+      </button>
       <button class="module-card" type="button" data-open-module="fundorotativo">
         <div class="card-top"><div class="card-icon">FR</div><div class="card-arrow">›</div></div>
         <div class="card-title">Fundo Rotativo</div>
         <div class="card-desc">Justificativas, certidões e documentos do Fundo Rotativo.</div>
       </button>
-      <button class="module-card" type="button" data-open-module="filtroip">
-        <div class="card-top"><div class="card-icon">IP</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Filtro IP</div>
-        <div class="card-desc">Organização e filtragem de endereços IP para análise.</div>
+      <button class="module-card" type="button" data-open-module="historico">
+        <div class="card-top"><div class="card-icon">HD</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Histórico de Documentos</div>
+        <div class="card-desc">Registros locais de documentos gerados e enviados para assinatura no Google Drive.</div>
+        <div class="card-subtags"><span class="card-subtag">GERADOS</span><span class="card-subtag">ENVIADOS</span><span class="card-subtag">LOCAL</span></div>
       </button>
       <button class="module-card" type="button" data-open-module="lesoes">
         <div class="card-top"><div class="card-icon">LL</div><div class="card-arrow">›</div></div>
@@ -636,6 +624,12 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
         <div class="card-title">QR Code</div>
         <div class="card-desc">Gerador local de QR Code, sem dependência de serviços externos.</div>
+      </button>
+<button class="module-card" type="button" data-open-module="transcritor">
+        <div class="card-top"><div class="card-icon">AV</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Transcritor de Áudio e Vídeo</div>
+        <div class="card-desc">Transcrição local em lote com Whisper, texto original, terceira pessoa e formato de depoimento.</div>
+        <div class="card-subtags"><span class="card-subtag">ÁUDIO</span><span class="card-subtag">VÍDEO</span><span class="card-subtag">WHISPER</span><span class="card-subtag">LOCAL</span></div>
       </button>
 <a class="module-card suggestion-card" href="https://docs.google.com/forms/d/e/1FAIpQLScl_CI5AskrgmjFRc7paIiqabmSyYN33KXAJcLWnTHbdl9Asw/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer" id="suggestionsCard" aria-label="Abrir formulário externo de sugestões no Google Forms">
         <span class="card-badge">FORMULÁRIO EXTERNO · GOOGLE FORMS</span>
