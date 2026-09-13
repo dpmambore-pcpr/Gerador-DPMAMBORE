@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v2.8.6';
+const CACHE_VERSION='pcpr-central-v2.8.7';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -36,7 +36,7 @@ const CORE_FILES=[
   './pcpr-config.js',
   './pcpr-drive.js',
   './pcpr-drive-v285.js',
-  './pcpr-drive-v286.js',
+  './pcpr-drive-v287.js',
   './pericia.html',
   './pwa.js',
   './pwa-v285.js',
