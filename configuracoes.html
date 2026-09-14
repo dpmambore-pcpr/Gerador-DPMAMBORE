@@ -32,6 +32,32 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 .drive-grid{display:grid;grid-template-columns:1fr;gap:10px}.drive-authority{border:1px solid var(--line);border-radius:10px;padding:12px;background:#faf9f6}.drive-authority-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}.drive-authority-name{font-size:13px;font-weight:800;color:#1d2b27}.drive-authority-role{font-size:11px;color:var(--muted);margin-top:2px}.drive-folder-status{font-size:10.5px;margin-top:6px;color:#52635c;overflow-wrap:anywhere}.drive-folder-status.ok{color:var(--ok);font-weight:700}.drive-folder-status.warn{color:#8a5a00}.drive-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.drive-actions button{min-height:32px;font-size:11px}.technical{border:1px dashed #cdbd95;border-radius:9px;padding:10px;background:#fffaf0;margin-top:10px}.technical summary{cursor:pointer;font-size:11.5px;font-weight:800;color:#5d4b22}.technical .grid{margin-top:10px}.drive-app-status{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #cbd9d2;border-radius:10px;padding:11px 13px;background:#f8fbf9;margin-bottom:10px}.drive-app-status.bad{border-color:#dfc2a2;background:#fff8ee}.drive-state{display:flex;align-items:center;gap:8px;font-size:12px;color:#24483d}.drive-state-dot{width:10px;height:10px;border-radius:50%;background:#a86516;box-shadow:0 0 0 3px rgba(168,101,22,.12)}.drive-app-status.ok .drive-state-dot{background:#2f7a55;box-shadow:0 0 0 3px rgba(47,122,85,.12)}.drive-state small{display:block;color:var(--muted);font-weight:400;margin-top:2px}.drive-share-actions{display:flex;gap:7px;flex-wrap:wrap}.drive-share-actions button{min-height:32px;font-size:11px}.request-note{display:none;border-left:4px solid var(--gold);background:#fffaf0;padding:9px 11px;margin:8px 0 10px;font-size:11px;line-height:1.45;color:#5d4b22}.request-note.show{display:block}
 @media(max-width:780px){.grid,.grid3,.backup-grid,.logo-row{grid-template-columns:1fr}.full{grid-column:auto}.rowitem{flex-direction:column}.sticky-text{display:none}}
 @media print{.sticky-save{display:none!important}}
+
+
+/* ===== SEÇÕES RECOLHÍVEIS — CONFIGURAÇÃO GERAL ===== */
+.accordion-controls{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.accordion-controls button{min-height:34px;padding:0 12px;font-size:11px}
+.card.config-accordion{padding:0;overflow:hidden}
+.card.config-accordion .section-head{margin:0;padding:14px 16px;min-height:54px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);cursor:pointer;background:linear-gradient(180deg,#fff,#fbfaf6)}
+.card.config-accordion.collapsed .section-head{border-bottom:0}
+.card.config-accordion .section-head h2{margin:0;flex:1;font-size:15px;color:var(--green2)}
+.card.config-accordion .section-toggle{margin-left:auto;min-width:112px;min-height:34px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#f5f1e7;color:var(--green2);border:1px solid #cdbf9c;border-radius:8px;font-size:11px;font-weight:900}
+.card.config-accordion .section-toggle .chevron{font-size:15px;line-height:1;transition:transform .16s ease}
+.card.config-accordion:not(.collapsed) .section-toggle .chevron{transform:rotate(180deg)}
+.card.config-accordion .section-body{padding:16px}
+.card.config-accordion.collapsed .section-body{display:none}
+.card.config-accordion.collapsed .section-head>.actions,
+.card.config-accordion.collapsed .section-head>.badge,
+.card.config-accordion.collapsed .section-head>button:not(.section-toggle){display:none!important}
+.card.config-accordion .section-head:focus-within{box-shadow:inset 0 0 0 2px rgba(197,162,83,.18)}
+@media(max-width:720px){
+  .accordion-controls{justify-content:stretch}
+  .accordion-controls button{flex:1 1 140px}
+  .card.config-accordion .section-head{padding:12px;align-items:flex-start;flex-wrap:wrap}
+  .card.config-accordion .section-head h2{flex:1 1 calc(100% - 125px);font-size:14px}
+  .card.config-accordion .section-toggle{min-width:104px}
+  .card.config-accordion .section-body{padding:12px}
+}
 </style>
 </head>
 <body>
@@ -39,9 +65,11 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <main>
 <div class="summary"><div class="summary-title">Configuração ativa</div><div class="summary-main" id="summaryMain">—</div><div class="summary-sub" id="summarySub">—</div></div>
 <div class="integration"><b>Integração da Central:</b> ao salvar aqui, os dados passam a ser o padrão dos módulos integrados. Configurações específicas já salvas dentro de um módulo <b>não são apagadas</b> e continuam tendo prioridade naquele módulo. Para voltar ao padrão geral, use o botão <b>USAR CONFIGURAÇÃO GERAL</b> dentro do módulo.</div>
+<div class="accordion-controls" aria-label="Controles das seções"><button id="expandAllConfig" class="secondary" type="button">ABRIR TODOS</button><button id="collapseAllConfig" class="secondary" type="button">RECOLHER TODOS</button></div>
 
-<section class="card">
-<div class="section-head"><h2>1. Cabeçalho institucional e brasão</h2><div class="actions"><button class="secondary restore-mini" id="restoreHeader" type="button">Restaurar cabeçalho original</button><button class="secondary restore-mini" id="restoreLogo" type="button">Restaurar brasão original</button></div></div>
+<section class="card config-accordion collapsed" id="configSection1" data-config-section="1">
+<div class="section-head"><h2>1. Cabeçalho institucional e brasão</h2><div class="actions"><button class="secondary restore-mini" id="restoreHeader" type="button">Restaurar cabeçalho original</button><button class="secondary restore-mini" id="restoreLogo" type="button">Restaurar brasão original</button></div><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody1"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody1" hidden>
 <div class="grid">
 <label class="full">Estado<input id="estadoHeader"></label>
 <label class="full">Secretaria / órgão superior<input id="secretaria"></label>
@@ -57,10 +85,12 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="note">A imagem personalizada fica salva apenas neste navegador. Os módulos integrados usam a imagem geral quando não houver imagem específica configurada no próprio módulo.</div>
 </div>
 </div>
+</div>
 </section>
 
-<section class="card">
-<div class="section-head"><h2>2. Rodapé institucional</h2><button class="secondary restore-mini" id="restoreFooter" type="button">Restaurar rodapé original</button></div>
+<section class="card config-accordion collapsed" id="configSection2" data-config-section="2">
+<div class="section-head"><h2>2. Rodapé institucional</h2><button class="secondary restore-mini" id="restoreFooter" type="button">Restaurar rodapé original</button><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody2"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody2" hidden>
 <div class="grid">
 <label>Logradouro<input id="logradouro"></label><label>Número<input id="numero"></label>
 <label>Bairro<input id="bairro"></label><label>CEP<input id="cep" inputmode="numeric" maxlength="10"></label>
@@ -68,10 +98,12 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <label class="full">Site<input id="site"></label>
 </div>
 <div class="note">Cidade e UF do rodapé utilizam os mesmos campos definidos no cabeçalho acima.</div>
+</div>
 </section>
 
-<section class="card">
-<div class="section-head"><h2>3. Autoridades / assinantes</h2><button class="secondary restore-mini" id="restoreAuthorities" type="button">Restaurar autoridades originais</button></div>
+<section class="card config-accordion collapsed" id="configSection3" data-config-section="3">
+<div class="section-head"><h2>3. Autoridades / assinantes</h2><button class="secondary restore-mini" id="restoreAuthorities" type="button">Restaurar autoridades originais</button><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody3"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody3" hidden>
 <div class="grid3">
 <label>Nome da autoridade<input id="novoDelegado" placeholder="Ex.: Anderson Sérgio Romão"></label>
 <label>Cargo<select id="novoCargo"><option>Delegado de Polícia</option><option>Delegada de Polícia</option><option>APJ - Agente de Polícia Judiciária</option></select></label>
@@ -81,10 +113,12 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="list" id="delegados"></div>
 <div class="note">A autoridade marcada com ★ é a padrão. Alterar a ordem ou definir outra autoridade padrão atualiza a assinatura dos módulos que usam a Configuração Geral.</div>
 <div class="preview" id="signaturePreview"></div>
+</div>
 </section>
 
-<section class="card">
-<div class="section-head"><h2>4. Servidores e cargos</h2><button class="secondary restore-mini" id="restoreServers" type="button">Restaurar servidores originais</button></div>
+<section class="card config-accordion collapsed" id="configSection4" data-config-section="4">
+<div class="section-head"><h2>4. Servidores e cargos</h2><button class="secondary restore-mini" id="restoreServers" type="button">Restaurar servidores originais</button><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody4"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody4" hidden>
 <div class="grid3">
 <label>Nome do servidor<input id="novoServidor" placeholder="Nome completo"></label>
 <label>Cargo<select id="novoServidorCargo"><option>Delegado de Polícia</option><option>Delegada de Polícia</option><option selected>APJ - Agente de Polícia Judiciária</option></select></label>
@@ -92,10 +126,12 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 </div>
 <div class="list" id="servidores"></div>
 <div class="note">Esta lista alimenta os módulos que possuem seleção de servidor. Os APJs também são mantidos em formato compatível com os módulos antigos.</div>
+</div>
 </section>
 
-<section class="card">
-<div class="section-head"><h2>5. Google Drive — assinatura de documentos</h2><span class="badge">OPCIONAL</span></div>
+<section class="card config-accordion collapsed" id="configSection5" data-config-section="5">
+<div class="section-head"><h2>5. Google Drive — assinatura de documentos</h2><span class="badge">OPCIONAL</span><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody5"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody5" hidden>
 <div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe a integração da Central ou use a configuração avançada.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="exportDriveTechBtn" class="secondary" type="button">EXPORTAR INTEGRAÇÃO GOOGLE</button><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR KEY / ID</button></div></div>
 <div class="request-note show" id="driveRequestNote"><b>Para outra DP:</b> solicite ao responsável pela Central PCPR o arquivo de integração Google. Depois use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b>. A unidade não precisa criar outro Google Cloud; após importar, cada DP informa somente o link da própria pasta e autoriza com a própria conta Google.<br><b>E-mail para solicitação:</b> dpmambore@pc.pr.gov.br</div>
 <div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> informe somente a pasta que receberá os documentos da autoridade. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador e não alteram as pastas das demais unidades.</div>
@@ -109,10 +145,12 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 </div>
 <div class="note">Esses três dados pertencem à aplicação Google da Central. Não informe Client Secret, senha, token ou código de recuperação. A API Key deve permanecer restrita ao domínio publicado e às APIs utilizadas.</div>
 </details>
+</div>
 </section>
 
-<section class="card">
-<h2>6. Backup e manutenção</h2>
+<section class="card config-accordion collapsed" id="configSection6" data-config-section="6">
+<div class="section-head"><h2>6. Backup e manutenção</h2><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody6"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
+<div class="section-body" id="configSectionBody6" hidden>
 <div class="backup-grid">
 <div class="backup-box"><h3>Levar configuração para outro computador</h3><p>Exporte um arquivo JSON com cabeçalho, logo, rodapé, autoridades, servidores e destinos de assinatura configurados neste navegador.</p><div class="actions"><button id="export" class="secondary" type="button">Exportar configuração</button><input id="importFile" type="file" accept="application/json,.json" hidden><button id="importBtn" class="secondary" type="button">Importar configuração</button></div></div>
 <div class="backup-box"><h3>Restaurar configuração original</h3><p>Restaura somente a Configuração Geral. Não apaga formulários, históricos, projetos nem personalizações específicas dos módulos.</p><button id="reset" class="danger" type="button">Restaurar configuração original</button></div>
@@ -120,6 +158,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="actions" style="margin-top:12px"><button id="saveBottom" class="gold" type="button" style="min-width:260px">SALVAR CONFIGURAÇÃO GERAL</button></div>
 <div class="note">Use este botão antes de sair desta tela. Ele salva a integração Google disponível neste navegador e os links das pastas das autoridades.</div>
 <div class="status" id="status"></div>
+</div>
 </section>
 </main>
 
@@ -264,4 +303,44 @@ API.onChange(c=>{cfg=c;fill();status('Configuração Geral atualizada em outra a
 fill();
 })();
 </script>
+
+<script id="config-accordion-js">
+(function(){
+  'use strict';
+  const KEY='pcpr.config.sections.open.v1';
+  const sections=[...document.querySelectorAll('.config-accordion[data-config-section]')];
+  function readState(){
+    try{const x=JSON.parse(localStorage.getItem(KEY)||'{}');return x&&typeof x==='object'?x:{}}catch(_){return{}}
+  }
+  function saveState(){
+    try{const o={};sections.forEach(s=>o[s.dataset.configSection]=!s.classList.contains('collapsed'));localStorage.setItem(KEY,JSON.stringify(o))}catch(_){}
+  }
+  function setOpen(section,open,save=true){
+    if(!section)return;
+    section.classList.toggle('collapsed',!open);
+    const body=section.querySelector('.section-body');
+    const btn=section.querySelector('.section-toggle');
+    if(body)body.hidden=!open;
+    if(btn){btn.setAttribute('aria-expanded',String(open));const l=btn.querySelector('.toggle-label');if(l)l.textContent=open?'Recolher':'Abrir'}
+    if(save)saveState();
+    setTimeout(()=>{try{window.parent?.postMessage({type:'pcpr-refit'},'*')}catch(_){window.dispatchEvent(new Event('resize'))}},30);
+  }
+  const state=readState();
+  sections.forEach(section=>{
+    const id=section.dataset.configSection;
+    const shouldOpen=state[id]===true;
+    setOpen(section,shouldOpen,false);
+    const head=section.querySelector('.section-head');
+    const toggle=section.querySelector('.section-toggle');
+    toggle?.addEventListener('click',e=>{e.stopPropagation();setOpen(section,section.classList.contains('collapsed'))});
+    head?.addEventListener('click',e=>{
+      if(e.target.closest('button:not(.section-toggle),input,select,textarea,a,label'))return;
+      setOpen(section,section.classList.contains('collapsed'));
+    });
+  });
+  document.getElementById('expandAllConfig')?.addEventListener('click',()=>{sections.forEach(s=>setOpen(s,true,false));saveState()});
+  document.getElementById('collapseAllConfig')?.addEventListener('click',()=>{sections.forEach(s=>setOpen(s,false,false));saveState()});
+})();
+</script>
+
 </body></html>
