@@ -83,6 +83,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+import { cleanupText, mergeWithOverlap, makeThirdPersonText, makeDepositionText } from './transcritor-text.js?v=1.2.0';
 const TF_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
 const FFMPEG_URL='https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js';
 const FFMPEG_UTIL_URL='https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js';
@@ -179,10 +180,25 @@ async function ensureASR(){
         asrModel=model;asrDevice='webgpu';asrPrecision='balanced';setModelProgress(100);
         setEngine(`${model.split('/').pop()} pronto · WebGPU · EQUILIBRADO`);return asr;
       }catch(secondError){console.warn('Fallback WebGPU falhou',secondError)}
-      setEngine('WebGPU indisponível para este modelo; tentando CPU/WASM Q8…');setModelProgress(0);
-      asr=await load('wasm','quality');
-      asrModel=model;asrDevice='wasm';asrPrecision='quality';setModelProgress(100);
-      setEngine(`${model.split('/').pop()} pronto · CPU/WASM · Q8`);return asr;
+      try{
+        setEngine('WebGPU indisponível para este modelo; tentando CPU/WASM Q8…');setModelProgress(0);
+        asr=await load('wasm','quality');
+        asrModel=model;asrDevice='wasm';asrPrecision='quality';setModelProgress(100);
+        setEngine(`${model.split('/').pop()} pronto · CPU/WASM · Q8`);return asr;
+      }catch(thirdError){console.warn('CPU/WASM com o modelo grande falhou',thirdError)}
+    }
+    // Rede de segurança final: se o modelo grande não couber neste dispositivo,
+    // cai para um modelo menor em CPU para ainda produzir uma transcrição.
+    const fallbackModel='onnx-community/whisper-small';
+    if(model!==fallbackModel && !/whisper-base/.test(model)){
+      try{
+        setEngine('O modelo selecionado não pôde ser carregado aqui; usando Whisper Small em CPU para não deixar sem transcrição…');setModelProgress(0);
+        asr=await pipeline('automatic-speech-recognition',fallbackModel,{device:'wasm',dtype:dtypeFor('wasm','quality'),progress_callback});
+        asrModel=fallbackModel;asrDevice='wasm';asrPrecision='quality';setModelProgress(100);
+        setEngine(`${fallbackModel.split('/').pop()} pronto · CPU/WASM · Q8 (alternativa automática)`);
+        toast('O modelo grande não coube neste dispositivo; usando Whisper Small automaticamente.');
+        return asr;
+      }catch(finalError){console.warn('Modelo alternativo também falhou',finalError)}
     }
     throw firstError;
   }
@@ -283,55 +299,13 @@ async function audioFromFile(file,item){
   }
 }
 
-function cleanupText(t){
-  t=String(t||'').replace(/\s+/g,' ').trim();
-  if(!t)return '';
-  t=t.charAt(0).toUpperCase()+t.slice(1);
-  if(!/[.!?]$/.test(t))t+='.';
-  return t.replace(/\s+([,.;!?])/g,'$1');
-}
-function sentenceSplit(t){return cleanupText(t).split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9])/).map(s=>s.trim()).filter(Boolean)}
-function thirdPersonSentence(s){
-  let t=s.trim();
-  const reps=[
-    [/\b[Ee]u\s+fui\b/g,'foi'],[/\b[Ee]u\s+vi\b/g,'viu'],[/\b[Ee]u\s+ouvi\b/g,'ouviu'],[/\b[Ee]u\s+recebi\b/g,'recebeu'],[/\b[Ee]u\s+fiz\b/g,'fez'],[/\b[Ee]u\s+disse\b/g,'disse'],[/\b[Ee]u\s+falei\b/g,'falou'],[/\b[Ee]u\s+liguei\b/g,'ligou'],[/\b[Ee]u\s+enviei\b/g,'enviou'],[/\b[Ee]u\s+mandei\b/g,'mandou'],[/\b[Ee]u\s+peguei\b/g,'pegou'],[/\b[Ee]u\s+deixei\b/g,'deixou'],[/\b[Ee]u\s+cheguei\b/g,'chegou'],[/\b[Ee]u\s+saí\b/g,'saiu'],[/\b[Ee]u\s+entrei\b/g,'entrou'],[/\b[Ee]u\s+comprei\b/g,'comprou'],[/\b[Ee]u\s+vendi\b/g,'vendeu'],[/\b[Ee]u\s+dei\b/g,'deu'],[/\b[Ee]u\s+tenho\b/g,'tem'],[/\b[Ee]u\s+tinha\b/g,'tinha'],[/\b[Ee]u\s+estava\b/g,'estava'],[/\b[Ee]u\s+estou\b/g,'está'],[/\b[Ee]u\s+sou\b/g,'é'],[/\b[Ee]u\s+era\b/g,'era'],[/\b[Ee]u\s+quero\b/g,'quer'],[/\b[Ee]u\s+queria\b/g,'queria'],[/\b[Ee]u\s+acho\b/g,'acha'],[/\b[Ee]u\s+acredito\b/g,'acredita'],[/\b[Ee]u\s+lembro\b/g,'lembra']
-  ];
-  for(const [a,b] of reps)t=t.replace(a,b);
-  t=t.replace(/^eu\s+/i,'').replace(/\bmeu\b/gi,'seu').replace(/\bminha\b/gi,'sua').replace(/\bmeus\b/gi,'seus').replace(/\bminhas\b/gi,'suas');
-  return t.charAt(0).toLowerCase()+t.slice(1);
-}
-function makeThirdPerson(text){
-  const name=els('personName').value.trim().toUpperCase();const role=els('personRole').value.toLowerCase();
-  const prefix=name?`${name}, ouvido(a) na condição de ${role}, relatou que `:`A pessoa ouvida, na condição de ${role}, relatou que `;
-  const ss=sentenceSplit(text).map(thirdPersonSentence);
-  if(!ss.length)return '';
-  let body=ss.join(' '); body=body.charAt(0).toLowerCase()+body.slice(1);
-  return prefix+body;
-}
-function makeDeposition(text){
-  const ss=sentenceSplit(text).map(thirdPersonSentence).map(s=>s.replace(/[.]+$/,'').trim()).filter(Boolean);
-  if(!ss.length)return '';
-  return ss.map((s,i)=>(i===0?'DECLARA que ':'QUE ')+s+';').join('\n\n').replace(/;$/,'.');
-}
+function makeThirdPerson(text){return makeThirdPersonText(text,els('personName').value,els('personRole').value)}
+function makeDeposition(text){return makeDepositionText(text)}
 function makeTimestamped(chunks){
   if(!Array.isArray(chunks)||!chunks.length)return '';
   return chunks.map(c=>{const ts=c.timestamp||c.timestamps||[null,null];const a=Array.isArray(ts)?ts[0]:null;return `${a!=null?'['+fmtTime(a)+'] ':''}${String(c.text||'').trim()}`.trim()}).filter(Boolean).join('\n');
 }
 
-function normWord(w){return String(w||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9çÇ]/g,'').toLowerCase()}
-function mergeWithOverlap(base,next){
-  base=String(base||'').trim(); next=String(next||'').trim();
-  if(!base)return next;if(!next)return base;
-  const a=base.split(/\s+/),b=next.split(/\s+/);let best=0;
-  const max=Math.min(28,a.length,b.length);
-  for(let k=max;k>=3;k--){
-    let ok=true;
-    for(let i=0;i<k;i++){if(normWord(a[a.length-k+i])!==normWord(b[i])){ok=false;break}}
-    if(ok){best=k;break}
-  }
-  const tail=best?b.slice(best).join(' '):next;
-  return (base+(tail?' '+tail:'')).trim();
-}
 function getPromptIds(pipe,text){
   text=String(text||'').trim();if(!text)return null;
   text=text.slice(-900);
@@ -371,29 +345,50 @@ async function transcribeHighContext(pipe,audio,item){
     const chunk=audio.subarray(start,end);
     const prior=keepContext&&combined?combined.slice(-500):'';
     const prompt=[userContext,prior].filter(Boolean).join('. ');
-    const opts={task:'transcribe',return_timestamps:wantTs,num_beams:5,do_sample:false,temperature:0,max_new_tokens:448};
+    // Busca em feixe custa caro; em CPU/WASM ela deixa cada bloco lento a ponto de
+    // parecer travado. Usamos feixe amplo apenas no WebGPU e decodificação gulosa na CPU.
+    const gpu=asrDevice==='webgpu';
+    const opts={task:'transcribe',return_timestamps:wantTs,do_sample:false,temperature:0,num_beams:gpu?5:1,no_repeat_ngram_size:4,max_new_tokens:gpu?448:256};
     if(language!=='auto')opts.language=language;
     const promptIds=getPromptIds(pipe,prompt);if(promptIds)opts.prompt_ids=promptIds;
     setEngine(`transcrevendo ${item.name} · bloco ${ci+1}/${totalChunks}${promptIds?' · contexto ativo':''}…`);
-    const out=await pipe(chunk,opts);
+    // Resiliência por bloco: se um bloco falhar (memória, feixe, contexto), tenta
+    // um modo simples; se ainda falhar, ignora o bloco e segue, sem perder o arquivo.
+    let out;
+    try{
+      out=await pipe(chunk,opts);
+    }catch(blockErr){
+      console.warn(`Bloco ${ci+1} falhou; tentando modo simples`,blockErr);
+      try{
+        const simple={task:'transcribe',return_timestamps:false,do_sample:false,temperature:0,num_beams:1,no_repeat_ngram_size:4,max_new_tokens:256};
+        if(language!=='auto')simple.language=language;
+        out=await pipe(chunk,simple);
+      }catch(blockErr2){
+        console.error(`Bloco ${ci+1} ignorado após nova falha`,blockErr2);
+        out={text:''};
+        item._skippedBlocks=(item._skippedBlocks||0)+1;
+      }
+    }
     const text=String(out?.text||'').replace(/\s+/g,' ').trim();
     combined=mergeWithOverlap(combined,text);
     allChunks.push(...offsetChunks(out?.chunks,start/sampleRate,ci?overlapSec:0));
     const p=38+Math.min(54,Math.round(((ci+1)/totalChunks)*54));updateItem(item,{progress:p});
     if(end>=audio.length)break;
   }
-  return {text:combined,chunks:allChunks};
+  return {text:combined,chunks:allChunks,skippedBlocks:item._skippedBlocks||0};
 }
 
 
 async function transcribeItem(item){
+  item._skippedBlocks=0;
   updateItem(item,{status:'processing',progress:3,error:''});
   try{
     const audio=await audioFromFile(item.file,item);updateItem(item,{progress:28});
     const pipe=await ensureASR();updateItem(item,{progress:38});
     const out=await transcribeHighContext(pipe,audio,item);updateItem(item,{progress:94});
     const original=cleanupText(out?.text||'');
-    if(!original)throw new Error('O modelo não retornou texto reconhecível.');
+    if(!original)throw new Error('O modelo não retornou texto reconhecível. Ative "Tratar áudio difícil" para gravações baixas/ruidosas, confira o idioma selecionado ou tente outro modelo Whisper.');
+    if(out?.skippedBlocks)item.error=`Atenção: ${out.skippedBlocks} bloco(s) não puderam ser transcritos e foram ignorados; confira o áudio nesses trechos.`;
     const revised=cleanupText(original);
     const third=els('autoThird').checked?makeThirdPerson(original):'';
     const deposition=els('autoDeposition').checked?makeDeposition(original):'';
