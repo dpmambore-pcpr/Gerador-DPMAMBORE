@@ -132,19 +132,14 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <section class="card config-accordion collapsed" id="configSection5" data-config-section="5">
 <div class="section-head"><h2>5. Google Drive — assinatura de documentos</h2><span class="badge">OPCIONAL</span><button class="section-toggle" type="button" aria-expanded="false" aria-controls="configSectionBody5"><span class="toggle-label">Abrir</span><span class="chevron" aria-hidden="true">⌄</span></button></div>
 <div class="section-body" id="configSectionBody5" hidden>
-<div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe a integração da Central ou use a configuração avançada.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="exportDriveTechBtn" class="secondary" type="button">EXPORTAR INTEGRAÇÃO GOOGLE</button><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR KEY / ID</button></div></div>
-<div class="request-note show" id="driveRequestNote"><b>Para outra DP:</b> solicite ao responsável pela Central PCPR o arquivo de integração Google. Depois use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b>. A unidade não precisa criar outro Google Cloud; após importar, cada DP informa somente o link da própria pasta e autoriza com a própria conta Google.<br><b>E-mail para solicitação:</b> dpmambore@pc.pr.gov.br</div>
+<div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe o arquivo de integração Google fornecido pela Central.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR INTEGRAÇÃO GOOGLE</button></div></div>
+<div class="request-note show" id="driveRequestNote"><b>Para solicitar a integração:</b> envie um e-mail para <b>dpmambore@pc.pr.gov.br</b> solicitando o arquivo de integração Google e informe, no corpo da mensagem, <b>qual é o e-mail institucional da própria Delegacia que será utilizado para autorizar o Google Drive</b>. Evite informar contas pessoais de servidores ou APJs.<br><b>Após a solicitação:</b> o responsável pela Central cadastrará o e-mail institucional informado como <b>usuário de teste no Google Cloud</b> e devolverá o arquivo de integração. Depois, nesta tela, use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b> e autorize a pasta com a mesma conta institucional cadastrada.<br><b>Importante:</b> a mesma conta institucional pode ser utilizada em diferentes computadores da unidade; no Google Cloud, a vaga de usuário de teste é contabilizada pela conta/e-mail, e não por dispositivo.</div>
 <div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> informe somente a pasta que receberá os documentos da autoridade. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador e não alteram as pastas das demais unidades.</div>
 <div class="drive-grid" id="driveAuthorities"></div>
-<details class="technical" id="driveAdvanced">
-<summary>Configuração avançada / usar credenciais próprias</summary>
-<div class="grid">
-<label class="full">OAuth Client ID<input id="driveClientId" placeholder="xxxxxxxxxxxx-xxxxxxxx.apps.googleusercontent.com"></label>
-<label class="full">API Key do Google Picker<input id="driveApiKey" placeholder="AIza..."></label>
-<label class="full">Project Number / App ID<input id="driveAppId" placeholder="Ex.: 123456789012"></label>
-</div>
-<div class="note">Esses três dados pertencem à aplicação Google da Central. Não informe Client Secret, senha, token ou código de recuperação. A API Key deve permanecer restrita ao domínio publicado e às APIs utilizadas.</div>
-</details>
+<!-- Dados técnicos necessários à integração. Permanecem fora da interface comum. -->
+<input id="driveClientId" type="hidden" autocomplete="off">
+<input id="driveApiKey" type="hidden" autocomplete="off">
+<input id="driveAppId" type="hidden" autocomplete="off">
 </div>
 </section>
 
@@ -156,7 +151,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="backup-box"><h3>Restaurar configuração original</h3><p>Restaura somente a Configuração Geral. Não apaga formulários, históricos, projetos nem personalizações específicas dos módulos.</p><button id="reset" class="danger" type="button">Restaurar configuração original</button></div>
 </div>
 <div class="actions" style="margin-top:12px"><button id="saveBottom" class="gold" type="button" style="min-width:260px">SALVAR CONFIGURAÇÃO GERAL</button></div>
-<div class="note">Use este botão antes de sair desta tela. Ele salva a integração Google disponível neste navegador e os links das pastas das autoridades.</div>
+<div class="note">Use este botão antes de sair desta tela. Ele salva a integração Google disponível neste navegador e os links das pastas das autoridades. Os identificadores técnicos permanecem ocultos na interface comum.</div>
 <div class="status" id="status"></div>
 </div>
 </section>
@@ -164,9 +159,9 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 
 <div class="sticky-save"><div class="sticky-inner"><div class="sticky-text"><b>Configuração Geral da Central:</b> cabeçalho, brasão, rodapé, autoridade e servidores serão reutilizados pelos módulos integrados.</div><button id="save" class="gold" type="button">Salvar e aplicar em toda a Central</button></div></div>
 
-<script src="pcpr-core.js?v=3.0.0"></script>
-<script src="pcpr-config.js?v=3.0.0"></script>
-<script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-core.js?v=3.0.1"></script>
+<script src="pcpr-config.js?v=3.0.1"></script>
+<script src="pcpr-drive.js?v=3.0.1"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -214,8 +209,8 @@ function currentDriveTech(){return {clientId:$('driveClientId').value.trim(),api
 function driveTechReady(d){d=d||currentDriveTech();return !!(d.clientId&&d.apiKey&&d.appId)}
 function updateDriveIntegrationStatus(){
   const d=currentDriveTech(),box=$('driveAppStatus'),txt=$('driveAppStatusText'),sub=$('driveAppStatusSub');if(!box||!txt||!sub)return;
-  if(driveTechReady(d)){box.classList.add('ok');box.classList.remove('bad');txt.textContent='Integração Google: disponível';sub.textContent='A Central já possui OAuth, API Key e Project Number neste navegador. Cada DP precisa informar somente a própria pasta.';}
-  else{box.classList.remove('ok');box.classList.add('bad');txt.textContent='Integração Google não configurada';sub.textContent='Importe a integração da Central ou abra a configuração avançada para informar credenciais próprias.';}
+  if(driveTechReady(d)){box.classList.add('ok');box.classList.remove('bad');txt.textContent='Integração Google: disponível';sub.textContent='A integração técnica foi carregada neste navegador. Cada DP precisa informar somente a própria pasta.';}
+  else{box.classList.remove('ok');box.classList.add('bad');txt.textContent='Integração Google não configurada';sub.textContent='Importe o arquivo de integração Google fornecido pela Central.';}
 }
 function downloadJson(data,name){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
 function normalizeDriveImport(x){x=(x&&typeof x==='object')?x:{};const d=(x.drive&&typeof x.drive==='object')?x.drive:x;return {clientId:String(d.clientId||'').trim(),apiKey:String(d.apiKey||'').trim(),appId:String(d.appId||d.projectNumber||'').trim(),scope:'https://www.googleapis.com/auth/drive.file'}}
@@ -224,14 +219,14 @@ function renderDriveAuthorities(){
   autoridades.forEach((a,i)=>{
     const row=document.createElement('div');row.className='drive-authority';
     const configured=!!a.driveFolderId,authorized=!!a.driveFolderAuthorized;
-    row.innerHTML=`<div class="drive-authority-head"><div><div class="drive-authority-name">${escapeHtml(a.nome)}</div><div class="drive-authority-role">${escapeHtml(a.cargo||'Cargo não informado')}</div></div><span class="badge">${configured?(authorized?'AUTORIZADA':'LINK SALVO'):'NÃO CONFIGURADA'}</span></div><label>Link da pasta para assinatura<input class="drive-link" data-i="${i}" value="${escapeHtml(a.driveFolderUrl||'')}" placeholder="https://drive.google.com/drive/folders/..."></label><div class="drive-folder-status ${authorized?'ok':configured?'warn':''}">${configured?'ID: '+escapeHtml(a.driveFolderId)+(a.driveFolderName?' · '+escapeHtml(a.driveFolderName):''):'Cole o link da pasta que receberá os PDFs para assinatura.'}</div><div class="drive-actions"><button type="button" class="secondary drive-auth" data-i="${i}">Autorizar pasta</button><button type="button" class="secondary drive-open" data-i="${i}" ${configured?'':'disabled'}>Abrir pasta</button><button type="button" class="danger drive-clear" data-i="${i}" ${configured?'':'disabled'}>Limpar</button></div>`;
+    row.innerHTML=`<div class="drive-authority-head"><div><div class="drive-authority-name">${escapeHtml(a.nome)}</div><div class="drive-authority-role">${escapeHtml(a.cargo||'Cargo não informado')}</div></div><span class="badge">${configured?(authorized?'AUTORIZADA':'LINK SALVO'):'NÃO CONFIGURADA'}</span></div><label>Link da pasta para assinatura<input class="drive-link" data-i="${i}" value="${escapeHtml(a.driveFolderUrl||'')}" placeholder="https://drive.google.com/drive/folders/..."></label><div class="drive-folder-status ${authorized?'ok':configured?'warn':''}">${configured?(a.driveFolderName?'Pasta configurada: '+escapeHtml(a.driveFolderName):'Pasta configurada'):'Cole o link da pasta que receberá os PDFs para assinatura.'}</div><div class="drive-actions"><button type="button" class="secondary drive-auth" data-i="${i}">Autorizar pasta</button><button type="button" class="secondary drive-open" data-i="${i}" ${configured?'':'disabled'}>Abrir pasta</button><button type="button" class="danger drive-clear" data-i="${i}" ${configured?'':'disabled'}>Limpar</button></div>`;
     box.appendChild(row);
   });
   box.querySelectorAll('.drive-link').forEach(inp=>{
     inp.addEventListener('input',()=>{
       const i=Number(inp.dataset.i),oldId=autoridades[i]?.driveFolderId||'',id=window.PCPRDrive?.extractFolderId(inp.value)||'';
       autoridades[i]={...autoridades[i],driveFolderUrl:inp.value.trim(),driveFolderId:id,driveFolderName:id===oldId?autoridades[i].driveFolderName:'',driveFolderAuthorized:id===oldId?autoridades[i].driveFolderAuthorized:false};
-      const st=inp.closest('.drive-authority').querySelector('.drive-folder-status');st.textContent=id?'ID identificado: '+id:'Cole um link válido do Google Drive.';st.className='drive-folder-status '+(id?'warn':'');
+      const st=inp.closest('.drive-authority').querySelector('.drive-folder-status');st.textContent=id?'Link da pasta identificado.':'Cole um link válido do Google Drive.';st.className='drive-folder-status '+(id?'warn':'');
     });
     inp.addEventListener('change',()=>{if(window.PCPRDrive?.extractFolderId(inp.value))persistDriveOnly('Link da pasta salvo neste navegador.');});
   });
@@ -242,7 +237,7 @@ function renderDriveAuthorities(){
     const drive={clientId:$('driveClientId').value.trim(),apiKey:$('driveApiKey').value.trim(),appId:$('driveAppId').value.trim()};
     const id=window.PCPRDrive?.extractFolderId(a.driveFolderId||a.driveFolderUrl)||'';
     if(!id)return status('Cole primeiro o link válido da pasta desta autoridade.',true);
-    if(!drive.clientId||!drive.apiKey||!drive.appId)return status('A integração Google ainda não está disponível neste navegador. Importe a integração da Central ou abra Configuração avançada.',true);
+    if(!drive.clientId||!drive.apiKey||!drive.appId)return status('A integração Google ainda não está disponível neste navegador. Importe o arquivo de integração fornecido pela Central.',true);
     b.disabled=true;b.textContent='Abrindo Google…';
     try{
       const picked=await window.PCPRDrive.pickFolder(drive,id);
@@ -254,21 +249,23 @@ function renderDriveAuthorities(){
 }
 
 ['driveClientId','driveApiKey','driveAppId'].forEach(id=>{$(id).addEventListener('input',updateDriveIntegrationStatus);$(id).addEventListener('change',()=>persistDriveOnly('Configuração técnica do Google salva neste navegador.'));});
-$('exportDriveTechBtn').onclick=()=>{const d=currentDriveTech();if(!driveTechReady(d))return status('Preencha OAuth Client ID, API Key e Project Number na Configuração avançada antes de exportar a integração.',true);downloadJson({schema:'pcpr-central-google-drive-v1',app:'Central PCPR',drive:d},'INTEGRACAO_GOOGLE_CENTRAL_PCPR.json');status('Arquivo de integração Google exportado. Ele contém somente os identificadores técnicos da aplicação, sem pasta de nenhuma DP e sem token de acesso.');};
 $('importDriveTechBtn').onclick=()=>$('importDriveTechFile').click();
-$('importDriveTechFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text()),d=normalizeDriveImport(x);if(!driveTechReady(d))throw new Error('Arquivo sem OAuth Client ID, API Key ou Project Number.');$('driveClientId').value=d.clientId;$('driveApiKey').value=d.apiKey;$('driveAppId').value=d.appId;persistDriveOnly();updateDriveIntegrationStatus();status('Integração Google importada e salva. Agora informe somente o link da pasta de cada autoridade.');}catch(err){status(err.message||'Arquivo de integração Google inválido.',true)}e.target.value='';};
+$('importDriveTechFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const x=JSON.parse(await f.text()),d=normalizeDriveImport(x);if(!driveTechReady(d))throw new Error('Arquivo de integração Google incompleto ou inválido.');$('driveClientId').value=d.clientId;$('driveApiKey').value=d.apiKey;$('driveAppId').value=d.appId;persistDriveOnly();updateDriveIntegrationStatus();status('Integração Google importada e salva. Agora informe somente o link da pasta da autoridade.');}catch(err){status(err.message||'Arquivo de integração Google inválido.',true)}e.target.value='';};
 $('requestDriveTechBtn').onclick=async()=>{
   const to='dpmambore@pc.pr.gov.br';
   const subject='Solicitação de integração Google Drive — Central PCPR';
   const body=`Olá,
 
-Solicito o arquivo de integração Google da Central PCPR (OAuth Client ID, API Key restrita e Project Number/App ID) para habilitar o envio de documentos ao Google Drive nesta unidade.
+Solicito o arquivo de integração Google da Central PCPR para habilitar o envio de documentos ao Google Drive nesta unidade.
 
 Unidade Policial: ______________________________
 Município/PR: _________________________________
+E-mail institucional da DP que deverá ser cadastrado no Google Cloud: ____________________
 Responsável pela solicitação: __________________
 
-Não é necessário enviar Client Secret, senha ou token.
+Solicito também o cadastro do e-mail institucional acima como usuário de teste no Google Cloud, para permitir a autorização da pasta do Google Drive. Após o cadastro, favor encaminhar o arquivo de integração Google para utilização na Central PCPR.
+
+A autorização será realizada com a conta institucional da própria Delegacia, evitando contas pessoais de servidores ou APJs.
 
 Atenciosamente.`;
   const gmail='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(to)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
