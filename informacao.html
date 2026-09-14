@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — INFORMAÇÃO / CENTRAL PCPR
+Aplicação estática executada no navegador. Não possui backend próprio, banco de dados remoto
+ou servidor institucional conectado à Central. O texto, as fotos e a prévia da Informação
+permanecem neste navegador até a geração ou o envio acionado pelo usuário.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Informação — Central de Ofícios PCPR</title>
+<style>
+:root{
+  --azul:#183a31;--azul2:#285748;--claro:#f5f1e7;--borda:#d8d3c8;--texto:#17202a;--suave:#626b70;
+  --ok:#246344;--alerta:#a98639;--erro:#9b2d34;--pcpr-ink:#111820;--pcpr-gold:#c5a253;--pcpr-bg:#f4f2ec;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--pcpr-bg);color:var(--texto);font-family:Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit}
+header{
+  background:linear-gradient(115deg,var(--pcpr-ink) 0%,#183a31 72%,#20473c 100%);
+  border-bottom:5px solid var(--pcpr-gold);padding:20px 22px;color:#fff;
+  box-shadow:inset 0 -1px 0 rgba(143,48,55,.35);
+}
+header h1{margin:0;font-size:23px;line-height:1.2}
+header p{margin:3px 0 0;font-size:12px;color:#f1ede2}
+main{max-width:1500px;margin:0 auto;padding:18px 22px 60px}
+.security-note{
+  margin:10px auto 0;max-width:1500px;padding:9px 11px;border:1px solid #cfd9d3;
+  border-radius:9px;background:#f4f8f5;color:#40534c;font-size:11px;line-height:1.42
+}
+.security-note b{color:#244b3e}
+.layout{display:grid;grid-template-columns:minmax(420px,540px) minmax(620px,1fr);gap:16px;align-items:start}
+.card{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 0 rgba(197,162,83,.12)}
+h2{font-size:14px;margin:0 0 12px;color:var(--pcpr-ink);text-transform:uppercase;letter-spacing:.5px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--pcpr-gold);color:var(--pcpr-ink);font-size:12px;font-weight:900;margin-right:7px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--suave);font-weight:700}
+.full{grid-column:1/-1}
+input,select,textarea{
+  border:1px solid #bac5d1;border-radius:8px;padding:8px 9px;font-size:13px;width:100%;
+  background:#fff;color:#17202a;min-height:40px
+}
+input:focus,select:focus,textarea:focus,.editor:focus{
+  outline:none;border-color:#285748;box-shadow:0 0 0 3px rgba(40,87,72,.14)
+}
+.linha{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{
+  background:linear-gradient(180deg,#326b58,#285748);color:#fff;border:1px solid #183a31;
+  border-radius:9px;padding:8px 14px;font-size:13px;cursor:pointer;min-height:42px;font-weight:700
+}
+button:hover{filter:brightness(.96)}
+button.sec{background:#f5f1e7;color:var(--pcpr-ink);border:1px solid #cdbf9c}
+button.gold{background:var(--pcpr-gold);color:var(--pcpr-ink);border-color:#a88b45}
+button.danger{background:#fff;color:var(--erro);border-color:#d6aeb1}
+button:disabled{opacity:.5;cursor:not-allowed}
+#msg{font-size:13px;margin-top:10px;color:var(--suave);font-weight:700;min-height:18px}
+#msg.ok{color:var(--ok)}#msg.err{color:var(--erro)}
+#driveStatus{font-size:11.5px;margin-top:8px;color:var(--suave);line-height:1.45}
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--borda);
+  border-bottom:0;border-radius:8px 8px 0 0;background:#f7f5ef
+}
+.toolbar .sep{width:1px;height:26px;background:#d8d3c8;margin:0 2px}
+.tb{
+  min-height:34px;min-width:34px;padding:0 9px;border-radius:7px;font-size:13px;font-weight:800
+}
+.tb.active{background:var(--pcpr-gold);color:var(--pcpr-ink);border-color:#e2cf9d}
+.editor{
+  min-height:280px;max-height:520px;overflow:auto;border:1px solid var(--borda);border-radius:0 0 8px 8px;
+  padding:12px 14px;background:#fff;color:#17202a;font-size:13px;line-height:1.55;text-align:justify
+}
+.editor:empty:before{content:attr(data-placeholder);color:#8a9290;pointer-events:none}
+.editor img{max-width:100%;height:auto;display:block;margin:10px auto;border:1px solid #ddd}
+.photos{display:grid;gap:8px}
+.photo-row{
+  display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center;
+  border:1px solid #e0ddd4;border-radius:10px;padding:8px;background:#fbfaf7
+}
+.photo-row img{width:72px;height:56px;object-fit:cover;border-radius:7px;background:#fff;border:1px solid #ddd}
+.photo-row .meta{min-width:0}
+.photo-row .name{font-size:12px;font-weight:800;color:#1e2b27;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-row input{min-height:34px;font-size:12px}
+.hint{font-size:11.5px;color:var(--suave);line-height:1.4}
+.preview-card{position:sticky;top:12px}
+.preview-wrap{background:#e8e6df;border-radius:10px;padding:12px;overflow:auto}
+.folha{
+  background:#fff;border:1px solid var(--borda);padding:34px 42px;font-family:Arial,Helvetica,sans-serif;
+  font-size:13px;line-height:1.5;width:210mm;min-height:297mm;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);color:#000
+}
+.folha p{margin:0 0 6px}
+.folha .cab{text-align:center;font-size:10px;font-weight:bold;line-height:1.25;margin-bottom:22px}
+.folha .cab img{height:72px;display:block;margin:0 auto 6px}
+.folha .rod{text-align:center;font-size:9.5px;color:#333;margin-top:26px;line-height:1.3}
+.folha .doc-title{text-align:center;font-weight:800;font-size:14px;margin:0 0 14px;letter-spacing:.4px;text-transform:uppercase}
+.folha .doc-date{text-align:right;margin:0 0 16px}
+.folha .doc-body{min-height:80px;text-align:justify}
+.folha .doc-body p{margin:0 0 8px}
+.folha .doc-body img{max-width:100%;height:auto;display:block;margin:10px auto}
+.folha .anexo{margin:16px 0 0;text-align:center;page-break-inside:avoid}
+.folha .anexo img{max-width:100%;max-height:110mm;height:auto;display:block;margin:0 auto 6px;border:1px solid #ccc}
+.folha .anexo .cap{font-size:11px;color:#333}
+.folha .sign{margin-top:28px;text-align:center}
+.folha .sign .nome{font-weight:800;margin-top:28px}
+.placeholder-doc{color:#888;font-style:italic}
+footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 30px;line-height:1.6}
+.hide{display:none!important}
+@media(max-width:1150px){
+  .layout{grid-template-columns:1fr}
+  .preview-card{position:static}
+  .preview-wrap{padding:6px}
+  .folha{transform:scale(.72);transform-origin:top left;margin-bottom:-83mm}
+}
+@media(max-width:680px){
+  header{padding:18px 16px}header h1{font-size:20px}
+  main{padding:14px 10px 40px}
+  .form{grid-template-columns:1fr}
+  .folha{transform:scale(.52);margin-bottom:-143mm}
+}
+@media print{
+  .security-note,header,.formcol,#msg,#driveStatus,footer,.preview-card>h2{display:none!important}
+  body{background:#fff}
+  main{max-width:none;padding:0;margin:0}
+  .layout{display:block}
+  .preview-card{position:static;border:0;padding:0;margin:0;box-shadow:none;background:transparent}
+  .preview-wrap{padding:0;background:#fff;overflow:visible;border:0}
+  .folha{box-shadow:none;transform:none!important;margin:0 auto;width:210mm;min-height:297mm;border:0}
+  @page{size:A4 portrait;margin:0}
+}
+</style>
+<script src="pcpr-core.js?v=3.0.0"></script>
+<script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-drive.js?v=3.0.0"></script>
+<script>window.PCPR_DOCNAME_CONFIG={"documentType":"Informação","targetSelector":"#btnPdf","actionSelectors":["#btnPdf","#btnPrint","#btnDrive"],"cloudSelectors":["#btnDrive"]};</script>
+<script src="pcpr-documento.js?v=3.0.0"></script>
+</head>
+<body>
+<header>
+  <h1>Informação</h1>
+  <p id="hSub">Central de Ofícios — mesmo cabeçalho e rodapé institucionais · processamento local</p>
+</header>
+<div class="security-note"><b>Funcionamento:</b> o texto digitado ou colado e as fotos anexadas permanecem neste navegador. Nada é enviado até que você imprima, baixe o PDF ou escolha enviar para a pasta de assinatura.</div>
+<main>
+<div class="layout">
+<div class="formcol">
+  <div class="card">
+    <h2><span class="step-num">1</span> Dados da Informação</h2>
+    <div class="form">
+      <label>Nº da Informação<input id="fNumero" type="text" autocomplete="off" placeholder="001/2026"></label>
+      <label>Data<input id="fData" type="date"></label>
+      <label>Procedimento / IP nº<input id="fProc" type="text" autocomplete="off" placeholder="386606/2026"></label>
+      <label>Assinante<select id="fAssin"></select></label>
+      <label class="full">Assunto<input id="fAssunto" type="text" autocomplete="off" placeholder="Relato de diligências, comunicação de fato, etc."></label>
+      <label class="full">Destinatário (opcional)<input id="fDestino" type="text" autocomplete="off" placeholder="Ilmo. Sr. Delegado de Polícia"></label>
+      <label class="full">Cargo do assinante<input id="fCargo" type="text" autocomplete="off"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">2</span> Texto da Informação</h2>
+    <p class="hint" style="margin:0 0 8px">Digite, cole de outro documento ou use os botões de formatação. A colagem preserva negrito, itálico e alinhamento.</p>
+    <div class="toolbar" role="toolbar" aria-label="Formatação do texto">
+      <button type="button" class="tb sec" id="tbBold" data-cmd="bold" title="Negrito"><b>N</b></button>
+      <button type="button" class="tb sec" id="tbItalic" data-cmd="italic" title="Itálico"><i>I</i></button>
+      <span class="sep"></span>
+      <button type="button" class="tb sec" data-cmd="justifyLeft" title="Alinhar à esquerda">Esq</button>
+      <button type="button" class="tb sec" data-cmd="justifyCenter" title="Centralizar">Centro</button>
+      <button type="button" class="tb sec" data-cmd="justifyRight" title="Alinhar à direita">Dir</button>
+      <button type="button" class="tb sec" data-cmd="justifyFull" title="Justificar">Just</button>
+      <span class="sep"></span>
+      <select id="tbFont" title="Fonte" style="width:auto;min-height:34px;font-size:12px">
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Times New Roman', Times, serif">Times</option>
+      </select>
+      <select id="tbSize" title="Tamanho" style="width:auto;min-height:34px;font-size:12px">
+        <option value="3">12</option>
+        <option value="2">10</option>
+        <option value="4">14</option>
+        <option value="5">18</option>
+      </select>
+    </div>
+    <div id="editor" class="editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Digite ou cole o texto da informação..."></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">3</span> Fotos anexadas</h2>
+    <p class="hint" style="margin:0 0 10px">As fotos entram no documento após o texto, com o mesmo cabeçalho e rodapé da Informação. Também é possível inserir a imagem no ponto do cursor.</p>
+    <div class="linha">
+      <button class="sec" type="button" id="btnAddPhotos">📷 Anexar fotos</button>
+      <button class="sec" type="button" id="btnInsertPhoto">Inserir no texto</button>
+      <input id="photoFile" type="file" accept="image/*" multiple class="hide">
+    </div>
+    <div id="photoList" class="photos" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-num">4</span> Gerar documento</h2>
+    <div class="linha">
+      <button type="button" id="btnPdf">Baixar PDF</button>
+      <button class="gold" type="button" id="btnPrint">Imprimir / Salvar PDF</button>
+      <button type="button" id="btnDrive">☁ Enviar PDF para assinatura</button>
+      <button class="sec danger" type="button" id="btnClear">Limpar</button>
+    </div>
+    <div id="msg"></div>
+    <div id="driveStatus">O destino do Google Drive é definido por autoridade na Configuração Geral da Central.</div>
+  </div>
+</div>
+
+<div class="card preview-card">
+  <h2>Pré-visualização</h2>
+  <div class="preview-wrap"><div class="folha" id="folha"></div></div>
+</div>
+</div>
+</main>
+<footer><span id="rodapeTela"></span></footer>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const photos=[];
+let lastRange=null;
+function cfg(){return (window.PCPRConfig&&PCPRConfig.get)?PCPRConfig.get():{};}
+function headerLines(){return (window.PCPRConfig&&PCPRConfig.headerLines)?PCPRConfig.headerLines():[];}
+function footerLines(){return (window.PCPRConfig&&PCPRConfig.footerLines)?PCPRConfig.footerLines():[];}
+function servers(){return (window.PCPRConfig&&PCPRConfig.servers)?PCPRConfig.servers():[];}
+function authority(){return (window.PCPRConfig&&PCPRConfig.authority)?PCPRConfig.authority():{nome:'',cargo:''};}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function todayISO(){const d=new Date(),z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());}
+function dataExtenso(iso){
+  if(!iso)return '____ de _____________ de ______';
+  const d=new Date(iso+'T12:00:00');
+  return d.getDate()+' de '+MESES[d.getMonth()]+' de '+d.getFullYear();
+}
+function crestSrc(){
+  const g=cfg();
+  const logo=String(g.logo||'').trim();
+  if(!logo)return 'brasao-padrao.png';
+  if(/^data:image\//i.test(logo))return logo;
+  return 'data:image/png;base64,'+logo;
+}
+function cidadeLinha(){
+  const g=cfg();
+  const cidade=g.cidade||'Mamborê';
+  const uf=g.uf||'PR';
+  return cidade+'/'+uf;
+}
+function fillAssinantes(){
+  const sel=$('fAssin');
+  const auth=authority();
+  const list=servers().length?servers():[{nome:auth.nome,cargo:auth.cargo}];
+  const cur=sel.value;
+  sel.innerHTML=list.map((s,i)=>'<option value="'+i+'">'+esc(s.nome)+'</option>').join('');
+  if(cur && [...sel.options].some(o=>o.value===cur))sel.value=cur;
+  applyCargo();
+}
+function currentSigner(){
+  const list=servers();
+  const s=list[Number($('fAssin').value)]||authority();
+  return {nome:s.nome||'',cargo:s.cargo||$('fCargo').value.trim()};
+}
+function applyCargo(){
+  const s=currentSigner();
+  if(!$('fCargo').dataset.touched) $('fCargo').value=s.cargo||'';
+}
+function setMsg(t,kind){$('msg').textContent=t||'';$('msg').className=kind||'';}
+
+function saveSelection(){
+  const sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  const node=sel.anchorNode;
+  if(node && $('editor').contains(node)) lastRange=sel.getRangeAt(0).cloneRange();
+}
+function restoreSelection(){
+  const ed=$('editor');
+  ed.focus();
+  const sel=window.getSelection();
+  if(lastRange){
+    sel.removeAllRanges();
+    sel.addRange(lastRange);
+    return;
+  }
+  const r=document.createRange();
+  r.selectNodeContents(ed);
+  r.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(r);
+}
+function exec(cmd,val){
+  restoreSelection();
+  try{document.execCommand(cmd,false,val==null?null:val);}catch(_){}
+  saveSelection();
+  updatePreview();
+  syncToolbar();
+}
+function syncToolbar(){
+  document.querySelectorAll('.tb[data-cmd]').forEach(b=>{
+    let on=false;
+    try{on=document.queryCommandState(b.dataset.cmd);}catch(_){}
+    b.classList.toggle('active',!!on);
+  });
+}
+function sanitizeHtml(html){
+  const doc=new DOMParser().parseFromString('<div id="r">'+String(html||'')+'</div>','text/html');
+  const root=doc.getElementById('r')||doc.body;
+  const keep=new Set(['P','DIV','BR','B','STRONG','I','EM','U','SPAN','UL','OL','LI','IMG']);
+  (function walk(node){
+    [...node.childNodes].forEach(child=>{
+      if(child.nodeType===Node.COMMENT_NODE){child.remove();return;}
+      if(child.nodeType!==Node.ELEMENT_NODE)return;
+      const tag=child.tagName;
+      if(tag==='SCRIPT'||tag==='STYLE'||tag==='META'||tag==='LINK'||tag==='IFRAME'){child.remove();return;}
+      if(tag==='IMG'){
+        const src=child.getAttribute('src')||'';
+        if(!/^(data:image\/|blob:|https?:)/i.test(src)){child.remove();return;}
+        const alt=child.getAttribute('alt')||'';
+        [...child.attributes].forEach(a=>child.removeAttribute(a.name));
+        child.setAttribute('src',src);
+        if(alt)child.setAttribute('alt',alt);
+        child.style.maxWidth='100%';
+        child.style.height='auto';
+        return;
+      }
+      if(!keep.has(tag)){
+        while(child.firstChild)node.insertBefore(child.firstChild,child);
+        child.remove();
+        return;
+      }
+      const align=(child.style&&child.style.textAlign)||child.getAttribute('align')||'';
+      const fw=child.style&&child.style.fontWeight;
+      const fs=child.style&&child.style.fontStyle;
+      const ff=child.style&&child.style.fontFamily;
+      const fz=child.style&&child.style.fontSize;
+      [...child.attributes].forEach(a=>child.removeAttribute(a.name));
+      if(/^(left|center|right|justify)$/i.test(align)) child.style.textAlign=align.toLowerCase();
+      if(fw) child.style.fontWeight=fw;
+      if(fs) child.style.fontStyle=fs;
+      if(ff) child.style.fontFamily=ff;
+      if(fz) child.style.fontSize=fz;
+      walk(child);
+    });
+  })(root);
+  return root.innerHTML;
+}
+function editorHtml(){return sanitizeHtml($('editor').innerHTML);}
+function editorEmpty(){
+  const t=String($('editor').innerText||'').replace(/\u00a0/g,' ').trim();
+  return !t && !$('editor').querySelector('img');
+}
+function compressImage(file,maxW){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,(maxW||1400)/Math.max(img.width,1));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*scale));
+      c.height=Math.max(1,Math.round(img.height*scale));
+      const ctx=c.getContext('2d');
+      ctx.fillStyle='#fff';
+      ctx.fillRect(0,0,c.width,c.height);
+      ctx.drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      resolve({data:c.toDataURL('image/jpeg',0.84),name:file.name||'foto.jpg',w:c.width,h:c.height});
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Não foi possível ler a imagem.'));};
+    img.src=url;
+  });
+}
+function renderPhotos(){
+  const box=$('photoList');
+  if(!photos.length){box.innerHTML='<div class="hint">Nenhuma foto anexada.</div>';return;}
+  box.innerHTML=photos.map((p,i)=>'<div class="photo-row"><img alt="" src="'+p.data+'"><div class="meta"><div class="name">Foto '+(i+1)+' — '+esc(p.name)+'</div><input data-cap="'+i+'" placeholder="Legenda (opcional)" value="'+esc(p.caption||'')+'"></div><button type="button" class="sec danger" data-del="'+i+'" style="min-height:34px;padding:0 10px">Remover</button></div>').join('');
+  box.querySelectorAll('[data-cap]').forEach(el=>el.oninput=()=>{photos[+el.dataset.cap].caption=el.value;updatePreview();});
+  box.querySelectorAll('[data-del]').forEach(el=>el.onclick=()=>{photos.splice(+el.dataset.del,1);renderPhotos();updatePreview();});
+}
+async function addFiles(files,insert){
+  const list=[...files].filter(f=>/^image\//.test(f.type));
+  if(!list.length){setMsg('Selecione arquivos de imagem.','err');return;}
+  setMsg('Carregando foto(s)…','');
+  try{
+    for(const f of list){
+      const img=await compressImage(f);
+      if(insert){
+        restoreSelection();
+        document.execCommand('insertHTML',false,'<img alt="'+esc(img.name)+'" src="'+img.data+'">');
+        saveSelection();
+      }else{
+        photos.push({id:Date.now()+Math.random(),data:img.data,name:img.name,caption:''});
+      }
+    }
+    renderPhotos();
+    updatePreview();
+    setMsg(list.length+(list.length===1?' foto anexada.':' fotos anexadas.'),'ok');
+  }catch(e){setMsg(e.message||String(e),'err');}
+}
+function updatePreview(){
+  const g=cfg();
+  const cab=headerLines().map(l=>'<div>'+esc(l)+'</div>').join('');
+  const rod=footerLines().map(l=>'<div>'+esc(l)+'</div>').join('');
+  const numero=$('fNumero').value.trim();
+  const assunto=$('fAssunto').value.trim();
+  const proc=$('fProc').value.trim();
+  const dest=$('fDestino').value.trim();
+  const signer=currentSigner();
+  const cargo=$('fCargo').value.trim()||signer.cargo;
+  const body=editorEmpty()?'<p class="placeholder-doc">Digite ou cole o texto da informação.</p>':editorHtml();
+  const anexos=photos.map((p,i)=>'<div class="anexo"><img alt="'+esc(p.caption||p.name)+'" src="'+p.data+'"><div class="cap">'+(p.caption?esc(p.caption):'Foto anexa '+(i+1))+'</div></div>').join('');
+  $('folha').innerHTML=
+    '<div class="cab"><img alt="Brasão" src="'+crestSrc()+'">'+cab+'</div>'+
+    '<div class="doc-title">Informação'+(numero?' nº '+esc(numero):'')+'</div>'+
+    '<p class="doc-date">'+esc(cidadeLinha())+', '+dataExtenso($('fData').value)+'.</p>'+
+    (dest?'<p><b>'+esc(dest)+'</b></p>':'')+
+    (assunto?'<p><b>Assunto:</b> '+esc(assunto)+'</p>':'')+
+    (proc?'<p><b>Ref.:</b> '+esc(proc)+'</p>':'')+
+    '<div class="doc-body">'+body+'</div>'+
+    anexos+
+    '<div class="sign"><div>Respeitosamente,</div><div class="nome">'+esc((signer.nome||g.assinante||'').toUpperCase())+'</div><div>'+esc(cargo||'')+'</div></div>'+
+    '<div class="rod">'+rod+'</div>';
+  $('hSub').textContent=(g.unidade||'Delegacia de Polícia')+' — '+(g.subdivisao||'')+' · Informação institucional · processamento local';
+  $('rodapeTela').textContent=footerLines().join(' · ');
+}
+function fillDefaults(){
+  $('fData').value=todayISO();
+  fillAssinantes();
+  const y=new Date().getFullYear();
+  if(!$('fNumero').value) $('fNumero').value='001/'+y;
+  renderPhotos();
+  updatePreview();
+}
+
+document.querySelectorAll('.tb[data-cmd]').forEach(b=>b.onclick=()=>exec(b.dataset.cmd));
+$('tbFont').onchange=()=>exec('fontName',$('tbFont').value);
+$('tbSize').onchange=()=>exec('fontSize',$('tbSize').value);
+['mouseup','keyup','focus'].forEach(ev=>$('editor').addEventListener(ev,()=>{saveSelection();syncToolbar();}));
+$('editor').addEventListener('input',updatePreview);
+$('editor').addEventListener('paste',e=>{
+  const cd=e.clipboardData; if(!cd)return;
+  const files=[...cd.files].filter(f=>/^image\//.test(f.type));
+  if(files.length){
+    e.preventDefault();
+    addFiles(files,true);
+    return;
+  }
+  const html=cd.getData('text/html');
+  const text=cd.getData('text/plain');
+  e.preventDefault();
+  restoreSelection();
+  if(html) document.execCommand('insertHTML',false,sanitizeHtml(html));
+  else document.execCommand('insertText',false,text||'');
+  saveSelection();
+  updatePreview();
+});
+$('editor').addEventListener('dragover',e=>{
+  if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')) e.preventDefault();
+});
+$('editor').addEventListener('drop',e=>{
+  const files=[...((e.dataTransfer&&e.dataTransfer.files)||[])].filter(f=>/^image\//.test(f.type));
+  if(!files.length)return;
+  e.preventDefault();
+  addFiles(files,true);
+});
+['fNumero','fData','fProc','fAssunto','fDestino','fCargo'].forEach(id=>$(id).addEventListener('input',updatePreview));
+$('fAssin').addEventListener('change',()=>{$('fCargo').dataset.touched='';applyCargo();updatePreview();});
+$('fCargo').addEventListener('input',()=>{$('fCargo').dataset.touched='1';});
+$('btnAddPhotos').onclick=()=>{$('photoFile').dataset.insert='';$('photoFile').click();};
+$('btnInsertPhoto').onclick=()=>{$('photoFile').dataset.insert='1';$('photoFile').click();};
+$('photoFile').onchange=e=>{
+  const insert=e.target.dataset.insert==='1';
+  addFiles(e.target.files||[],insert);
+  e.target.value='';
+};
+$('btnClear').onclick=()=>{
+  if(!confirm('Limpar o texto, os dados e as fotos desta Informação?'))return;
+  $('fNumero').value='';$('fProc').value='';$('fAssunto').value='';$('fDestino').value='';
+  $('editor').innerHTML='';photos.splice(0,photos.length);
+  $('fCargo').dataset.touched='';
+  fillDefaults();
+  setMsg('Campos limpos.','ok');
+};
+function paperEl(){return $('folha');}
+$('btnPrint').onclick=()=>{
+  updatePreview();
+  window.print();
+};
+$('btnPdf').onclick=async()=>{
+  updatePreview();
+  setMsg('Gerando PDF…','');
+  try{
+    if(typeof PCPRDrive.elementsToPdfBlob!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');
+    const blob=await PCPRDrive.elementsToPdfBlob([paperEl()],{scale:2});
+    const nome=(window.PCPRDocumento&&typeof PCPRDocumento.fileName==='function'&&PCPRDocumento.fileName('pdf'))
+      || (($('pcprNomeDoc')&&$('pcprNomeDoc').value.trim())||('INFORMACAO_'+($('fNumero').value||'SEM_NUMERO').replace(/[^\w.-]+/g,'_')))+'.pdf';
+    if(window.PCPRCore&&PCPRCore.history) PCPRCore.history.add({tipo:'Informação',nomeDoc:nome.replace(/\.pdf$/i,''),arquivo:nome,autoridade:currentSigner().nome,acao:'GERADO',formato:'PDF'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    setMsg('PDF gerado.','ok');
+  }catch(e){setMsg(e.message||String(e),'err');}
+};
+$('btnDrive').onclick=async()=>{
+  updatePreview();
+  setMsg('Enviando para a pasta de assinatura…','');
+  try{
+    if(typeof PCPRDrive.uploadElementsPdfForAuthority!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');
+    const nome='INFORMACAO_'+($('fNumero').value||'SEM_NUMERO').replace(/[^\w.-]+/g,'_')+'.pdf';
+    const r=await PCPRDrive.uploadElementsPdfForAuthority({
+      authorityName:currentSigner().nome,
+      fileName:nome,
+      elements:[paperEl()]
+    });
+    setMsg((r&&r.message)||'PDF enviado para a pasta de assinatura.','ok');
+  }catch(e){setMsg(e.message||String(e),'err');}
+};
+if(window.PCPRConfig&&typeof PCPRConfig.onChange==='function') PCPRConfig.onChange(()=>{fillAssinantes();updatePreview();});
+function suggestDocName(){
+  const el=$('pcprNomeDoc'); if(!el||el.value.trim())return;
+  const n=($('fNumero').value.trim()||'SEM_NUMERO').replace(/[^\w.-]+/g,'_');
+  el.value='INFORMACAO_'+n;
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+}
+fillDefaults();
+setTimeout(suggestDocName,80);
+</script>
+</body>
+</html>

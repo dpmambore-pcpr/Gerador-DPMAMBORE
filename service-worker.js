@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.8';
+const CACHE_VERSION='pcpr-central-v3.0.9';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -25,6 +25,7 @@ const CORE_FILES=[
   './icon-192.png',
   './icon-512.png',
   './imei.html',
+  './informacao.html',
   './historico-documentos.html',
   './index.html',
   './laudo-lesoes.html',
