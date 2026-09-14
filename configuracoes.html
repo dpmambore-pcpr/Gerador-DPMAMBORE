@@ -214,13 +214,21 @@ function updateDriveIntegrationStatus(){
 }
 function downloadJson(data,name){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
 function normalizeDriveImport(x){x=(x&&typeof x==='object')?x:{};const d=(x.drive&&typeof x.drive==='object')?x.drive:x;return {clientId:String(d.clientId||'').trim(),apiKey:String(d.apiKey||'').trim(),appId:String(d.appId||d.projectNumber||'').trim(),scope:'https://www.googleapis.com/auth/drive.file'}}
+function isInsideIframe(){
+  // A Central carrega a Configuração dentro de um <iframe>. O OAuth do Google (GIS)
+  // e o Google Picker não concluem de forma confiável dentro de um iframe: o fluxo
+  // "trava" após clicar em Autorizar pasta. Nesses casos usamos a página dedicada,
+  // que roda no nível superior e valida diretamente o link já colado.
+  try{return !!(window.top&&window.top!==window);}catch(_){return true;}
+}
 function useStandaloneGoogleAuthorization(){
   const ua=navigator.userAgent||'';
-  return /iPhone|iPad|iPod|Android/i.test(ua) ||
+  return isInsideIframe() ||
+    /iPhone|iPad|iPod|Android/i.test(ua) ||
     (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
 }
 function openStandaloneGoogleAuthorization(authorityName){
-  const url='autorizar-google.html?v=3.0.5&authority='+encodeURIComponent(authorityName||'');
+  const url='autorizar-google.html?v=3.0.6&authority='+encodeURIComponent(authorityName||'');
   try{
     if(window.top&&window.top!==window)window.top.location.href=url;
     else window.location.href=url;
@@ -253,6 +261,7 @@ function renderDriveAuthorities(){
     if(!drive.clientId||!drive.apiKey||!drive.appId)return status('A integração Google ainda não está disponível neste navegador. Importe o arquivo de integração fornecido pela Central.',true);
     if(useStandaloneGoogleAuthorization()){
       persistDriveOnly();
+      status('Abrindo a página de autorização do Google…');
       openStandaloneGoogleAuthorization(a.nome);
       return;
     }
