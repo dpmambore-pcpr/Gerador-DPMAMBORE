@@ -161,7 +161,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 
 <script src="pcpr-core.js?v=3.0.1"></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
-<script src="pcpr-drive.js?v=3.0.4"></script>
+<script src="pcpr-drive.js?v=3.0.5"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -220,7 +220,7 @@ function useStandaloneGoogleAuthorization(){
     (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
 }
 function openStandaloneGoogleAuthorization(authorityName){
-  const url='autorizar-google.html?authority='+encodeURIComponent(authorityName||'');
+  const url='autorizar-google.html?v=3.0.5&authority='+encodeURIComponent(authorityName||'');
   try{
     if(window.top&&window.top!==window)window.top.location.href=url;
     else window.location.href=url;

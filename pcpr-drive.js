@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-const VERSION='3.0.4';
+const VERSION='3.0.5';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
@@ -39,6 +39,11 @@ function pickerOrigin(){
     if(t&&t.protocol&&t.host)return t.protocol+'//'+t.host;
   }catch(_){}
   try{return global.location.protocol+'//'+global.location.host}catch(_){return ''}
+}
+function isMobileOrStandalone(){
+  const ua=navigator.userAgent||'';
+  return /iPhone|iPad|iPod|Android/i.test(ua) ||
+    !!(global.matchMedia&&global.matchMedia('(display-mode: standalone)').matches);
 }
 function normalizeDrive(d){d=(d&&typeof d==='object')?d:{};return {clientId:clean(d.clientId),apiKey:clean(d.apiKey),appId:clean(d.appId),scope:SCOPE}}
 function authorityList(cfg){
@@ -194,6 +199,40 @@ async function pickFolder(settings,startFolderId){
   });
 }
 
+async function validateConfiguredFolder(settings,folderId,accessToken){
+  const d=normalizeDrive(settings);
+  if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');
+  const id=extractFolderId(folderId);
+  if(!id)throw new Error('Pasta do Google Drive inválida.');
+  let tok=accessToken||'';
+  if(!tok){
+    if(hasLiveToken())tok=token;
+    else{
+      if(!global.google?.accounts?.oauth2){
+        await ensureGoogleLibraries(false);
+        throw new Error('A integração Google terminou de carregar. Toque novamente em Autorizar pasta.');
+      }
+      tok=await requestAccessTokenOnce(d,'consent');
+    }
+  }
+  const url='https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(id)+'?fields=id,name,mimeType,trashed,capabilities(canAddChildren)&supportsAllDrives=true';
+  const res=await fetch(url,{headers:{Authorization:'Bearer '+tok}});
+  let data={};try{data=await res.json()}catch(_){}
+  if(!res.ok){
+    const msg=data&&data.error&&data.error.message?data.error.message:('HTTP '+res.status);
+    const e=new Error('Google Drive: '+msg);
+    e.status=res.status;
+    if(res.status===403||res.status===404){
+      e.message='A conta Google foi autorizada, mas esta pasta ainda não está disponível para a Central. No computador, selecione/autorize esta mesma pasta uma vez usando a mesma conta institucional da DP e depois tente novamente no celular.';
+    }
+    throw e;
+  }
+  if(data.trashed)throw new Error('A pasta configurada está na lixeira do Google Drive.');
+  if(data.mimeType!=='application/vnd.google-apps.folder')throw new Error('O link configurado não corresponde a uma pasta do Google Drive.');
+  if(data.capabilities&&data.capabilities.canAddChildren===false)throw new Error('A conta Google autorizada não possui permissão para adicionar arquivos nesta pasta.');
+  return {id:data.id||id,name:data.name||'Pasta do Google Drive',url:folderUrl(data.id||id),accessToken:tok};
+}
+
 async function uploadFile(bytes,name,mimeType,folderId,settings,accessToken){
   const id=extractFolderId(folderId);if(!id)throw new Error('Pasta do Google Drive inválida.');
   const tok=accessToken||await getAccessToken(settings,false);
@@ -241,9 +280,13 @@ async function prepareDestination(authorityName,options){
   let id=extractFolderId(a.driveFolderId||a.driveFolderUrl);
   if(!id)throw new Error('Nenhuma pasta do Google Drive foi configurada para '+a.nome+'. Abra Configuração Geral → Google Drive e cole o link da pasta para assinatura.');
   const d=normalizeDrive(cfg.drive);
-  if(!d.clientId||!d.apiKey)throw new Error('A integração Google Drive ainda não está completa. Abra Configuração Geral → Google Drive → Configuração técnica e preencha OAuth Client ID e API Key.');
+  if(!d.clientId)throw new Error('A integração Google Drive ainda não está completa. Importe novamente o arquivo de integração Google.');
+  if(!isMobileOrStandalone()&&!d.apiKey)throw new Error('A integração Google Drive ainda não está completa. Importe novamente o arquivo de integração Google.');
   let accessToken='';
   if(options.forcePicker||!a.driveFolderAuthorized){
+    if(isMobileOrStandalone()){
+      throw new Error('No celular, a Central não abre o seletor de pasta. Abra Configurações → Google Drive → Autorizar pasta para validar o link já configurado.');
+    }
     const picked=await pickFolder(d,id);
     cfg=savePickedFolder(cfg,a.nome,picked);
     a=findAuthority(a.nome,cfg)||a;
@@ -275,6 +318,9 @@ async function uploadPdfForAuthority(opts){
         clearToken();dest.accessToken=await getAccessToken(dest.drive,true);
         result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
       }else if(e&&(e.status===403||e.status===404)&&!opts.forcePicker){
+        if(isMobileOrStandalone()){
+          throw new Error('A pasta configurada precisa ser reautorizada. No celular, abra Configurações → Google Drive → Autorizar pasta. Se a validação informar que a pasta ainda não está disponível, autorize essa mesma pasta uma vez no computador com a mesma conta institucional da DP.');
+        }
         const picked=await pickFolder(dest.drive,dest.folderId);
         const cfg=savePickedFolder(dest.cfg,dest.authority.nome,picked);
         dest.authority=findAuthority(dest.authority.nome,cfg)||dest.authority;
@@ -333,5 +379,5 @@ function warmupGoogle(){ensureGoogleLibraries(true).catch(()=>{});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(warmupGoogle,0),{once:true});
 else setTimeout(warmupGoogle,0);
 
-global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,pickerOrigin,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
+global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,pickerOrigin,isMobileOrStandalone,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,validateConfiguredFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
 })(window);

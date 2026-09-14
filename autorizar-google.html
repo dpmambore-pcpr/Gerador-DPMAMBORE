@@ -23,23 +23,22 @@ button:disabled{opacity:.5}
 .hint{font-size:12px;color:#65706b;line-height:1.5;margin-top:12px}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
 <header><b>Central PCPR · Google Drive</b><small>Autorização da pasta de assinatura</small></header>
 <main>
 <div class="card">
-  <div class="info"><b>Autorização em tela inteira.</b><br>Esta página é usada no celular para evitar que o Google Picker fique preso dentro do módulo da Central.</div>
+  <div class="info"><b>Autorização direta no celular.</b><br>No celular a Central não abre o seletor do Google Picker. Ela autentica a conta institucional e valida diretamente a pasta que já foi informada no link.</div>
   <div class="field"><div class="label">Autoridade</div><div class="value" id="authority">—</div></div>
   <div class="field"><div class="label">Pasta configurada</div><div class="value" id="folder">—</div></div>
-  <button id="authorize" class="primary" type="button">AUTORIZAR / SELECIONAR PASTA</button>
+  <button id="authorize" class="primary" type="button" disabled>CARREGANDO GOOGLE…</button>
   <button id="back" class="secondary" type="button">VOLTAR À CENTRAL</button>
   <div id="status" class="status"></div>
-  <div class="hint">Entre com a conta institucional da Delegacia cadastrada para a integração. Se o Google pedir consentimento, conclua a autorização e depois selecione a pasta indicada.</div>
+  <div class="hint">Entre com a conta institucional da Delegacia cadastrada para a integração. A pasta usada será exatamente a do link salvo na Configuração Geral. Para trocar a pasta, altere primeiro o link. No computador o seletor de pasta continua disponível normalmente.</div>
 </div>
 </main>
 <script src="pcpr-config.js?v=3.0.1"></script>
-<script src="pcpr-drive.js?v=3.0.4"></script>
+<script src="pcpr-drive.js?v=3.0.5"></script>
 <script>
 (function(){
   'use strict';
@@ -73,22 +72,21 @@ button:disabled{opacity:.5}
     if(!a)return message('Autoridade não encontrada na Configuração Geral.',true);
     if(!id)return message('Volte à Configuração Geral e cole primeiro o link da pasta.',true);
     const drive=c.drive||{};
-    if(!drive.clientId||!drive.apiKey||!drive.appId)return message('Importe primeiro o arquivo de integração Google na Configuração Geral.',true);
+    if(!drive.clientId)return message('Importe primeiro o arquivo de integração Google na Configuração Geral.',true);
 
-    b.disabled=true;b.textContent='ABRINDO GOOGLE…';message('Aguarde. O Google será aberto para autorização e seleção da pasta.',false);
+    b.disabled=true;b.textContent='AUTORIZANDO CONTA…';
+    message('Aguarde. O Google será aberto somente para autenticar a conta institucional. A Central não abrirá o seletor de pasta no celular.',false);
     try{
-      const picked=await PCPRDrive.pickFolder(drive,id);
-      if(picked.id!==id){
-        const ok=confirm('A pasta selecionada é diferente da pasta configurada. Deseja substituir pelo local selecionado?');
-        if(!ok){message('Seleção cancelada. Nenhuma configuração foi alterada.',true);return;}
-      }
+      const tok=await PCPRDrive.getAccessToken(drive,true);
+      b.textContent='VALIDANDO PASTA…';
+      const checked=await PCPRDrive.validateConfiguredFolder(drive,id,tok);
       const target=fold(a.nome);
       c.autoridades=(Array.isArray(c.autoridades)?c.autoridades:[]).map(x=>{
         if(fold(x&&x.nome)!==target)return x;
-        return {...x,driveFolderId:picked.id,driveFolderUrl:picked.url,driveFolderName:picked.name||'Pasta do Google Drive',driveFolderAuthorized:true};
+        return {...x,driveFolderId:checked.id,driveFolderUrl:checked.url,driveFolderName:checked.name||'Pasta do Google Drive',driveFolderAuthorized:true};
       });
       save(c);
-      message('Pasta autorizada com sucesso. Você já pode voltar à Central e enviar os documentos.',false);
+      message('Conta autenticada e pasta validada com sucesso. Você já pode voltar à Central e enviar os documentos.',false);
       b.textContent='AUTORIZADA ✓';
       b.disabled=true;
       refresh();
@@ -96,10 +94,21 @@ button:disabled{opacity:.5}
     }catch(e){
       message(e?.message||String(e),true);
     }finally{
-      if(!/AUTORIZADA/.test(b.textContent)){b.disabled=false;b.textContent='AUTORIZAR / SELECIONAR PASTA';}
+      if(!/AUTORIZADA/.test(b.textContent)){b.disabled=false;b.textContent='AUTORIZAR PASTA CONFIGURADA';}
     }
   };
+
+  function waitGoogleReady(){
+    const b=$('authorize');
+    if(window.google?.accounts?.oauth2&&window.PCPRDrive){
+      b.disabled=false;
+      b.textContent='AUTORIZAR PASTA CONFIGURADA';
+      return;
+    }
+    setTimeout(waitGoogleReady,120);
+  }
   refresh();
+  waitGoogleReady();
 })();
 </script>
 </body>
