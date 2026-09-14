@@ -1,0 +1,16 @@
+{
+  "name": "Central PCPR — Static PWA",
+  "ports": [
+    {
+      "name": "static web server",
+      "port": 8000
+    }
+  ],
+  "terminals": [
+    {
+      "name": "static-server",
+      "command": "python3 -m http.server 8000",
+      "description": "Serves the static PWA (HTML/JS/assets) over HTTP at http://localhost:8000. Open /index.html to use the Central PCPR app."
+    }
+  ]
+}
