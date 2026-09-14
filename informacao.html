@@ -38,6 +38,16 @@ h2{font-size:14px;margin:0 0 12px;color:var(--pcpr-ink);text-transform:uppercase
 .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
 .form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--suave);font-weight:700}
 .full{grid-column:1/-1}
+.signers{display:grid;gap:7px}
+.signer{
+  display:flex;align-items:flex-start;gap:9px;margin:0;padding:9px 11px;border:1px solid #e0ddd4;
+  border-radius:9px;background:#fbfaf7;cursor:pointer;color:#17202a;font-weight:700;font-size:13px
+}
+.signer input{width:auto;min-height:0;margin-top:3px;accent-color:#285748}
+.signer .who{display:flex;flex-direction:column;gap:2px;min-width:0}
+.signer .who b{font-size:13px;font-weight:800;color:#17202a}
+.signer .who span{font-size:11px;color:var(--suave);font-weight:700}
+.signer:has(input:checked){border-color:#285748;background:#edf5f0;box-shadow:0 0 0 2px rgba(40,87,72,.12)}
 input,select,textarea{
   border:1px solid #bac5d1;border-radius:8px;padding:8px 9px;font-size:13px;width:100%;
   background:#fff;color:#17202a;min-height:40px
@@ -147,12 +157,14 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
   <div class="card">
     <h2><span class="step-num">1</span> Dados da Informação</h2>
     <div class="form">
-      <label>Nº da Informação<input id="fNumero" type="text" autocomplete="off" placeholder="001/2026"></label>
       <label>Data<input id="fData" type="date"></label>
       <label>Procedimento / IP nº<input id="fProc" type="text" autocomplete="off" placeholder="386606/2026"></label>
-      <label>Assinante<select id="fAssin"></select></label>
       <label class="full">Assunto<input id="fAssunto" type="text" autocomplete="off" placeholder="Relato de diligências, comunicação de fato, etc."></label>
       <label class="full">Destinatário (opcional)<input id="fDestino" type="text" autocomplete="off" placeholder="Ilmo. Sr. Delegado de Polícia"></label>
+      <div class="full">
+        <div style="font-size:12px;color:var(--suave);font-weight:700;margin-bottom:6px">Quem assina</div>
+        <div id="signers" class="signers" role="radiogroup" aria-label="Quem assina a Informação"></div>
+      </div>
       <label class="full">Cargo do assinante<input id="fCargo" type="text" autocomplete="off"></label>
     </div>
   </div>
@@ -246,19 +258,47 @@ function cidadeLinha(){
   const uf=g.uf||'PR';
   return cidade+'/'+uf;
 }
-function fillAssinantes(){
-  const sel=$('fAssin');
+function foldName(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();}
+function firstName(s){return foldName(s).split(/\s+/)[0]||'';}
+const SIGNER_SLOTS=[
+  {id:'tiago', first:'tiago', fallbackNome:'Tiago Henrique Lemes', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
+  {id:'thiago', first:'thiago', fallbackNome:'Thiago Gonzaga da Silva Couto', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
+  {id:'paulo', first:'paulo', fallbackNome:'Paulo Henrique Vilaça', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
+  {id:'delegado', first:'', fallbackNome:'Anderson Sérgio Romão', fallbackCargo:'Delegado de Polícia', delegado:true}
+];
+function resolveSigners(){
+  const list=servers();
   const auth=authority();
-  const list=servers().length?servers():[{nome:auth.nome,cargo:auth.cargo}];
-  const cur=sel.value;
-  sel.innerHTML=list.map((s,i)=>'<option value="'+i+'">'+esc(s.nome)+'</option>').join('');
-  if(cur && [...sel.options].some(o=>o.value===cur))sel.value=cur;
+  return SIGNER_SLOTS.map(slot=>{
+    let found=null;
+    if(slot.delegado){
+      found=list.find(s=>/delegad/i.test(s.cargo||''))||(auth.nome?auth:null);
+    }else{
+      found=list.find(s=>firstName(s.nome)===slot.first);
+    }
+    return {
+      id:slot.id,
+      nome:(found&&found.nome)||slot.fallbackNome,
+      cargo:(found&&found.cargo)||(slot.delegado&&auth.cargo)||slot.fallbackCargo
+    };
+  });
+}
+function selectedSignerId(){
+  const el=document.querySelector('input[name="signer"]:checked');
+  return el?el.value:SIGNER_SLOTS[0].id;
+}
+function fillAssinantes(){
+  const box=$('signers');
+  const cur=selectedSignerId();
+  const people=resolveSigners();
+  box.innerHTML=people.map((s,i)=>'<label class="signer"><input type="radio" name="signer" value="'+esc(s.id)+'" '+(s.id===cur||(!cur&&i===0)?'checked':'')+'><span class="who"><b>'+esc(s.nome)+'</b><span>'+esc(s.cargo)+'</span></span></label>').join('');
+  box.querySelectorAll('input[name="signer"]').forEach(el=>el.onchange=()=>{$('fCargo').dataset.touched='';applyCargo();updatePreview();});
+  if(!box.querySelector('input[name="signer"]:checked') && box.querySelector('input')) box.querySelector('input').checked=true;
   applyCargo();
 }
 function currentSigner(){
-  const list=servers();
-  const s=list[Number($('fAssin').value)]||authority();
-  return {nome:s.nome||'',cargo:s.cargo||$('fCargo').value.trim()};
+  const id=selectedSignerId();
+  return resolveSigners().find(s=>s.id===id)||resolveSigners()[0];
 }
 function applyCargo(){
   const s=currentSigner();
@@ -399,7 +439,6 @@ function updatePreview(){
   const g=cfg();
   const cab=headerLines().map(l=>'<div>'+esc(l)+'</div>').join('');
   const rod=footerLines().map(l=>'<div>'+esc(l)+'</div>').join('');
-  const numero=$('fNumero').value.trim();
   const assunto=$('fAssunto').value.trim();
   const proc=$('fProc').value.trim();
   const dest=$('fDestino').value.trim();
@@ -409,14 +448,14 @@ function updatePreview(){
   const anexos=photos.map((p,i)=>'<div class="anexo"><img alt="'+esc(p.caption||p.name)+'" src="'+p.data+'"><div class="cap">'+(p.caption?esc(p.caption):'Foto anexa '+(i+1))+'</div></div>').join('');
   $('folha').innerHTML=
     '<div class="cab"><img alt="Brasão" src="'+crestSrc()+'">'+cab+'</div>'+
-    '<div class="doc-title">Informação'+(numero?' nº '+esc(numero):'')+'</div>'+
+    '<div class="doc-title">Informação</div>'+
     '<p class="doc-date">'+esc(cidadeLinha())+', '+dataExtenso($('fData').value)+'.</p>'+
     (dest?'<p><b>'+esc(dest)+'</b></p>':'')+
     (assunto?'<p><b>Assunto:</b> '+esc(assunto)+'</p>':'')+
     (proc?'<p><b>Ref.:</b> '+esc(proc)+'</p>':'')+
     '<div class="doc-body">'+body+'</div>'+
     anexos+
-    '<div class="sign"><div>Respeitosamente,</div><div class="nome">'+esc((signer.nome||g.assinante||'').toUpperCase())+'</div><div>'+esc(cargo||'')+'</div></div>'+
+    '<div class="sign"><div>Respeitosamente,</div><div class="nome">'+esc((signer.nome||'').toUpperCase())+'</div><div>'+esc(cargo||'')+'</div></div>'+
     '<div class="rod">'+rod+'</div>';
   $('hSub').textContent=(g.unidade||'Delegacia de Polícia')+' — '+(g.subdivisao||'')+' · Informação institucional · processamento local';
   $('rodapeTela').textContent=footerLines().join(' · ');
@@ -424,8 +463,6 @@ function updatePreview(){
 function fillDefaults(){
   $('fData').value=todayISO();
   fillAssinantes();
-  const y=new Date().getFullYear();
-  if(!$('fNumero').value) $('fNumero').value='001/'+y;
   renderPhotos();
   updatePreview();
 }
@@ -461,8 +498,7 @@ $('editor').addEventListener('drop',e=>{
   e.preventDefault();
   addFiles(files,true);
 });
-['fNumero','fData','fProc','fAssunto','fDestino','fCargo'].forEach(id=>$(id).addEventListener('input',updatePreview));
-$('fAssin').addEventListener('change',()=>{$('fCargo').dataset.touched='';applyCargo();updatePreview();});
+['fData','fProc','fAssunto','fDestino','fCargo'].forEach(id=>$(id).addEventListener('input',updatePreview));
 $('fCargo').addEventListener('input',()=>{$('fCargo').dataset.touched='1';});
 $('btnAddPhotos').onclick=()=>{$('photoFile').dataset.insert='';$('photoFile').click();};
 $('btnInsertPhoto').onclick=()=>{$('photoFile').dataset.insert='1';$('photoFile').click();};
@@ -473,7 +509,7 @@ $('photoFile').onchange=e=>{
 };
 $('btnClear').onclick=()=>{
   if(!confirm('Limpar o texto, os dados e as fotos desta Informação?'))return;
-  $('fNumero').value='';$('fProc').value='';$('fAssunto').value='';$('fDestino').value='';
+  $('fProc').value='';$('fAssunto').value='';$('fDestino').value='';
   $('editor').innerHTML='';photos.splice(0,photos.length);
   $('fCargo').dataset.touched='';
   fillDefaults();
@@ -490,8 +526,9 @@ $('btnPdf').onclick=async()=>{
   try{
     if(typeof PCPRDrive.elementsToPdfBlob!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');
     const blob=await PCPRDrive.elementsToPdfBlob([paperEl()],{scale:2});
+    const fallback='INFORMACAO_'+($('fData').value||todayISO()).replace(/-/g,'')+'_'+(currentSigner().nome||'assinante').replace(/[^\w.-]+/g,'_');
     const nome=(window.PCPRDocumento&&typeof PCPRDocumento.fileName==='function'&&PCPRDocumento.fileName('pdf'))
-      || (($('pcprNomeDoc')&&$('pcprNomeDoc').value.trim())||('INFORMACAO_'+($('fNumero').value||'SEM_NUMERO').replace(/[^\w.-]+/g,'_')))+'.pdf';
+      || (($('pcprNomeDoc')&&$('pcprNomeDoc').value.trim())||fallback)+'.pdf';
     if(window.PCPRCore&&PCPRCore.history) PCPRCore.history.add({tipo:'Informação',nomeDoc:nome.replace(/\.pdf$/i,''),arquivo:nome,autoridade:currentSigner().nome,acao:'GERADO',formato:'PDF'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),1500);
@@ -503,7 +540,7 @@ $('btnDrive').onclick=async()=>{
   setMsg('Enviando para a pasta de assinatura…','');
   try{
     if(typeof PCPRDrive.uploadElementsPdfForAuthority!=='function')throw new Error('Módulo do Google Drive desatualizado. Atualize a Central e recarregue a página.');
-    const nome='INFORMACAO_'+($('fNumero').value||'SEM_NUMERO').replace(/[^\w.-]+/g,'_')+'.pdf';
+    const nome='INFORMACAO_'+($('fData').value||todayISO()).replace(/-/g,'')+'_'+(currentSigner().nome||'assinante').replace(/[^\w.-]+/g,'_')+'.pdf';
     const r=await PCPRDrive.uploadElementsPdfForAuthority({
       authorityName:currentSigner().nome,
       fileName:nome,
@@ -515,8 +552,8 @@ $('btnDrive').onclick=async()=>{
 if(window.PCPRConfig&&typeof PCPRConfig.onChange==='function') PCPRConfig.onChange(()=>{fillAssinantes();updatePreview();});
 function suggestDocName(){
   const el=$('pcprNomeDoc'); if(!el||el.value.trim())return;
-  const n=($('fNumero').value.trim()||'SEM_NUMERO').replace(/[^\w.-]+/g,'_');
-  el.value='INFORMACAO_'+n;
+  const d=($('fData').value||todayISO()).replace(/-/g,'');
+  el.value='INFORMACAO_'+d;
   el.dispatchEvent(new Event('input',{bubbles:true}));
 }
 fillDefaults();
