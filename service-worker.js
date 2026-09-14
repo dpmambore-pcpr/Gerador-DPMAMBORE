@@ -1,8 +1,9 @@
-const CACHE_VERSION='pcpr-central-v3.0.0';
+const CACHE_VERSION='pcpr-central-v3.0.3';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
   './',
+  './analisador-google.html',
   './MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt',
   './apple-touch-icon-precomposed.png',
   './apple-touch-icon.png',
@@ -42,7 +43,8 @@ const CORE_FILES=[
   './pwa.js',
   './qrcode.html',
   './reconhecimento-fotografico.html',
-  './relatorio-viagem.html'
+  './relatorio-viagem.html',
+  './transcritor.html'
 ];
 const STATIC_CDN_HOSTS=new Set(['cdn.jsdelivr.net','unpkg.com']);
 self.addEventListener('install',event=>{

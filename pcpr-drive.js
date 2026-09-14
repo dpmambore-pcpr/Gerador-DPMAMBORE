@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-const VERSION='3.0.2';
+const VERSION='3.0.3';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
@@ -33,6 +33,15 @@ function extractFolderId(input){
   return /^[A-Za-z0-9_-]{10,}$/.test(s)?s:'';
 }
 function folderUrl(id){id=clean(id);return id?'https://drive.google.com/drive/folders/'+encodeURIComponent(id):''}
+function pickerOrigin(){
+  // A Central abre os módulos em iframe. O Google recomenda informar
+  // explicitamente a origem da página superior ao Picker nesses casos.
+  try{
+    const t=global.top&&global.top.location;
+    if(t&&t.protocol&&t.host)return t.protocol+'//'+t.host;
+  }catch(_){}
+  try{return global.location.protocol+'//'+global.location.host}catch(_){return ''}
+}
 function normalizeDrive(d){d=(d&&typeof d==='object')?d:{};return {clientId:clean(d.clientId),apiKey:clean(d.apiKey),appId:clean(d.appId),scope:SCOPE}}
 function authorityList(cfg){
   return Array.isArray(cfg&&cfg.autoridades)?cfg.autoridades.filter(a=>a&&clean(a.nome)):[];
@@ -164,7 +173,13 @@ async function pickFolder(settings,startFolderId){
       const view=new global.google.picker.DocsView(global.google.picker.ViewId.FOLDERS)
         .setIncludeFolders(true).setSelectFolderEnabled(true).setMode(global.google.picker.DocsViewMode.LIST);
       const start=extractFolderId(startFolderId);if(start)view.setFileIds(start);
-      let builder=new global.google.picker.PickerBuilder().addView(view).setOAuthToken(accessToken).setDeveloperKey(d.apiKey).setCallback(data=>{
+      const origin=pickerOrigin();
+      let builder=new global.google.picker.PickerBuilder()
+        .addView(view)
+        .setOAuthToken(accessToken)
+        .setDeveloperKey(d.apiKey);
+      if(origin)builder=builder.setOrigin(origin);
+      builder=builder.setCallback(data=>{
         const action=data&&data[global.google.picker.Response.ACTION];
         if(action===global.google.picker.Action.CANCEL){reject(new Error('Seleção de pasta cancelada.'));return;}
         if(action!==global.google.picker.Action.PICKED)return;
@@ -320,5 +335,5 @@ function warmupGoogle(){ensureGoogleLibraries(true).catch(()=>{});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(warmupGoogle,0),{once:true});
 else setTimeout(warmupGoogle,0);
 
-global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
+global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,pickerOrigin,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
 })(window);
