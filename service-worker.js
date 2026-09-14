@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.3';
+const CACHE_VERSION='pcpr-central-v3.0.4';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -8,6 +8,7 @@ const CORE_FILES=[
   './apple-touch-icon-precomposed.png',
   './apple-touch-icon.png',
   './atualizacoes.html',
+  './autorizar-google.html',
   './auto-arrecadacao.html',
   './brasao-padrao.png',
   './configuracoes.html',

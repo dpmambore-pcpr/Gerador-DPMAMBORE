@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Autorizar Google Drive — Central PCPR</title>
+<style>
+:root{--ink:#111820;--green:#285748;--green2:#183a31;--gold:#c5a253;--bg:#f4f2ec;--line:#d8d3c8;--red:#8f3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#17202a}
+header{background:linear-gradient(115deg,var(--ink),var(--green2) 72%,#20473c);color:#fff;border-bottom:5px solid var(--gold);padding:18px}
+header b{font-size:18px} header small{display:block;margin-top:5px;color:#eee8d9}
+main{max-width:680px;margin:auto;padding:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.info{border-left:4px solid var(--gold);background:#fffaf0;padding:12px;margin-bottom:14px;line-height:1.5;font-size:14px}
+.field{margin:13px 0}.label{font-size:11px;font-weight:800;text-transform:uppercase;color:#68736e}.value{font-size:15px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+button{width:100%;min-height:54px;border-radius:10px;border:1px solid var(--green2);font-size:16px;font-weight:800;margin-top:10px}
+.primary{background:linear-gradient(#326b58,var(--green));color:#fff}.secondary{background:#f4efe2;color:#17202a;border-color:#cdbd95}
+button:disabled{opacity:.5}
+.status{display:none;margin-top:14px;border-radius:10px;padding:12px;line-height:1.45;font-size:14px}
+.status.show{display:block;background:#edf5f0;color:#225440;border:1px solid #b9d1c4}
+.status.err{background:#fff2f2;color:var(--red);border-color:#ddb8bb}
+.hint{font-size:12px;color:#65706b;line-height:1.5;margin-top:12px}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+<header><b>Central PCPR · Google Drive</b><small>Autorização da pasta de assinatura</small></header>
+<main>
+<div class="card">
+  <div class="info"><b>Autorização em tela inteira.</b><br>Esta página é usada no celular para evitar que o Google Picker fique preso dentro do módulo da Central.</div>
+  <div class="field"><div class="label">Autoridade</div><div class="value" id="authority">—</div></div>
+  <div class="field"><div class="label">Pasta configurada</div><div class="value" id="folder">—</div></div>
+  <button id="authorize" class="primary" type="button">AUTORIZAR / SELECIONAR PASTA</button>
+  <button id="back" class="secondary" type="button">VOLTAR À CENTRAL</button>
+  <div id="status" class="status"></div>
+  <div class="hint">Entre com a conta institucional da Delegacia cadastrada para a integração. Se o Google pedir consentimento, conclua a autorização e depois selecione a pasta indicada.</div>
+</div>
+</main>
+<script src="pcpr-config.js?v=3.0.1"></script>
+<script src="pcpr-drive.js?v=3.0.4"></script>
+<script>
+(function(){
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const params=new URLSearchParams(location.search);
+  const requested=(params.get('authority')||'').trim();
+
+  function cfg(){return window.PCPRConfig&&PCPRConfig.get?PCPRConfig.get():JSON.parse(localStorage.getItem('pcpr.configGeralUnidade.v1')||'{}')}
+  function save(x){return window.PCPRConfig&&PCPRConfig.save?PCPRConfig.save(x):(localStorage.setItem('pcpr.configGeralUnidade.v1',JSON.stringify(x)),x)}
+  function fold(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim()}
+  function message(txt,err){
+    const el=$('status');el.textContent=txt;el.className='status show'+(err?' err':'');
+  }
+  function findAuthority(c){
+    const list=Array.isArray(c.autoridades)?c.autoridades:[];
+    return list.find(a=>fold(a&&a.nome)===fold(requested)) || list[0] || null;
+  }
+  function refresh(){
+    const c=cfg(),a=findAuthority(c);
+    $('authority').textContent=a?.nome||'Autoridade não encontrada';
+    const id=window.PCPRDrive?.extractFolderId(a?.driveFolderId||a?.driveFolderUrl)||'';
+    $('folder').textContent=a?.driveFolderName || (id?'Pasta configurada pelo link':'Nenhuma pasta configurada');
+    return {c,a,id};
+  }
+
+  $('back').onclick=()=>{ if(history.length>1) history.back(); else location.href='index.html'; };
+
+  $('authorize').onclick=async()=>{
+    const b=$('authorize');
+    const {c,a,id}=refresh();
+    if(!a)return message('Autoridade não encontrada na Configuração Geral.',true);
+    if(!id)return message('Volte à Configuração Geral e cole primeiro o link da pasta.',true);
+    const drive=c.drive||{};
+    if(!drive.clientId||!drive.apiKey||!drive.appId)return message('Importe primeiro o arquivo de integração Google na Configuração Geral.',true);
+
+    b.disabled=true;b.textContent='ABRINDO GOOGLE…';message('Aguarde. O Google será aberto para autorização e seleção da pasta.',false);
+    try{
+      const picked=await PCPRDrive.pickFolder(drive,id);
+      if(picked.id!==id){
+        const ok=confirm('A pasta selecionada é diferente da pasta configurada. Deseja substituir pelo local selecionado?');
+        if(!ok){message('Seleção cancelada. Nenhuma configuração foi alterada.',true);return;}
+      }
+      const target=fold(a.nome);
+      c.autoridades=(Array.isArray(c.autoridades)?c.autoridades:[]).map(x=>{
+        if(fold(x&&x.nome)!==target)return x;
+        return {...x,driveFolderId:picked.id,driveFolderUrl:picked.url,driveFolderName:picked.name||'Pasta do Google Drive',driveFolderAuthorized:true};
+      });
+      save(c);
+      message('Pasta autorizada com sucesso. Você já pode voltar à Central e enviar os documentos.',false);
+      b.textContent='AUTORIZADA ✓';
+      b.disabled=true;
+      refresh();
+      return;
+    }catch(e){
+      message(e?.message||String(e),true);
+    }finally{
+      if(!/AUTORIZADA/.test(b.textContent)){b.disabled=false;b.textContent='AUTORIZAR / SELECIONAR PASTA';}
+    }
+  };
+  refresh();
+})();
+</script>
+</body>
+</html>

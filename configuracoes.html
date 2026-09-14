@@ -161,7 +161,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 
 <script src="pcpr-core.js?v=3.0.1"></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
-<script src="pcpr-drive.js?v=3.0.3"></script>
+<script src="pcpr-drive.js?v=3.0.4"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -214,6 +214,19 @@ function updateDriveIntegrationStatus(){
 }
 function downloadJson(data,name){const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
 function normalizeDriveImport(x){x=(x&&typeof x==='object')?x:{};const d=(x.drive&&typeof x.drive==='object')?x.drive:x;return {clientId:String(d.clientId||'').trim(),apiKey:String(d.apiKey||'').trim(),appId:String(d.appId||d.projectNumber||'').trim(),scope:'https://www.googleapis.com/auth/drive.file'}}
+function useStandaloneGoogleAuthorization(){
+  const ua=navigator.userAgent||'';
+  return /iPhone|iPad|iPod|Android/i.test(ua) ||
+    (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
+}
+function openStandaloneGoogleAuthorization(authorityName){
+  const url='autorizar-google.html?authority='+encodeURIComponent(authorityName||'');
+  try{
+    if(window.top&&window.top!==window)window.top.location.href=url;
+    else window.location.href=url;
+  }catch(_){window.location.href=url;}
+}
+
 function renderDriveAuthorities(){
   const box=$('driveAuthorities');if(!box)return;box.innerHTML='';
   autoridades.forEach((a,i)=>{
@@ -238,6 +251,11 @@ function renderDriveAuthorities(){
     const id=window.PCPRDrive?.extractFolderId(a.driveFolderId||a.driveFolderUrl)||'';
     if(!id)return status('Cole primeiro o link válido da pasta desta autoridade.',true);
     if(!drive.clientId||!drive.apiKey||!drive.appId)return status('A integração Google ainda não está disponível neste navegador. Importe o arquivo de integração fornecido pela Central.',true);
+    if(useStandaloneGoogleAuthorization()){
+      persistDriveOnly();
+      openStandaloneGoogleAuthorization(a.nome);
+      return;
+    }
     b.disabled=true;b.textContent='Abrindo Google…';
     try{
       const picked=await window.PCPRDrive.pickFolder(drive,id);

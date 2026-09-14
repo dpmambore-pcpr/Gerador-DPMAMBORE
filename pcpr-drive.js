@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-const VERSION='3.0.3';
+const VERSION='3.0.4';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
@@ -34,8 +34,6 @@ function extractFolderId(input){
 }
 function folderUrl(id){id=clean(id);return id?'https://drive.google.com/drive/folders/'+encodeURIComponent(id):''}
 function pickerOrigin(){
-  // A Central abre os módulos em iframe. O Google recomenda informar
-  // explicitamente a origem da página superior ao Picker nesses casos.
   try{
     const t=global.top&&global.top.location;
     if(t&&t.protocol&&t.host)return t.protocol+'//'+t.host;
