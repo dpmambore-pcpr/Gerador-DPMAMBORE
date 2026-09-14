@@ -1,9 +1,27 @@
 (function(global){
 'use strict';
-const VERSION='3.0.0';
+const VERSION='3.0.2';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
+const TOKEN_STORE_KEY='pcpr.drive.oauth.token.v1';
+function loadStoredToken(){
+  try{
+    const raw=sessionStorage.getItem(TOKEN_STORE_KEY);if(!raw)return false;
+    const data=JSON.parse(raw)||{};
+    const t=clean(data.token),exp=Number(data.exp)||0;
+    if(t&&Date.now()<exp-60000){token=t;tokenExp=exp;return true;}
+    sessionStorage.removeItem(TOKEN_STORE_KEY);
+  }catch(_){}
+  return false;
+}
+function saveStoredToken(){
+  try{
+    if(token&&tokenExp)sessionStorage.setItem(TOKEN_STORE_KEY,JSON.stringify({token,exp:tokenExp}));
+  }catch(_){}
+}
+function clearStoredToken(){try{sessionStorage.removeItem(TOKEN_STORE_KEY)}catch(_){} }
+function hasLiveToken(){if(token&&Date.now()<tokenExp-60000)return true;return loadStoredToken();}
 function clean(v){return String(v??'').trim()}
 function historyAdd(entry){try{const h=global.PCPRCore&&global.PCPRCore.history;if(h&&typeof h.add==='function')h.add(entry)}catch(_){}}
 function currentDocType(){try{return global.PCPRCore&&typeof global.PCPRCore.moduleName==='function'?global.PCPRCore.moduleName():(clean(document.title)||'Documento')}catch(_){return 'Documento'}}
@@ -71,9 +89,21 @@ function requestAccessTokenOnce(d,promptValue){
       settled=true;
       token=resp.access_token;
       tokenExp=Date.now()+((Number(resp.expires_in)||3300)*1000);
+      saveStoredToken();
       resolve(token);
     };
-    const errCb=(e)=>finishReject(new Error((e&&e.type)||'Falha na autenticação Google.'));
+    const errCb=(e)=>{
+      const type=clean(e&&e.type);
+      if(type==='popup_failed_to_open'){
+        finishReject(new Error('O navegador bloqueou a janela de autorização do Google. No iPhone/iPad, abra a Central diretamente no Safari e toque novamente em Autorizar pasta. Se necessário, permita pop-ups temporariamente.'));
+        return;
+      }
+      if(type==='popup_closed'){
+        finishReject(new Error('A janela de autorização do Google foi fechada antes da conclusão. Toque novamente em Autorizar pasta.'));
+        return;
+      }
+      finishReject(new Error(type||'Falha na autenticação Google.'));
+    };
     try{
       if(!tokenClient||tokenClientId!==d.clientId){
         tokenClient=global.google.accounts.oauth2.initTokenClient({client_id:d.clientId,scope:SCOPE,callback:cb,error_callback:errCb});
@@ -90,21 +120,45 @@ function requestAccessTokenOnce(d,promptValue){
 }
 async function getAccessToken(settings,forcePrompt){
   const d=normalizeDrive(settings);if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');
-  if(token&&Date.now()<tokenExp-60000&&!forcePrompt)return token;
+  if(hasLiveToken()&&!forcePrompt)return token;
+  // Se a biblioteca já estiver pronta, inicia a solicitação imediatamente.
+  // Isso preserva o gesto do clique no Safari/iOS e evita popup_failed_to_open.
+  if(global.google?.accounts?.oauth2){
+    if(forcePrompt)return requestAccessTokenOnce(d,'consent');
+    try{return await requestAccessTokenOnce(d,'');}
+    catch(silentError){
+      const msg=clean(silentError&&silentError.message);
+      if(/popup_failed_to_open|bloqueou a janela/i.test(msg))throw silentError;
+      return requestAccessTokenOnce(d,'consent');
+    }
+  }
   await ensureGoogleLibraries(false);
-  // Primeiro tenta obter um novo token silenciosamente. Isto é essencial porque
-  // cada aba/módulo da Central roda em um iframe diferente e perde o token em memória.
-  try{
-    return await requestAccessTokenOnce(d,'');
-  }catch(silentError){
-    // Só abre a interface do Google quando a sessão/permissão realmente exigir.
-    // Em uso normal, após a primeira autorização, este trecho não é executado.
-    return await requestAccessTokenOnce(d,'consent');
+  // Quando o carregamento da biblioteca ocorreu após o clique, não tentamos
+  // abrir um popup atrasado no iOS. A mensagem orienta um segundo toque,
+  // agora com a biblioteca já carregada e o gesto preservado.
+  if(forcePrompt)throw new Error('A integração Google terminou de carregar. Toque novamente em Autorizar pasta.');
+  try{return await requestAccessTokenOnce(d,'');}
+  catch(silentError){
+    const msg=clean(silentError&&silentError.message);
+    if(/popup_failed_to_open|bloqueou a janela/i.test(msg))throw silentError;
+    throw new Error('É necessário autorizar o Google Drive. Abra Configurações → Google Drive e toque em Autorizar pasta.');
   }
 }
+
 async function pickFolder(settings,startFolderId){
   const d=normalizeDrive(settings);if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');if(!d.apiKey)throw new Error('API Key do Google Picker não configurada.');
-  await ensureGoogleLibraries(true);const accessToken=await getAccessToken(d,false);
+  let accessToken='';
+  if(hasLiveToken())accessToken=token;
+  else{
+    // Autorizar pasta é uma ação explícita do usuário. O token deve ser
+    // solicitado diretamente a partir desse clique, antes de qualquer await.
+    if(!global.google?.accounts?.oauth2){
+      await ensureGoogleLibraries(false);
+      throw new Error('A integração Google terminou de carregar. Toque novamente em Autorizar pasta.');
+    }
+    accessToken=await requestAccessTokenOnce(d,'consent');
+  }
+  await ensureGoogleLibraries(true);
   return new Promise((resolve,reject)=>{
     try{
       const view=new global.google.picker.DocsView(global.google.picker.ViewId.FOLDERS)
@@ -126,6 +180,7 @@ async function pickFolder(settings,startFolderId){
     }catch(e){reject(e)}
   });
 }
+
 async function uploadFile(bytes,name,mimeType,folderId,settings,accessToken){
   const id=extractFolderId(folderId);if(!id)throw new Error('Pasta do Google Drive inválida.');
   const tok=accessToken||await getAccessToken(settings,false);
@@ -258,6 +313,12 @@ async function uploadElementsPdfForAuthority(opts){
   return uploadPdfForAuthority({...opts,bytes});
 }
 
-function clearToken(){token=null;tokenExp=0;}
+function clearToken(){token=null;tokenExp=0;tokenClient=null;tokenClientId='';clearStoredToken();}
+// Pré-carrega as bibliotecas do Google enquanto o usuário preenche o formulário.
+// Assim, no iOS, o clique em "Autorizar pasta" pode abrir o OAuth imediatamente.
+function warmupGoogle(){ensureGoogleLibraries(true).catch(()=>{});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(warmupGoogle,0),{once:true});
+else setTimeout(warmupGoogle,0);
+
 global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
 })(window);
