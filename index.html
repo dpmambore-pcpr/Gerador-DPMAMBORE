@@ -454,7 +454,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 }
 </style>
 <script src="pcpr-core.js?v=3.0.1"></script>
-<script src="pwa.js?v=3.0.1" defer></script>
+<script src="pwa.js?v=3.0.11" defer></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
 </head>
 <body class="home-mode">
@@ -617,8 +617,8 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
       <button class="module-card" type="button" data-open-module="oficios">
         <div class="card-top"><div class="card-icon">OF</div><div class="card-arrow">›</div></div>
         <div class="card-title">Ofícios</div>
-        <div class="card-desc">Ofícios e expedientes institucionais, com Diárias, Relatório de Viagem, Perícia e Oitiva integrados.</div>
-        <div class="card-subtags"><span class="card-subtag">OFÍCIOS</span><span class="card-subtag">DIÁRIAS</span><span class="card-subtag">RELATÓRIO VIAGEM</span><span class="card-subtag">PERÍCIA</span><span class="card-subtag">OITIVA</span></div>
+        <div class="card-desc">Ofícios e expedientes institucionais, com Informação, Diárias, Relatório de Viagem, Perícia e Oitiva integrados.</div>
+        <div class="card-subtags"><span class="card-subtag">OFÍCIOS</span><span class="card-subtag">INFORMAÇÃO</span><span class="card-subtag">DIÁRIAS</span><span class="card-subtag">RELATÓRIO VIAGEM</span><span class="card-subtag">PERÍCIA</span><span class="card-subtag">OITIVA</span></div>
       </button>
       <button class="module-card" type="button" data-open-module="qrcode">
         <div class="card-top"><div class="card-icon">QR</div><div class="card-arrow">›</div></div>
@@ -646,7 +646,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 
   <div id="loading" class="loading hide">Carregando…</div>
   <iframe id="frameConfiguracoes" class="module-frame" title="Configuração Geral da Unidade" data-src="configuracoes.html?v=3.0.9"></iframe>
-  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=3.0.0"></iframe>
+  <iframe id="frameOficios" class="module-frame" title="Gerador de Ofícios" data-src="oficios.html?v=3.0.11"></iframe>
   <iframe id="frameLesoes" class="module-frame" title="Gerador de Laudo de Lesões" data-src="laudo-lesoes.html?v=3.0.0"></iframe>
   <iframe id="frameImei" class="module-frame" title="Consulta IMEI" data-src="imei.html?v=3.0.0"></iframe>
   <iframe id="frameOperadora" class="module-frame" title="Consulta de Operadora" data-src="consulta-operadora.html?v=3.0.0"></iframe>
@@ -1060,7 +1060,7 @@ if(!document.getElementById('backTop')){
     erb:'antena torre estação rádio base azimute sinal celular localização',
     filtroip:'ip internet provedor conexão log porta cgnat',
     lesoes:'lesão laudo exame corpo delito ferimento apj',
-    oficios:'ofício oficio diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
+    oficios:'ofício oficio informação informacao diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
     qrcode:'qr link url código codigo',
     googleanalise:'google resposta ofício oficio imei android id conta gmail subscriber device profile aparelho celular data criação criacao login vínculo vinculo investigação investigacao',
     transcritor:'transcrição transcricao áudio audio vídeo video whisper depoimento terceira pessoa fala gravação gravacao mp3 mp4 wav m4a'

@@ -91,7 +91,7 @@ function generalToDaily(){
   const a=Array.isArray(g.autoridades)&&g.autoridades.length?g.autoridades[0]:null;
   const header=[g.secretaria||'SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA',g.departamento||'POLÍCIA CIVIL DO PARANÁ',g.subdivisao,g.unidade].filter(Boolean);
   const address=[g.endereco,[g.cidade,g.uf].filter(Boolean).join(' - '),g.cep].filter(Boolean).join(', ');
-  const servers=Array.isArray(g.servidores)&&g.servidores.length?g.servidores.map(x=>typeof x==='string'?{name:x,role:''}:{name:x&&x.nome,role:x&&x.cargo}).filter(x=>x.name):(Array.isArray(g.apjs)?g.apjs:[]).map(name=>({name,role:'APJ - Agente de Polícia Judiciária'}));
+  const servers=Array.isArray(g.servidores)&&g.servidores.length?g.servidores.map(x=>typeof x==='string'?{name:x,role:''}:{name:x&&x.nome,role:x&&x.cargo}).filter(x=>x.name):(Array.isArray(g.apjs)?g.apjs:[]).map(name=>({name,role:'Agente de Polícia Judiciária'}));
   if(a&&a.nome&&!servers.some(x=>x.name===a.nome))servers.push({name:a.nome,role:a.cargo||'Delegado de Polícia'});
   return Object.assign(clone(DEFAULT_CFG),{
     header:header.length?header:clone(DEFAULT_CFG.header),crest:g.logo||DEFAULT_CREST,

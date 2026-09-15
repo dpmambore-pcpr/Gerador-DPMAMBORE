@@ -14,6 +14,7 @@ function uid(){try{return crypto.randomUUID()}catch(_){return 'pcpr-'+Date.now()
 function nowISO(){return new Date().toISOString()}
 function pathFile(){try{return decodeURIComponent(location.pathname.split('/').pop()||'index.html').toLowerCase()}catch(_){return 'index.html'}}
 const MODULES={
+  'informacao.html':'Informação',
   'oficios-core.html':'Ofício',
   'oficios.html':'Ofícios',
   'oficio-coffee-break.html':'Ofício Coffee Break',

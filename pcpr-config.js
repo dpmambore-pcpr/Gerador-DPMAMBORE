@@ -20,15 +20,21 @@ const DEFAULT={
   drive:{clientId:'',apiKey:'',appId:'',scope:'https://www.googleapis.com/auth/drive.file'},
   servidores:[
     {nome:'Anderson Sérgio Romão',cargo:'Delegado de Polícia'},
-    {nome:'Thiago Gonzaga da Silva Couto',cargo:'APJ - Agente de Polícia Judiciária'},
-    {nome:'Tiago Henrique Lemes',cargo:'APJ - Agente de Polícia Judiciária'},
-    {nome:'Paulo Henrique Vilaça',cargo:'APJ - Agente de Polícia Judiciária'}
+    {nome:'Thiago Gonzaga da Silva Couto',cargo:'Agente de Polícia Judiciária'},
+    {nome:'Tiago Henrique Lemes',cargo:'Agente de Polícia Judiciária'},
+    {nome:'Paulo Henrique Vilaça',cargo:'Agente de Polícia Judiciária'}
   ],
   apjs:['Thiago Gonzaga da Silva Couto','Tiago Henrique Lemes','Paulo Henrique Vilaça']
 };
 function clone(v){return JSON.parse(JSON.stringify(v))}
 function readJSON(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}}
 function cleanName(v){return String(v??'').trim()}
+function agentCargo(cargo){
+  const raw=cleanName(cargo);
+  if(/^APJ(\s*[-–—:]\s*)?(Agente de Pol[ií]cia Judici[aá]ria)?$/i.test(raw)) return 'Agente de Polícia Judiciária';
+  if(/^APJ\b/i.test(raw) && /agente de pol[ií]cia judici[aá]ria/i.test(raw)) return 'Agente de Polícia Judiciária';
+  return raw;
+}
 function uniqueByName(arr){
   const out=[];
   (Array.isArray(arr)?arr:[]).forEach(x=>{
@@ -58,10 +64,11 @@ function normalize(raw){
   c.autoridades=uniqueByName(c.autoridades);
   let servidores=uniqueByName(c.servidores);
   if(!servidores.length){
-    const aps=(Array.isArray(c.apjs)?c.apjs:[]).map(nome=>({nome,cargo:'APJ - Agente de Polícia Judiciária'}));
+    const aps=(Array.isArray(c.apjs)?c.apjs:[]).map(nome=>({nome,cargo:'Agente de Polícia Judiciária'}));
     servidores=uniqueByName([...(c.autoridades||[]),...aps]);
   }
-  c.servidores=servidores.map(x=>({nome:x.nome,cargo:x.cargo||''}));
+  c.servidores=servidores.map(x=>({nome:x.nome,cargo:agentCargo(x.cargo||'')}));
+  c.autoridades=c.autoridades.map(a=>({...a,cargo:agentCargo(a.cargo||'')}));
   if(!c.autoridades.length)c.autoridades=c.servidores.filter(x=>/^delegad[oa]/i.test(x.cargo||'')).map(x=>({nome:x.nome,cargo:x.cargo,complemento:''}));
   if(!c.autoridades.length)c.autoridades=clone(DEFAULT.autoridades);
   for(const a of c.autoridades){
