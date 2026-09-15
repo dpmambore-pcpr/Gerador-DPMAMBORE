@@ -905,7 +905,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
 .mapwrap.pick-point #map{cursor:crosshair!important}.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
-.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo,.capture .route-rec,.capture .map3d-hint{display:none!important}
+.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo,.capture .route-rec,.capture .map3d-hint,.capture .maplibregl-ctrl-top-left,.capture .maplibregl-ctrl-bottom-right,.capture .maplibregl-ctrl-attrib{display:none!important}
 .route-rec{position:absolute;z-index:1250;left:12px;top:58px;display:none;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:850;box-shadow:0 3px 14px rgba(0,0,0,.42)}
 .route-rec.show{display:flex}
 .route-rec i{width:9px;height:9px;border-radius:50%;background:#ff8b86;display:block}
@@ -4056,8 +4056,48 @@ function fitAll(){
   if(cfg.view3d)fitMap3d(pts);else map.fitBounds(pts,{padding:[38,38],maxZoom:16});
 }
 
+function map3dFrameLooksBroken(c){
+  try{
+    const ctx=c.getContext('2d',{willReadFrequently:true});
+    const {data}=ctx.getImageData(0,0,c.width,c.height);
+    let n=0,r=0,g=0,b=0,dark=0;
+    const step=Math.max(16,Math.floor(data.length/16000)*4);
+    for(let i=0;i<data.length;i+=step){
+      n++;r+=data[i];g+=data[i+1];b+=data[i+2];
+      if(data[i]+data[i+1]+data[i+2]<24)dark++;
+    }
+    if(!n)return true;
+    const ar=r/n,ag=g/n,ab=b/n;
+    if(ag>ar*2.1&&ag>ab*2.1&&ag>70)return true;
+    if(dark/n>0.97)return true;
+    return false;
+  }catch(_){return false}
+}
+function copyMap3dCanvas(){
+  if(!map3d)throw new Error('Mapa 3D não iniciado.');
+  try{map3d.triggerRepaint()}catch(_){}
+  const gl=map3d.getCanvas();
+  const c=document.createElement('canvas');
+  c.width=gl.width||gl.clientWidth;c.height=gl.height||gl.clientHeight;
+  const ctx=c.getContext('2d',{alpha:false});
+  ctx.fillStyle='#0d1814';ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(gl,0,0,c.width,c.height);
+  return c;
+}
+async function captureMap3dCanvas(){
+  await waitMap3dIdle(420);
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+  let c=copyMap3dCanvas();
+  if(map3dFrameLooksBroken(c)){
+    await waitMap3dIdle(900);
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    c=copyMap3dCanvas();
+  }
+  return c;
+}
 async function captureMap(opts={}){
   const scale=opts.scale==null?1.5:opts.scale;
+  if(!opts.force2d&&cfg.view3d&&map3d&&map3dReady)return captureMap3dCanvas();
   document.body.classList.add('capture');await new Promise(r=>setTimeout(r,250));
   try{return await html2canvas($('mapWrap'),{useCORS:true,backgroundColor:'#fff',scale,logging:false})}
   finally{document.body.classList.remove('capture')}
@@ -4087,7 +4127,7 @@ function filterPeriodLabel(){
   }else if(f.daypart)parts.push(f.daypart);
   return parts.length?parts.join(' · '):'todos os registros visíveis após os filtros';
 }
-function stampRouteFrame(src,lines){
+function stampRouteFrame(src,lines,heading){
   const c=document.createElement('canvas');
   c.width=src.width;c.height=src.height;
   const ctx=c.getContext('2d');
@@ -4097,7 +4137,7 @@ function stampRouteFrame(src,lines){
   ctx.fillRect(0,c.height-h,c.width,h);
   ctx.fillStyle='#c5a253';
   ctx.font='bold '+Math.max(16,Math.round(c.height*0.026))+'px Arial';
-  ctx.fillText('DESLOCAMENTO DO ALVO · ordem de conexão',20,c.height-h+28);
+  ctx.fillText(heading||'DESLOCAMENTO DO ALVO · ordem de conexão',20,c.height-h+28);
   ctx.fillStyle='#f4f2ec';
   ctx.font=Math.max(13,Math.round(c.height*0.02))+'px Arial';
   (lines||[]).forEach((line,i)=>ctx.fillText(String(line||''),20,c.height-h+54+i*22));
@@ -4163,6 +4203,8 @@ function buildRouteCameraStops(t,maxStops=28){
 }
 async function withMapsBasemap(fn){
   const prev=cfg.base;
+  const was3d=cfg.view3d;
+  if(was3d)await setMap3d(false);
   const want=(prev==='satellite'||prev==='hybrid'||prev==='street')?prev:'street';
   if(want!==cfg.base){
     try{map.removeLayer(activeBase)}catch(_){}
@@ -4176,6 +4218,7 @@ async function withMapsBasemap(fn){
       cfg.base=prev;activeBase=addBaseSafely(bases[prev]||osmRaster());
       syncBaseControls();
     }
+    if(was3d)await setMap3d(true,{fit:false});
   }
 }
 async function prepareTrajectoryView(){
@@ -4426,17 +4469,21 @@ function densifyTrajectory(t,maxPts=86){
   }
   return out;
 }
-function chaseCamera(p,backKm=.14){
+function chaseCamera(p,backKm=.42){
   const behind=destination(p.lat,p.lng,p.bearing+180,backKm);
-  return {center:[behind[1],behind[0]],zoom:15.5,pitch:64,bearing:p.bearing};
+  return {center:[behind[1],behind[0]],zoom:14.7,pitch:56,bearing:p.bearing};
 }
 function waitMap3dIdle(ms=280){
   if(!map3d)return sleep(ms);
+  const started=Date.now();
   return new Promise(resolve=>{
     let settled=false;
     const done=()=>{if(settled)return;settled=true;resolve()};
     try{map3d.once('idle',done)}catch(_){}
     setTimeout(done,ms);
+  }).then(()=>{
+    const left=ms-(Date.now()-started);
+    return left>0?sleep(left):null;
   });
 }
 async function exportTrajectoryVideo3d(){
@@ -4444,58 +4491,43 @@ async function exportTrajectoryVideo3d(){
   if(!window.MediaRecorder||!pickVideoMime())return status('Este navegador não grava vídeo do trajeto.',true);
   if(!map3dAvailable())return status('Este navegador não abre o mapa 3D (WebGL).',true);
   const recEl=$('routeRec'),recText=$('routeRecText');
+  const heading='FLYOVER 3D · deslocamento do alvo';
   setRouteExportBusy(true);
   try{
     recEl?.classList.add('show');if(recText)recText.textContent='Preparando flyover 3D…';
     status('Gerando vídeo 3D do trajeto...');
     await setMap3d(true,{fit:false});
-    const path=densifyTrajectory(t,80);
-    const first=chaseCamera(path[0],.35);
-    map3d.jumpTo({center:first.center,zoom:14.2,pitch:50,bearing:path[0].bearing});
+    const path=densifyTrajectory(t,26);
+    const first=chaseCamera(path[0],.7);
+    map3d.jumpTo({center:first.center,zoom:13.8,pitch:48,bearing:path[0].bearing});
     state.trajectoryVisible=true;state.playing=true;state.exportingRoute=true;state.trajectoryIndex=0;syncMap3d();
-    await waitMap3dIdle(900);
-    const gl=map3d.getCanvas();
-    const out=document.createElement('canvas');
-    out.width=gl.width;out.height=gl.height;
-    const ctx=out.getContext('2d');
-    const mime=pickVideoMime();
-    const stream=out.captureStream(24);
-    const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4200000});
-    const chunks=[];
-    rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-    const stopped=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=()=>reject(rec.error||new Error('Falha ao gravar vídeo 3D'))});
-    let composing=true;
-    const hud=()=>{
-      ctx.drawImage(gl,0,0);
-      const h=Math.max(88,Math.round(out.height*.12));
-      ctx.fillStyle='rgba(17,24,32,.84)';ctx.fillRect(0,out.height-h,out.width,h);
-      ctx.fillStyle='#c5a253';ctx.font='bold '+Math.max(16,Math.round(out.height*.024))+'px Arial';
-      ctx.fillText('FLYOVER 3D · deslocamento do alvo',20,out.height-h+26);
-      ctx.fillStyle='#f4f2ec';ctx.font=Math.max(13,Math.round(out.height*.018))+'px Arial';
-      const i=Math.max(0,state.trajectoryIndex||0),ev=t[i]?.ev;
-      ctx.fillText('Conexão '+(i+1)+' de '+t.length+(ev?' · '+erbDisplayName(ev):'')+' · '+filterPeriodLabel(),20,out.height-h+52);
-      ctx.fillText('Câmera inclinada sobre o mapa · linha reta entre ERBs, não é rota GPS',20,out.height-h+74);
-    };
-    const loop=()=>{if(!composing)return;try{hud()}catch(_){}requestAnimationFrame(loop)};
-    rec.start(250);await sleep(120);loop();
-    hud();await sleep(700);
+    await waitMap3dIdle(1400);
+    const frames=[];
+    frames.push(stampRouteFrame(await captureMap({scale:1}),[
+      'Flyover 3D · visão geral · '+filterPeriodLabel(),
+      'Câmera inclinada sobre o mapa · linha reta entre ERBs, não é rota GPS'
+    ],heading));
     for(let n=0;n<path.length;n++){
       const p=path[n];
       state.trajectoryIndex=p.index;state.routeCursor={lat:p.lat,lng:p.lng,index:p.index};syncMap3d();
-      const cam=chaseCamera(p,p.kind==='stop'?.18:.12);
-      await new Promise(resolve=>{
-        let done=false;const finish=()=>{if(done)return;done=true;resolve()};
-        map3d.easeTo({center:cam.center,zoom:cam.zoom,pitch:cam.pitch,bearing:cam.bearing,duration:p.kind==='stop'?520:240,essential:true});
-        map3d.once('moveend',finish);setTimeout(finish,p.kind==='stop'?620:320);
-      });
+      const cam=chaseCamera(p,p.kind==='stop'?.5:.38);
+      map3d.jumpTo({center:cam.center,zoom:cam.zoom,pitch:cam.pitch,bearing:cam.bearing});
+      await waitMap3dIdle(p.kind==='stop'?520:320);
+      const dest=p.kind==='stop'?p.index:Math.min(t.length-1,p.index+1);
+      const ev=t[dest].ev;
+      const frame=stampRouteFrame(await captureMap({scale:1}),[
+        (p.kind==='stop'?'Conexão ':'Deslocando para conexão ')+(dest+1)+' de '+t.length+' · '+t[dest].d.toLocaleString('pt-BR'),
+        erbDisplayName(ev)+(ev.city?' · '+ev.city:'')
+      ],heading);
+      frames.push(frame);
+      if(p.kind==='stop')frames.push(frame);
       if(recText)recText.textContent='Flyover 3D '+(n+1)+' / '+path.length;
     }
-    await sleep(900);
-    composing=false;if(typeof rec.requestData==='function')rec.requestData();rec.stop();
-    stream.getTracks().forEach(tr=>tr.stop());
-    await stopped;
-    if(!chunks.length)throw new Error('O navegador não gerou o arquivo de vídeo 3D.');
-    const blob=new Blob(chunks,{type:mime});
+    state.playing=false;state.exportingRoute=false;state.routeCursor=null;syncMap3d();
+    fitMap3d(t.map(x=>[x.ev.lat,x.ev.lng]));
+    await waitMap3dIdle(1100);
+    frames.push(stampRouteFrame(await captureMap({scale:1}),['Trajeto completo 3D · ordem de conexão · '+filterPeriodLabel()],heading));
+    const blob=await encodeVideoFromCanvases(frames,2);
     saveBlob(blob,'trajeto_ERB_3D_flyover.'+(/mp4/i.test(blob.type)?'mp4':'webm'));
     status('Vídeo 3D do trajeto gerado. O download está na pasta de downloads.');
   }catch(e){console.error(e);status('Falha ao gerar o vídeo 3D: '+(e.message||e),true)}
@@ -4671,6 +4703,8 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     exportTrajectoryVideo,
     exportTrajectoryVideo3d,
     setMap3d,
+    captureMap,
+    map3dFrameLooksBroken,
     trajectoryData,
     applyHourFilter(hours){state.filters={...normalizedFilters(state.filters),hours};$('filterPill')?.classList.add('show');redraw();return trajectoryData().length}
   };
