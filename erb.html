@@ -4283,7 +4283,7 @@ function map3dCollections(){
     sectors.push({type:'Feature',properties:{color,fill:dim?.08:.2,popup:eventPopup(group)},geometry:{type:'Polygon',coordinates:[ring]}});
     const dest=destination(ev.lat,ev.lng,ev.az,ev.dist);
     rays.push({type:'Feature',properties:{color},geometry:{type:'LineString',coordinates:[[ev.lng,ev.lat],[dest[1],dest[0]]]}});
-    towers.push({type:'Feature',properties:{color,height:dim?36:120,popup:eventPopup(group)},geometry:{type:'Polygon',coordinates:[erbPadRing(ev.lat,ev.lng)]}});
+    towers.push({type:'Feature',properties:{color,height:dim?90:280,popup:eventPopup(group)},geometry:{type:'Polygon',coordinates:[erbPadRing(ev.lat,ev.lng,22)]}});
     labels.push({type:'Feature',properties:{label:erbDisplayName(ev)+(group.length>1?' ×'+group.length:''),color},geometry:{type:'Point',coordinates:[ev.lng,ev.lat]}});
   });
   state.pois.forEach(p=>{
@@ -4308,7 +4308,8 @@ function ensureMap3dLayers(){
   if(!map3d.getLayer('erb-rays'))map3d.addLayer({id:'erb-rays',type:'line',source:'erb-rays',paint:{'line-color':['get','color'],'line-width':2.4,'line-opacity':.9}});
   if(!map3d.getLayer('erb-route-full'))map3d.addLayer({id:'erb-route-full',type:'line',source:'erb-route',filter:['==',['get','kind'],'full'],paint:{'line-color':'#ffffff','line-width':2,'line-dasharray':[2,2],'line-opacity':.45}});
   if(!map3d.getLayer('erb-route-progress'))map3d.addLayer({id:'erb-route-progress',type:'line',source:'erb-route',filter:['==',['get','kind'],'progress'],paint:{'line-color':'#c5a253','line-width':6,'line-opacity':.95}});
-  if(!map3d.getLayer('erb-towers'))map3d.addLayer({id:'erb-towers',type:'fill-extrusion',source:'erb-towers',paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':0,'fill-extrusion-opacity':.92}});
+  if(!map3d.getLayer('erb-dots'))map3d.addLayer({id:'erb-dots',type:'circle',source:'erb-labels',paint:{'circle-radius':7,'circle-color':['get','color'],'circle-stroke-width':2,'circle-stroke-color':'#ffffff','circle-pitch-alignment':'map'}});
+  if(!map3d.getLayer('erb-towers'))map3d.addLayer({id:'erb-towers',type:'fill-extrusion',source:'erb-towers',paint:{'fill-extrusion-color':['get','color'],'fill-extrusion-height':['get','height'],'fill-extrusion-base':0,'fill-extrusion-opacity':.95,'fill-extrusion-vertical-gradient':true}});
   if(!map3d.getLayer('erb-labels'))map3d.addLayer({id:'erb-labels',type:'symbol',source:'erb-labels',layout:{'text-field':['get','label'],'text-size':11,'text-offset':[0,-1.6],'text-anchor':'bottom','text-allow-overlap':true},paint:{'text-color':'#fff','text-halo-color':'#0d1814','text-halo-width':1.4}});
   if(!map3d.getLayer('erb-pois'))map3d.addLayer({id:'erb-pois',type:'circle',source:'erb-pois',paint:{'circle-radius':7,'circle-color':'#ffd84d','circle-stroke-width':2,'circle-stroke-color':'#111'}});
   map3d.on('click','erb-towers',e=>{
