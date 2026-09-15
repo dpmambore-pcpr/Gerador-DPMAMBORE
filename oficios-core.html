@@ -49,9 +49,6 @@ button.sec:hover{background:var(--claro)}
 .folha{background:#fff;border:1px solid var(--borda);padding:34px 42px;font-family:Arial,Helvetica,sans-serif;
   font-size:13px;line-height:1.5;max-width:780px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .folha p{margin:0 0 6px}
-.folha .cab{text-align:center;font-size:10px;font-weight:bold;line-height:1.25;margin-bottom:22px}
-.folha .cab img{height:72px;display:block;margin:0 auto 6px}
-.folha .rod{text-align:center;font-size:9.5px;color:#333;border-top:0;margin-top:26px;line-height:1.3}
 .folha table.tv{border-collapse:collapse;width:100%;font-size:11px;margin:8px 0}
 .folha table.tv th,.folha table.tv td{border:1px solid #000;padding:3px 5px;text-align:center}
 .folha table.tv th{background:#e1e7f2}
@@ -84,8 +81,15 @@ button.mini{min-height:34px!important;padding:0 11px!important;font-size:12px!im
 .conf-status{margin-top:12px;padding:9px 11px;border-radius:8px;background:#edf5f0;border:1px solid #c9ddd0;color:#285748;font-size:12px;font-weight:800}
 .conf-warnings{margin-top:10px;padding:10px 12px;border-radius:8px;background:#fbf6e9;border:1px solid #dfcfaa;color:#725716;font-size:12px;line-height:1.45}
 @media(max-width:760px){.conf-grid{grid-template-columns:1fr}.compact-actions{align-items:flex-start}}
-
+@media print{
+  header,main>.card:not(#cardPrev),.atalho-informacao,.security-note,footer{display:none!important}
+  body{background:#fff!important}
+  #cardPrev{display:block!important;border:0;box-shadow:none;padding:0;margin:0}
+  #prev{padding:0}
+  .pcpr-oficio-folha{transform:none!important}
+}
 </style>
+<link rel="stylesheet" href="pcpr-oficio-chrome.css?v=3.0.14">
 
 <style id="pcpr-unified-theme">
 :root{
@@ -166,6 +170,7 @@ footer{color:var(--suave) !important;}
 
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-oficio-chrome.js?v=3.0.14"></script>
 <script src="pcpr-drive.js?v=3.0.0"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#btnOdt","actionSelectors":["#btnOdt","#btnPdf","#btnDrive","#btnZip"],"cloudSelectors":["#btnDrive"]};</script>
@@ -1281,7 +1286,7 @@ function tokLarg(t,tam){
 }
 
 // ===================== PDF =====================
-var PGP={l:595.28,a:841.89,esq:72,dir:72,topo:186,base:80};
+var PGP={l:595.28,a:841.89,esq:72,dir:72,topo:170,base:62};
 
 function PDFDoc(){this.pgs=[];this.at=null;this.y=0;}
 PDFDoc.prototype.nova=function(){this.at={ops:[]};this.pgs.push(this.at);this.y=PGP.a-PGP.topo;};
@@ -1363,22 +1368,40 @@ PDFDoc.prototype.tabela=function(bl){
 };
 function montaPDF(pgs,jpeg,dims){
   var enc=new TextEncoder();
-  var bl=(CFG.brasaoL||70)*0.75, ba=(CFG.brasaoA||85)*0.75;
+  var chrome=window.PCPROficioChrome;
+  var crest=chrome?chrome.crestPdfSize(CFG.brasaoL,CFG.brasaoA,dims):{w:(CFG.brasaoL||70)*0.75,h:(CFG.brasaoA||85)*0.75};
   var conteudos=pgs.map(function(p){
     var ops=[];
-    ops.push("q "+bl.toFixed(2)+" 0 0 "+ba.toFixed(2)+" "+((PGP.l-bl)/2).toFixed(2)+" "+(PGP.a-30-ba).toFixed(2)+" cm /Im1 Do Q");
-    var y=PGP.a-38-ba;
-    CFG.cabecalho.forEach(function(l){
-      var w=larg(l,9,true);
-      ops.push("BT /F2 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+y.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
-      y-=11;
-    });
-    var yr=54;
-    CFG.rodape.forEach(function(l){
-      var w=larg(l,9,false);
-      ops.push("BT /F1 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+yr.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
-      yr-=11;
-    });
+    if(chrome){
+      ops=ops.concat(chrome.pdfWatermarkAndFooterOps({pageW:PGP.l,pageH:PGP.a,jpegW:dims.l,jpegH:dims.a}));
+      var hdr=chrome.pdfHeaderCrestOps({pageW:PGP.l,pageH:PGP.a,crest:crest});
+      ops=ops.concat(hdr.ops);
+      var y=hdr.nextY;
+      CFG.cabecalho.forEach(function(l){
+        var w=larg(l,9,true);
+        ops.push("BT /F2 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+y.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
+        y-=11;
+      });
+      CFG.rodape.forEach(function(l,i){
+        var w=larg(l,8,false);
+        var yr=chrome.footerTextY(i,CFG.rodape.length);
+        ops.push("BT /F1 8 Tf "+((PGP.l-w)/2).toFixed(2)+" "+yr.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
+      });
+    }else{
+      ops.push("q "+crest.w.toFixed(2)+" 0 0 "+crest.h.toFixed(2)+" "+((PGP.l-crest.w)/2).toFixed(2)+" "+(PGP.a-20-crest.h).toFixed(2)+" cm /Im1 Do Q");
+      var y2=PGP.a-28-crest.h;
+      CFG.cabecalho.forEach(function(l){
+        var w=larg(l,9,true);
+        ops.push("BT /F2 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+y2.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
+        y2-=11;
+      });
+      var yr=54;
+      CFG.rodape.forEach(function(l){
+        var w=larg(l,9,false);
+        ops.push("BT /F1 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+yr.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
+        yr-=11;
+      });
+    }
     return ops.concat(p.ops).join("\n");
   });
   var n=1,idCat=n++,idPags=n++,idsP=[],idsC=[];
@@ -1390,7 +1413,8 @@ function montaPDF(pgs,jpeg,dims){
   idsP.forEach(function(id,i){
     corpo[id]="<< /Type /Page /Parent "+idPags+" 0 R /MediaBox [0 0 "+PGP.l.toFixed(2)+" "+PGP.a.toFixed(2)
       +"] /Resources << /Font << /F1 "+f1+" 0 R /F2 "+f2+" 0 R /F3 "+f3+" 0 R /F4 "+f4
-      +" 0 R >> /XObject << /Im1 "+idImg+" 0 R >> >> /Contents "+idsC[i]+" 0 R >>";
+      +" 0 R >> /XObject << /Im1 "+idImg+" 0 R >> "+(window.PCPROficioChrome?window.PCPROficioChrome.pdfExtGStateResource():"")
+      +" >> /Contents "+idsC[i]+" 0 R >>";
     corpo[idsC[i]]={stream:conteudos[i]};
   });
   var bf=["Helvetica","Helvetica-Bold","Helvetica-Oblique","Helvetica-BoldOblique"];
@@ -1426,7 +1450,7 @@ function brasaoJPEG(cb){
   if(CACHE_JPEG&&CACHE_JPEG.chave===CFG.brasao){cb(CACHE_JPEG);return;}
   var img=new Image();
   img.onload=function(){
-    var c=document.createElement("canvas"),esc2=Math.min(1,300/Math.max(img.width,img.height));
+    var c=document.createElement("canvas"),esc2=Math.min(1,933/Math.max(img.width,img.height));
     c.width=Math.max(1,Math.round(img.width*esc2));c.height=Math.max(1,Math.round(img.height*esc2));
     var ctx=c.getContext("2d");ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,c.width,c.height);
     ctx.drawImage(img,0,0,c.width,c.height);
@@ -1541,12 +1565,14 @@ function blocosParaODT(blocos){
     +'<style:style style:name="TIU" style:family="text"><style:text-properties fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
     +'<style:style style:name="TBIU" style:family="text"><style:text-properties fo:font-weight="bold" fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
     +'<style:style style:name="HdrCenter" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/></style:style><style:style style:name="HdrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt" fo:font-weight="bold"/></style:style>'
-    +'<style:style style:name="FtrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt"/></style:style>'
+    +'<style:style style:name="FtrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="8pt"/></style:style>'
+    +(window.PCPROficioChrome?window.PCPROficioChrome.odtWatermarkStyle()+window.PCPROficioChrome.odtFooterStyle():'')
     +'</office:styles>'
-    +'<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="3.9cm" fo:margin-bottom="1.8cm" fo:margin-left="2cm" fo:margin-right="2cm"/></style:page-layout></office:automatic-styles>'
+    +'<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="3.6cm" fo:margin-bottom="2.0cm" fo:margin-left="2cm" fo:margin-right="2cm"/></style:page-layout></office:automatic-styles>'
     +'<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1">'
-    +'<style:header><text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="1.6cm" svg:height="2.0cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
-    +'<style:footer>'+rod+'</style:footer>'
+    +'<style:header>'+(window.PCPROficioChrome?window.PCPROficioChrome.odtWatermarkFrame():'')
+    +'<text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="1.53cm" svg:height="1.90cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
+    +'<style:footer>'+(window.PCPROficioChrome?CFG.rodape.map(function(l){return '<text:p text:style-name="FtrBox">'+x(l)+'</text:p>';}).join(''):rod)+'</style:footer>'
     +'</style:master-page></office:master-styles></office:document-styles>';
   var meta='<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2"><office:meta><meta:generator>Central PCPR v2.0</meta:generator></office:meta></office:document-meta>';
   var settings='<?xml version="1.0" encoding="UTF-8"?><office:document-settings xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" office:version="1.2"><office:settings/></office:document-settings>';
@@ -1571,8 +1597,11 @@ function blocosParaODT(blocos){
 
 // ===================== pré-visualização em tela =====================
 function blocosParaHTML(blocos){
-  var h='<div class="folha"><div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
-    +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div>";
+  var chrome=window.PCPROficioChrome;
+  var h=chrome
+    ? '<div class="folha pcpr-oficio-folha">'+chrome.marcaDaguaInstitucional()+chrome.cabecalhoInstitucional(CFG.brasao,CFG.cabecalho)+'<div class="corpoOficio">'
+    : '<div class="folha"><div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
+      +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div>";
   blocos.forEach(function(b){
     if(b.t==="vazio"){h+="<p>&nbsp;</p>";return;}
     if(b.t==="tab"){
@@ -1598,7 +1627,11 @@ function blocosParaHTML(blocos){
       return t;
     }).join("")+"</p>";
   });
-  h+='<div class="rod">'+CFG.rodape.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div></div>";
+  if(chrome){
+    h+='</div>'+chrome.rodapeInstitucional(CFG.rodape)+'</div>';
+  }else{
+    h+='<div class="rod">'+CFG.rodape.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div></div>";
+  }
   return h;
 }
 

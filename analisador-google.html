@@ -693,7 +693,7 @@ function ensureOfficeEngine(){
     const finish=()=>{try{const w=f.contentWindow;if(typeof w.oficioGoogle!=='function'||typeof w.blocosParaHTML!=='function'||typeof w.blocosParaPDF!=='function'||typeof w.blocosParaODT!=='function')throw new Error('O arquivo oficios-core.html foi carregado, mas o modelo Google não foi localizado.');resolve(w)}catch(e){officeEnginePromise=null;reject(e)}};
     if(f){if(f.dataset.ready==='1')return finish();f.addEventListener('load',()=>{f.dataset.ready='1';finish()},{once:true});return}
     f=document.createElement('iframe');f.id='pcprOfficialOfficeEngine';f.title='Motor oficial de ofícios da Central';f.setAttribute('aria-hidden','true');f.tabIndex=-1;f.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;border:0';
-    f.addEventListener('load',()=>{f.dataset.ready='1';finish()},{once:true});f.addEventListener('error',()=>{officeEnginePromise=null;reject(new Error('Não foi possível carregar oficios-core.html. Confirme que o arquivo está na mesma pasta da Central.'))},{once:true});f.src='oficios-core.html?v=3.0.0';document.body.appendChild(f)
+    f.addEventListener('load',()=>{f.dataset.ready='1';finish()},{once:true});f.addEventListener('error',()=>{officeEnginePromise=null;reject(new Error('Não foi possível carregar oficios-core.html. Confirme que o arquivo está na mesma pasta da Central.'))},{once:true});f.src='oficios-core.html?v=3.0.14';document.body.appendChild(f)
   });
   return officeEnginePromise
 }
