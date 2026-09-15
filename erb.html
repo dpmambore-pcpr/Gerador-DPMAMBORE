@@ -4205,9 +4205,10 @@ async function exportTrajectoryVideo(){
       drawTimelineLayers();
       map.setView([stop.lat,stop.lng],stop.kind==='stop'?15:14,{animate:false});
       await waitMapReady(stop.kind==='stop'?380:240);
+      const dest=stop.kind==='stop'?i:Math.min(t.length-1,i+1);
       const frame=stampRouteFrame(await captureMap({scale:1}),[
-        (stop.kind==='stop'?'Conexão ':'Deslocando para conexão ')+(i+1)+' de '+t.length+' · '+t[i].d.toLocaleString('pt-BR'),
-        erbDisplayName(ev)+(ev.city?' · '+ev.city:'')+(ev.cgi?' · CGI '+ev.cgi:'')
+        (stop.kind==='stop'?'Conexão ':'Deslocando para conexão ')+(dest+1)+' de '+t.length+' · '+t[dest].d.toLocaleString('pt-BR'),
+        erbDisplayName(t[dest].ev)+(t[dest].ev.city?' · '+t[dest].ev.city:'')+(t[dest].ev.cgi?' · CGI '+t[dest].ev.cgi:'')
       ]);
       frames.push(frame);
       if(stop.kind==='stop')frames.push(frame);
@@ -4217,7 +4218,7 @@ async function exportTrajectoryVideo(){
     state.playing=false;state.exportingRoute=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
     drawTimelineLayers();fitTrajectory();await waitMapReady(520);
     frames.push(stampRouteFrame(await captureMap({scale:1}),['Trajeto completo · ordem de conexão · '+filterPeriodLabel()]));
-    const blob=await encodeVideoFromCanvases(frames,4);
+    const blob=await encodeVideoFromCanvases(frames,2);
     saveBlob(blob,'trajeto_ERB_conexoes.'+(/mp4/i.test(blob.type)?'mp4':'webm'));
     status('Vídeo do trajeto gerado.');
     });
