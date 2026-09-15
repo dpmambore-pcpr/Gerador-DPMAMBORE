@@ -4199,7 +4199,7 @@ async function exportTrajectoryVideo(){
     frames.push(overview,overview);
     state.playing=true;state.exportingRoute=true;
     for(let n=0;n<stops.length;n++){
-      const stop=stops[n],i=stop.index,ev=t[i].ev;
+      const stop=stops[n],i=stop.index;
       state.trajectoryIndex=i;
       state.routeCursor={lat:stop.lat,lng:stop.lng,index:i};
       drawTimelineLayers();
