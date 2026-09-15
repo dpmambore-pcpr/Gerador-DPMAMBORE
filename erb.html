@@ -905,7 +905,10 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
 .mapwrap.pick-point #map{cursor:crosshair!important}.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
-.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo{display:none!important}
+.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo,.capture .route-rec{display:none!important}
+.route-rec{position:absolute;z-index:1250;left:12px;top:58px;display:none;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:850;box-shadow:0 3px 14px rgba(0,0,0,.42)}
+.route-rec.show{display:flex}
+.route-rec i{width:9px;height:9px;border-radius:50%;background:#ff8b86;display:block}
 .import-dropzone{margin-top:8px;border:2px dashed #8aa89b;border-radius:10px;padding:16px 12px;text-align:center;background:#f4f8f5;color:#40534c;font-size:10.5px;font-weight:850;line-height:1.45}.import-dropzone strong{display:block;color:#183a31;font-size:12px;margin-bottom:3px}
 .file-drop-overlay{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;background:rgba(9,22,17,.78);backdrop-filter:blur(2px);pointer-events:none}.file-drop-overlay.show{display:flex}.file-drop-card{min-width:min(520px,86vw);max-width:720px;border:2px dashed #d8bd71;border-radius:16px;padding:30px 24px;text-align:center;background:#f7f4ea;color:#17202a;box-shadow:0 20px 60px rgba(0,0,0,.35)}.file-drop-card b{display:block;font-size:20px;color:#183a31;margin-bottom:6px}.file-drop-card span{font-size:12px;color:#59645f;line-height:1.5}
 .presentation .sidebar{display:none}.presentation .app{grid-template-columns:1fr}.presentation .topbar{left:10px}.presentation .coordbar{left:10px}
@@ -937,8 +940,11 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .route-note{margin-top:7px;padding-top:7px;border-top:1px solid #29483b;color:#93a89e;font-size:8.6px;line-height:1.4}
 .route-summary{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 7px}
 .route-chip{border:1px solid #355847;border-radius:999px;background:#102019;color:#d7e4de;padding:4px 7px;font-size:8.5px;font-weight:850}
-.routearrow{background:rgba(255,255,255,.94);border:1px solid #111;border-radius:50%;width:22px!important;height:22px!important;display:grid!important;place-items:center;font-weight:950;color:#111;box-shadow:0 1px 5px rgba(0,0,0,.3)}
-.routearrow span{display:block;line-height:18px;font-size:14px;transform-origin:center}
+.routearrow{background:#c5a253;border:2px solid #111;border-radius:50%;width:26px!important;height:26px!important;display:grid!important;place-items:center;font-weight:950;color:#111;box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.routearrow span{display:block;line-height:20px;font-size:16px;transform-origin:center}
+.seqicon.current{background:#c5a253;border-color:#fff;color:#111;box-shadow:0 0 0 3px rgba(197,162,83,.55)}
+.routepin{background:transparent;border:0}
+.routepin span{display:block;width:18px;height:18px;border-radius:50%;background:#c41e3a;border:3px solid #fff;box-shadow:0 0 0 3px rgba(197,162,83,.9),0 2px 8px rgba(0,0,0,.45)}
 .timeitem .routecity{color:#e3c979;font-weight:850}
 .route-stepmeta{margin-top:5px;padding-top:5px;border-top:1px solid #29483b;color:#a9bbb2;font-size:8.2px;line-height:1.4}
 .route-move{color:#f0d890;font-weight:850}.route-warn{color:#d6bb75;font-size:8px}
@@ -1069,6 +1075,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
 <main class="mapwrap" id="mapWrap">
   <button class="clear-imported-floating" id="clearImportedFilesFloating" title="Remover todos os arquivos importados; preservar pontos manuais">🧹 LIMPAR IMPORTADOS</button>
+  <div class="route-rec" id="routeRec"><i></i><span id="routeRecText">Gerando vídeo do trajeto…</span></div>
   <div id="map"></div>
 
   <div class="topbar">
@@ -1150,6 +1157,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
         <button class="toolbtn">Exportar</button>
         <div class="dropdown">
           <button class="dropitem" id="pngMap">PNG do mapa</button>
+          <button class="dropitem" id="pngRouteArrows">Imagem do deslocamento com setas</button>
+          <button class="dropitem" id="videoRoute">Vídeo do trajeto (ordem de conexão)</button>
           <button class="dropitem" id="pdfReport">Relatório PDF</button>
           <div class="dropsep"></div>
           <button class="dropitem" id="geoJsonExport">GeoJSON</button>
@@ -1166,7 +1175,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
   <div class="timelinebar" id="timelinebar">
     <div class="timelinehead">
-      <div class="row"><button class="btn outline small" id="prevTimeline">◀ Anterior</button><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="nextTimeline">Próximo ▶</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button><button class="btn gold small" id="selectTrajectoryInline">Selecionar trajeto</button><button class="btn danger small" id="removeTrajectoryInline">Remover trajeto</button></div>
+      <div class="row"><button class="btn outline small" id="prevTimeline">◀ Anterior</button><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="nextTimeline">Próximo ▶</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button><button class="btn gold small" id="selectTrajectoryInline">Selecionar trajeto</button><button class="btn gold small" id="exportRouteImageInline">Imagem com setas</button><button class="btn gold small" id="exportRouteVideoInline">Vídeo do trajeto</button><button class="btn danger small" id="removeTrajectoryInline">Remover trajeto</button></div>
       <button class="btn outline small" id="closeTimeline">Fechar</button>
     </div>
     <div class="route-summary" id="routeSummary"></div>
@@ -1219,7 +1228,7 @@ const state={
   lots:[],events:[],pois:[],
   activeLotId:null,focusEventId:null,
   filters:defaultFilters(),
-  onlyGeo:false,playing:false,heatMode:'normal',trajectoryIndex:0,trajectoryVisible:false,
+  onlyGeo:false,playing:false,exportingRoute:false,routeCursor:null,heatMode:'normal',trajectoryIndex:0,trajectoryVisible:false,
   trajectorySelection:{enabled:false,lotIds:[],cgis:[]}
 };
 const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'code'};
@@ -1349,7 +1358,10 @@ function validGeoEvent(ev){
   return Number.isFinite(lat)&&Number.isFinite(lng)&&Number.isFinite(az)&&lat>=-90&&lat<=90&&lng>=-180&&lng<=180;
 }
 function projectName(){return $('projectName').value.trim()||'Projeto ERB'}
-function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
+function saveBlob(blob,name){
+  if(window.__pcprErbTest)window.__pcprErbTest.lastExport={name,type:blob.type,size:blob.size,blob};
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)
+}
 function haversineKm(a,b){
   const R=6371.0088,toRad=x=>x*Math.PI/180;
   const p1=toRad(Number(a.lat)),p2=toRad(Number(b.lat)),dp=toRad(Number(b.lat)-Number(a.lat)),dl=toRad(Number(b.lng)-Number(a.lng));
@@ -1499,7 +1511,7 @@ function trajectorySelectionLabel(){
   return `Trajeto selecionado — ${a}${cgis.length?` · ${cgis.length} CGI/ERB específica(s)`:''}.`;
 }
 function removeTrajectory(){
-  clearInterval(playTimer);state.playing=false;state.trajectoryVisible=false;state.trajectoryIndex=0;
+  clearInterval(playTimer);state.playing=false;state.exportingRoute=false;state.routeCursor=null;state.trajectoryVisible=false;state.trajectoryIndex=0;
   pathG.clearLayers();seqG.clearLayers();$('timelinebar')?.classList.remove('show');
   status('Trajeto removido do mapa. A seleção foi preservada para uma nova análise.');
 }
@@ -1602,21 +1614,33 @@ function drawTimelineLayers(){
   pathG.clearLayers();seqG.clearLayers();
   const t=trajectoryData(),metrics=trajectoryMetrics(t);
   const showRoute=Boolean(state.trajectoryVisible);
+  const progress=Boolean(state.playing||state.exportingRoute);
+  const lastIdx=t.length? (progress?Math.max(0,Math.min(t.length-1,state.trajectoryIndex||0)):t.length-1):0;
+  const cursor=state.routeCursor;
   if(showRoute&&cfg.showPath&&t.length>1){
     const pts=t.map(x=>[x.ev.lat,x.ev.lng]);
-    L.polyline(pts,{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.82}).addTo(pathG);
-    const maxArrows=60,step=Math.max(1,Math.ceil((t.length-1)/maxArrows));
-    for(let i=0;i<t.length-1;i+=step){
-      const a=t[i].ev,b=t[i+1].ev;if(a.lat===b.lat&&a.lng===b.lng)continue;
+    L.polyline(pts,{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.35}).addTo(pathG);
+    const drawn=pts.slice(0,lastIdx+1);
+    if(cursor&&progress)drawn.push([cursor.lat,cursor.lng]);
+    if(drawn.length>1)L.polyline(drawn,{color:'#c5a253',weight:5,opacity:.95}).addTo(pathG);
+    const arrowUntil=progress?Math.max(lastIdx,cursor?lastIdx:lastIdx):t.length-1;
+    const maxArrows=60,step=Math.max(1,Math.ceil(Math.max(1,arrowUntil)/maxArrows));
+    for(let i=0;i<arrowUntil;i+=step){
+      const a=t[i].ev,b=t[i+1]&&t[i+1].ev;if(!b||(a.lat===b.lat&&a.lng===b.lng))continue;
       const mid=[(a.lat+b.lat)/2,(a.lng+b.lng)/2],br=bearingBetween(a,b);
-      const ic=L.divIcon({className:'routearrow',html:`<span style="transform:rotate(${br}deg)">↑</span>`,iconSize:[22,22],iconAnchor:[11,11]});
-      L.marker(mid,{icon:ic,interactive:false}).addTo(pathG);
+      const ic=L.divIcon({className:'routearrow',html:`<span style="transform:rotate(${br}deg)">↑</span>`,iconSize:[26,26],iconAnchor:[13,13]});
+      L.marker(mid,{icon:ic,interactive:false,zIndexOffset:800}).addTo(pathG);
     }
   }
   if(showRoute&&cfg.showSeq)t.forEach((x,i)=>{
-    const ic=L.divIcon({className:'seqicon',html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
-    L.marker([x.ev.lat,x.ev.lng],{icon:ic}).addTo(seqG);
+    const current=progress&&i===lastIdx;
+    const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
+    L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
   });
+  if(showRoute&&progress&&cursor&&Number.isFinite(cursor.lat)&&Number.isFinite(cursor.lng)){
+    const pin=L.divIcon({className:'routepin',html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]});
+    L.marker([cursor.lat,cursor.lng],{icon:pin,interactive:false,zIndexOffset:1400}).addTo(pathG);
+  }
   const uniqueErbs=new Set(t.map(x=>x.ev.cgi||x.ev.cellid||routeKey(x.ev))).size;
   const cities=[...new Set(t.map(x=>String(x.ev.city||'').trim()).filter(Boolean))];
   const transitions=Math.max(0,t.length-1);
@@ -3822,7 +3846,7 @@ function startTimeline(){
   step();state.playing=true;playTimer=setInterval(step,1500)
 }
 function stepTimeline(delta){const t=trajectoryData();if(!t.length)return status('Não há trajeto cronológico.',true);state.trajectoryVisible=true;drawTimelineLayers();state.trajectoryIndex=Math.max(0,Math.min(t.length-1,(state.trajectoryIndex||0)+delta));const x=t[state.trajectoryIndex];focusEvent(x.ev.id);map.setView([x.ev.lat,x.ev.lng],15)}
-function stopTimeline(){clearInterval(playTimer);state.playing=false;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
+function stopTimeline(){clearInterval(playTimer);state.playing=false;state.routeCursor=null;state.focusEventId=null;document.querySelectorAll('[data-time]').forEach(x=>x.classList.remove('active'))}
 
 /* Salvamento automático e link portátil do projeto. */
 const EMBEDDED_PROJECT=(()=>{try{return JSON.parse($('erbEmbeddedProject').textContent)||{}}catch(_){return {invalid:true}}})();
@@ -3993,12 +4017,177 @@ function fitAll(){
   if(pts.length)map.fitBounds(pts,{padding:[38,38],maxZoom:16});else status('Não há dados nos filtros atuais para enquadrar.',true);
 }
 
-async function captureMap(){
+async function captureMap(opts={}){
+  const scale=opts.scale==null?1.5:opts.scale;
   document.body.classList.add('capture');await new Promise(r=>setTimeout(r,250));
-  try{return await html2canvas($('mapWrap'),{useCORS:true,backgroundColor:'#fff',scale:1.5,logging:false})}
+  try{return await html2canvas($('mapWrap'),{useCORS:true,backgroundColor:'#fff',scale,logging:false})}
   finally{document.body.classList.remove('capture')}
 }
 async function exportPng(){try{status('Gerando PNG...');const c=await captureMap();c.toBlob(b=>saveBlob(b,'mapa_ERB.png'),'image/png');status('PNG gerado.')}catch(e){console.error(e);status('Falha ao gerar PNG.',true)}}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function waitMapReady(ms=420){
+  return new Promise(resolve=>{
+    let settled=false;
+    const done=()=>{if(settled)return;settled=true;resolve()};
+    try{map.invalidateSize(false)}catch(_){}
+    map.once('moveend',()=>setTimeout(done,Math.min(180,ms)));
+    setTimeout(done,ms);
+  });
+}
+function setRouteExportBusy(on){
+  ['pngRouteArrows','videoRoute','exportRouteImageInline','exportRouteVideoInline'].forEach(id=>{const el=$(id);if(el)el.disabled=!!on});
+}
+function filterPeriodLabel(){
+  const f=state.filters||{};
+  const parts=[];
+  if(f.start||f.end)parts.push((f.start||'…')+' → '+(f.end||'…'));
+  if(Array.isArray(f.dates)&&f.dates.length)parts.push(f.dates.length===1?f.dates[0]:f.dates.length+' dia(s)');
+  if(Array.isArray(f.hours)&&f.hours.length){
+    const a=Math.min(...f.hours),b=Math.max(...f.hours);
+    parts.push(String(a).padStart(2,'0')+'h–'+String(b+1).padStart(2,'0')+'h');
+  }else if(f.daypart)parts.push(f.daypart);
+  return parts.length?parts.join(' · '):'todos os registros visíveis após os filtros';
+}
+function stampRouteFrame(src,lines){
+  const c=document.createElement('canvas');
+  c.width=src.width;c.height=src.height;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(src,0,0);
+  const h=Math.max(96,Math.round(c.height*0.13));
+  ctx.fillStyle='rgba(17,24,32,.86)';
+  ctx.fillRect(0,c.height-h,c.width,h);
+  ctx.fillStyle='#c5a253';
+  ctx.font='bold '+Math.max(16,Math.round(c.height*0.026))+'px Arial';
+  ctx.fillText('DESLOCAMENTO DO ALVO · ordem de conexão',20,c.height-h+28);
+  ctx.fillStyle='#f4f2ec';
+  ctx.font=Math.max(13,Math.round(c.height*0.02))+'px Arial';
+  (lines||[]).forEach((line,i)=>ctx.fillText(String(line||''),20,c.height-h+54+i*22));
+  return c;
+}
+function pickVideoMime(){
+  if(!window.MediaRecorder)return '';
+  return ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+}
+async function encodeVideoFromCanvases(frames,fps=4){
+  if(!frames.length)throw new Error('Nenhum quadro gerado.');
+  const mime=pickVideoMime();
+  if(!mime)throw new Error('Este navegador não grava vídeo (MediaRecorder).');
+  const canvas=document.createElement('canvas');
+  canvas.width=frames[0].width;canvas.height=frames[0].height;
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(frames[0],0,0);
+  const stream=canvas.captureStream(Math.max(1,fps));
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2500000});
+  const chunks=[];
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  const stopped=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=()=>reject(rec.error||new Error('Falha ao gravar vídeo'))});
+  rec.start(250);
+  await sleep(140);
+  const hold=Math.max(120,Math.round(1000/fps));
+  for(const frame of frames){ctx.drawImage(frame,0,0);await sleep(hold)}
+  if(typeof rec.requestData==='function')rec.requestData();
+  rec.stop();
+  stream.getTracks().forEach(tr=>tr.stop());
+  await stopped;
+  if(!chunks.length)throw new Error('O navegador não gerou o arquivo de vídeo.');
+  return new Blob(chunks,{type:mime});
+}
+function sampleTrajectoryIndexes(n,max=24){
+  if(n<=0)return [];
+  if(n<=max)return [...Array(n).keys()];
+  const out=[];
+  for(let k=0;k<max;k++){
+    const i=Math.round(k*(n-1)/(max-1));
+    if(out[out.length-1]!==i)out.push(i);
+  }
+  return out;
+}
+function buildRouteCameraStops(t,maxStops=28){
+  if(!t.length)return [];
+  if(t.length===1)return [{kind:'stop',index:0,lat:t[0].ev.lat,lng:t[0].ev.lng}];
+  const legs=[];let totalKm=0;
+  for(let i=1;i<t.length;i++){const km=haversineKm(t[i-1].ev,t[i].ev);totalKm+=km;legs.push(km)}
+  const budget=Math.max(t.length-1,maxStops-t.length);
+  const out=[];
+  for(let i=0;i<t.length;i++){
+    out.push({kind:'stop',index:i,lat:t[i].ev.lat,lng:t[i].ev.lng});
+    if(i>=t.length-1)break;
+    const share=totalKm>0?legs[i]/totalKm:1/(t.length-1);
+    const n=Math.min(5,Math.max(1,Math.round(budget*share)||1));
+    const a=t[i].ev,b=t[i+1].ev;
+    for(let s=1;s<=n;s++){
+      const p=s/(n+1);
+      out.push({kind:'move',index:i,lat:a.lat+(b.lat-a.lat)*p,lng:a.lng+(b.lng-a.lng)*p});
+    }
+  }
+  return out;
+}
+async function prepareTrajectoryView(){
+  const t=trajectoryData();
+  if(t.length<2){status('Aplique o filtro de dia/horário e monte um trajeto com pelo menos duas conexões.',true);return null}
+  state.trajectoryVisible=true;$('timelinebar').classList.add('show');
+  return t;
+}
+async function exportTrajectoryImage(){
+  const t=await prepareTrajectoryView();if(!t)return;
+  setRouteExportBusy(true);
+  try{
+    status('Gerando imagem do deslocamento com setas...');
+    state.exportingRoute=false;state.playing=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
+    drawTimelineLayers();fitTrajectory();await waitMapReady(700);
+    const metrics=trajectoryMetrics(t);
+    const stamped=stampRouteFrame(await captureMap(),[
+      t.length+' etapa(s) · '+metrics.totalKm.toFixed(2).replace('.',',')+' km em linha reta entre ERBs',
+      t[0].d.toLocaleString('pt-BR')+' → '+t[t.length-1].end.toLocaleString('pt-BR')+' · '+filterPeriodLabel(),
+      'Setas = ordem de conexão após os filtros · linha reta, não é rota GPS'
+    ]);
+    await new Promise(resolve=>stamped.toBlob(b=>{saveBlob(b,'deslocamento_ERB_setas.png');resolve()},'image/png'));
+    status('Imagem do deslocamento gerada.');
+  }catch(e){console.error(e);status('Falha ao gerar a imagem do deslocamento.',true)}
+  finally{setRouteExportBusy(false)}
+}
+async function exportTrajectoryVideo(){
+  const t=await prepareTrajectoryView();if(!t)return;
+  if(!window.MediaRecorder||!pickVideoMime())return status('Este navegador não grava vídeo do trajeto.',true);
+  const recEl=$('routeRec'),recText=$('routeRecText');
+  setRouteExportBusy(true);
+  try{
+    recEl?.classList.add('show');if(recText)recText.textContent='Gerando vídeo do trajeto…';
+    status('Gerando vídeo do trajeto no mapa...');
+    const frames=[],stops=buildRouteCameraStops(t,28);
+    state.playing=false;state.exportingRoute=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
+    drawTimelineLayers();fitTrajectory();await waitMapReady(700);
+    const overview=stampRouteFrame(await captureMap({scale:1}),[
+      'Visão geral do deslocamento filtrado · '+filterPeriodLabel(),
+      'Ordem de conexão entre ERBs · linha reta, não é rota GPS'
+    ]);
+    frames.push(overview,overview);
+    state.playing=true;state.exportingRoute=true;
+    for(let n=0;n<stops.length;n++){
+      const stop=stops[n],i=stop.index,ev=t[i].ev;
+      state.trajectoryIndex=i;
+      state.routeCursor={lat:stop.lat,lng:stop.lng,index:i};
+      drawTimelineLayers();
+      map.setView([stop.lat,stop.lng],stop.kind==='stop'?15:14,{animate:false});
+      await waitMapReady(stop.kind==='stop'?380:240);
+      const frame=stampRouteFrame(await captureMap({scale:1}),[
+        (stop.kind==='stop'?'Conexão ':'Deslocando para conexão ')+(i+1)+' de '+t.length+' · '+t[i].d.toLocaleString('pt-BR'),
+        erbDisplayName(ev)+(ev.city?' · '+ev.city:'')+(ev.cgi?' · CGI '+ev.cgi:'')
+      ]);
+      frames.push(frame);
+      if(stop.kind==='stop')frames.push(frame);
+      if(recText)recText.textContent='Gravando '+(n+1)+' / '+stops.length;
+      status('Gravando trajeto: '+(n+1)+'/'+stops.length+'...');
+    }
+    state.playing=false;state.exportingRoute=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
+    drawTimelineLayers();fitTrajectory();await waitMapReady(520);
+    frames.push(stampRouteFrame(await captureMap({scale:1}),['Trajeto completo · ordem de conexão · '+filterPeriodLabel()]));
+    const blob=await encodeVideoFromCanvases(frames,4);
+    saveBlob(blob,'trajeto_ERB_conexoes.'+(/mp4/i.test(blob.type)?'mp4':'webm'));
+    status('Vídeo do trajeto gerado.');
+  }catch(e){console.error(e);status('Falha ao gerar o vídeo do trajeto: '+(e.message||e),true)}
+  finally{state.playing=false;state.exportingRoute=false;state.routeCursor=null;setRouteExportBusy(false);recEl?.classList.remove('show')}
+}
 function visibleTrajectoryLine(){const t=trajectoryData();return t.length>1?t.map(x=>[Number(x.ev.lng),Number(x.ev.lat)]):[]}
 function exportGeoJson(){
   const features=filteredEvents().map(e=>({type:'Feature',geometry:{type:'Point',coordinates:[Number(e.lng),Number(e.lat)]},properties:{name:e.name||e.station||'',cgi:e.cgi||e.cellid||'',azimuth:Number(e.az),city:e.city||'',datetime:e.datetime||'',lot:lotById(e.lotId)?.name||'',operator:currentOperator(e),file:e.sourceFile||e.source||'',parser:e.parser||'',imei:e.imei||'',ipv6:e.ipv6||'',role:e.role||'',fileHash:e.fileHash||''}}));
@@ -4057,6 +4246,8 @@ async function runSelfTest(){
   try{const a=timSignatureAntennaRecords({text:'DADOS DE ANTENA\n724-04-\n00683-19247 -25,385049\n-49,138823\n27/06/2025\n250°\n4G-COSM01-07-C\nPRESIDENTE JUSCELINO KUBITSCHEK\nJARDIM SANTA MONICA\nCOLOMBO\nPR\n83412-590'});add('Assinatura de ERB multilinha',a.length===1&&a[0].cgi==='724-04-00683-19247'&&a[0].lat===-25.385049&&a[0].lng===-49.138823&&a[0].az===250,a.length?`${a[0].cgi} · ${a[0].lat}, ${a[0].lng} · ${a[0].az}°`:'não reconstruída')}catch(e){add('Assinatura de ERB multilinha',false,e.message)}
   try{add('Auditoria',typeof buildFileMeta==='function'&&typeof openLotAudit==='function','hash e rastreabilidade')}catch(e){add('Auditoria',false,e.message)}
   try{add('Trajeto',typeof trajectoryData==='function'&&typeof trajectoryMetrics==='function'&&typeof openTrajectorySelector==='function'&&typeof removeTrajectory==='function','ordem cronológica + seleção de documentos/ERBs + remoção')}catch(e){add('Trajeto',false,e.message)}
+  try{add('Vídeo / imagem do deslocamento',typeof exportTrajectoryVideo==='function'&&typeof exportTrajectoryImage==='function'&&Boolean(window.MediaRecorder),'exportação do trajeto filtrado')}catch(e){add('Vídeo / imagem do deslocamento',false,e.message)}
+  try{const idx=sampleTrajectoryIndexes(40,8);const stops=buildRouteCameraStops([{ev:{lat:-24.32,lng:-52.53}},{ev:{lat:-24.30,lng:-52.50}},{ev:{lat:-24.34,lng:-52.54}}],12);add('Quadros do trajeto',idx[0]===0&&idx[idx.length-1]===39&&stops.some(s=>s.kind==='move')&&stops.filter(s=>s.kind==='stop').length===3,'amostragem + interpolação no mapa')}catch(e){add('Quadros do trajeto',false,e.message)}
   try{add('GeoJSON',typeof exportGeoJson==='function','exportação geográfica')}catch(e){add('GeoJSON',false,e.message)}
   try{add('KML',typeof exportKml==='function','Google Earth/QGIS')}catch(e){add('KML',false,e.message)}
   try{add('Ranking / coincidências',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','análise')}catch(e){add('Ranking / coincidências',false,e.message)}
@@ -4116,7 +4307,7 @@ map.on('moveend',()=>autosave());
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&storageDirty)persistProject()});
 window.addEventListener('pagehide',()=>{if(storageDirty)persistProject()});
 window.addEventListener('beforeunload',e=>{if(storageDirty)persistProject();if(storageUnsafe){e.preventDefault();e.returnValue=''}});
-$('pngMap').onclick=exportPng;$('pdfReport').onclick=exportPdf;$('geoJsonExport').onclick=exportGeoJson;$('kmlExport').onclick=exportKml;
+$('pngMap').onclick=exportPng;$('pngRouteArrows').onclick=exportTrajectoryImage;$('videoRoute').onclick=exportTrajectoryVideo;$('exportRouteImageInline').onclick=exportTrajectoryImage;$('exportRouteVideoInline').onclick=exportTrajectoryVideo;$('pdfReport').onclick=exportPdf;$('geoJsonExport').onclick=exportGeoJson;$('kmlExport').onclick=exportKml;
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
 $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
@@ -4132,6 +4323,38 @@ syncLabelControls();syncBaseControls();
 renderSavedLinks();
 redraw();
 initializePersistence();
+async function seedDemoTrajectory(){
+  if(!storageReady){
+    await new Promise(resolve=>{
+      const t=setInterval(()=>{if(storageReady){clearInterval(t);resolve()}},40);
+      setTimeout(()=>{clearInterval(t);resolve()},4000);
+    });
+  }
+  const prior=storageSuspended;storageSuspended=true;
+  stopTimeline();
+  state.lots=[];state.events=[];state.pois=[];state.activeLotId=null;state.filters=defaultFilters();
+  const lotId=ensureManualLot();
+  const lot=lotById(lotId);if(lot)lot.name='Alvo — conexões filtradas';
+  const pts=[
+    {name:'ERB Centro',cgi:'724-04-001-1',lat:-24.3172,lng:-52.5298,az:90,city:'Mamborê',datetime:'15/09/2026 08:12:00'},
+    {name:'ERB Norte',cgi:'724-04-001-2',lat:-24.3041,lng:-52.5184,az:45,city:'Mamborê',datetime:'15/09/2026 10:40:00'},
+    {name:'ERB Leste',cgi:'724-04-001-3',lat:-24.2918,lng:-52.4902,az:120,city:'Mamborê',datetime:'15/09/2026 14:18:00'},
+    {name:'ERB Sul',cgi:'724-04-001-4',lat:-24.3386,lng:-52.5411,az:210,city:'Mamborê',datetime:'15/09/2026 19:55:00'}
+  ];
+  pts.forEach((p,i)=>state.events.push({id:uid(),lotId,name:p.name,station:p.name,sector:String(i+1),cgi:p.cgi,lat:p.lat,lng:p.lng,az:p.az,city:p.city,datetime:p.datetime,dist:cfg.defaultDist,margin:cfg.defaultMargin,eventType:'DADOS',radiusSource:'MANUAL',visible:true,displayMode:'normal'}));
+  state.trajectoryVisible=true;$('timelinebar').classList.add('show');redraw();fitTrajectory();
+  storageSuspended=prior;
+  return trajectoryData().length;
+}
+if(/[?&]test=1(?:&|$)/.test(location.search)){
+  window.__pcprErbTest={
+    seedDemoTrajectory,
+    exportTrajectoryImage,
+    exportTrajectoryVideo,
+    trajectoryData,
+    applyHourFilter(hours){state.filters={...normalizedFilters(state.filters),hours};$('filterPill')?.classList.add('show');redraw();return trajectoryData().length}
+  };
+}
 })();
 </script>
 </body>
