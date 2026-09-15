@@ -53,6 +53,11 @@ html,body{
   border-color:#e2cf9d;
   color:var(--ink)
 }
+.tab-informacao{
+  border-color:#e2cf9d;
+  background:rgba(197,162,83,.22);
+  color:#fff8e0
+}
 .frame{
   border:1px solid var(--line);
   border-radius:10px;
@@ -67,43 +72,21 @@ iframe{
   border:0;
   background:#fff
 }
-/* Botão recolhível: oculto no computador */
-.mobile-menu-toggle{display:none}
 
 @media(max-width:650px){
   html,body{overflow-x:hidden}
   .wrap{padding:6px}
 
-  .mobile-menu-toggle{
-    display:flex;
-    width:100%;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    padding:12px 14px;
-    margin:0 0 7px;
-    border:1px solid #6f9486;
-    border-radius:10px;
-    background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);
-    color:#f4f2ec;
-    font-size:14px;
-    font-weight:800;
-    cursor:pointer;
-  }
-  .mobile-menu-toggle .arrow{transition:transform .18s ease}
-  .mobile-menu-toggle[aria-expanded="true"] .arrow{transform:rotate(180deg)}
-
   .tabs{
-    display:none;
+    display:flex;
     margin:0 0 7px;
     padding:7px;
-    gap:5px;
+    gap:5px
   }
-  .tabs.mobile-open{display:flex}
   .tab{
     flex:1 1 47%;
     padding:10px 6px;
-    font-size:10px;
+    font-size:10px
   }
 
   .frame{
@@ -126,52 +109,34 @@ iframe{
 </head>
 <body>
 <div class="wrap">
-<button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-expanded="false" aria-controls="oficiosTabs">
-  <span>☰ Menu de Ofícios</span><span class="arrow">▾</span>
-</button>
 <nav class="tabs" id="oficiosTabs">
-<button class="tab" data-src="oficio-coffee-break.html?v=3.0.0">Coffee Break</button>
-<button class="tab" data-src="diario-bordo.html?v=3.0.0">Diário de Bordo</button>
+<button class="tab active" data-src="oficios-core.html?v=3.0.11">Ofícios</button>
+<button class="tab tab-informacao" data-src="informacao.html?v=3.0.11">Informação</button>
 <button class="tab" data-src="oficio-diaria.html?v=3.0.0">Diárias</button>
-<button class="tab" data-src="informacao.html?v=3.0.1">Informação</button>
-<button class="tab active" data-src="oficios-core.html?v=3.0.0">Ofícios</button>
-<button class="tab" data-src="oitiva-penitenciaria.html?v=3.0.0">Oitiva em Penitenciária</button>
 <button class="tab" data-src="pericia.html?v=3.0.0">Perícia</button>
-<button class="tab" data-src="reconhecimento-fotografico.html?v=3.0.0">Reconhecimento Fotográfico</button>
+<button class="tab" data-src="oitiva-penitenciaria.html?v=3.0.0">Oitiva em Penitenciária</button>
 <button class="tab" data-src="relatorio-viagem.html?v=3.0.0">Relatório de Viagem</button>
+<button class="tab" data-src="reconhecimento-fotografico.html?v=3.0.0">Reconhecimento Fotográfico</button>
+<button class="tab" data-src="diario-bordo.html?v=3.0.0">Diário de Bordo</button>
+<button class="tab" data-src="oficio-coffee-break.html?v=3.0.0">Coffee Break</button>
 </nav>
-<div class="frame"><iframe id="f" src="oficios-core.html?v=3.0.0" title="Central de Ofícios"></iframe></div>
+<div class="frame"><iframe id="f" src="oficios-core.html?v=3.0.11" title="Central de Ofícios"></iframe></div>
 </div>
 <script>
 const f=document.getElementById('f');
-const tabs=document.getElementById('oficiosTabs');
-const mobileToggle=document.getElementById('mobileMenuToggle');
 
-function isMobile(){ return window.matchMedia('(max-width:650px)').matches; }
-
-mobileToggle.addEventListener('click',()=>{
-  const open=tabs.classList.toggle('mobile-open');
-  mobileToggle.setAttribute('aria-expanded',String(open));
-});
-
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+function activateTab(b){
+  if(!b)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
   f.src=b.dataset.src;
+}
 
-  if(isMobile()){
-    tabs.classList.remove('mobile-open');
-    mobileToggle.setAttribute('aria-expanded','false');
-    setTimeout(()=>f.scrollIntoView({behavior:'smooth',block:'start'}),80);
-  }
-});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateTab(b));
 
-/* No celular o menu começa recolhido; no desktop o layout original é preservado. */
-window.addEventListener('resize',()=>{
-  if(!isMobile()){
-    tabs.classList.remove('mobile-open');
-    mobileToggle.setAttribute('aria-expanded','false');
-  }
-});
+const wantInformacao=/informacao/i.test(String(location.hash||'')+String(location.search||''));
+if(wantInformacao){
+  activateTab(document.querySelector('.tab[data-src*="informacao.html"]'));
+}
 </script>
 </body></html>

@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.10';
+const CACHE_VERSION='pcpr-central-v3.0.11';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -51,6 +51,7 @@ const CORE_FILES=[
 ];
 const STATIC_CDN_HOSTS=new Set(['cdn.jsdelivr.net','unpkg.com']);
 self.addEventListener('install',event=>{
+  self.skipWaiting();
   event.waitUntil((async()=>{
     const cache=await caches.open(STATIC_CACHE);
     const results=await Promise.allSettled(CORE_FILES.map(url=>cache.add(url)));
