@@ -1387,7 +1387,12 @@ function traceText(ev){return [ev.sourceFile||ev.source||'',ev.parser||'',ev.sou
 
 const map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:true}).setView([-24.317,-52.529],13);
 map.attributionControl.setPrefix(false);
-function ofm(style){if(!L.maplibreGL||!window.maplibregl)return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});return L.maplibreGL({style:`https://tiles.openfreemap.org/styles/${style}`,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true}})}
+function osmRaster(){return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,crossOrigin:'anonymous',attribution:'&copy; OpenStreetMap contributors'})}
+function ofm(style){
+  if(!L.maplibreGL||!window.maplibregl)return osmRaster();
+  try{return L.maplibreGL({style:`https://tiles.openfreemap.org/styles/${style}`,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true,failIfMajorPerformanceCaveat:false}})}
+  catch(e){console.warn('MapLibre indisponível, usando OSM.',e);return osmRaster()}
+}
 function satelliteTiles(){return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,zIndex:1,crossOrigin:'anonymous',attribution:'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics e outros'})}
 const bases={
   clean:ofm('positron'),street:ofm('liberty'),dark:ofm('dark'),satellite:satelliteTiles(),
@@ -1398,7 +1403,17 @@ const bases={
   ]),
   blank:L.layerGroup()
 };
-let activeBase=bases.clean.addTo(map);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
+function addBaseSafely(layer){
+  try{layer.addTo(map);return layer}
+  catch(e){
+    console.warn('Falha ao ativar mapa-base; usando OSM.',e);
+    try{map.removeLayer(layer)}catch(_){}
+    const osm=osmRaster();osm.addTo(map);
+    bases.clean=osm;bases.street=osm;bases.dark=osm;cfg.base='street';
+    return osm;
+  }
+}
+let activeBase=addBaseSafely(bases.clean);map.attributionControl.addAttribution('&copy; OpenStreetMap contributors · OpenFreeMap');
 function syncBaseControls(){
   document.querySelectorAll('[data-base]').forEach(b=>{const selected=b.dataset.base===cfg.base;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
 }
@@ -4122,6 +4137,23 @@ function buildRouteCameraStops(t,maxStops=28){
   }
   return out;
 }
+async function withMapsBasemap(fn){
+  const prev=cfg.base;
+  const want=(prev==='satellite'||prev==='hybrid'||prev==='street')?prev:'street';
+  if(want!==cfg.base){
+    try{map.removeLayer(activeBase)}catch(_){}
+    cfg.base=want;activeBase=addBaseSafely(bases[want]||osmRaster());
+    await waitMapReady(650);
+  }
+  try{return await fn()}
+  finally{
+    if(cfg.base!==prev){
+      try{map.removeLayer(activeBase)}catch(_){}
+      cfg.base=prev;activeBase=addBaseSafely(bases[prev]||osmRaster());
+      syncBaseControls();
+    }
+  }
+}
 async function prepareTrajectoryView(){
   const t=trajectoryData();
   if(t.length<2){status('Aplique o filtro de dia/horário e monte um trajeto com pelo menos duas conexões.',true);return null}
@@ -4132,17 +4164,19 @@ async function exportTrajectoryImage(){
   const t=await prepareTrajectoryView();if(!t)return;
   setRouteExportBusy(true);
   try{
-    status('Gerando imagem do deslocamento com setas...');
-    state.exportingRoute=false;state.playing=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
-    drawTimelineLayers();fitTrajectory();await waitMapReady(700);
-    const metrics=trajectoryMetrics(t);
-    const stamped=stampRouteFrame(await captureMap(),[
-      t.length+' etapa(s) · '+metrics.totalKm.toFixed(2).replace('.',',')+' km em linha reta entre ERBs',
-      t[0].d.toLocaleString('pt-BR')+' → '+t[t.length-1].end.toLocaleString('pt-BR')+' · '+filterPeriodLabel(),
-      'Setas = ordem de conexão após os filtros · linha reta, não é rota GPS'
-    ]);
-    await new Promise(resolve=>stamped.toBlob(b=>{saveBlob(b,'deslocamento_ERB_setas.png');resolve()},'image/png'));
-    status('Imagem do deslocamento gerada.');
+    await withMapsBasemap(async()=>{
+      status('Gerando imagem do deslocamento com setas...');
+      state.exportingRoute=false;state.playing=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
+      drawTimelineLayers();fitTrajectory();await waitMapReady(700);
+      const metrics=trajectoryMetrics(t);
+      const stamped=stampRouteFrame(await captureMap(),[
+        t.length+' etapa(s) · '+metrics.totalKm.toFixed(2).replace('.',',')+' km em linha reta entre ERBs',
+        t[0].d.toLocaleString('pt-BR')+' → '+t[t.length-1].end.toLocaleString('pt-BR')+' · '+filterPeriodLabel(),
+        'Setas = ordem de conexão após os filtros · linha reta, não é rota GPS'
+      ]);
+      await new Promise(resolve=>stamped.toBlob(b=>{saveBlob(b,'deslocamento_ERB_setas.png');resolve()},'image/png'));
+      status('Imagem do deslocamento gerada.');
+    });
   }catch(e){console.error(e);status('Falha ao gerar a imagem do deslocamento.',true)}
   finally{setRouteExportBusy(false)}
 }
@@ -4154,6 +4188,7 @@ async function exportTrajectoryVideo(){
   try{
     recEl?.classList.add('show');if(recText)recText.textContent='Gerando vídeo do trajeto…';
     status('Gerando vídeo do trajeto no mapa...');
+    await withMapsBasemap(async()=>{
     const frames=[],stops=buildRouteCameraStops(t,28);
     state.playing=false;state.exportingRoute=false;state.routeCursor=null;state.trajectoryIndex=t.length-1;
     drawTimelineLayers();fitTrajectory();await waitMapReady(700);
@@ -4185,6 +4220,7 @@ async function exportTrajectoryVideo(){
     const blob=await encodeVideoFromCanvases(frames,4);
     saveBlob(blob,'trajeto_ERB_conexoes.'+(/mp4/i.test(blob.type)?'mp4':'webm'));
     status('Vídeo do trajeto gerado.');
+    });
   }catch(e){console.error(e);status('Falha ao gerar o vídeo do trajeto: '+(e.message||e),true)}
   finally{state.playing=false;state.exportingRoute=false;state.routeCursor=null;setRouteExportBusy(false);recEl?.classList.remove('show')}
 }
@@ -4292,7 +4328,7 @@ document.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openDrawer(x.d
 document.querySelectorAll('[data-import-kind]').forEach(x=>x.onclick=()=>openDrawer('import',{type:x.dataset.importKind}));
 document.querySelectorAll('[data-label-mode]').forEach(x=>x.onclick=()=>setLabelMode(x.dataset.labelMode));
 $('selectRankAntennas')?.addEventListener('click',()=>openDrawer('filter'));
-document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{map.removeLayer(activeBase);cfg.base=x.dataset.base;activeBase=bases[cfg.base];activeBase.addTo(map);syncBaseControls();autosave()});
+document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{try{map.removeLayer(activeBase)}catch(_){}cfg.base=x.dataset.base;activeBase=addBaseSafely(bases[cfg.base]||osmRaster());syncBaseControls();autosave()});
 document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b===x));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-'+x.dataset.side).classList.add('active');if(x.dataset.side==='links')renderSavedLinks()});
 $('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
 $('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
