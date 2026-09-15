@@ -25,7 +25,9 @@
 @media print{body{background:white}.top,.security,.tabs,.formcol,.preview-head,.check{display:none!important}.wrap{margin:0;padding:0;max-width:none}.layout{display:block}.preview-card{border:0;padding:0;box-shadow:none}.paper-wrap{border:0;padding:0;background:white;overflow:visible}.paper-wrap canvas{width:210mm!important;height:297mm!important;box-shadow:none;max-width:none}@page{size:A4;margin:0}}
 </style>
 <script src="pcpr-core.js?v=3.0.0"></script>
-<script src="pcpr-config.js?v=3.0.0"></script><script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-oficio-chrome.js?v=3.0.14"></script>
+<script src="pcpr-drive.js?v=3.0.0"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#gerarDocumento","actionSelectors":["#gerarDocumento","#baixarOdt","#baixarPdf","#enviarDrive"],"cloudSelectors":["#enviarDrive"]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
@@ -124,11 +126,18 @@ function footerChanged(){return ['logradouro','numero','bairro','cep','municipio
 function loadImage(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});}
 function fitText(ctx,text,maxWidth,startPx,minPx=10){let s=startPx;ctx.font='700 '+s+'px Arial, Helvetica, sans-serif';while(s>minPx&&ctx.measureText(text).width>maxWidth){s-=.5;ctx.font='700 '+s+'px Arial, Helvetica, sans-serif';}return s;}
 async function drawPaper(ctx){if(!paperImg.complete)await new Promise(r=>paperImg.onload=r);ctx.clearRect(0,0,1414,2000);ctx.drawImage(paperImg,0,0,1414,2000);
- const hchg=headerChanged(),fchg=footerChanged();
+ const hchg=headerChanged();
  if(hchg){ctx.fillStyle='#fff';ctx.fillRect(430,200,560,122);if(cfg.crestData){ctx.fillRect(600,0,240,210);try{if(!crestImg||crestImg.src!==cfg.crestData)crestImg=await loadImage(cfg.crestData);const box={x:623,y:5,w:178,h:204},r=Math.min(box.w/crestImg.width,box.h/crestImg.height),w=crestImg.width*r,h=crestImg.height*r;ctx.drawImage(crestImg,box.x+(box.w-w)/2,box.y+(box.h-h)/2,w,h);}catch(e){}}
    const lines=[cfg.estado,cfg.secretaria,cfg.departamento,cfg.subdivisao,cfg.unidade];const ys=[209,232,255,277,299];ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#000';lines.forEach((t,i)=>{const fs=fitText(ctx,t,660,18,12);ctx.font='700 '+fs+'px Arial, Helvetica, sans-serif';ctx.fillText(t,707,ys[i]);});ctx.textAlign='left';
  }
- if(fchg){const tmp=document.createElement('canvas');tmp.width=1414;tmp.height=1;const tc=tmp.getContext('2d');tc.drawImage(paperImg,0,1920,1414,1,0,0,1414,1);ctx.drawImage(tmp,0,0,1414,1,0,1917,1414,83);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='top';let line1=[cfg.logradouro,cfg.numero,cfg.bairro,cfg.municipioUf,cfg.cep].filter(Boolean).join(', ');let line2='Email: '+cfg.email+' – Fone/Fax: '+cfg.telefone+' – '+cfg.site;let fs=fitText(ctx,line1,900,15,10);ctx.font=fs+'px Arial, Helvetica, sans-serif';ctx.fillText(line1,707,1936);fs=fitText(ctx,line2,980,15,10);ctx.font=fs+'px Arial, Helvetica, sans-serif';ctx.fillText(line2,707,1962);ctx.textAlign='left';}
+ try{
+  if(!window._pcprWmImg) window._pcprWmImg=await loadImage((window.PCPROficioChrome&&PCPROficioChrome.watermarkSrc())||'brasao-institucional.png');
+  if(window.PCPROficioChrome&&window._pcprWmImg) PCPROficioChrome.canvasDrawWatermark(ctx,window._pcprWmImg,1414,2000);
+ }catch(e){}
+ const line1=[cfg.logradouro,cfg.numero,cfg.bairro,cfg.municipioUf,cfg.cep].filter(Boolean).join(', ');
+ const line2=['Email: '+cfg.email, cfg.telefone?'Fone/Fax: '+cfg.telefone:'', cfg.site||''].filter(Boolean).join(' – ');
+ if(window.PCPROficioChrome){PCPROficioChrome.canvasDrawFooter(ctx,1414,2000,[line1,line2].filter(Boolean));}
+ else if(footerChanged()){const tmp=document.createElement('canvas');tmp.width=1414;tmp.height=1;const tc=tmp.getContext('2d');tc.drawImage(paperImg,0,1920,1414,1,0,0,1414,1);ctx.drawImage(tmp,0,0,1414,1,0,1917,1414,83);ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='top';let fs=fitText(ctx,line1,900,15,10);ctx.font=fs+'px Arial, Helvetica, sans-serif';ctx.fillText(line1,707,1936);fs=fitText(ctx,line2,980,15,10);ctx.font=fs+'px Arial, Helvetica, sans-serif';ctx.fillText(line2,707,1962);ctx.textAlign='left';}
 }
 function font(ctx,pt,weight='400',style='normal'){ctx.font=style+' '+weight+' '+(pt*1414/595.276).toFixed(2)+'px "Times New Roman", Times, serif';ctx.fillStyle='#000';ctx.textBaseline='top';}
 function drawTextPt(ctx,text,x,y,pt=12,weight='400',style='normal',align='left'){font(ctx,pt,weight,style);ctx.textAlign=align;ctx.fillText(text,x*1414/595.276,y*2000/841.89);ctx.textAlign='left';}
@@ -150,7 +159,7 @@ function buildZip(entries){const dt=dos(),locals=[],centrals=[];let off=0;entrie
 async function canvasPngBytes(canvas){const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));return new Uint8Array(await blob.arrayBuffer());}
 async function buildPaperPng(){const c=document.createElement('canvas');c.width=1414;c.height=2000;await drawPaper(c.getContext('2d'));return canvasPngBytes(c);}
 async function thumbnailBytes(){const src=$('preview'),c=document.createElement('canvas');c.width=181;c.height=256;c.getContext('2d').drawImage(src,0,0,c.width,c.height);return canvasPngBytes(c);}
-async function odtBytes(){const probs=validate(true);if(probs.length)throw new Error(probs.join(' '));const v=currentValues(),rep={'@@OFICIO_SEQ@@':v.oficio+'.'+v.seq,'@@MUNICIPIO_DATA@@':cfg.municipio,'@@DATA_OFICIO@@':v.dataOficio,'@@DATA_EVENTO@@':v.dataEvento,'@@HORARIO@@':v.horario,'@@LOCAL@@':v.local,'@@ENDERECO@@':v.endereco,'@@NUMERO@@':v.numero,'@@BAIRRO@@':v.bairro,'@@CIDADE@@':v.cidade,'@@QUANTIDADE@@':String($('quantidade').value),'@@COTA_LABEL@@':Number($('quantidade').value)===1?'cota':'cotas','@@RESPONSAVEL@@':cfg.responsavel,'@@CARGO@@':cfg.cargo,'@@TRATAMENTO@@':tratamentoText()};let entries=parseStoredZip(b64ToBytes(ODT_B64));let paperBytes=null;if(headerChanged()||footerChanged())paperBytes=await buildPaperPng();const thumb=await thumbnailBytes();entries=entries.map(e=>{if(e.name===PAPER_PATH&&paperBytes)return{name:e.name,data:paperBytes};if(e.name==='Thumbnails/thumbnail.png')return{name:e.name,data:thumb};if(e.name==='content.xml'){let s=dec.decode(e.data);Object.entries(rep).forEach(([a,b])=>{s=s.split(a).join(xmlEscape(b))});return{name:e.name,data:enc.encode(s)};}return e;});return buildZip(entries);}
+async function odtBytes(){const probs=validate(true);if(probs.length)throw new Error(probs.join(' '));const v=currentValues(),rep={'@@OFICIO_SEQ@@':v.oficio+'.'+v.seq,'@@MUNICIPIO_DATA@@':cfg.municipio,'@@DATA_OFICIO@@':v.dataOficio,'@@DATA_EVENTO@@':v.dataEvento,'@@HORARIO@@':v.horario,'@@LOCAL@@':v.local,'@@ENDERECO@@':v.endereco,'@@NUMERO@@':v.numero,'@@BAIRRO@@':v.bairro,'@@CIDADE@@':v.cidade,'@@QUANTIDADE@@':String($('quantidade').value),'@@COTA_LABEL@@':Number($('quantidade').value)===1?'cota':'cotas','@@RESPONSAVEL@@':cfg.responsavel,'@@CARGO@@':cfg.cargo,'@@TRATAMENTO@@':tratamentoText()};let entries=parseStoredZip(b64ToBytes(ODT_B64));let paperBytes=null;paperBytes=await buildPaperPng();const thumb=await thumbnailBytes();entries=entries.map(e=>{if(e.name===PAPER_PATH&&paperBytes)return{name:e.name,data:paperBytes};if(e.name==='Thumbnails/thumbnail.png')return{name:e.name,data:thumb};if(e.name==='content.xml'){let s=dec.decode(e.data);Object.entries(rep).forEach(([a,b])=>{s=s.split(a).join(xmlEscape(b))});return{name:e.name,data:enc.encode(s)};}return e;});return buildZip(entries);}
 function download(bytes,name,mime){const blob=new Blob([bytes],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
 function safeName(){const v=currentValues().oficio.replace(/\//g,'-')||'SEM-NUMERO';return 'OFICIO_COFFEE_BREAK_'+v;}
 function dataUrlBytes(url){const b64=url.split(',')[1],bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
