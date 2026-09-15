@@ -260,10 +260,16 @@ function cidadeLinha(){
 }
 function foldName(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();}
 function firstName(s){return foldName(s).split(/\s+/)[0]||'';}
+function displayCargo(cargo, fallback){
+  const raw=String(cargo||'').trim();
+  if(/^APJ(\s*[-–—:]\s*)?(Agente de Pol[ií]cia Judici[aá]ria)?$/i.test(raw)) return 'Agente de Polícia Judiciária';
+  if(/^APJ\b/i.test(raw) && /agente de pol[ií]cia judici[aá]ria/i.test(raw)) return 'Agente de Polícia Judiciária';
+  return raw || fallback || '';
+}
 const SIGNER_SLOTS=[
-  {id:'tiago', first:'tiago', fallbackNome:'Tiago Henrique Lemes', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
-  {id:'thiago', first:'thiago', fallbackNome:'Thiago Gonzaga da Silva Couto', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
-  {id:'paulo', first:'paulo', fallbackNome:'Paulo Henrique Vilaça', fallbackCargo:'APJ - Agente de Polícia Judiciária'},
+  {id:'tiago', first:'tiago', fallbackNome:'Tiago Henrique Lemes', fallbackCargo:'Agente de Polícia Judiciária'},
+  {id:'thiago', first:'thiago', fallbackNome:'Thiago Gonzaga da Silva Couto', fallbackCargo:'Agente de Polícia Judiciária'},
+  {id:'paulo', first:'paulo', fallbackNome:'Paulo Henrique Vilaça', fallbackCargo:'Agente de Polícia Judiciária'},
   {id:'delegado', first:'', fallbackNome:'Anderson Sérgio Romão', fallbackCargo:'Delegado de Polícia', delegado:true}
 ];
 function resolveSigners(){
@@ -279,7 +285,7 @@ function resolveSigners(){
     return {
       id:slot.id,
       nome:(found&&found.nome)||slot.fallbackNome,
-      cargo:(found&&found.cargo)||(slot.delegado&&auth.cargo)||slot.fallbackCargo
+      cargo:displayCargo((found&&found.cargo)||(slot.delegado&&auth.cargo)||slot.fallbackCargo, slot.fallbackCargo)
     };
   });
 }

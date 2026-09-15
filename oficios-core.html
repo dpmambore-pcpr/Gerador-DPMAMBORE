@@ -469,7 +469,7 @@ function cfgGeralResolvida(){
       out.cabecalho=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean).map(function(x){return String(x).toUpperCase();});
     }
     var generalAgents=(Array.isArray(g.servidores)?g.servidores:[]).filter(function(x){return x&&/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(String(x.cargo||''));});
-    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'APJ - Agente de Polícia Judiciária'};});
+    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'Agente de Polícia Judiciária'};});
     if(generalAgents.length){
       var antigos=CFG_PADRAO.agentes,map={};antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
       out.agentes=generalAgents.map(function(x){var n=String(x.nome||x||''),a=map[n.toLocaleLowerCase('pt-BR')]||{};return {nome:n,email:a.email||'',fone:a.fone||g.fone||''};});
@@ -503,7 +503,7 @@ function cfgGeralResolvida(){
       p.cabecalho=[g.estadoHeader,g.secretaria,g.departamento,g.subdivisao,g.unidade].filter(Boolean).map(function(s){return String(s).toUpperCase();});
     }
     var generalAgents=(Array.isArray(g.servidores)?g.servidores:[]).filter(function(x){return x&&/APJ|AGENTE DE POL[IÍ]CIA JUDICI[AÁ]RIA/i.test(String(x.cargo||''));});
-    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'APJ - Agente de Polícia Judiciária'};});
+    if(!generalAgents.length&&Array.isArray(g.apjs))generalAgents=g.apjs.map(function(n){return {nome:n,cargo:'Agente de Polícia Judiciária'};});
     if(generalAgents.length&&!p.agentes){
       var antigos=CFG_PADRAO.agentes,map={};antigos.forEach(function(a){map[String(a.nome||'').toLocaleLowerCase('pt-BR')]=a;});
       p.agentes=generalAgents.map(function(x){var n=String(x.nome||x||''),a=map[n.toLocaleLowerCase('pt-BR')]||{};return {nome:n,email:a.email||'',fone:a.fone||g.fone||''};});
