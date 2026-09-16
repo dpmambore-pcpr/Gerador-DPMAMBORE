@@ -160,7 +160,15 @@ function captureManagedClick(e){
   document.title=getBaseName()||originalTitle;
   setTimeout(()=>{if(armed&&Date.now()>=armed.until)document.title=originalTitle},121000);
 }
+function ensurePrintCss(){
+  if(document.getElementById('pcprDocNamePrintCss'))return;
+  const s=document.createElement('style');
+  s.id='pcprDocNamePrintCss';
+  s.textContent='@media print{#pcprDocNameBox{display:none!important}}';
+  document.head.appendChild(s);
+}
 function init(){
+  ensurePrintCss();
   buildField();patchAnchorClick();patchPrint();patchJsPdf();patchDrive();
   document.addEventListener('click',captureManagedClick,true);
   // Algumas bibliotecas (jsPDF/Drive) podem ser carregadas depois do helper.
