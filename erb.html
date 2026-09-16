@@ -903,6 +903,17 @@ input:focus,select:focus,textarea:focus{border-color:#6a9a84;box-shadow:0 0 0 3p
 .filterpill{display:none;align-items:center;gap:5px;background:#604d21;color:#f9e3a2;border:1px solid #80672b;border-radius:999px;padding:5px 8px;font-size:8.7px;font-weight:900;pointer-events:auto}.filterpill.show{display:flex}
 .coordbar{position:absolute;z-index:920;left:50px;bottom:8px;background:rgba(7,15,12,.92);border:1px solid #3b5c4e;border-radius:7px;padding:6px 8px;font:9.7px monospace;cursor:pointer}
 .timelinebar{position:absolute;z-index:910;left:50%;transform:translateX(-50%);bottom:42px;width:min(820px,78%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px;display:none;box-shadow:var(--shadow)}.timelinebar.show{display:block}
+.timescrub{position:absolute;z-index:912;left:50%;transform:translateX(-50%);bottom:42px;width:min(720px,72%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px 10px;display:none;box-shadow:var(--shadow)}
+.timescrub.show{display:block}
+.timescrub-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px}
+.timescrub-head b{font-size:9.4px;letter-spacing:.06em;color:#f0d890}
+.timescrub-head span{font-size:10.2px;font-weight:850;color:#e8efe9;font-variant-numeric:tabular-nums}
+.timescrub input[type=range]{width:100%;margin:3px 0 4px;accent-color:#c5a253;cursor:pointer;height:18px}
+.timescrub-meta{display:flex;justify-content:space-between;gap:8px;font-size:8.7px;color:#c6d6ce;line-height:1.35}
+.timescrub-meta strong{color:#f5e0a3}
+.mapwrap.has-timescrub .timelinebar{bottom:118px}
+.mapwrap.has-timescrub .map3d-hint{bottom:118px}
+.mapwrap.has-timescrub .coordbar{bottom:8px}
 .timelinehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.timeitems{display:flex;gap:6px;overflow:auto}.timeitem{min-width:150px;border:1px solid #335244;background:#102019;border-radius:7px;padding:6px;cursor:pointer;font-size:8.9px}.timeitem.active{border-color:#fff}
 .drawerback{position:fixed;inset:0;z-index:1600;background:rgba(0,0,0,.42);display:none}.drawerback.show{display:block}.drawer{position:absolute;top:0;right:0;width:min(440px,94vw);height:100%;background:#0e1b16;border-left:1px solid #36594a;box-shadow:-10px 0 35px rgba(0,0,0,.35);overflow:auto;padding:14px}
 .drawerhead{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #29483b;padding-bottom:10px;margin-bottom:12px}.drawerhead h2{margin:0;font-size:15px}.close{width:32px;height:32px;border-radius:8px;border:1px solid #3f6253;background:#172820;color:#fff;font-size:18px}
@@ -916,7 +927,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
 .mapwrap.pick-point #map{cursor:crosshair!important}.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
-.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .leaflet-control,.capture .geo,.capture .route-rec,.capture .map3d-hint,.capture .map3d-hud,.capture .maplibregl-ctrl-top-left,.capture .maplibregl-ctrl-bottom-right,.capture .maplibregl-ctrl-attrib{display:none!important}
+.capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .timescrub,.capture .leaflet-control,.capture .geo,.capture .route-rec,.capture .map3d-hint,.capture .map3d-hud,.capture .maplibregl-ctrl-top-left,.capture .maplibregl-ctrl-bottom-right,.capture .maplibregl-ctrl-attrib{display:none!important}
 .route-rec{position:absolute;z-index:1250;left:12px;top:58px;display:none;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:850;box-shadow:0 3px 14px rgba(0,0,0,.42)}
 .route-rec.show{display:flex}
 .route-rec i{width:9px;height:9px;border-radius:50%;background:#ff8b86;display:block}
@@ -963,7 +974,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .tracebox{border:1px solid #345747;border-radius:8px;background:#0a1712;padding:8px;margin-top:8px;font-size:8.7px;line-height:1.5;color:#a9bbb2;word-break:break-word}.tracebox b{color:#e8d9aa}
 .checkboxline{display:flex;align-items:center;gap:7px;border:1px solid #29483b;border-radius:8px;background:#0b1712;padding:8px}.checkboxline input{width:auto}.checkboxline label{margin:0;cursor:pointer}
 
-@media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar{width:92%}}
+@media(max-width:920px){html,body{overflow:auto}.app{grid-template-columns:1fr;grid-template-rows:60vh auto;height:auto}.mapwrap{grid-row:1;position:sticky;top:0;height:60vh;z-index:10}.sidebar{grid-row:2;overflow:visible}.topbar{left:46px}.toolbar:first-child{max-width:75%}.toolbtn{height:32px;padding:0 8px}.coordbar{left:46px}.timelinebar,.timescrub{width:92%}}
 @media print{.sec{display:none!important}}
 
 /* Filtros múltiplos v9.5 */
@@ -1197,6 +1208,12 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="pickhint" id="pickHint">Clique no mapa para escolher a posição do ponto · ESC para cancelar</div>
   <div class="coordbar" id="coordbar">Lat.: — | Long.: —</div>
 
+  <div class="timescrub" id="timeScrub">
+    <div class="timescrub-head"><b>LINHA DO TEMPO</b><span id="timeScrubCount">0 conexões</span></div>
+    <input id="timeScrubRange" type="range" min="0" max="0" value="0" step="1" aria-label="Arrastar a linha do tempo das conexões">
+    <div class="timescrub-meta"><span id="timeScrubWhen">—</span><span id="timeScrubErb">Arraste para inserir as ERBs em ordem cronológica</span></div>
+  </div>
+
   <div class="timelinebar" id="timelinebar">
     <div class="timelinehead">
       <div class="row"><button class="btn outline small" id="prevTimeline">◀ Anterior</button><button class="btn primary small" id="playTimeline">▶ Play trajeto</button><button class="btn gold small" id="playTimeline3d">▶ Play 3D</button><button class="btn outline small" id="stopTimeline">■</button><button class="btn outline small" id="nextTimeline">Próximo ▶</button><button class="btn outline small" id="fitTimeline">Enquadrar trajeto</button><button class="btn gold small" id="selectTrajectoryInline">Selecionar trajeto</button><button class="btn gold small" id="exportRouteImageInline">Imagem com setas</button><button class="btn gold small" id="exportRouteVideoInline">Vídeo do trajeto</button><button class="btn gold small" id="exportRouteVideo3dInline">Vídeo 3D</button><button class="btn danger small" id="removeTrajectoryInline">Remover trajeto</button></div>
@@ -1209,7 +1226,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
     <div class="route-note">Trajeto cronológico estimado a partir da sequência de ERBs/CGIs após os filtros aplicados. A linha entre antenas serve para visualizar a ordem de utilização das ERBs e <b>não representa percurso GPS, via efetivamente utilizada ou posição exata do terminal</b>.</div>
   </div>
 
-  <div class="heat-legend" id="heatLegend"><b>MAPA DE CALOR / INCIDÊNCIA</b><div class="heat-scale"></div><div>Intensidade representa recorrência de utilização da ERB nos registros filtrados. Não representa localização exata do terminal.</div></div>
+  <div class="heat-legend" id="heatLegend"><b>MAPA DE CALOR / INCIDÊNCIA</b><div class="heat-scale"></div><div>Intensidade representa recorrência de conexões no local até o ponto da linha do tempo. Ao voltar a uma ERB, o calor aumenta. Não representa localização exata do terminal.</div></div>
 
   <div class="geo" id="geoPanel">
     <h3>INTERSEÇÃO — ÁREA DE CONVERGÊNCIA ESTIMADA</h3><div class="muted" style="margin:-3px 0 8px">Inferência geométrica dos setores visíveis; não representa a posição exata do aparelho.</div>
@@ -1253,10 +1270,10 @@ const state={
   activeLotId:null,focusEventId:null,
   filters:defaultFilters(),
   onlyGeo:false,playing:false,exportingRoute:false,routeCursor:null,heatMode:'normal',trajectoryIndex:0,trajectoryVisible:false,
-  trajectorySelection:{enabled:false,lotIds:[],cgis:[]}
+  trajectorySelection:{enabled:false,lotIds:[],cgis:[]},timeScrub:null
 };
 const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'code',view3d:false};
-let filterDraft=null,filterErbOptions=[],filterMultiOptions={};
+let filterDraft=null,filterErbOptions=[],filterMultiOptions={},filterOpenedFrom=null,liveApplyTimer=null;
 const PROJECT_PREFIX='pcpr.erb.v7.project.';
 const MULTI_FILTERS=[
   {key:'targetNumbers',legacy:'targetNumber',label:'Números alvo / linhas',missing:'Número alvo não informado',search:'Buscar número alvo…'},
@@ -1447,7 +1464,7 @@ let heatLayer=null;
 let legend=null,playTimer=null,play3dGen=0;
 let map3d=null,map3dReady=false,map3dPopup=null,map3dLayersReady=false;
 
-function filteredEvents(f=state.filters,{ignoreErbs=false}={}){
+function matchedEvents(f=state.filters,{ignoreErbs=false}={}){
   const groups=MULTI_FILTERS.map(def=>({key:def.key,values:multiFilterSelection(f,def)})).filter(x=>x.values!==null).map(x=>({key:x.key,values:new Set(x.values)}));
   const cities=Array.isArray(f.cities)?new Set(f.cities):f.city?new Set([cityFilterKey(f.city)]):null;
   const hours=Array.isArray(f.hours)?new Set(f.hours):f.daypart?new Set(hoursForPeriod(f.daypart)):null;
@@ -1466,6 +1483,41 @@ function filteredEvents(f=state.filters,{ignoreErbs=false}={}){
     if(hours&&(!d||!hours.has(d.getHours())))return false;
     return true;
   });
+}
+function chronoDated(f=state.filters){
+  return matchedEvents(f).map(ev=>({ev,d:parseDate(ev.datetime)})).filter(x=>x.d).sort((a,b)=>{
+    const t=a.d-b.d;if(t)return t;
+    return String(a.ev.id||'').localeCompare(String(b.ev.id||''));
+  });
+}
+function locHeatKey(ev){return `${Number(ev.lat).toFixed(5)}|${Number(ev.lng).toFixed(5)}`}
+function timeScrubIndex(){
+  const chrono=chronoDated();
+  if(!chrono.length)return null;
+  if(state.timeScrub==null||state.timeScrub==='')return chrono.length-1;
+  return Math.max(0,Math.min(chrono.length-1,Number(state.timeScrub)||0));
+}
+function setTimeScrub(index){
+  const chrono=chronoDated();
+  if(!chrono.length){state.timeScrub=null;return null}
+  if(index==null||index===''){state.timeScrub=null;return chrono.length-1}
+  state.timeScrub=Math.max(0,Math.min(chrono.length-1,Number(index)||0));
+  return state.timeScrub;
+}
+function timeScrubSlice(){
+  const chrono=chronoDated(),idx=timeScrubIndex();
+  if(idx==null)return[];
+  return chrono.slice(0,idx+1);
+}
+function filteredEvents(f=state.filters,opts={}){
+  const list=matchedEvents(f,opts);
+  if(opts.ignoreTimeScrub)return list;
+  const chrono=chronoDated(f);
+  if(!chrono.length)return list;
+  const idx=timeScrubIndex();
+  if(idx==null||idx>=chrono.length-1)return list;
+  const allowed=new Set(chrono.slice(0,idx+1).map(x=>x.ev.id));
+  return list.filter(ev=>allowed.has(ev.id));
 }
 function sectorGroups(){
   const m=new Map();
@@ -1634,15 +1686,52 @@ function redraw(fit=false){
       .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.type)}<br>${fmt(p.lat)} / ${fmt(p.lng)}${p.datetime?'<br>'+esc(p.datetime):''}${p.obs?'<br>'+esc(p.obs):''}`);
     bounds.push([p.lat,p.lng]);
   });
-  drawHeatmap(groups);drawTimelineLayers();renderLegend();renderSidebar();updateGeo(false);
+  drawHeatmap(groups);drawTimelineLayers();drawTimeScrubPath();renderLegend();renderSidebar();updateGeo(false);
+  updateTimeScrubUi();
   if(fit&&bounds.length){
     if(cfg.view3d)fitMap3d(bounds);else map.fitBounds(bounds,{padding:[38,38],maxZoom:16});
   }
   syncMap3d();
   autosave(true);
 }
+function drawTimeScrubPath(){
+  if(state.trajectoryVisible)return;
+  const slice=timeScrubSlice();
+  if(slice.length<1)return;
+  if(cfg.showPath&&slice.length>1){
+    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.32}).addTo(pathG);
+    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#c5a253',weight:4,opacity:.92}).addTo(pathG);
+  }
+  if(cfg.showSeq)slice.forEach((x,i)=>{
+    const current=i===slice.length-1;
+    const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
+    L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
+  });
+}
+function updateTimeScrubUi(){
+  const bar=$('timeScrub'),range=$('timeScrubRange'),wrap=$('mapWrap');
+  if(!bar||!range)return;
+  const chrono=chronoDated();
+  if(!chrono.length){
+    bar.classList.remove('show');wrap?.classList.remove('has-timescrub');
+    return;
+  }
+  bar.classList.add('show');wrap?.classList.add('has-timescrub');
+  const idx=timeScrubIndex(),slice=chrono.slice(0,idx+1),cur=slice[slice.length-1];
+  if(range.max!==String(chrono.length-1))range.max=String(chrono.length-1);
+  range.min='0';
+  if(range.value!==String(idx))range.value=String(idx);
+  const locCounts=new Map();
+  slice.forEach(x=>{const k=locHeatKey(x.ev);locCounts.set(k,(locCounts.get(k)||0)+1)});
+  const here=cur?locCounts.get(locHeatKey(cur.ev))||1:0;
+  const places=locCounts.size;
+  if($('timeScrubCount'))$('timeScrubCount').textContent=`${slice.length} conexão(ões) · ${places} local(is)`;
+  if($('timeScrubWhen'))$('timeScrubWhen').textContent=cur?cur.d.toLocaleString('pt-BR'):'—';
+  if($('timeScrubErb'))$('timeScrubErb').innerHTML=cur?`<strong>${esc(erbDisplayName(cur.ev))}</strong>${here>1?' · '+here+' conexões neste local':''}`:'Arraste para inserir as ERBs';
+}
 function drawHeatmap(groups=sectorGroups()){
-  const on=state.heatMode==='heat'||state.heatMode==='both';
+  const scrubOn=chronoDated().length>0;
+  const on=state.heatMode==='heat'||state.heatMode==='both'||scrubOn;
   $('heatLegend')?.classList.toggle('show',on);
   if(!on||!groups.length)return;
   const aggregated=new Map();
@@ -1751,7 +1840,7 @@ function renderSidebar(){
   $('poiCount').textContent=`${state.pois.length} pontos`;
   $('poiList').innerHTML=state.pois.map(p=>`<div class="item"><div class="itemname">${poiSymbol(p.type)} ${esc(p.name)}</div><div class="itemmeta">${esc(p.type)} · ${fmt(p.lat)} / ${fmt(p.lng)}</div><div style="margin-top:5px"><button class="btn danger small" data-poidel="${p.id}">Excluir</button></div></div>`).join('');
   document.querySelectorAll('[data-poidel]').forEach(x=>x.onclick=()=>{state.pois=state.pois.filter(p=>p.id!==x.dataset.poidel);redraw()});
-  updateFilterOptions();
+  if(!document.querySelector('.drawer.filter-drawer'))updateFilterOptions();
   renderAnalysis();
 }
 
@@ -1776,7 +1865,7 @@ function drawerFilterValues(){
   f.city='';f.daypart='';f.movementOnly=Boolean($('filterMovement')?.checked);
   return f;
 }
-function rankingFilterOptions(){return analysisRanking(filteredEvents(drawerFilterValues(),{ignoreErbs:true}),$('filterErbOrder')?.value||state.filters.erbOrder)}
+function rankingFilterOptions(){return analysisRanking(filteredEvents(drawerFilterValues(),{ignoreErbs:true,ignoreTimeScrub:true}),$('filterErbOrder')?.value||state.filters.erbOrder)}
 function multiFilterHtml(def){
   return `<fieldset class="filter-multi-group" id="filterGroup_${def.key}"><legend>${esc(def.label)}</legend>
     <div class="filter-tools"><button class="btn outline small" type="button" data-multi-all="${def.key}">Marcar todas</button><button class="btn outline small" type="button" data-multi-none="${def.key}">Desmarcar todas</button></div>
@@ -1815,14 +1904,14 @@ function renderMultiFilter(def){
     const chosen=new Set(filterDraft[def.key]||available.map(x=>x.value));
     if(input.checked)chosen.add(input.value);else chosen.delete(input.value);
     filterDraft[def.key]=[...chosen];filterDraft[def.legacy]='';
-    updateMultiFilterSummary(def);renderErbSelectionOptions();
+    updateMultiFilterSummary(def);renderErbSelectionOptions();scheduleLiveApply();
   });
   applyMultiFilterSearch(def.key);updateMultiFilterSummary(def);
 }
 function bindMultiFilters(){
   for(const def of MULTI_FILTERS){
-    $('filterGroup_'+def.key).querySelector('[data-multi-all]').onclick=()=>{filterDraft[def.key]=null;filterDraft[def.legacy]='';renderMultiFilter(def);renderErbSelectionOptions()};
-    $('filterGroup_'+def.key).querySelector('[data-multi-none]').onclick=()=>{filterDraft[def.key]=[];filterDraft[def.legacy]='';renderMultiFilter(def);renderErbSelectionOptions()};
+    $('filterGroup_'+def.key).querySelector('[data-multi-all]').onclick=()=>{filterDraft[def.key]=null;filterDraft[def.legacy]='';renderMultiFilter(def);renderErbSelectionOptions();scheduleLiveApply()};
+    $('filterGroup_'+def.key).querySelector('[data-multi-none]').onclick=()=>{filterDraft[def.key]=[];filterDraft[def.legacy]='';renderMultiFilter(def);renderErbSelectionOptions();scheduleLiveApply()};
     $('filterSearch_'+def.key).oninput=()=>applyMultiFilterSearch(def.key);
   }
 }
@@ -1838,7 +1927,7 @@ function renderFilterCities(){
   box.querySelectorAll('[data-filter-city]').forEach(input=>input.onchange=()=>{
     const chosen=new Set(filterDraft.cities||filterCityOptions().map(x=>x[0]));
     if(input.checked)chosen.add(input.dataset.filterCity);else chosen.delete(input.dataset.filterCity);
-    filterDraft.cities=[...chosen];renderErbSelectionOptions();updateFilterCitySummary();
+    filterDraft.cities=[...chosen];renderErbSelectionOptions();updateFilterCitySummary();scheduleLiveApply();
   });
   applyFilterCitySearch();updateFilterCitySummary();
 }
@@ -1866,7 +1955,7 @@ function updateErbSelectionSummary(){
   const connections=selected.reduce((n,x)=>n+x.connectionCount,0);
   const outside=keys?[...keys].filter(key=>!filterErbOptions.some(x=>x.key===key)).length:0;
   $('erbSelectionSummary').textContent=`${selected.length} de ${filterErbOptions.length} antena(s)/setor(es) · ${connections} registro(s) de conexão/chamada${outside?` · ${outside} seleção(ões) fora das cidades/horários atuais`:''}`;
-  $('filterPreviewCount').textContent=`No mapa após aplicar: ${selected.length} antena(s)/setor(es)`;
+  if($('filterPreviewCount'))$('filterPreviewCount').textContent=`Já no mapa: ${selected.length} antena(s)/setor(es)`;
 }
 function renderErbSelectionOptions(){
   const box=$('erbSelectionList');if(!box||!filterDraft)return;
@@ -1882,34 +1971,58 @@ function renderErbSelectionOptions(){
   box.querySelectorAll('[data-erbkey]').forEach(input=>input.onchange=()=>{
     const chosen=new Set(filterDraft.erbKeys||filterErbOptions.map(x=>x.key));
     if(input.checked)chosen.add(input.dataset.erbkey);else chosen.delete(input.dataset.erbkey);
-    filterDraft.erbKeys=[...chosen];updateErbSelectionSummary();
+    filterDraft.erbKeys=[...chosen];updateErbSelectionSummary();scheduleLiveApply();
   });
   updateErbSelectionSummary();
 }
+function liveApplyFilters({close=false,fit=false,resetScrub=true}={}){
+  if(!filterDraft)return false;
+  const f=drawerFilterValues();
+  if(f.start&&f.end&&new Date(f.start)>new Date(f.end))return false;
+  filterDraft=f;state.filters=f;
+  if($('filterLabelMode')){cfg.labelMode=$('filterLabelMode').value==='citySector'?'citySector':'code';syncLabelControls()}
+  $('filterPill')?.classList.toggle('show',filtersActive());
+  if(resetScrub)state.timeScrub=null;
+  redraw(fit);
+  if($('filterPreviewCount'))$('filterPreviewCount').textContent=`Já no mapa: ${analysisRanking().length} antena(s)/setor(es)`;
+  if(close)closeDrawer();
+  return true;
+}
+function scheduleLiveApply(){
+  clearTimeout(liveApplyTimer);
+  liveApplyTimer=setTimeout(()=>liveApplyFilters({fit:false,resetScrub:true}),80);
+}
+function cancelLiveFilters(){
+  clearTimeout(liveApplyTimer);
+  if(!filterOpenedFrom)return;
+  state.filters=normalizedFilters(filterOpenedFrom);
+  $('filterPill')?.classList.toggle('show',filtersActive());
+  state.timeScrub=null;redraw(false);
+}
 function bindFilterControls(){
   bindMultiFilters();
-  ['filterStart','filterEnd','filterErbOrder','filterMovement','filterLabelMode'].forEach(id=>$(id).addEventListener('change',renderErbSelectionOptions));
-  $('filterCitiesAll').onclick=()=>{filterDraft.cities=null;renderFilterCities();renderErbSelectionOptions()};
-  $('filterCitiesNone').onclick=()=>{filterDraft.cities=[];renderFilterCities();renderErbSelectionOptions()};
+  ['filterStart','filterEnd','filterErbOrder','filterMovement','filterLabelMode'].forEach(id=>$(id).addEventListener('change',()=>{renderErbSelectionOptions();scheduleLiveApply()}));
+  $('filterCitiesAll').onclick=()=>{filterDraft.cities=null;renderFilterCities();renderErbSelectionOptions();scheduleLiveApply()};
+  $('filterCitiesNone').onclick=()=>{filterDraft.cities=[];renderFilterCities();renderErbSelectionOptions();scheduleLiveApply()};
   $('filterCitySearch').oninput=applyFilterCitySearch;
   document.querySelectorAll('[data-filter-hour]').forEach(input=>input.onchange=()=>{
     const hours=new Set(filterDraft.hours||Array.from({length:24},(_,h)=>h));
     if(input.checked)hours.add(Number(input.dataset.filterHour));else hours.delete(Number(input.dataset.filterHour));
-    filterDraft.hours=hours.size===24?null:[...hours].sort((a,b)=>a-b);renderFilterHours();renderErbSelectionOptions();
+    filterDraft.hours=hours.size===24?null:[...hours].sort((a,b)=>a-b);renderFilterHours();renderErbSelectionOptions();scheduleLiveApply();
   });
   document.querySelectorAll('[data-filter-period]').forEach(input=>input.onchange=()=>{
     const hours=new Set(filterDraft.hours||Array.from({length:24},(_,h)=>h));
     hoursForPeriod(input.dataset.filterPeriod).forEach(h=>input.checked?hours.add(h):hours.delete(h));
-    filterDraft.hours=hours.size===24?null:[...hours].sort((a,b)=>a-b);renderFilterHours();renderErbSelectionOptions();
+    filterDraft.hours=hours.size===24?null:[...hours].sort((a,b)=>a-b);renderFilterHours();renderErbSelectionOptions();scheduleLiveApply();
   });
-  $('filterHoursAll').onclick=()=>{filterDraft.hours=null;renderFilterHours();renderErbSelectionOptions()};
-  $('filterHoursNone').onclick=()=>{filterDraft.hours=[];renderFilterHours();renderErbSelectionOptions()};
-  $('erbSelectAll').onclick=()=>{filterDraft.erbKeys=null;renderErbSelectionOptions()};
-  $('erbSelectNone').onclick=()=>{filterDraft.erbKeys=[];renderErbSelectionOptions()};
+  $('filterHoursAll').onclick=()=>{filterDraft.hours=null;renderFilterHours();renderErbSelectionOptions();scheduleLiveApply()};
+  $('filterHoursNone').onclick=()=>{filterDraft.hours=[];renderFilterHours();renderErbSelectionOptions();scheduleLiveApply()};
+  $('erbSelectAll').onclick=()=>{filterDraft.erbKeys=null;renderErbSelectionOptions();scheduleLiveApply()};
+  $('erbSelectNone').onclick=()=>{filterDraft.erbKeys=[];renderErbSelectionOptions();scheduleLiveApply()};
   $('erbSelectTop').onclick=()=>{
-    const best=analysisRanking(filteredEvents(drawerFilterValues(),{ignoreErbs:true}),'desc')[0];
+    const best=analysisRanking(filteredEvents(drawerFilterValues(),{ignoreErbs:true,ignoreTimeScrub:true}),'desc')[0];
     if(!best||!best.connectionCount)return status('Nenhuma conexão/chamada encontrada nos filtros atuais.',true);
-    filterDraft.erbKeys=[best.key];renderErbSelectionOptions();
+    filterDraft.erbKeys=[best.key];renderErbSelectionOptions();scheduleLiveApply();
   };
   $('applyFilters').onclick=applyFilters;$('clearFilters').onclick=clearFilters;
 }
@@ -2109,9 +2222,10 @@ async function openDrawer(kind,preset={}){
       setTimeout(()=>previewSelectedFiles(droppedImportFiles),0);
     }
   }else if(kind==='filter'){
+    filterOpenedFrom=normalizedFilters(state.filters);
     filterDraft=normalizedFilters(state.filters);filterErbOptions=[];filterMultiOptions={};
     title.textContent='Filtros com seleção múltipla';
-    body.innerHTML=`<div class="filter-intro">Marque uma ou mais opções em cada grupo. Combine números, operadoras, cidades e horários; depois escolha as antenas para o mapa.</div>
+    body.innerHTML=`<div class="filter-intro">Marque ou desmarque as opções: o mapa já atualiza na hora, sem precisar clicar em aplicar. Combine números, operadoras, cidades e horários; as antenas listadas também entram e saem do mapa ao marcar.</div>
       <section class="filter-section" id="filterRecorte"><h3>1. Recorte da análise <span class="muted">Todos os grupos abaixo permitem selecionar várias opções</span></h3>
         <div class="muted">Exemplo: marque dois números alvo e duas operadoras para ver os registros desses números nas operadoras escolhidas. Use “Desmarcar todas” antes de escolher apenas algumas opções.</div>
         <div class="filter-multi-grid">${MULTI_FILTERS.map(multiFilterHtml).join('')}</div>
@@ -2135,7 +2249,7 @@ async function openDrawer(kind,preset={}){
         <div class="muted">Lista recalculada pelos números alvo, IMEIs, operadoras, tipos, dias, lotes, cidades e horários selecionados. Cadastros sem conexão contam como zero. Mais registros não significam, por si só, maior tempo de permanência.</div>
       </section>
       <div class="field"><div class="checkboxline"><input id="filterMovement" type="checkbox" ${filterDraft.movementOnly?'checked':''}><label for="filterMovement">Somente mudanças efetivas de ERB no trajeto</label></div></div>
-      <div class="drawerfoot filter-footer"><span id="filterPreviewCount" role="status"></span><button class="btn outline" data-close>Cancelar</button><button class="btn danger" id="clearFilters">Limpar filtros</button><button class="btn primary" id="applyFilters">Aplicar no mapa</button></div>`;
+      <div class="drawerfoot filter-footer"><span id="filterPreviewCount" role="status"></span><button class="btn outline" data-close data-restore-filters>Cancelar</button><button class="btn danger" id="clearFilters">Limpar filtros</button><button class="btn primary" id="applyFilters">Concluir</button></div>`;
     $('filterErbOrder').value=filterDraft.erbOrder;$('filterLabelMode').value=cfg.labelMode;
     updateFilterOptions();renderFilterCities();renderFilterHours();bindFilterControls();renderErbSelectionOptions();
   }else if(kind==='projects'){
@@ -2145,10 +2259,15 @@ async function openDrawer(kind,preset={}){
     document.querySelectorAll('[data-openproj]').forEach(x=>x.onclick=()=>openProject(x.dataset.openproj));
     document.querySelectorAll('[data-delproj]').forEach(x=>x.onclick=()=>deleteProject(x.dataset.delproj));
   }
-  body.querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);
+  body.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>closeDrawer(x.hasAttribute('data-restore-filters')));
 }
-function closeDrawer(){importSelectionId++;filterDraft=null;filterErbOptions=[];filterMultiOptions={};$('drawerBack').classList.remove('show');document.querySelector('.drawer').classList.remove('filter-drawer')}
-$('drawerClose').onclick=closeDrawer;$('drawerBack').onclick=e=>{if(e.target===$('drawerBack'))closeDrawer()};
+function closeDrawer(restoreFilters=false){
+  clearTimeout(liveApplyTimer);
+  if(restoreFilters)cancelLiveFilters();
+  filterOpenedFrom=null;
+  importSelectionId++;filterDraft=null;filterErbOptions=[];filterMultiOptions={};$('drawerBack').classList.remove('show');document.querySelector('.drawer').classList.remove('filter-drawer')
+}
+$('drawerClose').onclick=()=>closeDrawer();$('drawerBack').onclick=e=>{if(e.target===$('drawerBack'))closeDrawer()};
 
 function lotSelectHtml(id,allowNew=false){
   return `<select id="${id}">${allowNew?'<option value="__new">Criar novo lote automaticamente</option>':''}${state.lots.map(l=>`<option value="${l.id}" ${l.id===state.activeLotId?'selected':''}>${esc(l.name)}</option>`).join('')}</select>`
@@ -2241,10 +2360,7 @@ function savePoi(){
 }
 function applyFilters(){
   if(!filterDraft)return;
-  const f=drawerFilterValues();
-  if(f.start&&f.end&&new Date(f.start)>new Date(f.end))return status('A data/hora inicial deve ser anterior à final.',true);
-  state.filters=f;cfg.labelMode=$('filterLabelMode').value==='citySector'?'citySector':'code';syncLabelControls();
-  $('filterPill').classList.toggle('show',filtersActive());closeDrawer();redraw(true);
+  if(!liveApplyFilters({close:true,fit:true,resetScrub:true}))return status('A data/hora inicial deve ser anterior à final.',true);
   status(`${filteredEvents().length} registro(s) e ${analysisRanking().length} antena(s)/setor(es) após os filtros.`);
 }
 function clearFilters(){
@@ -3892,8 +4008,9 @@ function updateGeo(openPanel=true){
   }catch(e){console.error(e);$('geoArea').textContent='erro';if(openPanel)$('geoPanel').classList.add('show')}
 }
 function startTimeline(){
+  state.timeScrub=null;
   const t=trajectoryData();if(!t.length)return status('Não há eventos com data/hora para montar o trajeto.',true);
-  state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers();
+  state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers();updateTimeScrubUi();
   if(cfg.view3d)return flyTrajectory3d();
   clearInterval(playTimer);let i=0;
   const step=()=>{state.trajectoryIndex=i;focusEvent(t[i].ev.id);lookAtErb(t[i].ev.lat,t[i].ev.lng);i++;if(i>=t.length){clearInterval(playTimer);state.playing=false;syncMap3d()}};
@@ -3923,7 +4040,7 @@ function projectDb(){
 }
 async function dbRead(store,key,all=false){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly'),req=all?tx.objectStore(store).getAll():tx.objectStore(store).get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function dbWriteProject(data){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['projects','meta'],'readwrite');tx.objectStore('projects').put(data);tx.objectStore('meta').put({projectId:data.projectId,updated:data.updated},LAST_PROJECT_KEY);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação interrompida'))})}
-function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.7.0',filterSchema:3,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
+function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.7.0',filterSchema:3,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,timeScrub:state.timeScrub,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
 function validateSnapshot(o){
   if(!o||typeof o!=='object'||!Array.isArray(o.lots)||!Array.isArray(o.events)||!Array.isArray(o.pois))throw new Error('Arquivo sem estrutura de projeto ERB (lotes, registros e pontos).');
   const idOk=v=>typeof v==='string'&&/^[a-zA-Z0-9_.-]{1,120}$/.test(v);
@@ -3939,7 +4056,7 @@ function applySnapshot(o){
     state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO';e.az=normAz(Number(e.az));if(!e.sourceFile&&e.source)e.sourceFile=e.source});
     state.filters=normalizedFilters(o.filters||{},Number(o.filterSchema||0)<2);state.heatMode=['normal','heat','both'].includes(o.heatMode)?o.heatMode:'normal';
     state.trajectorySelection=o.trajectorySelection&&typeof o.trajectorySelection==='object'?{enabled:Boolean(o.trajectorySelection.enabled),lotIds:Array.isArray(o.trajectorySelection.lotIds)?o.trajectorySelection.lotIds:[],cgis:Array.isArray(o.trajectorySelection.cgis)?o.trajectorySelection.cgis:[]}:{enabled:false,lotIds:[],cgis:[]};
-    state.trajectoryVisible=Boolean(o.trajectoryVisible);state.trajectoryIndex=Number(o.trajectoryIndex)||0;state.onlyGeo=Boolean(o.onlyGeo);
+    state.trajectoryVisible=Boolean(o.trajectoryVisible);state.trajectoryIndex=Number(o.trajectoryIndex)||0;state.timeScrub=Number.isInteger(o.timeScrub)?o.timeScrub:null;state.onlyGeo=Boolean(o.onlyGeo);
     pruneEmptyImportedLots();
     if(o.cfg){for(const k of ['showLabels','showPath','showSeq','view3d'])if(typeof o.cfg[k]==='boolean')cfg[k]=o.cfg[k];for(const k of ['defaultDist','defaultMargin'])if(Number.isFinite(o.cfg[k])&&o.cfg[k]>0)cfg[k]=o.cfg[k];if(bases[o.cfg.base])cfg.base=o.cfg.base}
     cfg.labelMode=o.cfg?.labelMode==='citySector'?'citySector':'code';syncLabelControls();
@@ -4567,6 +4684,7 @@ async function flyTrajectory3d(){
   }
 }
 async function startTrajectory3d(){
+  state.timeScrub=null;updateTimeScrubUi();
   const t=trajectoryData();
   if(!t.length)return status('Não há eventos com data/hora para montar o trajeto.',true);
   return flyTrajectory3d();
@@ -4688,6 +4806,25 @@ async function runSelfTest(){
   try{add('GeoJSON',typeof exportGeoJson==='function','exportação geográfica')}catch(e){add('GeoJSON',false,e.message)}
   try{add('KML',typeof exportKml==='function','Google Earth/QGIS')}catch(e){add('KML',false,e.message)}
   try{add('Ranking / coincidências',typeof analysisRanking==='function'&&typeof coincidenceGroups==='function','análise')}catch(e){add('Ranking / coincidências',false,e.message)}
+  try{add('Filtro ao vivo',typeof liveApplyFilters==='function'&&typeof scheduleLiveApply==='function'&&typeof cancelLiveFilters==='function','marcar/desmarcar aplica no mapa sem botão separado')}catch(e){add('Filtro ao vivo',false,e.message)}
+  try{
+    const backup={lots:state.lots,events:state.events,filters:state.filters,timeScrub:state.timeScrub,activeLotId:state.activeLotId};
+    const prior=storageSuspended;storageSuspended=true;
+    state.lots=[{id:'t',name:'T',type:'DADOS',color:'#2f81f7',visible:true}];
+    state.activeLotId='t';
+    state.events=[
+      {id:'a',lotId:'t',name:'A',lat:-24.3,lng:-52.5,az:90,cgi:'X',datetime:'15/09/2026 08:00:00',dist:1,margin:45,visible:true,displayMode:'normal'},
+      {id:'b',lotId:'t',name:'B',lat:-24.4,lng:-52.6,az:45,cgi:'Y',datetime:'15/09/2026 09:00:00',dist:1,margin:45,visible:true,displayMode:'normal'},
+      {id:'a2',lotId:'t',name:'A',lat:-24.3,lng:-52.5,az:90,cgi:'X',datetime:'15/09/2026 10:00:00',dist:1,margin:45,visible:true,displayMode:'normal'}
+    ];
+    state.filters=defaultFilters();state.timeScrub=0;
+    const first=filteredEvents();
+    state.timeScrub=1;const mid=filteredEvents();
+    state.timeScrub=2;const all=filteredEvents();
+    const heat=sectorGroups().find(g=>g[0].cgi==='X');
+    add('Linha do tempo / calor',first.length===1&&mid.length===2&&all.length===3&&heat&&heat.length===2,'insere ERBs na ordem e acumula conexões ao voltar ao mesmo local');
+    state.lots=backup.lots;state.events=backup.events;state.filters=backup.filters;state.timeScrub=backup.timeScrub;state.activeLotId=backup.activeLotId;storageSuspended=prior;
+  }catch(e){add('Linha do tempo / calor',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.7.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
@@ -4748,6 +4885,12 @@ $('pngMap').onclick=exportPng;$('pngRouteArrows').onclick=exportTrajectoryImage;
 $('toggleMap3d').onclick=()=>toggleMap3d();$('toggleMap3dBtn').onclick=()=>toggleMap3d();
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
 $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
+(function bindTimeScrub(){
+  const bar=$('timeScrub'),range=$('timeScrubRange');if(!bar||!range)return;
+  L.DomEvent.disableClickPropagation(bar);L.DomEvent.disableScrollPropagation(bar);
+  const apply=()=>{setTimeScrub(Number(range.value));redraw(false)};
+  range.addEventListener('input',apply);range.addEventListener('change',apply);
+})();
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(poiPickMode)cancelPoiPick();closeDrawer();$('geoPanel').classList.remove('show')}});
 window.addEventListener('resize',()=>{setTimeout(()=>{map.invalidateSize();if(map3d&&cfg.view3d)map3d.resize()},80)});
@@ -4777,7 +4920,8 @@ async function seedDemoTrajectory(){
     {name:'ERB Centro',cgi:'724-04-001-1',lat:-24.3172,lng:-52.5298,az:90,city:'Mamborê',datetime:'15/09/2026 08:12:00'},
     {name:'ERB Norte',cgi:'724-04-001-2',lat:-24.3041,lng:-52.5184,az:45,city:'Mamborê',datetime:'15/09/2026 10:40:00'},
     {name:'ERB Leste',cgi:'724-04-001-3',lat:-24.2918,lng:-52.4902,az:120,city:'Mamborê',datetime:'15/09/2026 14:18:00'},
-    {name:'ERB Sul',cgi:'724-04-001-4',lat:-24.3386,lng:-52.5411,az:210,city:'Mamborê',datetime:'15/09/2026 19:55:00'}
+    {name:'ERB Sul',cgi:'724-04-001-4',lat:-24.3386,lng:-52.5411,az:210,city:'Mamborê',datetime:'15/09/2026 19:55:00'},
+    {name:'ERB Centro',cgi:'724-04-001-1',lat:-24.3172,lng:-52.5298,az:90,city:'Mamborê',datetime:'15/09/2026 21:10:00'}
   ];
   pts.forEach((p,i)=>state.events.push({id:uid(),lotId,name:p.name,station:p.name,sector:String(i+1),cgi:p.cgi,lat:p.lat,lng:p.lng,az:p.az,city:p.city,datetime:p.datetime,dist:cfg.defaultDist,margin:cfg.defaultMargin,eventType:'DADOS',radiusSource:'MANUAL',visible:true,displayMode:'normal'}));
   state.trajectoryVisible=true;$('timelinebar').classList.add('show');redraw();fitTrajectory();
@@ -4795,7 +4939,12 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     densifyTrajectory,
     chaseCamera,
     trajectoryData,
-    applyHourFilter(hours){state.filters={...normalizedFilters(state.filters),hours};$('filterPill')?.classList.add('show');redraw();return trajectoryData().length}
+    chronoDated,
+    setTimeScrub,
+    timeScrubIndex,
+    filteredEvents,
+    liveApplyFilters,
+    applyHourFilter(hours){state.filters={...normalizedFilters(state.filters),hours};$('filterPill')?.classList.add('show');state.timeScrub=null;redraw();return trajectoryData().length}
   };
 }
 })();
