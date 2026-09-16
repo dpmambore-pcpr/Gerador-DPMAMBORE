@@ -1,0 +1,91 @@
+/* Papel timbrado institucional PCPR — híbrido:
+   marca d’água de papel-pericia.png + brasão/textos/faixa em HTML/CSS.
+   Aplicar somente em documentos que já possuem brasão no topo. */
+.pcpr-timbrado{
+  position:relative;
+  width:210mm;
+  min-height:297mm;
+  background:#fff;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.pcpr-timbrado.pcpr-timbrado-landscape{
+  width:297mm;
+  min-height:210mm;
+}
+.pcpr-timbrado .pcpr-wm{
+  position:absolute;
+  left:50%;
+  top:52%;
+  width:93mm;
+  height:119mm;
+  transform:translate(-50%,-50%);
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  z-index:0;
+}
+.pcpr-timbrado-landscape .pcpr-wm{
+  width:78mm;
+  height:100mm;
+  top:50%;
+}
+.pcpr-timbrado .pcpr-cab,
+.pcpr-timbrado .cab,
+.pcpr-timbrado .doc-header,
+.pcpr-timbrado .dochead,
+.pcpr-timbrado .doc-head,
+.pcpr-timbrado .autoHeader{
+  position:relative;
+  z-index:2;
+}
+.pcpr-timbrado .pcpr-corpo{
+  position:relative;
+  z-index:2;
+  padding:2mm 20mm 16mm;
+}
+.pcpr-timbrado .pcpr-rod,
+.pcpr-timbrado .rod.pcpr-rod-bar,
+.pcpr-timbrado .page-footer.pcpr-rod-bar,
+.pcpr-timbrado .footerDoc.pcpr-rod-bar,
+.pcpr-timbrado .doc-footer.pcpr-rod-bar{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:12.5mm;
+  z-index:3;
+  margin:0;
+  border:0;
+  padding:0 10mm;
+  background:linear-gradient(90deg,#ababab 0%,#d3d3d3 50%,#fafafa 100%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-family:Arial,Helvetica,sans-serif;
+  font-size:7.2pt;
+  line-height:1.28;
+  color:#111;
+  box-sizing:border-box;
+}
+.pcpr-timbrado-landscape .pcpr-rod,
+.pcpr-timbrado-landscape .rod.pcpr-rod-bar,
+.pcpr-timbrado-landscape .page-footer.pcpr-rod-bar,
+.pcpr-timbrado-landscape .footerDoc.pcpr-rod-bar,
+.pcpr-timbrado-landscape .doc-footer.pcpr-rod-bar{
+  height:11mm;
+}
+@media print{
+  .pcpr-timbrado{
+    box-shadow:none !important;
+    margin:0 !important;
+    page-break-after:always;
+    break-after:page;
+  }
+  .pcpr-timbrado:last-child{
+    page-break-after:auto;
+    break-after:auto;
+  }
+}

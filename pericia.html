@@ -52,14 +52,14 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
 .doc:before{display:none!important}
 .sheet{width:210mm;height:297mm;position:relative;margin:0 auto 12mm;background:#fff;overflow:hidden;box-shadow:0 2px 12px #0004;break-after:page;page-break-after:always}
 .sheet:last-child{margin-bottom:0;break-after:auto;page-break-after:auto}
-.page-paper{position:absolute;inset:0;width:210mm;height:297mm;object-fit:fill;display:block;z-index:0;pointer-events:none;user-select:none}
-.page-letterhead{position:absolute;left:0;right:0;top:21mm;height:29mm;z-index:1;background:#fff;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:8.7pt;line-height:1.16;font-weight:700;padding-top:.6mm;pointer-events:none;display:block}
+.page-paper{position:absolute;left:50%;top:52%;width:93mm;height:119mm;transform:translate(-50%,-50%);object-fit:contain;display:block;z-index:0;pointer-events:none;user-select:none}
+.page-letterhead{position:absolute;left:0;right:0;top:30mm;height:24mm;z-index:1;background:transparent;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:8.7pt;line-height:1.16;font-weight:700;padding-top:.4mm;pointer-events:none;display:block}
 .page-letterhead .head-line{display:block;margin:0 0 .15mm 0;white-space:nowrap}
-.page-letterlogo{position:absolute;left:0;right:0;top:0;height:21mm;z-index:2;background:#fff;display:flex;justify-content:center;align-items:flex-start;padding-top:1mm;pointer-events:none}
-.page-letterlogo img{width:18.5mm;height:18.5mm;object-fit:contain;display:block}
-.page-letterfooter{position:absolute;left:0;right:0;bottom:0;height:17mm;z-index:2;background:linear-gradient(90deg,#d2d2d2 0%,#f4f4f4 48%,#d7d7d7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:7.2pt;line-height:1.25;padding:1mm 10mm;pointer-events:none}
+.page-letterlogo{position:absolute;left:0;right:0;top:0;height:30mm;z-index:2;background:transparent;display:flex;justify-content:center;align-items:flex-start;padding-top:.7mm;pointer-events:none}
+.page-letterlogo img{width:22mm;height:29mm;object-fit:contain;display:block}
+.page-letterfooter{position:absolute;left:0;right:0;bottom:0;height:12.5mm;z-index:3;background:linear-gradient(90deg,#ababab 0%,#d3d3d3 50%,#fafafa 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:7.2pt;line-height:1.25;padding:0 10mm;pointer-events:none}
 .page-letterfooter .foot-line{margin:0;white-space:nowrap}
-.page-content{position:absolute;left:20mm;right:20mm;top:50mm;bottom:20mm;z-index:3;overflow:hidden;font-family:"Times New Roman",serif;font-size:12pt;line-height:1.5;color:#111}
+.page-content{position:absolute;left:20mm;right:20mm;top:54mm;bottom:16mm;z-index:3;overflow:hidden;font-family:"Times New Roman",serif;font-size:12pt;line-height:1.5;color:#111}
 .page-content p{margin-top:0}
 .page-content .ofn{font-weight:bold;margin:0 0 5mm 0}
 .page-content .date{text-align:right;margin:0 0 5mm 0}
@@ -82,11 +82,11 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
   .doc{margin:0!important;padding:0!important;width:210mm!important;background:#fff!important}
   .sheet{margin:0!important;width:210mm!important;height:297mm!important;box-shadow:none!important;overflow:hidden!important;break-after:page!important;page-break-after:always!important}
   .sheet:last-child{break-after:auto!important;page-break-after:auto!important}
-  .page-paper{display:block!important;visibility:visible!important;opacity:1!important;z-index:0!important;position:absolute!important;left:0!important;top:0!important;width:210mm!important;height:297mm!important;max-width:none!important}
+  .page-paper{display:block!important;visibility:visible!important;opacity:1!important;z-index:0!important;position:absolute!important;left:50%!important;top:52%!important;width:93mm!important;height:119mm!important;transform:translate(-50%,-50%)!important;max-width:none!important}
   .page-letterhead{display:block!important;visibility:visible!important}
   .page-letterlogo{display:flex!important;visibility:visible!important}
   .page-letterfooter{display:flex!important;visibility:visible!important}
-  .page-content{z-index:3!important;position:absolute!important;left:20mm!important;right:20mm!important;top:50mm!important;bottom:20mm!important;overflow:hidden!important}
+  .page-content{z-index:3!important;position:absolute!important;left:20mm!important;right:20mm!important;top:54mm!important;bottom:16mm!important;overflow:hidden!important}
 }
 
 /* AJUSTES PERÍCIA — CAMPOS E FORMATAÇÃO */
@@ -98,8 +98,11 @@ header,.left,.print-hide{display:none!important}main{padding:0;max-width:none}.g
 .page-content .sign{width:100%!important;margin:14mm 0 25mm 0!important;text-align:center!important;font-weight:bold!important}
 .page-content .sign b{display:inline-block;text-align:center!important}
 @media(max-width:760px){.desc-item{grid-template-columns:1fr!important}.desc-item .remove{align-self:auto}}
-</style><script src="pcpr-core.js?v=3.0.0"></script>
+</style>
+<link rel="stylesheet" href="pcpr-papel-timbrado.css?v=1.0.0">
+<script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script><script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-papel-timbrado.js?v=1.0.0"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#printBtn","actionSelectors":["#printBtn","#driveBtn","#odtBtn"],"cloudSelectors":["#driveBtn"]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
@@ -158,8 +161,8 @@ function val(id){return $(id).value.trim()}
 function descValues(){return [...document.querySelectorAll('.desc-item')].map(row=>({item:(row.querySelector('.desc-item-name')?.value||'').trim(),desc:(row.querySelector('.desc-text')?.value||'').trim()})).filter(x=>x.item||x.desc)}
 function addDesc(item='',desc=''){const row=document.createElement('div');row.className='desc-item';row.innerHTML=`<input class="desc-item-name" type="text" placeholder="ITEM — ex.: CELULAR SAMSUNG PRETO" value="${esc(item)}"><textarea class="desc-text" placeholder="DESCRIÇÃO — ex.: Celular encontrado com Fulano de Tal...">${esc(desc)}</textarea><button type="button" class="btn danger remove" title="Remover item">×</button>`;row.querySelector('.remove').onclick=()=>{if(document.querySelectorAll('.desc-item').length>1)row.remove();else{row.querySelector('.desc-item-name').value='';row.querySelector('.desc-text').value=''}render()};row.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',render));$('descs').appendChild(row)}
 function newSheet(doc){
-  const sheet=document.createElement('section'); sheet.className='sheet';
-  const paper=document.createElement('img'); paper.className='page-paper'; paper.alt='Papel timbrado PCPR'; paper.src='data:image/png;base64,'+PAPEL_B64;
+  const sheet=document.createElement('section'); sheet.className='sheet pcpr-timbrado';
+  const paper=document.createElement('img'); paper.className='page-paper pcpr-wm'; paper.alt=''; paper.src='marca-dagua-pcpr.png';
   const headerLines=(cfg.header||DEF.header).flatMap(x=>String(x||'').split(/\r?\n/)).map(x=>x.trim()).filter(Boolean);
   const head=document.createElement('div');head.className='page-letterhead';head.innerHTML=headerLines.map(x=>`<div class="head-line">${esc(x)}</div>`).join('');
   const logo=document.createElement('div');logo.className='page-letterlogo';logo.innerHTML=`<img alt="Brasão" src="${esc(cfg.logo||DEFAULT_CREST_URL)}">`;
@@ -243,19 +246,25 @@ function odtStyles(){return `<?xml version="1.0" encoding="UTF-8"?><office:docum
 function imageFromSrc(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src})}
 function canvasPngBytes(canvas){return new Promise((resolve,reject)=>canvas.toBlob(async b=>{if(!b)return reject(new Error('Falha ao gerar papel timbrado.'));resolve(new Uint8Array(await b.arrayBuffer()))},'image/png'))}
 async function dynamicPaperBytes(){
-  const base=await imageFromSrc('data:image/png;base64,'+PAPEL_B64);const cv=document.createElement('canvas');cv.width=base.naturalWidth||base.width;cv.height=base.naturalHeight||base.height;const x=cv.getContext('2d');x.drawImage(base,0,0,cv.width,cv.height);
+  const dpi=200,cv=document.createElement('canvas');cv.width=Math.round(210*dpi/25.4);cv.height=Math.round(297*dpi/25.4);const x=cv.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);
   const sx=cv.width/210,sy=cv.height/297;
-  // Cobre integralmente o cabeçalho original da imagem-base e redesenha brasão + cinco linhas configuráveis.
-  x.fillStyle='#fff';x.fillRect(0,0,cv.width,50*sy);
+  try{
+    const wm=await imageFromSrc('marca-dagua-pcpr.png');
+    const wmW=93*sx,wmH=119*sy;x.drawImage(wm,(cv.width-wmW)/2,(cv.height-wmH)/2-4*sy,wmW,wmH);
+  }catch(e){console.warn('Marca d\u2019água não pôde ser aplicada ao ODT:',e)}
   try{
     const im=await imageFromSrc(cfg.logo||DEFAULT_CREST_URL);
-    const maxW=18.5*sx,maxH=18.5*sy,ratio=Math.min(maxW/im.width,maxH/im.height);
-    const w=im.width*ratio,h=im.height*ratio;x.drawImage(im,(cv.width-w)/2,1*sy,w,h);
+    const maxW=22*sx,maxH=29*sy,ratio=Math.min(maxW/im.width,maxH/im.height);
+    const w=im.width*ratio,h=im.height*ratio;x.drawImage(im,(cv.width-w)/2,.7*sy,w,h);
   }catch(e){console.warn('Brasão não pôde ser aplicado ao ODT:',e)}
-  x.fillStyle='#111';x.textAlign='center';x.textBaseline='top';x.font=`700 ${Math.max(12,8.7*96/72*sy/(96/25.4))}px Arial`;
+  x.fillStyle='#111';x.textAlign='center';x.textBaseline='top';x.font=`700 ${Math.max(12,8.7*dpi/72)}px Arial`;
   const headerLines=(cfg.header||DEF.header).flatMap(line=>String(line||'').split(/\r?\n/)).map(line=>line.trim()).filter(Boolean);
-  let yy=21.6*sy;const step=3.45*sy;headerLines.forEach(line=>{x.fillText(String(line),cv.width/2,yy,cv.width-42*sx);yy+=step});
-  const fh=17*sy;x.fillStyle='#e9e9e9';x.fillRect(0,cv.height-fh,cv.width,fh);x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';x.font=`${Math.max(10,7.2*96/72*sy/(96/25.4))}px Arial`;const fs=(cfg.footer||DEF.footer);const cy=cv.height-fh/2;fs.forEach((line,i)=>x.fillText(String(line),cv.width/2,cy+(i-(fs.length-1)/2)*3.6*sy,cv.width-20*sx));
+  let yy=31.2*sy;const step=3.55*sy;headerLines.forEach(line=>{x.fillText(String(line),cv.width/2,yy,cv.width-42*sx);yy+=step});
+  const fh=12.5*sy,steps=24;
+  for(let i=0;i<steps;i++){const t=i/(steps-1),v=Math.round(171+(250-171)*t);x.fillStyle=`rgb(${v},${v},${v})`;x.fillRect(cv.width*i/steps,cv.height-fh,cv.width/steps+1,fh)}
+  x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';x.font=`${Math.max(10,7.2*dpi/72)}px Arial`;
+  const fs=(cfg.footer||DEF.footer);const cy=cv.height-fh/2;fs.forEach((line,i)=>x.fillText(String(line),cv.width/2,cy+(i-(fs.length-1)/2)*3.3*sy,cv.width-20*sx));
   return canvasPngBytes(cv)
 }
 async function downloadOdt(){let papel=new Uint8Array();try{papel=await dynamicPaperBytes()}catch(e){console.warn('Papel timbrado dinâmico não pôde ser gerado:',e);try{const bin=atob(PAPEL_B64);papel=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)papel[i]=bin.charCodeAt(i)}catch(_){} }const manifest=`<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3"><manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text" manifest:version="1.3"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/><manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>${papel.length?'<manifest:file-entry manifest:full-path="Pictures/papel-pericia.png" manifest:media-type="image/png"/>':''}</manifest:manifest>`;const files=[{name:'mimetype',data:'application/vnd.oasis.opendocument.text'},{name:'content.xml',data:odtContent()},{name:'styles.xml',data:odtStyles()},{name:'META-INF/manifest.xml',data:manifest}];if(papel.length)files.push({name:'Pictures/papel-pericia.png',data:papel});const b=makeZip(files),u=URL.createObjectURL(b),a=document.createElement('a');const ip=parseIP(val('ip'));a.href=u;a.download=`OFICIO_PERICIA_${ip.n||'IP'}_${ip.ano||''}.odt`;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);$('status').textContent=papel.length?'ODT gerado no padrão do modelo.':'ODT gerado; o papel timbrado não pôde ser incorporado neste navegador.'}

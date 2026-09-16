@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.0.1: papel timbrado híbrido nos documentos com brasão -->
 <!-- v3.0.0: núcleo compartilhado + histórico local de documentos -->
 <!-- v2.8.10: solicitação de KEY/ID integrada ao Gmail -->
 <!-- v2.8.9: simplificação da integração Google para compartilhamento entre DPs -->
@@ -56,8 +57,8 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.0.0</span>
-      <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
+      <span class="version">VERSÃO ATUAL · v3.0.1</span>
+      <span class="note">Última atualização: 16/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
 
@@ -69,8 +70,19 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.0.0">
-        <div class="item-head"><span class="item-ver">v3.0.0</span><span class="item-date">12/09/2026</span><span class="tag new">NÚCLEO CENTRAL</span><span class="tag improve">HISTÓRICO</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.0.1">
+        <div class="item-head"><span class="item-ver">v3.0.1</span><span class="item-date">16/09/2026</span><span class="tag new">PAPEL TIMBRADO</span><span class="tag improve">DOCUMENTOS</span><span class="badge">ATUAL</span></div>
+        <h3>Papel timbrado institucional nos documentos com brasão</h3>
+        <ul>
+          <li>O timbre passou a ser híbrido: marca d’água extraída de <b>papel-pericia.png</b>, brasão e textos em HTML/CSS/PDF/ODT, e faixa cinza no rodapé (~12,5 mm, degradê #ABABAB → #FAFAFA).</li>
+          <li>Aplicado somente aos geradores que já possuíam brasão: Ofícios, Informação, Diárias, Perícia, Oitiva em Penitenciária, Relatório de Viagem, Reconhecimento Fotográfico, Diário de Bordo e o ofício oficial do Analisador Google.</li>
+          <li>Coffee Break, Auto de Arrecadação e Laudo de Lesões não foram alterados, por serem modelos de ficha/foto.</li>
+          <li>O PNG completo deixa de ser usado como fundo único, evitando o texto institucional de Mamborê “assado” na imagem e a pixelização no A4.</li>
+          <li>Atualizado o cache do PWA para <b>v3.0.15</b>.</li>
+        </ul>
+      </article>
+      <article class="item" data-version="3.0.0">
+        <div class="item-head"><span class="item-ver">v3.0.0</span><span class="item-date">12/09/2026</span><span class="tag new">NÚCLEO CENTRAL</span><span class="tag improve">HISTÓRICO</span></div>
         <h3>Núcleo compartilhado e Histórico de Documentos</h3>
         <ul>
           <li>Consolidados os arquivos compartilhados da Central em <b>pcpr-core.js</b>, <b>pcpr-config.js</b>, <b>pcpr-drive.js</b>, <b>pcpr-documento.js</b> e <b>pwa.js</b>, todos na mesma versão.</li>
@@ -399,7 +411,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </div>
 <script>
 (() => {
-  const CURRENT_VERSION='2.8.5';
+  const CURRENT_VERSION='3.0.1';
   const SEEN_KEY='pcprCentralUpdatesSeenVersion';
   try{localStorage.setItem(SEEN_KEY,CURRENT_VERSION)}catch(_){ }
 

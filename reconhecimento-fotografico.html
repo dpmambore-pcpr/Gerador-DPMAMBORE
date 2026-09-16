@@ -39,6 +39,7 @@ button{border:0;border-radius:8px;padding:10px 13px;font-weight:800;cursor:point
 </style>
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-papel-timbrado.js?v=1.0.0"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#pdfFotos","actionSelectors":["#pdfFotos","#pdfCompleto"],"cloudSelectors":[]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
@@ -261,26 +262,38 @@ function authority(){
  return a[0]
 }
 function imgInfo(data){return new Promise((res,rej)=>{let im=new Image();im.onload=()=>res({w:im.naturalWidth,h:im.naturalHeight});im.onerror=rej;im.src=data})}
+function letterheadOpts(){
+ const g=cfg();
+ return {
+  crest:g.logo||LOGO,
+  headerLines:[g.estado,g.secretaria,g.departamento,g.subdivisao,g.unidade].map(t=>String(t||'').toUpperCase()),
+  footerLines:[`${g.endereco}, ${g.cidade} - ${g.uf}, ${g.cep}`,`Email: ${g.email} - Fone/Fax: ${g.fone} - ${g.site}`]
+ };
+}
 function header(doc,title=true){
- const g=cfg(), W=210, logo=g.logo||LOGO;
- const logoType=/^data:image\/png/i.test(logo)?'PNG':'JPEG';
- doc.addImage(logo,logoType,91.5,7,27,27);
- doc.setTextColor(0);doc.setFont('times','bold');doc.setFontSize(10.5);
- [g.estado,g.secretaria,g.departamento,g.subdivisao,g.unidade].forEach((t,i)=>doc.text(String(t).toUpperCase(),W/2,37+i*4.4,{align:'center'}));
- doc.setLineWidth(.25);doc.line(22,60,188,60);
- if(title){doc.setFontSize(11);doc.text('AUTO DE RECONHECIMENTO FOTOGRÁFICO',W/2,67,{align:'center'})}
+ const g=cfg(), W=210;
+ if(window.PCPRPapel&&PCPRPapel.drawJsPdfLetterhead){
+  PCPRPapel.drawJsPdfLetterhead(doc,letterheadOpts());
+ }else{
+  const logo=g.logo||LOGO, logoType=/^data:image\/png/i.test(logo)?'PNG':'JPEG';
+  doc.addImage(logo,logoType,94,0.7,22,29);
+  doc.setTextColor(17);doc.setFont('helvetica','bold');doc.setFontSize(8.7);
+  [g.estado,g.secretaria,g.departamento,g.subdivisao,g.unidade].forEach((t,i)=>doc.text(String(t).toUpperCase(),W/2,31.2+i*3.55,{align:'center'}));
+ }
+ doc.setTextColor(0);doc.setFont('times','bold');
+ if(title){
+  doc.setLineWidth(.25);doc.line(22,56,188,56);
+  doc.setFontSize(11);doc.text('AUTO DE RECONHECIMENTO FOTOGRÁFICO',W/2,62,{align:'center'});
+ }
 }
 function footer(doc){
+ if(window.PCPRPapel&&PCPRPapel.drawJsPdfLetterhead)return;
  const g=cfg();
- // Rodapé conforme o modelo: identificação PCPR acima e textos abaixo, sem sobreposição.
- doc.setLineWidth(.25);
- doc.line(22,278,92,278);
- doc.addImage(PCPR,'PNG',93,278.5,34,8.5);
- doc.setFont('helvetica','normal');doc.setFontSize(6.6);doc.setTextColor(45);
- doc.text(`${g.endereco}, ${g.cidade} - ${g.uf}, ${g.cep}`,105,289.5,{align:'center'});
- doc.text(`Email: ${g.email} - Fone/Fax: ${g.fone} - ${g.site}`,105,293,{align:'center'});
+ doc.setFont('helvetica','normal');doc.setFontSize(7.2);doc.setTextColor(17);
+ doc.text(`${g.endereco}, ${g.cidade} - ${g.uf}, ${g.cep}`,105,290.5,{align:'center'});
+ doc.text(`Email: ${g.email} - Fone/Fax: ${g.fone} - ${g.site}`,105,294,{align:'center'});
 }
-function newPage(doc,title=false){doc.addPage();header(doc,title);footer(doc);return title?73:66}
+function newPage(doc,title=false){doc.addPage();header(doc,title);footer(doc);return title?70:58}
 function section(doc,t,y){doc.setFont('times','bold');doc.setFontSize(11);doc.setTextColor(0);doc.text(t,22,y);return y+8}
 function addPara(doc,text,y,{bold=false,indent=12}={}){
  doc.setFont('times',bold?'bold':'normal');doc.setFontSize(10.5);doc.setTextColor(0);
@@ -288,7 +301,7 @@ function addPara(doc,text,y,{bold=false,indent=12}={}){
  for(const p0 of paras){
   const p=p0.trim(); if(!p){y+=4;continue}
   const lines=doc.splitTextToSize(p,166-indent);
-  if(y+lines.length*5.1>270)y=newPage(doc,false);
+  if(y+lines.length*5.1>277)y=newPage(doc,false);
   doc.text(lines,22+indent,y,{align:'justify',maxWidth:166-indent,lineHeightFactor:1.35});y+=lines.length*5.1+2.5;
  }
  return y;
@@ -300,14 +313,16 @@ async function addPhoto(doc,p,i,y,titleOnlyPages=false){
  doc.addImage(p.data,'JPEG',105-w/2,y,w,h,undefined,'FAST');return y+h+8;
 }
 async function makePhotosPdf(){
- if(!validatePhotos())return;const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true});
- header(doc,true);footer(doc);let y=76;
+ if(!validatePhotos())return;if(window.PCPRPapel&&PCPRPapel.watermarkDataUrl)await PCPRPapel.watermarkDataUrl();
+ const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true});
+ header(doc,true);footer(doc);let y=70;
  for(let i=0;i<photos.length;i++)y=await addPhoto(doc,photos[i],i,y,false);
  doc.save(`reconhecimento_fotografico_fotos_${$('dataRec').value.split('-').reverse().join('-')}.pdf`);
 }
 async function makeFullPdf(){
- if(!validateFull())return;const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true});
- header(doc,true);footer(doc);let y=76;
+ if(!validateFull())return;if(window.PCPRPapel&&PCPRPapel.watermarkDataUrl)await PCPRPapel.watermarkDataUrl();
+ const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',compress:true});
+ header(doc,true);footer(doc);let y=70;
  y=section(doc,'I - HISTÓRICO DA OCORRÊNCIA',y);y=addPara(doc,$('historico').value,y,{indent:0});
  if(y>248)y=newPage(doc,false); y=section(doc,'II - RECONHECIMENTO',y+3);
  y=addPara(doc,`Nesta data, ${dataExt($('dataRec').value)}, foram apresentadas fotografias de indivíduos enumeradas de 01 a ${pad(photos.length)}, sendo repassado para a vítima as seguintes observações:`,y,{indent:12});

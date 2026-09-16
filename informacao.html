@@ -96,13 +96,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .preview-card{position:sticky;top:12px}
 .preview-wrap{background:#e8e6df;border-radius:10px;padding:12px;overflow:auto}
 .folha{
-  background:#fff;border:1px solid var(--borda);padding:34px 42px;font-family:Arial,Helvetica,sans-serif;
-  font-size:13px;line-height:1.5;width:210mm;min-height:297mm;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);color:#000
+  background:#fff;border:1px solid var(--borda);padding:0 0 16mm;font-family:Arial,Helvetica,sans-serif;
+  font-size:13px;line-height:1.5;width:210mm;min-height:297mm;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);color:#000;
+  position:relative;overflow:hidden;box-sizing:border-box
 }
 .folha p{margin:0 0 6px}
-.folha .cab{text-align:center;font-size:10px;font-weight:bold;line-height:1.25;margin-bottom:22px}
-.folha .cab img{height:72px;display:block;margin:0 auto 6px}
-.folha .rod{text-align:center;font-size:9.5px;color:#333;margin-top:26px;line-height:1.3}
+.folha .cab{text-align:center;font-size:8.7pt;font-weight:bold;line-height:1.18;margin-bottom:8mm;padding-top:.7mm;position:relative;z-index:2}
+.folha .cab img{width:22mm;height:29mm;object-fit:contain;display:block;margin:0 auto 1.6mm}
+.folha .pcpr-corpo{position:relative;z-index:2;padding:0 20mm 4mm;font-family:"Times New Roman",Times,serif}
+.folha .rod{text-align:center;font-size:7.2pt;color:#111}
 .folha .doc-title{text-align:center;font-weight:800;font-size:14px;margin:0 0 14px;letter-spacing:.4px;text-transform:uppercase}
 .folha .doc-date{text-align:right;margin:0 0 16px}
 .folha .doc-body{min-height:80px;text-align:justify}
@@ -139,9 +141,11 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
   @page{size:A4 portrait;margin:0}
 }
 </style>
+<link rel="stylesheet" href="pcpr-papel-timbrado.css?v=1.0.0">
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
 <script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-papel-timbrado.js?v=1.0.0"></script>
 <script>window.PCPR_DOCNAME_CONFIG={"documentType":"Informação","targetSelector":"#btnPdf","actionSelectors":["#btnPdf","#btnPrint","#btnDrive"],"cloudSelectors":["#btnDrive"]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
 </head>
@@ -452,8 +456,11 @@ function updatePreview(){
   const cargo=$('fCargo').value.trim()||signer.cargo;
   const body=editorEmpty()?'<p class="placeholder-doc">Digite ou cole o texto da informação.</p>':editorHtml();
   const anexos=photos.map((p,i)=>'<div class="anexo"><img alt="'+esc(p.caption||p.name)+'" src="'+p.data+'"><div class="cap">'+(p.caption?esc(p.caption):'Foto anexa '+(i+1))+'</div></div>').join('');
+  $('folha').className='folha pcpr-timbrado';
   $('folha').innerHTML=
+    ((window.PCPRPapel&&PCPRPapel.watermarkImg)?PCPRPapel.watermarkImg():'<img class="pcpr-wm" alt="" src="marca-dagua-pcpr.png">')+
     '<div class="cab"><img alt="Brasão" src="'+crestSrc()+'">'+cab+'</div>'+
+    '<div class="pcpr-corpo">'+
     '<div class="doc-title">Informação</div>'+
     '<p class="doc-date">'+esc(cidadeLinha())+', '+dataExtenso($('fData').value)+'.</p>'+
     (dest?'<p><b>'+esc(dest)+'</b></p>':'')+
@@ -462,7 +469,8 @@ function updatePreview(){
     '<div class="doc-body">'+body+'</div>'+
     anexos+
     '<div class="sign"><div>Respeitosamente,</div><div class="nome">'+esc((signer.nome||'').toUpperCase())+'</div><div>'+esc(cargo||'')+'</div></div>'+
-    '<div class="rod">'+rod+'</div>';
+    '</div>'+
+    '<div class="rod pcpr-rod-bar">'+rod+'</div>';
   $('hSub').textContent=(g.unidade||'Delegacia de Polícia')+' — '+(g.subdivisao||'')+' · Informação institucional · processamento local';
   $('rodapeTela').textContent=footerLines().join(' · ');
 }

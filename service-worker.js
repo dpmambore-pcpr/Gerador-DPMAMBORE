@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.14';
+const CACHE_VERSION='pcpr-central-v3.0.15';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -29,6 +29,7 @@ const CORE_FILES=[
   './historico-documentos.html',
   './index.html',
   './laudo-lesoes.html',
+  './marca-dagua-pcpr.png',
   './manifest.webmanifest',
   './offline.html',
   './oficio-coffee-break.html',
@@ -41,6 +42,8 @@ const CORE_FILES=[
   './pcpr-config.js',
   './pcpr-drive.js',
   './pcpr-documento.js',
+  './pcpr-papel-timbrado.css',
+  './pcpr-papel-timbrado.js',
   './pericia.html',
   './pwa.js',
   './qrcode.html',

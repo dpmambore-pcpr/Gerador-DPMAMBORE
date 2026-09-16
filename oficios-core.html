@@ -52,6 +52,15 @@ button.sec:hover{background:var(--claro)}
 .folha .cab{text-align:center;font-size:10px;font-weight:bold;line-height:1.25;margin-bottom:22px}
 .folha .cab img{height:72px;display:block;margin:0 auto 6px}
 .folha .rod{text-align:center;font-size:9.5px;color:#333;border-top:0;margin-top:26px;line-height:1.3}
+.folha.pcpr-timbrado{
+  width:210mm;max-width:210mm;min-height:297mm;padding:0 0 16mm;box-sizing:border-box;overflow:hidden
+}
+.folha.pcpr-timbrado .cab{
+  font-size:8.7pt;line-height:1.18;padding-top:.7mm;margin-bottom:8mm;position:relative;z-index:2
+}
+.folha.pcpr-timbrado .cab img{width:22mm;height:29mm;object-fit:contain;margin:0 auto 1.6mm}
+.folha.pcpr-timbrado .pcpr-corpo{position:relative;z-index:2;padding:0 20mm 4mm;font-family:"Times New Roman",Times,serif}
+.folha.pcpr-timbrado .rod.pcpr-rod-bar{white-space:nowrap}
 .folha table.tv{border-collapse:collapse;width:100%;font-size:11px;margin:8px 0}
 .folha table.tv th,.folha table.tv td{border:1px solid #000;padding:3px 5px;text-align:center}
 .folha table.tv th{background:#e1e7f2}
@@ -68,7 +77,14 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 }
 .atalho-informacao h2{margin:0 0 6px}
 .atalho-informacao p{margin:0;max-width:720px}
-@media print{.security-note{display:none!important}}
+@media print{
+  .security-note,header,footer,.card,#msg,#driveStatus{display:none!important}
+  body{background:#fff}
+  main{max-width:none;padding:0;margin:0}
+  #prev{padding:0}
+  .folha.pcpr-timbrado{box-shadow:none;border:0;margin:0;border-radius:0!important}
+  @page{size:A4 portrait;margin:0}
+}
 
 
 /* v2.0 — fluxo e conferência */
@@ -160,13 +176,16 @@ button.sec{
 }
 .aviso b{color:#75560f !important;}
 .folha{border-radius:10px !important;border-color:var(--borda) !important;}
+.folha.pcpr-timbrado{border-radius:0 !important;}
 footer{color:var(--suave) !important;}
 @media(max-width:680px){header{padding:18px 16px !important;}header h1{font-size:20px !important;}}
 </style>
+<link rel="stylesheet" href="pcpr-papel-timbrado.css?v=1.0.0">
 
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
 <script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-papel-timbrado.js?v=1.0.0"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#btnOdt","actionSelectors":["#btnOdt","#btnPdf","#btnDrive","#btnZip"],"cloudSelectors":["#btnDrive"]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
@@ -1281,7 +1300,7 @@ function tokLarg(t,tam){
 }
 
 // ===================== PDF =====================
-var PGP={l:595.28,a:841.89,esq:72,dir:72,topo:186,base:80};
+var PGP={l:595.28,a:841.89,esq:56.69,dir:56.69,topo:153,base:51};
 
 function PDFDoc(){this.pgs=[];this.at=null;this.y=0;}
 PDFDoc.prototype.nova=function(){this.at={ops:[]};this.pgs.push(this.at);this.y=PGP.a-PGP.topo;};
@@ -1361,36 +1380,49 @@ PDFDoc.prototype.tabela=function(bl){
   bl.linhas.forEach(function(l){linha(l,false,false);});
   self.y-=6;
 };
-function montaPDF(pgs,jpeg,dims){
+function montaPDF(pgs,jpeg,dims,wm){
   var enc=new TextEncoder();
-  var bl=(CFG.brasaoL||70)*0.75, ba=(CFG.brasaoA||85)*0.75;
+  var bl=22*72/25.4, ba=29*72/25.4;
+  var hasWm=wm&&wm.bytes&&wm.bytes.length;
+  var wmW=93*72/25.4, wmH=119*72/25.4, barH=12.5*72/25.4;
   var conteudos=pgs.map(function(p){
     var ops=[];
-    ops.push("q "+bl.toFixed(2)+" 0 0 "+ba.toFixed(2)+" "+((PGP.l-bl)/2).toFixed(2)+" "+(PGP.a-30-ba).toFixed(2)+" cm /Im1 Do Q");
-    var y=PGP.a-38-ba;
+    if(hasWm){
+      ops.push("q "+wmW.toFixed(2)+" 0 0 "+wmH.toFixed(2)+" "+((PGP.l-wmW)/2).toFixed(2)+" "+((PGP.a-wmH)/2-12).toFixed(2)+" cm /ImWm Do Q");
+    }
+    var i,t,g,x,w;
+    for(i=0;i<24;i++){
+      t=i/23;g=(0.671+(0.980-0.671)*t).toFixed(3);
+      x=(PGP.l*i/24).toFixed(2);w=(PGP.l/24+0.45).toFixed(2);
+      ops.push(g+" "+g+" "+g+" rg "+x+" 0 "+w+" "+barH.toFixed(2)+" re f");
+    }
+    ops.push("0 g");
+    ops.push("q "+bl.toFixed(2)+" 0 0 "+ba.toFixed(2)+" "+((PGP.l-bl)/2).toFixed(2)+" "+(PGP.a-2-ba).toFixed(2)+" cm /Im1 Do Q");
+    var y=PGP.a-88.5;
     CFG.cabecalho.forEach(function(l){
-      var w=larg(l,9,true);
-      ops.push("BT /F2 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+y.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
+      var tw=larg(l,9,true);
+      ops.push("BT /F2 9 Tf "+((PGP.l-tw)/2).toFixed(2)+" "+y.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
       y-=11;
     });
-    var yr=54;
-    CFG.rodape.forEach(function(l){
-      var w=larg(l,9,false);
-      ops.push("BT /F1 9 Tf "+((PGP.l-w)/2).toFixed(2)+" "+yr.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
-      yr-=11;
+    var yr=barH/2+((CFG.rodape.length-1)*5);
+    CFG.rodape.forEach(function(l,idx){
+      var tw=larg(l,8,false);
+      var fy=barH/2+((CFG.rodape.length-1)/2-idx)*9;
+      ops.push("BT /F1 8 Tf "+((PGP.l-tw)/2).toFixed(2)+" "+fy.toFixed(2)+" Td ("+pdfStr(l)+") Tj ET");
     });
     return ops.concat(p.ops).join("\n");
   });
   var n=1,idCat=n++,idPags=n++,idsP=[],idsC=[];
   conteudos.forEach(function(){idsP.push(n++);idsC.push(n++);});
-  var f1=n++,f2=n++,f3=n++,f4=n++,idImg=n++;
+  var f1=n++,f2=n++,f3=n++,f4=n++,idImg=n++,idWm=hasWm?n++:0;
   var corpo=[];
   corpo[idCat]="<< /Type /Catalog /Pages "+idPags+" 0 R >>";
   corpo[idPags]="<< /Type /Pages /Count "+conteudos.length+" /Kids ["+idsP.map(function(i){return i+" 0 R";}).join(" ")+"] >>";
   idsP.forEach(function(id,i){
+    var xobjs="/Im1 "+idImg+" 0 R"+(hasWm?" /ImWm "+idWm+" 0 R":"");
     corpo[id]="<< /Type /Page /Parent "+idPags+" 0 R /MediaBox [0 0 "+PGP.l.toFixed(2)+" "+PGP.a.toFixed(2)
       +"] /Resources << /Font << /F1 "+f1+" 0 R /F2 "+f2+" 0 R /F3 "+f3+" 0 R /F4 "+f4
-      +" 0 R >> /XObject << /Im1 "+idImg+" 0 R >> >> /Contents "+idsC[i]+" 0 R >>";
+      +" 0 R >> /XObject << "+xobjs+" >> >> /Contents "+idsC[i]+" 0 R >>";
     corpo[idsC[i]]={stream:conteudos[i]};
   });
   var bf=["Helvetica","Helvetica-Bold","Helvetica-Oblique","Helvetica-BoldOblique"];
@@ -1398,6 +1430,7 @@ function montaPDF(pgs,jpeg,dims){
     corpo[id]="<< /Type /Font /Subtype /Type1 /BaseFont /"+bf[k]+" /Encoding /WinAnsiEncoding >>";
   });
   corpo[idImg]={img:jpeg,dims:dims};
+  if(hasWm)corpo[idWm]={img:wm.bytes,dims:{l:wm.l,a:wm.a}};
   var pedacos=[],pos=[],total=0;
   function push(b){pedacos.push(b);total+=b.length;}
   push(enc.encode("%PDF-1.4\n%aeiou\n"));
@@ -1422,6 +1455,10 @@ function montaPDF(pgs,jpeg,dims){
   return saida;
 }
 var CACHE_JPEG=null;
+var MARCA_DAGUA_BYTES=null;
+if(window.PCPRPapel&&PCPRPapel.watermarkPngBytes){
+  PCPRPapel.watermarkPngBytes().then(function(u){if(u&&u.length)MARCA_DAGUA_BYTES=u;}).catch(function(){});
+}
 function brasaoJPEG(cb){
   if(CACHE_JPEG&&CACHE_JPEG.chave===CFG.brasao){cb(CACHE_JPEG);return;}
   var img=new Image();
@@ -1439,17 +1476,22 @@ function brasaoJPEG(cb){
 function blocosParaPDF(blocos,cb){
   brasaoJPEG(function(j){
     if(!j){cb(null);return;}
-    var d=new PDFDoc();d.nova();
-    blocos.forEach(function(b){
-      if(b.t==="vazio")d.y-=10;
-      else if(b.t==="tab")d.tabela(b);
-      else if(b.t==="lista"){
-        b.itens.forEach(function(it,k){
-          d.par({t:"p",runs:runsItem(b.tipo,k,it),jc:"both",ind:36,tam:12});
-        });
-      } else d.par(b);
-    });
-    cb(montaPDF(d.pgs,j.bytes,{l:j.l,a:j.a}));
+    function finish(wm){
+      var d=new PDFDoc();d.nova();
+      blocos.forEach(function(b){
+        if(b.t==="vazio")d.y-=10;
+        else if(b.t==="tab")d.tabela(b);
+        else if(b.t==="lista"){
+          b.itens.forEach(function(it,k){
+            d.par({t:"p",runs:runsItem(b.tipo,k,it),jc:"both",ind:36,tam:12});
+          });
+        } else d.par(b);
+      });
+      cb(montaPDF(d.pgs,j.bytes,{l:j.l,a:j.a},wm||null));
+    }
+    if(window.PCPRPapel&&PCPRPapel.watermarkJpeg){
+      PCPRPapel.watermarkJpeg().then(finish).catch(function(){finish(null);});
+    }else finish(null);
   });
 }
 
@@ -1541,11 +1583,14 @@ function blocosParaODT(blocos){
     +'<style:style style:name="TIU" style:family="text"><style:text-properties fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
     +'<style:style style:name="TBIU" style:family="text"><style:text-properties fo:font-weight="bold" fo:font-style="italic" style:text-underline-style="solid"/></style:style>'
     +'<style:style style:name="HdrCenter" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/></style:style><style:style style:name="HdrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt" fo:font-weight="bold"/></style:style>'
-    +'<style:style style:name="FtrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="9pt"/></style:style>'
+    +'<style:style style:name="FtrText" style:family="paragraph"><style:paragraph-properties fo:text-align="center" fo:margin="0in"/><style:text-properties fo:font-size="8pt"/></style:style>'
+    +'<draw:fill-image draw:name="marcaDagua" xlink:href="Pictures/marca-dagua-pcpr.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>'
     +'</office:styles>'
-    +'<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="3.9cm" fo:margin-bottom="1.8cm" fo:margin-left="2cm" fo:margin-right="2cm"/></style:page-layout></office:automatic-styles>'
+    +'<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="5.4cm" fo:margin-bottom="1.8cm" fo:margin-left="2cm" fo:margin-right="2cm">'
+    +(MARCA_DAGUA_BYTES?'<style:background-image xlink:href="Pictures/marca-dagua-pcpr.png" xlink:type="simple" xlink:actuate="onLoad" style:repeat="no-repeat" style:position="center"/>':'')
+    +'</style:page-layout-properties><style:footer-style><style:header-footer-properties fo:min-height="1.25cm" fo:margin-top="0.15cm" fo:background-color="#d4d4d4"/></style:footer-style></style:page-layout></office:automatic-styles>'
     +'<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1">'
-    +'<style:header><text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="1.6cm" svg:height="2.0cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
+    +'<style:header><text:p text:style-name="HdrCenter"><draw:frame draw:name="Brasao" text:anchor-type="paragraph" svg:width="2.2cm" svg:height="2.9cm"><draw:image xlink:href="Pictures/brasao.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>'+cab+'</style:header>'
     +'<style:footer>'+rod+'</style:footer>'
     +'</style:master-page></office:master-styles></office:document-styles>';
   var meta='<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2"><office:meta><meta:generator>Central PCPR v2.0</meta:generator></office:meta></office:document-meta>';
@@ -1557,8 +1602,9 @@ function blocosParaODT(blocos){
     +'<manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>'
     +'<manifest:file-entry manifest:full-path="settings.xml" manifest:media-type="text/xml"/>'
     +'<manifest:file-entry manifest:full-path="Pictures/brasao.png" manifest:media-type="image/png"/>'
+    +(MARCA_DAGUA_BYTES?'<manifest:file-entry manifest:full-path="Pictures/marca-dagua-pcpr.png" manifest:media-type="image/png"/>':'')
     +'</manifest:manifest>';
-  return zip([
+  var odtFiles=[
     {name:"mimetype",data:"application/vnd.oasis.opendocument.text"},
     {name:"content.xml",data:content},
     {name:"styles.xml",data:styles},
@@ -1566,13 +1612,16 @@ function blocosParaODT(blocos){
     {name:"settings.xml",data:settings},
     {name:"Pictures/brasao.png",data:b64bin(CFG.brasao)},
     {name:"META-INF/manifest.xml",data:manifest}
-  ]);
+  ];
+  if(MARCA_DAGUA_BYTES) odtFiles.splice(6,0,{name:"Pictures/marca-dagua-pcpr.png",data:MARCA_DAGUA_BYTES});
+  return zip(odtFiles);
 }
 
 // ===================== pré-visualização em tela =====================
 function blocosParaHTML(blocos){
-  var h='<div class="folha"><div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
-    +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div>";
+  var wm=(window.PCPRPapel&&PCPRPapel.watermarkImg)?PCPRPapel.watermarkImg():'<img class="pcpr-wm" alt="" src="marca-dagua-pcpr.png">';
+  var h='<div class="folha pcpr-timbrado">'+wm+'<div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
+    +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div><div class=\"pcpr-corpo\">";
   blocos.forEach(function(b){
     if(b.t==="vazio"){h+="<p>&nbsp;</p>";return;}
     if(b.t==="tab"){
@@ -1598,7 +1647,7 @@ function blocosParaHTML(blocos){
       return t;
     }).join("")+"</p>";
   });
-  h+='<div class="rod">'+CFG.rodape.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div></div>";
+  h+='</div><div class="rod pcpr-rod-bar">'+CFG.rodape.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div></div>";
   return h;
 }
 
