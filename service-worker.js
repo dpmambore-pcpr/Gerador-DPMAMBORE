@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.13';
+const CACHE_VERSION='pcpr-central-v3.0.14';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -37,8 +37,11 @@ const CORE_FILES=[
   './oficios.html',
   './oitiva-penitenciaria.html',
   './papel-pericia.png',
+  './brasao-institucional.png',
   './pcpr-core.js',
   './pcpr-config.js',
+  './pcpr-oficio-chrome.css',
+  './pcpr-oficio-chrome.js',
   './pcpr-drive.js',
   './pcpr-documento.js',
   './pericia.html',

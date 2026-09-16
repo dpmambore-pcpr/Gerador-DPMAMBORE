@@ -1,0 +1,92 @@
+/* Chrome institucional dos ofícios com brasão — Central PCPR
+   cabecalhoInstitucional / marcaDaguaInstitucional / rodapeInstitucional */
+:root{
+  --pcpr-oficio-rodape-bg:#E5E5E5;
+  --pcpr-oficio-marca-opacity:.06;
+}
+.cabecalhoInstitucional{
+  text-align:center;
+  font-weight:700;
+  font-size:10pt;
+  line-height:1.18;
+  letter-spacing:.15px;
+  margin:0 0 7mm;
+  position:relative;
+  z-index:1;
+}
+.cabecalhoInstitucional img,
+.brasaoInstitucional{
+  display:block;
+  margin:0 auto 2.2mm;
+  height:19mm;
+  width:auto;
+  max-width:18mm;
+  object-fit:contain;
+  object-position:center top;
+}
+.marcaDaguaInstitucional{
+  position:absolute;
+  left:50%;
+  top:58%;
+  transform:translate(-50%,-50%);
+  width:118mm;
+  height:auto;
+  max-width:70%;
+  opacity:var(--pcpr-oficio-marca-opacity);
+  z-index:0;
+  pointer-events:none;
+  object-fit:contain;
+}
+.rodapeInstitucional{
+  position:relative;
+  z-index:1;
+  margin-top:auto;
+  background:var(--pcpr-oficio-rodape-bg);
+  text-align:center;
+  font-size:8pt;
+  line-height:1.35;
+  color:#333;
+  padding:3.2mm 10mm;
+  font-family:Arial,Helvetica,sans-serif;
+  font-weight:400;
+}
+.rodapeInstitucional div+div{margin-top:.6mm}
+
+/* Folha A4 usada pelos ofícios do núcleo */
+.folha.pcpr-oficio-folha,
+.pcpr-oficio-folha{
+  position:relative;
+  width:210mm;
+  max-width:none;
+  min-height:297mm;
+  margin:0 auto;
+  background:#fff;
+  color:#000;
+  display:flex;
+  flex-direction:column;
+  padding:10mm 18mm 0;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.pcpr-oficio-folha>.corpoOficio{flex:1 1 auto;position:relative;z-index:1}
+.pcpr-oficio-folha>.rod,
+.pcpr-oficio-folha>.rodapeInstitucional{
+  margin-left:-18mm;
+  margin-right:-18mm;
+  margin-top:10mm;
+}
+
+@media print{
+  @page{size:A4 portrait;margin:0}
+  .pcpr-oficio-folha{
+    box-shadow:none;
+    border:0 !important;
+    width:210mm;
+    min-height:297mm;
+    page-break-after:always;
+    break-after:page;
+  }
+  .pcpr-oficio-folha:last-child{page-break-after:auto;break-after:auto}
+  .marcaDaguaInstitucional{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rodapeInstitucional{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

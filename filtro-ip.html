@@ -147,6 +147,7 @@ footer{color:var(--suave)!important}
 
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
+<script src="pcpr-oficio-chrome.js?v=3.0.14"></script>
 </head>
 <body>
 <header>
@@ -850,6 +851,7 @@ var RODAPE_INST = CFG.rodape;
 
 function headerXML(){
   var cx = Math.round((CFG.brasaoL || 70) * 9525), cy = Math.round((CFG.brasaoA || 85) * 9525);
+  var wmCx = 4248000, wmCy = 5284800;
   var img = '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>'
     + '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'
     + '<wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'
@@ -858,18 +860,39 @@ function headerXML(){
     + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
     + '<pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="Brasao"/><pic:cNvPicPr/></pic:nvPicPr>'
     + '<pic:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
-    + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="666750" cy="809625"/></a:xfrm>'
+    + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm>'
     + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
     + "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>";
+  var wm = '<w:p><w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="0" behindDoc="1" locked="0" layoutInCell="1" allowOverlap="1">'
+    + '<wp:simplePos x="0" y="0"/>'
+    + '<wp:positionH relativeFrom="page"><wp:align>center</wp:align></wp:positionH>'
+    + '<wp:positionV relativeFrom="page"><wp:posOffset>3429000</wp:posOffset></wp:positionV>'
+    + '<wp:extent cx="'+wmCx+'" cy="'+wmCy+'"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'
+    + '<wp:wrapNone/><wp:docPr id="2" name="MarcaDagua"/>'
+    + '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
+    + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+    + '<pic:pic><pic:nvPicPr><pic:cNvPr id="2" name="MarcaDagua"/><pic:cNvPicPr/></pic:nvPicPr>'
+    + '<pic:blipFill><a:blip r:embed="rId1"><a:alphaModFix amt="6000"/></a:blip><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+    + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+wmCx+'" cy="'+wmCy+'"/></a:xfrm>'
+    + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
+    + '</pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>';
   var txt = CABECALHO_INST.map(function(l){
     return par(l, {jc:"center", espaco:false, sz:18, negrito:true});
   }).join("");
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:hdr") + img + txt + "</w:hdr>";
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:hdr") + wm + img + txt + "</w:hdr>";
 }
 function footerXML(){
+  var lines = RODAPE_INST.map(function(l){
+    return par(l, {jc:"center", espaco:false, sz:16});
+  }).join("");
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:ftr")
-    + RODAPE_INST.map(function(l){ return par(l, {jc:"center", espaco:false, sz:18}); }).join("")
-    + "</w:ftr>";
+    + '<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:jc w:val="center"/>'
+    + '<w:shd w:val="clear" w:color="auto" w:fill="E5E5E5"/>'
+    + '<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>'
+    + '</w:tblPr><w:tblGrid><w:gridCol w:w="10692"/></w:tblGrid>'
+    + '<w:tr><w:tc><w:tcPr><w:tcW w:w="10692" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="E5E5E5"/>'
+    + '<w:tcMar><w:top w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar>'
+    + '</w:tcPr>' + lines + '</w:tc></w:tr></w:tbl></w:ftr>';
 }
 function NS(tag){
   return "<" + tag + ' xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
@@ -918,7 +941,7 @@ function docxOficio(cfg){
   var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>'
     + '<w:footerReference w:type="default" r:id="rId3"/>'
     + '<w:pgSz w:w="11906" w:h="16838"/>'
-    + '<w:pgMar w:top="3005" w:right="1418" w:bottom="1418" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>'
+    + '<w:pgMar w:top="2700" w:right="1418" w:bottom="1200" w:left="1701" w:header="400" w:footer="200" w:gutter="0"/>'
     + "</w:sectPr>";
   var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:document")
     + "<w:body>" + corpoOficio(cfg) + sect + "</w:body></w:document>";
@@ -1232,7 +1255,7 @@ function quebra(txt, larg, tam, negrito){
 }
 
 // ---- página A4 ----
-var PG = { l: 595.28, a: 841.89, esq: 68, dir: 51, topo: 178, base: 78 };
+var PG = { l: 595.28, a: 841.89, esq: 68, dir: 51, topo: 168, base: 62 };
 
 function PDFDoc(){
   this.paginas = [];
@@ -1332,23 +1355,44 @@ function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
   // conteúdo de cada página, com cabeçalho e rodapé
   var conteudos = paginas.map(function(p){
     var ops = [];
-    var cx = (PG.l - brasaoDim.l) / 2;
-    ops.push("q " + brasaoDim.l.toFixed(2) + " 0 0 " + brasaoDim.a.toFixed(2) + " "
-      + cx.toFixed(2) + " " + (PG.a - 28 - brasaoDim.a).toFixed(2) + " cm /Im1 Do Q");
-    var y = PG.a - 34 - brasaoDim.a;
-    cabecalho.forEach(function(l){
-      var w = larguraTexto(l, 9, true);
-      ops.push("BT /F2 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + y.toFixed(2)
-        + " Td (" + pdfStr(l) + ") Tj ET");
-      y -= 11;
-    });
-    var yr = 52;
-    rodape.forEach(function(l){
-      var w = larguraTexto(l, 9, false);
-      ops.push("BT /F1 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + yr.toFixed(2)
-        + " Td (" + pdfStr(l) + ") Tj ET");
-      yr -= 11;
-    });
+    var chrome = window.PCPROficioChrome;
+    var crest = chrome ? chrome.crestPdfSize(CFG.brasaoL, CFG.brasaoA, dims) : {w: brasaoDim.l, h: brasaoDim.a};
+    if(chrome){
+      ops = ops.concat(chrome.pdfWatermarkAndFooterOps({pageW:PG.l,pageH:PG.a,jpegW:dims.l,jpegH:dims.a}));
+      var hdr = chrome.pdfHeaderCrestOps({pageW:PG.l,pageH:PG.a,crest:crest});
+      ops = ops.concat(hdr.ops);
+      var y = hdr.nextY;
+      cabecalho.forEach(function(l){
+        var w = larguraTexto(l, 9, true);
+        ops.push("BT /F2 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + y.toFixed(2)
+          + " Td (" + pdfStr(l) + ") Tj ET");
+        y -= 11;
+      });
+      rodape.forEach(function(l, i){
+        var w = larguraTexto(l, 8, false);
+        var yr = chrome.footerTextY(i, rodape.length);
+        ops.push("BT /F1 8 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + yr.toFixed(2)
+          + " Td (" + pdfStr(l) + ") Tj ET");
+      });
+    } else {
+      var cx = (PG.l - brasaoDim.l) / 2;
+      ops.push("q " + brasaoDim.l.toFixed(2) + " 0 0 " + brasaoDim.a.toFixed(2) + " "
+        + cx.toFixed(2) + " " + (PG.a - 28 - brasaoDim.a).toFixed(2) + " cm /Im1 Do Q");
+      var y2 = PG.a - 34 - brasaoDim.a;
+      cabecalho.forEach(function(l){
+        var w = larguraTexto(l, 9, true);
+        ops.push("BT /F2 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + y2.toFixed(2)
+          + " Td (" + pdfStr(l) + ") Tj ET");
+        y2 -= 11;
+      });
+      var yr = 52;
+      rodape.forEach(function(l){
+        var w = larguraTexto(l, 9, false);
+        ops.push("BT /F1 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + yr.toFixed(2)
+          + " Td (" + pdfStr(l) + ") Tj ET");
+        yr -= 11;
+      });
+    }
     return ops.concat(p.ops).join("\n");
   });
 
@@ -1366,7 +1410,8 @@ function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
     corpo[id] = "<< /Type /Page /Parent " + idPags + " 0 R /MediaBox [0 0 "
       + PG.l.toFixed(2) + " " + PG.a.toFixed(2) + "] /Resources << /Font << /F1 "
       + idFonte1 + " 0 R /F2 " + idFonte2 + " 0 R >> /XObject << /Im1 " + idImg
-      + " 0 R >> >> /Contents " + idsConteudo[i] + " 0 R >>";
+      + " 0 R >> " + (window.PCPROficioChrome ? window.PCPROficioChrome.pdfExtGStateResource() : "")
+      + " >> /Contents " + idsConteudo[i] + " 0 R >>";
     corpo[idsConteudo[i]] = {stream: conteudos[i]};
   });
   corpo[idFonte1] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
@@ -1415,7 +1460,7 @@ function brasaoJPEG(cb){
   var img = new Image();
   img.onload = function(){
     var c = document.createElement("canvas");
-    var lado = 300, esc = Math.min(1, lado / Math.max(img.width, img.height));
+    var lado = 933, esc = Math.min(1, lado / Math.max(img.width, img.height));
     c.width = Math.max(1, Math.round(img.width * esc));
     c.height = Math.max(1, Math.round(img.height * esc));
     var ctx = c.getContext("2d");
