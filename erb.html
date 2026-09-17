@@ -1198,8 +1198,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
           <button class="dropitem" id="toggleMap3d">Mapa 3D das ERBs</button>
           <div class="dropsep"></div>
           <div class="drop-caption">Nomes das antenas no mapa</div>
-          <button class="dropitem" data-label-mode="code" aria-pressed="true">Código da antena (CGI / Cell ID)</button>
-          <button class="dropitem" data-label-mode="citySector" aria-pressed="false">Cidade + antena / setor</button>
+          <button class="dropitem" data-label-mode="citySector" aria-pressed="true">Cidade + antena / setor</button>
+          <button class="dropitem" data-label-mode="code" aria-pressed="false">Código da antena (CGI / Cell ID)</button>
         </div>
       </div>
 
@@ -1290,7 +1290,7 @@ const state={
   onlyGeo:false,playing:false,exportingRoute:false,routeCursor:null,heatMode:'normal',trajectoryIndex:0,trajectoryVisible:false,
   trajectorySelection:{enabled:false,lotIds:[],cgis:[]},timeScrub:null
 };
-const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'code',view3d:false};
+const cfg={defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'citySector',view3d:false};
 let filterDraft=null,filterErbOptions=[],filterMultiOptions={},filterOpenedFrom=null,liveApplyTimer=null;
 const PROJECT_PREFIX='pcpr.erb.v7.project.';
 const MULTI_FILTERS=[
@@ -1345,6 +1345,11 @@ function normalizedFilters(value={},legacy=false){
   if(legacy&&f.erbKeys?.length===0)f.erbKeys=null;
   f.erbOrder=f.erbOrder==='asc'?'asc':'desc';
   return f;
+}
+function resolvedLabelMode(mode,schema){
+  if(mode==='citySector')return 'citySector';
+  if(mode==='code'&&Number(schema||0)>=4)return 'code';
+  return 'citySector';
 }
 function erbDisplayName(ev,mode=cfg.labelMode){
   const code=String(ev.cgi||ev.cellid||ev.station||ev.name||'ERB').trim();
@@ -1998,7 +2003,7 @@ function liveApplyFilters({close=false,fit=false,resetScrub=true}={}){
   const f=drawerFilterValues();
   if(f.start&&f.end&&new Date(f.start)>new Date(f.end))return false;
   filterDraft=f;state.filters=f;
-  if($('filterLabelMode')){cfg.labelMode=$('filterLabelMode').value==='citySector'?'citySector':'code';syncLabelControls()}
+  if($('filterLabelMode')){cfg.labelMode=resolvedLabelMode($('filterLabelMode').value,4);syncLabelControls()}
   $('filterPill')?.classList.toggle('show',filtersActive());
   if(resetScrub)state.timeScrub=null;
   redraw(fit);
@@ -2258,7 +2263,7 @@ async function openDrawer(kind,preset={}){
         <div class="filter-summary" id="filterHourSummary"></div><div class="muted">Faixas repetidas em cada dia do período, usando o mesmo horário exibido nos registros. O início é incluído e o fim inicia a próxima faixa.</div>
       </section>
       <section class="filter-section"><h3>4. Antenas por número de conexões</h3>
-        <div class="grid2"><div class="field"><label for="filterErbOrder">Ordenação</label><select id="filterErbOrder"><option value="desc">Maior → menor número de conexões</option><option value="asc">Menor → maior número de conexões</option></select></div><div class="field"><label for="filterLabelMode">Nome das antenas no mapa</label><select id="filterLabelMode"><option value="code">Código da antena (CGI / Cell ID)</option><option value="citySector">Cidade + antena / setor</option></select></div></div>
+        <div class="grid2"><div class="field"><label for="filterErbOrder">Ordenação</label><select id="filterErbOrder"><option value="desc">Maior → menor número de conexões</option><option value="asc">Menor → maior número de conexões</option></select></div><div class="field"><label for="filterLabelMode">Nome das antenas no mapa</label><select id="filterLabelMode"><option value="citySector">Cidade + antena / setor</option><option value="code">Código da antena (CGI / Cell ID)</option></select></div></div>
         <div class="filter-tools"><button class="btn outline small" type="button" id="erbSelectAll">Marcar todas</button><button class="btn outline small" type="button" id="erbSelectNone">Desmarcar todas</button><button class="btn gold small" type="button" id="erbSelectTop">Só a mais conectada</button></div>
         <div id="erbSelectionSummary" class="filter-summary" role="status"></div><div id="erbSelectionList" class="erb-selection-list"></div>
         <div class="muted">Lista recalculada pelos números alvo, IMEIs, operadoras, tipos, dias, lotes, cidades e horários selecionados. Cadastros sem conexão contam como zero. Mais registros não significam, por si só, maior tempo de permanência.</div>
@@ -4236,7 +4241,7 @@ function projectDb(){
 }
 async function dbRead(store,key,all=false){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(store,'readonly'),req=all?tx.objectStore(store).getAll():tx.objectStore(store).get(key);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function dbWriteProject(data){const db=await projectDb();return new Promise((resolve,reject)=>{const tx=db.transaction(['projects','meta'],'readwrite');tx.objectStore('projects').put(data);tx.objectStore('meta').put({projectId:data.projectId,updated:data.updated},LAST_PROJECT_KEY);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Gravação interrompida'))})}
-function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.7.0',filterSchema:3,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,timeScrub:state.timeScrub,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
+function snapshot(){const c=map.getCenter();lastSnapshotTime=Math.max(Date.now(),lastSnapshotTime+1);return{version:'9.7.0',filterSchema:4,projectId:state.currentProjectId||null,name:projectName(),updated:new Date(lastSnapshotTime).toISOString(),lots:state.lots,events:state.events,pois:state.pois,filters:{...state.filters},cfg:{...cfg},activeLotId:state.activeLotId,heatMode:state.heatMode,trajectorySelection:state.trajectorySelection,trajectoryVisible:state.trajectoryVisible,trajectoryIndex:state.trajectoryIndex,timeScrub:state.timeScrub,onlyGeo:state.onlyGeo,mapView:{lat:c.lat,lng:c.lng,zoom:map.getZoom()}}}
 function validateSnapshot(o){
   if(!o||typeof o!=='object'||!Array.isArray(o.lots)||!Array.isArray(o.events)||!Array.isArray(o.pois))throw new Error('Arquivo sem estrutura de projeto ERB (lotes, registros e pontos).');
   const idOk=v=>typeof v==='string'&&/^[a-zA-Z0-9_.-]{1,120}$/.test(v);
@@ -4255,7 +4260,7 @@ function applySnapshot(o){
     state.trajectoryVisible=Boolean(o.trajectoryVisible);state.trajectoryIndex=Number(o.trajectoryIndex)||0;state.timeScrub=Number.isInteger(o.timeScrub)?o.timeScrub:null;state.onlyGeo=Boolean(o.onlyGeo);
     pruneEmptyImportedLots();
     if(o.cfg){for(const k of ['showLabels','showPath','showSeq','view3d'])if(typeof o.cfg[k]==='boolean')cfg[k]=o.cfg[k];for(const k of ['defaultDist','defaultMargin'])if(Number.isFinite(o.cfg[k])&&o.cfg[k]>0)cfg[k]=o.cfg[k];if(bases[o.cfg.base])cfg.base=o.cfg.base}
-    cfg.labelMode=o.cfg?.labelMode==='citySector'?'citySector':'code';syncLabelControls();
+    cfg.labelMode=resolvedLabelMode(o.cfg?.labelMode,o.filterSchema);syncLabelControls();
     map.removeLayer(activeBase);activeBase=bases[cfg.base]||bases.clean;activeBase.addTo(map);syncBaseControls();
     $('projectName').value=o.name||'';state.activeLotId=state.lots.some(l=>l.id===o.activeLotId)?o.activeLotId:state.lots[0]?.id||null;
     $('filterPill').classList.toggle('show',filtersActive());redraw(!o.mapView);
@@ -4339,7 +4344,7 @@ async function deleteProject(id){
 }
 async function newProject(){
   if(state.currentProjectId||state.lots.length||state.pois.length)if(!await persistProject())return;
-  state.currentProjectId=uid();applySnapshot({lots:[],events:[],pois:[],name:'',cfg:{defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'code'},mapView:{lat:-24.317,lng:-52.529,zoom:13}});await persistProject();closeDrawer();status('Novo projeto. Os projetos anteriores continuam salvos.');
+  state.currentProjectId=uid();applySnapshot({lots:[],events:[],pois:[],name:'',cfg:{defaultDist:5,defaultMargin:45,showLabels:true,showPath:true,showSeq:true,base:'clean',labelMode:'citySector'},mapView:{lat:-24.317,lng:-52.529,zoom:13}});await persistProject();closeDrawer();status('Novo projeto. Os projetos anteriores continuam salvos.');
 }
 function bytesToBase64Url(bytes){let binary='';const chunk=0x8000;for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function base64UrlToBytes(text){const s=String(text||'').replace(/-/g,'+').replace(/_/g,'/'),p=s.length%4?4-s.length%4:0,binary=atob(s+'='.repeat(p)),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes}
@@ -5027,6 +5032,15 @@ async function runSelfTest(){
     const hit=typeof turf.booleanPointInPolygon==='function'?turf.booleanPointInPolygon(turf.point([inside[1],inside[0]]),sg.geo):true;
     add('Marcação dentro do leque',typeof startMapPick==='function'&&typeof finishMapPick==='function'&&typeof showMapContextMenu==='function'&&hit,'clique/botão direito em qualquer ponto, inclusive no raio/leque');
   }catch(e){add('Marcação dentro do leque',false,e.message)}
+  try{
+    const prev=cfg.labelMode;
+    const sample={city:'Mamborê',station:'COSM01',name:'COSM01',sector:'7',cgi:'724-04-00683-19247',az:90};
+    const cityName=erbDisplayName(sample,'citySector');
+    const codeName=erbDisplayName(sample,'code');
+    const migrated=resolvedLabelMode('code',3)==='citySector'&&resolvedLabelMode('code',4)==='code';
+    add('Nome padrão cidade + setor',cfg.labelMode==='citySector'&&cityName==='Mamborê · COSM01 · Setor 7'&&codeName==='724-04-00683-19247'&&migrated,cityName+' · padrão '+cfg.labelMode);
+    cfg.labelMode=prev;syncLabelControls();
+  }catch(e){add('Nome padrão cidade + setor',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.8.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
@@ -5148,6 +5162,10 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     timeScrubIndex,
     filteredEvents,
     liveApplyFilters,
+    erbDisplayName,
+    setLabelMode,
+    resolvedLabelMode,
+    getLabelMode(){return cfg.labelMode},
     applyHourFilter(hours){state.filters={...normalizedFilters(state.filters),hours};$('filterPill')?.classList.add('show');state.timeScrub=null;redraw();return trajectoryData().length}
   };
   setTimeout(()=>{seedDemoTrajectory().then(()=>$('closeTimeline')?.click())},800);
