@@ -165,13 +165,13 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.4.1",
+  version: "3.4.2",
   releaseDate: "17/09/2026",
   changes: [
-    "Centralizado o envio dos ofícios em um único botão.",
-    "Ajustado o rótulo do botão central: Enviar Doutor para uma operadora e Enviar todos Doutor para duas ou mais.",
-    "O envio em lote gera e transmite um PDF por operadora para a pasta de assinatura configurada, preservando a numeração sequencial dos ofícios.",
-    "Removidos os botões individuais de envio de cada operadora; pré-visualização e planilhas permanecem disponíveis individualmente."
+    "Aplicado papel-pericia.png como papel timbrado de fundo em todas as páginas dos ofícios PDF e DOCX.",
+    "O PDF incorpora diretamente o PNG oficial, sem depender de captura de tela e sem duplicar cabeçalho ou rodapé.",
+    "O DOCX usa o mesmo papel-pericia.png como imagem de fundo repetida em todas as páginas.",
+    "Mantidas a pré-visualização, impressão, downloads, planilhas e envio em PDF para a pasta do Doutor."
   ]
 });
 </script>
@@ -1208,6 +1208,55 @@ var CFG = {};
 var CABECALHO_INST = CFG.cabecalho;
 var RODAPE_INST = CFG.rodape;
 
+// Papel timbrado oficial compartilhado pelo repositório.
+// Mantê-lo como arquivo externo permite atualizar o timbrado no Git sem embutir
+// cópias diferentes em cada gerador.
+var PAPEL_PERICIA_URL = "papel-pericia.png";
+var CACHE_PAPEL_PERICIA = null;
+var CACHE_PAPEL_PERICIA_PROMISE = null;
+function carregaPapelPericia(){
+  if(CACHE_PAPEL_PERICIA) return Promise.resolve(CACHE_PAPEL_PERICIA);
+  if(CACHE_PAPEL_PERICIA_PROMISE) return CACHE_PAPEL_PERICIA_PROMISE;
+  CACHE_PAPEL_PERICIA_PROMISE = fetch(new URL(PAPEL_PERICIA_URL, document.baseURI).href, {cache:"no-cache"})
+    .then(function(r){
+      if(!r.ok) throw new Error("Não foi possível carregar " + PAPEL_PERICIA_URL + " (HTTP " + r.status + ").");
+      return r.arrayBuffer();
+    })
+    .then(function(ab){
+      var bytes = new Uint8Array(ab);
+      if(bytes.length < 24 || bytes[0] !== 137 || bytes[1] !== 80 || bytes[2] !== 78 || bytes[3] !== 71)
+        throw new Error(PAPEL_PERICIA_URL + " não é um arquivo PNG válido.");
+      CACHE_PAPEL_PERICIA = {bytes:bytes};
+      return CACHE_PAPEL_PERICIA;
+    })
+    .catch(function(e){
+      CACHE_PAPEL_PERICIA_PROMISE = null;
+      throw new Error(((e && e.message) || e) + " Confira se papel-pericia.png está na mesma pasta do Filtro de IP no Git.");
+    });
+  return CACHE_PAPEL_PERICIA_PROMISE;
+}
+
+// Cabeçalho DOCX usado apenas para posicionar o PNG atrás do texto.
+// A imagem ocupa a página inteira e se repete automaticamente em todas as páginas.
+function papelPericiaHeaderXML(){
+  var cx = 7560000, cy = 10692000; // 210 x 297 mm em EMU
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:hdr")
+    + '<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:drawing>'
+    + '<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="0" behindDoc="1" locked="0" layoutInCell="1" allowOverlap="1">'
+    + '<wp:simplePos x="0" y="0"/>'
+    + '<wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH>'
+    + '<wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV>'
+    + '<wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'
+    + '<wp:wrapNone/><wp:docPr id="1" name="Papel timbrado PCPR"/>'
+    + '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
+    + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+    + '<pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="papel-pericia.png"/><pic:cNvPicPr/></pic:nvPicPr>'
+    + '<pic:blipFill><a:blip r:embed="rIdPapel"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+    + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>'
+    + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
+    + '</pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p></w:hdr>';
+}
+
 function headerXML(){
   var cx = Math.round((CFG.brasaoL || 70) * 9525), cy = Math.round((CFG.brasaoA || 85) * 9525);
   var img = '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>'
@@ -1274,23 +1323,22 @@ function corpoOficio(c){
   return p.map(function(el){ return el.tabela ? tabelaIPs(c.linhas) : el; }).join("");
 }
 
-function docxOficio(cfg){
+function docxOficioComPapel(cfg, papelBytes){
   var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>'
-    + '<w:footerReference w:type="default" r:id="rId3"/>'
     + '<w:pgSz w:w="11906" w:h="16838"/>'
-    + '<w:pgMar w:top="3005" w:right="1418" w:bottom="1418" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>'
-    + "</w:sectPr>";
+    + '<w:pgMar w:top="3005" w:right="1418" w:bottom="1418" w:left="1701" w:header="0" w:footer="0" w:gutter="0"/>'
+    + '</w:sectPr>';
   var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:document")
-    + "<w:body>" + corpoOficio(cfg) + sect + "</w:body></w:document>";
+    + '<w:body>' + corpoOficio(cfg) + sect + '</w:body></w:document>';
 
   var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:styles")
-    + "<w:docDefaults><w:rPrDefault><w:rPr>"
+    + '<w:docDefaults><w:rPrDefault><w:rPr>'
     + '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="24"/><w:szCs w:val="24"/>'
-    + "</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr>"
+    + '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr>'
     + '<w:spacing w:after="120" w:line="360" w:lineRule="auto"/><w:jc w:val="both"/>'
-    + "</w:pPr></w:pPrDefault></w:docDefaults>"
+    + '</w:pPr></w:pPrDefault></w:docDefaults>'
     + '<w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/></w:style>'
-    + "</w:styles>";
+    + '</w:styles>';
 
   var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
@@ -1300,37 +1348,38 @@ function docxOficio(cfg){
     + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
     + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
     + '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
-    + '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
-    + "</Types>";
+    + '</Types>';
 
   var relsRoot = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
     + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
-    + "</Relationships>";
+    + '</Relationships>';
 
   var relsDoc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
     + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
     + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'
-    + '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'
-    + "</Relationships>";
+    + '</Relationships>';
 
   var relsHdr = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-    + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/brasao.png"/>'
-    + "</Relationships>";
+    + '<Relationship Id="rIdPapel" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/papel-pericia.png"/>'
+    + '</Relationships>';
 
   return zip([
-    {name:"[Content_Types].xml",        data: ct},
-    {name:"_rels/.rels",                data: relsRoot},
-    {name:"word/document.xml",          data: doc},
-    {name:"word/_rels/document.xml.rels", data: relsDoc},
-    {name:"word/styles.xml",            data: styles},
-    {name:"word/header1.xml",           data: headerXML()},
-    {name:"word/_rels/header1.xml.rels", data: relsHdr},
-    {name:"word/footer1.xml",           data: footerXML()},
-    {name:"word/media/brasao.png",      data: b64bin(CFG.brasao)}
+    {name:"[Content_Types].xml", data:ct},
+    {name:"_rels/.rels", data:relsRoot},
+    {name:"word/document.xml", data:doc},
+    {name:"word/_rels/document.xml.rels", data:relsDoc},
+    {name:"word/styles.xml", data:styles},
+    {name:"word/header1.xml", data:papelPericiaHeaderXML()},
+    {name:"word/_rels/header1.xml.rels", data:relsHdr},
+    {name:"word/media/papel-pericia.png", data:papelBytes}
   ]);
+}
+async function docxOficio(cfg){
+  var papel = await carregaPapelPericia();
+  return docxOficioComPapel(cfg, papel.bytes);
 }
 
 // ================= XLSX =================
@@ -1574,12 +1623,12 @@ function nomeArquivoOficio(c, nome, extensao){
   var base = "Oficio-" + limpaNome(c && c.numero ? c.numero : "oficio") + "-" + limpaNome(nome || "operadora");
   return base + "." + extensao;
 }
-function baixaOficio(idx){
+async function baixaOficio(idx){
   if(!validaIdentificacaoOficio()) return;
   var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
   if(!nome) return;
   var c = cfgOficio(nome, g[nome], idx);
-  var bytes = docxOficio(c);
+  var bytes = await docxOficio(c);
   baixaBin(bytes, nomeArquivoOficio(c, nome, "docx"),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 }
@@ -1652,10 +1701,11 @@ function exigePreviaOficio(){
   }
   return true;
 }
-function baixaDocxPrevia(){
+async function baixaDocxPrevia(){
   if(!exigePreviaOficio()) return;
   var c = PREVIA_OFICIO.cfg, nome = PREVIA_OFICIO.nome;
-  baixaBin(docxOficio(c), nomeArquivoOficio(c, nome, "docx"),
+  var bytes = await docxOficio(c);
+  baixaBin(bytes, nomeArquivoOficio(c, nome, "docx"),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 }
 function baixaPdfPrevia(){
@@ -1773,14 +1823,17 @@ function baixaXLSX(){
   baixaBin(xlsx(abas), "IPs-por-operadora-" + new Date().toISOString().slice(0,10) + ".xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
-function baixaPacote(){
+async function baixaPacote(){
   if(!validaIdentificacaoOficio()) return;
   var g = grupos(), nomes = Object.keys(g).sort(), arqs = [];
   var comPDF = document.getElementById("incPDF") && document.getElementById("incPDF").checked;
+  var papel;
+  try{ papel = await carregaPapelPericia(); }
+  catch(e){ msg((e && e.message) || String(e), "var(--erro)"); return; }
 
   nomes.forEach(function(n, i){
     var c = cfgOficio(n, g[n], i);
-    arqs.push({name: "oficios/" + nomeArquivoOficio(c, n, "docx"), data: docxOficio(c)});
+    arqs.push({name: "oficios/" + nomeArquivoOficio(c, n, "docx"), data: docxOficioComPapel(c, papel.bytes)});
     arqs.push({name: "planilhas/IPs-" + limpaNome(n) + ".csv", data: u8(csvDe(g[n]))});
   });
   var usados = {};
@@ -1940,7 +1993,53 @@ PDFDoc.prototype.tabela = function(cab, linhas, largs){
 };
 
 // ---- montagem do arquivo ----
-function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
+function u32be(b, o){ return ((b[o] << 24) | (b[o+1] << 16) | (b[o+2] << 8) | b[o+3]) >>> 0; }
+function concatU8(lista){
+  var total = lista.reduce(function(a,b){ return a + b.length; }, 0), out = new Uint8Array(total), p = 0;
+  lista.forEach(function(b){ out.set(b, p); p += b.length; });
+  return out;
+}
+function pngParaImagemPDF(bytes){
+  if(!bytes || bytes.length < 33) return null;
+  var sig = [137,80,78,71,13,10,26,10];
+  for(var i=0;i<8;i++) if(bytes[i] !== sig[i]) return null;
+  var p = 8, w = 0, h = 0, bit = 0, cor = -1, idats = [];
+  while(p + 12 <= bytes.length){
+    var len = u32be(bytes,p); p += 4;
+    if(p + 4 + len + 4 > bytes.length) return null;
+    var tipo = String.fromCharCode(bytes[p],bytes[p+1],bytes[p+2],bytes[p+3]); p += 4;
+    var dados = bytes.subarray(p,p+len); p += len + 4; // pula CRC
+    if(tipo === "IHDR"){
+      w = u32be(dados,0); h = u32be(dados,4); bit = dados[8]; cor = dados[9];
+    }else if(tipo === "IDAT") idats.push(dados);
+    else if(tipo === "IEND") break;
+  }
+  // O papel-pericia.png atual é RGB 8-bit. Nesse formato os IDAT podem ser
+  // usados diretamente no PDF com o preditor PNG, preservando o PNG sem JPEG.
+  if(!w || !h || bit !== 8 || cor !== 2 || !idats.length) return null;
+  return {bytes:concatU8(idats), l:w, a:h, colorSpace:"DeviceRGB", colors:3,
+    filter:"FlateDecode", decodeParms:"/Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns " + w};
+}
+function papelPericiaImagemPDF(cb){
+  carregaPapelPericia().then(function(papel){
+    var direto = pngParaImagemPDF(papel.bytes);
+    if(direto){ cb(direto); return; }
+    // Fallback para um PNG futuro com outro modo de cor: converte em JPEG em memória.
+    var blob = new Blob([papel.bytes], {type:"image/png"}), url = URL.createObjectURL(blob), img = new Image();
+    img.onload = function(){
+      try{
+        var c = document.createElement("canvas"); c.width = img.naturalWidth || img.width; c.height = img.naturalHeight || img.height;
+        var ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0);
+        var data = c.toDataURL("image/jpeg",0.98).split(",")[1];
+        cb({bytes:b64bin(data), l:c.width, a:c.height, colorSpace:"DeviceRGB", colors:3, filter:"DCTDecode", decodeParms:""});
+      }catch(e){ cb(null,e); }
+      finally{ URL.revokeObjectURL(url); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); cb(null,new Error("Não foi possível abrir papel-pericia.png.")); };
+    img.src = url;
+  }).catch(function(e){ cb(null,e); });
+}
+function montaPDF(paginas, imagem){
   var objs = [], enc = new TextEncoder();
   function obj(txt){ objs.push(txt); return objs.length; }
 
@@ -1948,26 +2047,10 @@ function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
   var partes = [];
   var buffers = [];
 
-  // conteúdo de cada página, com cabeçalho e rodapé
+  // O papel-pericia.png ocupa a folha inteira e é desenhado antes do texto.
+  // Assim o timbrado aparece em todas as páginas sem duplicar cabeçalho/rodapé.
   var conteudos = paginas.map(function(p){
-    var ops = [];
-    var cx = (PG.l - brasaoDim.l) / 2;
-    ops.push("q " + brasaoDim.l.toFixed(2) + " 0 0 " + brasaoDim.a.toFixed(2) + " "
-      + cx.toFixed(2) + " " + (PG.a - 28 - brasaoDim.a).toFixed(2) + " cm /Im1 Do Q");
-    var y = PG.a - 34 - brasaoDim.a;
-    cabecalho.forEach(function(l){
-      var w = larguraTexto(l, 9, true);
-      ops.push("BT /F2 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + y.toFixed(2)
-        + " Td (" + pdfStr(l) + ") Tj ET");
-      y -= 11;
-    });
-    var yr = 52;
-    rodape.forEach(function(l){
-      var w = larguraTexto(l, 9, false);
-      ops.push("BT /F1 9 Tf 0 Tw " + ((PG.l - w) / 2).toFixed(2) + " " + yr.toFixed(2)
-        + " Td (" + pdfStr(l) + ") Tj ET");
-      yr -= 11;
-    });
+    var ops = ["q " + PG.l.toFixed(2) + " 0 0 " + PG.a.toFixed(2) + " 0 0 cm /Im1 Do Q"];
     return ops.concat(p.ops).join("\n");
   });
 
@@ -1990,7 +2073,7 @@ function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
   });
   corpo[idFonte1] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
   corpo[idFonte2] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
-  corpo[idImg] = {img: jpeg, dims: dims};
+  corpo[idImg] = {img: imagem.bytes, dims:{l:imagem.l,a:imagem.a}, filter:imagem.filter, colorSpace:imagem.colorSpace, decodeParms:imagem.decodeParms};
 
   // serialização
   var pedacos = [], pos = [], total = 0;
@@ -2007,9 +2090,11 @@ function montaPDF(paginas, jpeg, dims, cabecalho, rodape, brasaoDim){
       push(s);
       push(enc.encode("\nendstream\nendobj\n"));
     } else {
+      var filtro = c.filter === "FlateDecode" ? "/FlateDecode" : "/DCTDecode";
+      var dec = c.decodeParms ? " /DecodeParms << " + c.decodeParms + " >>" : "";
       push(enc.encode(i + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + c.dims.l
-        + " /Height " + c.dims.a + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "
-        + c.img.length + " >>\nstream\n"));
+        + " /Height " + c.dims.a + " /ColorSpace /" + (c.colorSpace || "DeviceRGB")
+        + " /BitsPerComponent 8 /Filter " + filtro + dec + " /Length " + c.img.length + " >>\nstream\n"));
       push(c.img);
       push(enc.encode("\nendstream\nendobj\n"));
     }
@@ -2049,8 +2134,11 @@ function brasaoJPEG(cb){
 }
 
 function pdfOficio(c, cb){
-  brasaoJPEG(function(j){
-    if(!j){ cb(null); return; }
+  papelPericiaImagemPDF(function(j, erroPapel){
+    if(!j){
+      console.error(erroPapel || "Falha ao carregar papel-pericia.png");
+      cb(null); return;
+    }
     var d = new PDFDoc();
     d.novaPagina();
     var hoje = c.data ? new Date(c.data + "T12:00:00") : new Date();
@@ -2087,8 +2175,7 @@ function pdfOficio(c, cb){
     d.paragrafo(c.assinante || CFG.assinante, {jc:"center", negrito:true});
     d.paragrafo(c.cargo || CFG.cargo, {jc:"center"});
 
-    cb(montaPDF(d.paginas, j.bytes, {l:j.l, a:j.a}, CFG.cabecalho, CFG.rodape,
-      {l: (CFG.brasaoL || 70) * 0.75, a: (CFG.brasaoA || 85) * 0.75}));
+    cb(montaPDF(d.paginas, j));
   });
 }
 
