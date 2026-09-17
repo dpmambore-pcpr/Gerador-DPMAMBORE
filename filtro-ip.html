@@ -148,20 +148,30 @@ tbody tr:hover{background:#faf7f0!important}
 .prog{background:#eee8dc!important}
 .prog i{background:var(--pcpr-green)!important}
 footer{color:var(--suave)!important}
+
+/* ===== PRÉ-VISUALIZAÇÃO DO OFÍCIO ===== */
+body.modal-open{overflow:hidden}
+.preview-modal{position:fixed;inset:0;z-index:9999;background:rgba(14,24,21,.68);display:flex;align-items:center;justify-content:center;padding:16px}
+.preview-modal.hide{display:none!important}
+.preview-shell{width:min(1180px,calc(100vw - 24px));height:min(94vh,980px);background:#fff;border-radius:12px;box-shadow:0 24px 70px rgba(0,0,0,.32);display:flex;flex-direction:column;overflow:hidden;border:1px solid #bdb6a7}
+.preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:linear-gradient(110deg,var(--pcpr-ink),var(--pcpr-green-dark));color:#fff;border-bottom:4px solid var(--pcpr-gold)}
+.preview-head h3{margin:0;font-size:15px}.preview-head small{display:block;margin-top:3px;color:#e5e1d6;font-size:11px}
+.preview-tools{display:flex;gap:7px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--pcpr-line);background:#f7f4ed}
+.preview-tools button{min-height:36px}
+.preview-frame-wrap{flex:1;min-height:0;background:#dadada}
+.preview-frame{width:100%;height:100%;border:0;background:#fff}
+@media(max-width:760px){.preview-modal{padding:4px}.preview-shell{width:100%;height:98vh;border-radius:7px}.preview-head{align-items:flex-start}.preview-tools{padding:8px}}
 </style>
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.2.0",
+  version: "3.4.1",
   releaseDate: "17/09/2026",
   changes: [
-    "O campo de ofício agora aceita a digitação compacta do número, ano e iniciais; por exemplo, 012026wpm é convertido para 01/2026 - WPM.",
-    "O campo de inquérito agora aceita a digitação compacta do número e ano; por exemplo, 13542026 é convertido para 1354/2026.",
-    "O cabeçalho do documento combina automaticamente o inquérito e o ofício no padrão solicitado; por exemplo, 1354.2026.01/2026 - WPM.",
-    "O número do inquérito continua sendo preenchido separadamente na linha própria e nos demais pontos do modelo que utilizam {INQUERITO}.",
-    "Adicionado botão para enviar o ofício diretamente à pasta de assinatura da autoridade configurada, reutilizando a integração oficial da Central com o Google Drive.",
-    "O envio para a pasta de assinatura gera e transmite exclusivamente o PDF do ofício; o DOCX não é enviado ao Drive.",
-    "Na geração para múltiplas operadoras, somente a sequência do ofício é incrementada, preservando o ano, as iniciais e o mesmo inquérito."
+    "Centralizado o envio dos ofícios em um único botão.",
+    "Ajustado o rótulo do botão central: Enviar Doutor para uma operadora e Enviar todos Doutor para duas ou mais.",
+    "O envio em lote gera e transmite um PDF por operadora para a pasta de assinatura configurada, preservando a numeração sequencial dos ofícios.",
+    "Removidos os botões individuais de envio de cada operadora; pré-visualização e planilhas permanecem disponíveis individualmente."
   ]
 });
 </script>
@@ -191,7 +201,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <button id="btnCfgTopo" style="float:right;background:#1d5a94;border:1px solid rgba(255,255,255,.35)">Configurar para outra delegacia</button>
   <p id="hSub">Delegacia de Polícia Civil de Mamborê — 16ª SDP / PCPR · funciona offline, sem instalação · versão <span id="appVersion"></span></p>
 </header>
-<div class="security-note"><b>Processamento:</b> o filtro e a leitura dos arquivos ocorrem localmente. Ao usar “Identificar operadoras (online)”, somente os endereços necessários à identificação são consultados em serviços públicos de informação de rede. Ao escolher “Enviar PDF para pasta do Doutor”, somente o PDF gerado é enviado à pasta de assinatura da autoridade configurada no Google Drive. O token do ipinfo é opcional, usado somente na requisição e não é salvo pela Central.</div>
+<div class="security-note"><b>Processamento:</b> o filtro e a leitura dos arquivos ocorrem localmente. Ao usar “Identificar operadoras (online)”, somente os endereços necessários à identificação são consultados em serviços públicos de informação de rede. Ao escolher “Enviar Doutor” ou “Enviar todos Doutor”, somente os PDFs gerados são enviados à pasta de assinatura da autoridade configurada no Google Drive. O token do ipinfo é opcional, usado somente na requisição e não é salvo pela Central.</div>
 
 <main>
 
@@ -289,6 +299,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 
   <div class="linha" style="margin:12px 0 16px">
+    <button id="btnEnviarOficios">Enviar Doutor</button>
     <button id="btnPacote">Gerar todos os ofícios + planilhas (.zip)</button>
     <button class="sec" id="btnXLSX">Baixar XLSX (uma aba por operadora)</button>
     <label style="font-size:12.5px"><input type="checkbox" id="incPDF" checked> incluir PDF no pacote</label>
@@ -355,58 +366,28 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 </div>
 
-<div class="card" id="cardAtualizacao">
-  <h2>5. Atualização</h2>
-  <div id="changelogAtual"></div>
-  <div class="changelog-entry">
-    <h3>Versão 3.1.3</h3>
-    <div class="date">17/09/2026</div>
-    <ul>
-      <li>O campo “Ofício nº” agora recebe o número completo exatamente como deve aparecer no documento.</li>
-      <li>Removida a configuração separada de sufixo do número do ofício.</li>
-      <li>O ano e o sufixo não são mais acrescentados automaticamente ao documento.</li>
-      <li>Na geração em lote, somente o primeiro bloco numérico é incrementado; o restante do texto digitado é preservado.</li>
-    </ul>
-  </div>
-  <div class="changelog-entry">
-    <h3>Versão 3.1.2</h3>
-    <div class="date">17/09/2026</div>
-    <ul>
-      <li>Corrigida a identificação de operadora em lotes grandes, com reaproveitamento seguro de prefixos CIDR confirmados.</li>
-      <li>Adicionada consulta primária ao RIPEstat/RIPE NCC, mantendo ipinfo e ipwho.is como alternativas.</li>
-      <li>Adicionado o bloco verificado 2804:388::/30 da Claro S/A e mantidos os blocos verificados da Telefônica/Vivo.</li>
-      <li>Falhas temporárias de consulta deixaram de ser armazenadas como resultados definitivos.</li>
-    </ul>
-  </div>
-  <div class="changelog-entry">
-    <h3>Versão 3.1.1</h3>
-    <div class="date">17/09/2026</div>
-    <ul>
-      <li>Adicionados os prefixos IPv6 verificados da Telefônica/Vivo como fallback local.</li>
-      <li>Consolidada a geração de um único grupo/ofício para AS26599 e AS18881 quando pertencentes à TELEFÔNICA BRASIL S.A.</li>
-    </ul>
-  </div>
-  <div class="changelog-entry">
-    <h3>Versão 3.1.0</h3>
-    <div class="date">17/09/2026</div>
-    <ul>
-      <li>Adicionado suporte à importação direta de ZIP da Meta/WhatsApp.</li>
-      <li>Implementada localização automática de records.html e preservado o parser existente.</li>
-      <li>Consolidado o agrupamento de múltiplos ASNs pertencentes à mesma operadora.</li>
-      <li>Corrigida a leitura de IPv6 comprimido.</li>
-    </ul>
-  </div>
-  <div class="changelog-entry">
-    <h3>Versão 3.0.0 <span class="version-badge">base anterior</span></h3>
-    <div class="date">Histórico preservado a partir do arquivo-base recebido.</div>
-    <ul><li>Versão anterior à implementação da importação direta de ZIP.</li></ul>
+
+
+<div id="modalPreviaOficio" class="preview-modal hide" role="dialog" aria-modal="true" aria-labelledby="previaTitulo">
+  <div class="preview-shell">
+    <div class="preview-head">
+      <div><h3 id="previaTitulo">Pré-visualização do ofício</h3><small id="previaSubtitulo"></small></div>
+      <button type="button" class="sec" onclick="fechaPreviaOficio()" style="background:#fff;color:#23322d">Fechar</button>
+    </div>
+    <div class="preview-tools">
+      <button type="button" onclick="imprimePreviaOficio()">Imprimir</button>
+      <button type="button" onclick="baixaDocxPrevia()">Baixar DOCX</button>
+      <button type="button" onclick="baixaPdfPrevia()">Baixar PDF</button>
+      <button type="button" class="sec" onclick="baixaPlanilhaPrevia()">Baixar planilha (.xlsx)</button>
+    </div>
+    <div class="preview-frame-wrap"><iframe id="previaFrame" class="preview-frame" title="Pré-visualização do ofício em PDF"></iframe></div>
   </div>
 </div>
 
 </main>
 
 <footer>
-  Ferramenta local. O conteúdo dos arquivos e os filtros permanecem no navegador. Na identificação online, somente os IPs necessários são consultados nos serviços de rede. O PDF do ofício somente é enviado ao Google Drive quando o usuário aciona “Enviar PDF para pasta do Doutor”.<br>
+  Ferramenta local. O conteúdo dos arquivos e os filtros permanecem no navegador. Na identificação online, somente os IPs necessários são consultados nos serviços de rede. Os PDFs dos ofícios somente são enviados ao Google Drive quando o usuário aciona “Enviar Doutor” ou “Enviar todos Doutor”.<br>
   <span id="rodapeTela">Av. Augusto Mendes dos Santos, nº 997 — Centro — Mamborê/PR — CEP 87340-000 · dpmambore@pc.pr.gov.br · (44) 3568-1341</span><br><span>Versão <b id="appVersionRodape"></b></span>
 </footer>
 
@@ -484,12 +465,6 @@ function inicializaVersao(){
   if(v) v.textContent = APP_INFO.version;
   if(vr) vr.textContent = APP_INFO.version;
   document.title = "Filtro de IPs — Delegacia de Mamborê / PCPR · v" + APP_INFO.version;
-  var box = document.getElementById("changelogAtual");
-  if(box){
-    box.innerHTML = '<div class="changelog-entry"><h3>Versão ' + esc(APP_INFO.version)
-      + ' <span class="version-badge">atual</span></h3><div class="date">' + esc(APP_INFO.releaseDate)
-      + '</div><ul>' + APP_INFO.changes.map(function(c){ return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>';
-  }
 }
 
 function erroZipAmigavel(e){
@@ -772,17 +747,22 @@ function renderOps(){
   if(!temASN){ document.getElementById("cardOp").classList.add("hide"); return; }
   document.getElementById("cardOp").classList.remove("hide");
 
-  document.getElementById("ops").innerHTML = Object.keys(agrupados).sort().map(function(nome, idx){
+  var nomesAgrupados = Object.keys(agrupados).sort();
+  var btnEnviar = document.getElementById("btnEnviarOficios");
+  if(btnEnviar){
+    btnEnviar.textContent = nomesAgrupados.length > 1 ? "Enviar todos Doutor" : "Enviar Doutor";
+    btnEnviar.disabled = nomesAgrupados.length === 0;
+  }
+
+  document.getElementById("ops").innerHTML = nomesAgrupados.map(function(nome, idx){
     var ls = agrupados[nome];
     var ipsU = {}; ls.forEach(function(l){ ipsU[l.ip] = 1; });
     var bloco = ls.map(function(l){ return l.ip + "  —  " + br(l.data) + " às " + l.hora; }).join("\n");
     return '<div class="op"><h3>' + esc(nome) + "</h3>"
       + "<small>" + ls.length + " registro(s) · " + Object.keys(ipsU).length + " IP(s) único(s)</small><br>"
       + '<div class="linha" style="margin-top:8px">'
-      + '<button onclick="baixaOficio(' + idx + ')">Ofício .docx</button>'
-      + '<button onclick="baixaOficioPDF(' + idx + ')">Ofício .pdf</button>'
-      + '<button onclick="enviaOficioDoutor(this,' + idx + ')">Enviar PDF para pasta do Doutor</button>'
-      + '<button class="sec" onclick="baixaCSVOperadora(' + idx + ')">CSV</button>'
+      + '<button onclick="abrePreviaOficio(this,' + idx + ')">Pré-visualização</button>'
+      + '<button class="sec" onclick="baixaPlanilhaOperadora(' + idx + ')">Baixar planilha (.xlsx)</button>'
       + '<button class="sec" onclick="copiar(this,' + idx + ')">Copiar lista</button></div>'
       + '<textarea class="hide" id="blk' + idx + '">' + esc(bloco) + "</textarea></div>";
   }).join("");
@@ -1623,51 +1603,167 @@ function pdfOficioPromise(c){
     }catch(e){ reject(e); }
   });
 }
-async function enviaOficioDoutor(btn, idx){
+
+var PREVIA_OFICIO = {idx:-1, nome:"", cfg:null, pdfBytes:null, url:""};
+function limpaPreviaOficio(){
+  if(PREVIA_OFICIO.url){ try{ URL.revokeObjectURL(PREVIA_OFICIO.url); }catch(_){} }
+  PREVIA_OFICIO = {idx:-1, nome:"", cfg:null, pdfBytes:null, url:""};
+  var fr = document.getElementById("previaFrame"); if(fr) fr.removeAttribute("src");
+}
+async function abrePreviaOficio(btn, idx){
+  if(!validaIdentificacaoOficio()) return;
+  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
+  if(!nome) return;
+  var c = cfgOficio(nome, g[nome], idx);
+  var antigo = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "Gerando pré-visualização…"; }
+    var bytes = await pdfOficioPromise(c);
+    limpaPreviaOficio();
+    var blob = new Blob([bytes], {type:"application/pdf"});
+    var url = URL.createObjectURL(blob);
+    PREVIA_OFICIO = {idx:idx, nome:nome, cfg:c, pdfBytes:bytes, url:url};
+    var titulo = document.getElementById("previaTitulo");
+    var sub = document.getElementById("previaSubtitulo");
+    var frame = document.getElementById("previaFrame");
+    var modal = document.getElementById("modalPreviaOficio");
+    if(titulo) titulo.textContent = "Pré-visualização — " + nome.replace(/^AS\d+\s*/, "");
+    if(sub) sub.textContent = "OFÍCIO Nº " + c.numero + " · Inquérito Policial nº " + c.inquerito;
+    if(frame) frame.src = url;
+    if(modal) modal.classList.remove("hide");
+    document.body.classList.add("modal-open");
+  }catch(e){
+    console.error(e);
+    msg("Não foi possível gerar a pré-visualização: " + ((e && e.message) || e), "var(--erro)");
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = antigo || "Pré-visualização"; }
+  }
+}
+function fechaPreviaOficio(){
+  var modal = document.getElementById("modalPreviaOficio");
+  if(modal) modal.classList.add("hide");
+  document.body.classList.remove("modal-open");
+  limpaPreviaOficio();
+}
+function exigePreviaOficio(){
+  if(!PREVIA_OFICIO.cfg || PREVIA_OFICIO.idx < 0){
+    msg("Abra primeiro a pré-visualização do ofício.", "var(--erro)");
+    return false;
+  }
+  return true;
+}
+function baixaDocxPrevia(){
+  if(!exigePreviaOficio()) return;
+  var c = PREVIA_OFICIO.cfg, nome = PREVIA_OFICIO.nome;
+  baixaBin(docxOficio(c), nomeArquivoOficio(c, nome, "docx"),
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+}
+function baixaPdfPrevia(){
+  if(!exigePreviaOficio()) return;
+  baixaBin(PREVIA_OFICIO.pdfBytes, nomeArquivoOficio(PREVIA_OFICIO.cfg, PREVIA_OFICIO.nome, "pdf"), "application/pdf");
+}
+function imprimePreviaOficio(){
+  if(!exigePreviaOficio()) return;
+  var fr = document.getElementById("previaFrame");
+  try{
+    if(fr && fr.contentWindow){ fr.contentWindow.focus(); fr.contentWindow.print(); return; }
+  }catch(e){ console.warn("Impressão direta do visualizador indisponível", e); }
+  var w = window.open(PREVIA_OFICIO.url, "_blank");
+  if(!w) msg("O navegador bloqueou a janela de impressão. Libere pop-ups e tente novamente.", "var(--erro)");
+}
+function baixaPlanilhaPrevia(){
+  if(!exigePreviaOficio()) return;
+  baixaPlanilhaOperadora(PREVIA_OFICIO.idx);
+}
+async function enviaOficiosDoutor(btn){
   if(!validaIdentificacaoOficio()) return;
   if(!window.PCPRDrive || typeof window.PCPRDrive.uploadPdfForAuthority !== "function"){
     alert("A integração com a pasta de assinatura não foi carregada. Verifique se pcpr-drive.js está na mesma pasta do filtro.");
     return;
   }
 
-  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  if(!nome) return;
-  var c = cfgOficio(nome, g[nome], idx);
-  if(!c.assinante){
+  var g = grupos(), nomes = Object.keys(g).sort();
+  if(!nomes.length){
+    msg("Nenhuma operadora disponível para envio.", "var(--erro)");
+    return;
+  }
+
+  var c0 = cfgOficio(nomes[0], g[nomes[0]], 0);
+  if(!c0.assinante){
     msg("Informe o assinante para localizar a pasta de assinatura correspondente.", "var(--erro)");
     var a = document.getElementById("ofAssin"); if(a) a.focus();
     return;
   }
 
-  var textoAntigo = btn ? btn.textContent : "";
-  try{
-    if(btn){ btn.disabled = true; btn.textContent = "Gerando PDF…"; }
-    var bytes = await pdfOficioPromise(c);
-    if(btn) btn.textContent = "Enviando…";
+  var total = nomes.length;
+  var pergunta = total > 1
+    ? "Enviar todos os " + total + " ofícios em PDF para a pasta do Doutor?\n\nSerá enviado um PDF por operadora."
+    : "Enviar o ofício em PDF para a pasta do Doutor?";
+  if(!window.confirm(pergunta)) return;
 
-    // Reutiliza a integração oficial da Central. Este fluxo envia exclusivamente PDF.
-    var result = await window.PCPRDrive.uploadPdfForAuthority({
-      authorityName: c.assinante,
-      fileName: nomeArquivoOficio(c, nome, "pdf"),
-      bytes: bytes,
-      confirm: true
-    });
-    var autoridade = result && result.authority && result.authority.nome ? result.authority.nome : c.assinante;
-    msg("Ofício enviado em PDF para a pasta de assinatura de " + autoridade + ".", "var(--ok)");
+  var textoNormal = total > 1 ? "Enviar todos Doutor" : "Enviar Doutor";
+  var enviados = [], falhas = [];
+
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = total > 1 ? "Enviando 1 de " + total + "…" : "Enviando…"; }
+
+    for(var i = 0; i < total; i++){
+      var nome = nomes[i];
+      var c = cfgOficio(nome, g[nome], i);
+      try{
+        if(btn && total > 1) btn.textContent = "Enviando " + (i + 1) + " de " + total + "…";
+        var bytes = await pdfOficioPromise(c);
+        var result = await window.PCPRDrive.uploadPdfForAuthority({
+          authorityName: c.assinante,
+          fileName: nomeArquivoOficio(c, nome, "pdf"),
+          bytes: bytes,
+          confirm: false
+        });
+        enviados.push({nome:nome, result:result});
+      }catch(e){
+        if(e && e.cancelled) throw e;
+        console.error("Falha ao enviar ofício de " + nome, e);
+        falhas.push({nome:nome, erro:(e && e.message) ? e.message : String(e || "erro desconhecido")});
+      }
+    }
+
+    if(!falhas.length){
+      msg(total > 1
+        ? total + " ofícios enviados em PDF para a pasta do Doutor."
+        : "Ofício enviado em PDF para a pasta do Doutor.", "var(--ok)");
+    }else if(enviados.length){
+      var resumoParcial = enviados.length + " de " + total + " ofício(s) enviado(s). Falharam: "
+        + falhas.map(function(f){ return f.nome; }).join(", ") + ".";
+      msg(resumoParcial, "var(--erro)");
+      alert(resumoParcial + "\n\n" + falhas.map(function(f){ return f.nome + ": " + f.erro; }).join("\n"));
+    }else{
+      var resumoErro = "Nenhum ofício foi enviado. " + falhas.map(function(f){ return f.nome + ": " + f.erro; }).join(" | ");
+      msg(resumoErro, "var(--erro)");
+      alert("Não foi possível enviar os ofícios para a pasta do Doutor.\n\n" + falhas.map(function(f){ return f.nome + ": " + f.erro; }).join("\n"));
+    }
   }catch(e){
     if(!(e && e.cancelled)){
       console.error(e);
       var detalhe = (e && e.message) ? e.message : String(e || "erro desconhecido");
-      msg("Não foi possível enviar o PDF para a pasta de assinatura: " + detalhe, "var(--erro)");
-      alert("Não foi possível enviar o PDF para a pasta do Doutor: " + detalhe);
+      msg("Não foi possível concluir o envio: " + detalhe, "var(--erro)");
+      alert("Não foi possível concluir o envio para a pasta do Doutor: " + detalhe);
     }
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = textoAntigo || "Enviar PDF para pasta do Doutor"; }
+    if(btn){ btn.disabled = false; btn.textContent = textoNormal; }
   }
 }
 function baixaCSVOperadora(idx){
   var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
+  if(!nome) return;
   baixaBin(u8(csvDe(g[nome])), "IPs-" + limpaNome(nome) + ".csv", "text/csv;charset=utf-8");
+}
+function baixaPlanilhaOperadora(idx){
+  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
+  if(!nome) return;
+  var usados = {};
+  var aba = {nome:nomeAba(nome.replace(/^AS\d+\s*/, ""), usados), linhas:linhasPlan(g[nome])};
+  baixaBin(xlsx([aba]), "IPs-" + limpaNome(nome) + ".xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 function baixaXLSX(){
   var g = grupos(), usados = {}, abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
@@ -2202,9 +2298,14 @@ document.getElementById("btnProcTexto").onclick = function(){
 };
 document.getElementById("btnColar").onclick = function(){ document.getElementById("areaColar").classList.toggle("hide"); };
 document.getElementById("btnLimpar").onclick = function(){ location.reload(); };
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") fechaPreviaOficio(); });
+var modalPrevia = document.getElementById("modalPreviaOficio");
+if(modalPrevia) modalPrevia.addEventListener("click", function(e){ if(e.target === modalPrevia) fechaPreviaOficio(); });
+
 document.getElementById("btnCSV").onclick = baixaCSV;
 document.getElementById("btnXLSX").onclick = baixaXLSX;
 document.getElementById("btnPacote").onclick = baixaPacote;
+document.getElementById("btnEnviarOficios").onclick = function(){ enviaOficiosDoutor(this); };
 document.getElementById("ofJud").onchange = function(){
   document.getElementById("lblAutos").classList.toggle("hide", !this.checked);
 };
