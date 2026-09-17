@@ -152,19 +152,16 @@ footer{color:var(--suave)!important}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.1.1",
+  version: "3.1.2",
   releaseDate: "17/09/2026",
   changes: [
-    "Adicionado suporte à importação direta de arquivos ZIP da Meta/WhatsApp.",
-    "O sistema localiza automaticamente records.html na raiz ou em subpastas do ZIP.",
-    "Arquivos adicionais do ZIP, inclusive preservation-1.html e imagens, são ignorados.",
-    "Drag-and-drop e seleção por clique passam pelo mesmo fluxo central de processamento.",
-    "Incluído tratamento específico para ZIP inválido, corrompido, vazio, protegido e records.html ausente ou vazio.",
-    "Mantidos os formatos PDF, HTML, HTM, TXT e CSV e o mesmo parser já utilizado pelo records.html.",
-    "Consolidado o agrupamento por operadora para múltiplos ASNs da mesma empresa, mantendo o ASN visível como dado técnico.",
-    "Corrigida a identificação dos blocos IPv6 da Telefônica/Vivo quando as APIs externas não respondem.",
-    "Adicionado fallback local para 2804:18::/32 (AS26599) e 2804:7f0::/29 (AS18881), ambos da TELEFÔNICA BRASIL S.A.",
-    "Os IPs desses blocos agora são consolidados em uma única operadora e geram um único ofício mesmo sem resposta do ipinfo/ipwho.is."
+    "Corrigida a identificação de operadora em lotes grandes de IPs, evitando uma consulta externa independente para cada endereço quando vários IPs pertencem ao mesmo prefixo.",
+    "Adicionada consulta primária ao RIPEstat/RIPE NCC para obter prefixo e ASN; ipinfo e ipwho.is permanecem como alternativas quando necessário.",
+    "Implementado cache por prefixo: uma identificação confirmada para um bloco é reaproveitada somente para IPs que realmente pertencem ao CIDR retornado pela fonte.",
+    "Corrigida a possibilidade de tentar novamente IPs que falharam em consulta anterior; falhas não ficam mais gravadas como se fossem resultados válidos.",
+    "Adicionado o bloco 2804:388::/30, registrado para AS22085 Claro S/A, à tabela local de prefixos verificados.",
+    "Mantidos os blocos verificados da Telefônica/Vivo: 2804:18::/32 (AS26599) e 2804:7f0::/29 (AS18881).",
+    "Atualizadas as informações de privacidade da tela para refletir corretamente os serviços externos usados na identificação online."
   ]
 });
 </script>
@@ -192,7 +189,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <button id="btnCfgTopo" style="float:right;background:#1d5a94;border:1px solid rgba(255,255,255,.35)">Configurar para outra delegacia</button>
   <p id="hSub">Delegacia de Polícia Civil de Mamborê — 16ª SDP / PCPR · funciona offline, sem instalação · versão <span id="appVersion"></span></p>
 </header>
-<div class="security-note"><b>Processamento:</b> o filtro e a leitura do PDF ocorrem localmente. Somente ao usar “Identificar operadoras (online)” os IPs selecionados são enviados ao serviço ipinfo. Token opcional, quando digitado, é usado somente na requisição e não é salvo pela Central.</div>
+<div class="security-note"><b>Processamento:</b> o filtro e a leitura do PDF ocorrem localmente. Somente ao usar “Identificar operadoras (online)” os endereços necessários à identificação são consultados em serviços públicos de informação de rede. A consulta primária usa RIPEstat/RIPE NCC; ipinfo e ipwho.is são alternativas. O token do ipinfo é opcional, usado somente na requisição e não é salvo pela Central.</div>
 
 <main>
 
@@ -360,6 +357,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <h2>5. Atualização</h2>
   <div id="changelogAtual"></div>
   <div class="changelog-entry">
+    <h3>Versão 3.1.1</h3>
+    <div class="date">17/09/2026</div>
+    <ul>
+      <li>Adicionados os prefixos IPv6 verificados da Telefônica/Vivo como fallback local.</li>
+      <li>Consolidada a geração de um único grupo/ofício para AS26599 e AS18881 quando pertencentes à TELEFÔNICA BRASIL S.A.</li>
+    </ul>
+  </div>
+  <div class="changelog-entry">
     <h3>Versão 3.1.0</h3>
     <div class="date">17/09/2026</div>
     <ul>
@@ -379,7 +384,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 </main>
 
 <footer>
-  Ferramenta local. O conteúdo do PDF e os filtros não são enviados pela Central. Somente os endereços IP consultados são enviados ao ipinfo quando o usuário aciona a identificação online.<br>
+  Ferramenta local. O conteúdo dos arquivos e os filtros não são enviados pela Central. Na identificação online, somente os endereços IP necessários à consulta são enviados ao RIPEstat/RIPE NCC e, se necessário, aos serviços alternativos ipinfo/ipwho.is.<br>
   <span id="rodapeTela">Av. Augusto Mendes dos Santos, nº 997 — Centro — Mamborê/PR — CEP 87340-000 · dpmambore@pc.pr.gov.br · (44) 3568-1341</span><br><span>Versão <b id="appVersionRodape"></b></span>
 </footer>
 
@@ -430,6 +435,8 @@ var TS   = "(\\d{4}-\\d{2}-\\d{2})[ T]+(\\d{2}:\\d{2}:\\d{2})(?:\\s*(?:UTC|Z))?"
 var SCAN = new RegExp("(" + TS + ")|(" + IPV6 + ")|(" + IPV4 + ")", "g");
 
 var estado = { linhas: [], asn: {}, arquivos: [] };
+var cachePrefixosASN = [];
+var cacheTitularASN = {};
 
 // ---------------- extração de texto ----------------
 async function textoDoPDF(buffer, nome){
@@ -765,69 +772,224 @@ function copiar(btn, idx){
 }
 
 // ---------------- consulta de operadora ----------------
-async function consultaASN(){
-  var b = document.getElementById("btnASN"); b.disabled = true;
-  var token = document.getElementById("token").value.trim();
-  var pend = []; atual.forEach(function(l){ if(!estado.asn[l.ip]) pend.push(l.ip); });
-  pend = Array.from(new Set(pend));
-  if(!pend.length){ b.disabled = false; msg("Todos os IPs já estavam identificados."); return; }
+// Prefixos abaixo são recursos de numeração verificados em Registro.br/LACNIC.
+// Eles funcionam como fallback local para que uma indisponibilidade de API não impeça a geração do ofício.
+var PREFIXOS_OPERADORAS_VERIFICADOS = [
+  {cidr:"2804:18::/32",  asn:"AS26599", org:"TELEFÔNICA BRASIL S.A.", fonte:"Registro.br/LACNIC"},
+  {cidr:"2804:7f0::/29", asn:"AS18881", org:"TELEFÔNICA BRASIL S.A.", fonte:"Registro.br/LACNIC"},
+  {cidr:"2804:388::/30", asn:"AS22085", org:"Claro S/A", fonte:"Registro.br/LACNIC"}
+];
 
-  var feitos = 0, falhas = 0;
-  for(var i = 0; i < pend.length; i += 4){
-    await Promise.all(pend.slice(i, i+4).map(async function(ip){
-      estado.asn[ip] = await buscaIP(ip, token) || (falhas++, {});
-      barra(++feitos / pend.length);
-    }));
-    msg("Consultando operadoras… " + feitos + "/" + pend.length);
+function ipv4BigInt(ip){
+  var p = String(ip || "").trim().split(".");
+  if(p.length !== 4) return null;
+  var v = 0n;
+  for(var i=0;i<4;i++){
+    if(!/^\d+$/.test(p[i])) return null;
+    var n = Number(p[i]); if(n < 0 || n > 255) return null;
+    v = (v << 8n) + BigInt(n);
   }
-  barra(1);
-  msg(falhas ? (pend.length - falhas) + " de " + pend.length + " IPs identificados. Falhas costumam ser bloqueio do proxy ou limite da API — informe um token do ipinfo." 
-             : pend.length + " IPs identificados.", falhas ? "var(--alerta)" : "var(--ok)");
-  b.disabled = false;
-  processa();
+  return v;
+}
+function ipv6BigInt(ip){
+  var texto = String(ip || "").trim().toLowerCase();
+  if(!texto || texto.indexOf(":") < 0) return null;
+  // IPv4 mapeado no final, ex.: ::ffff:192.0.2.1
+  var m4 = texto.match(/(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if(m4){
+    var b4 = ipv4BigInt(m4[1]);
+    if(b4 === null) return null;
+    var hi = Number((b4 >> 16n) & 0xffffn).toString(16);
+    var lo = Number(b4 & 0xffffn).toString(16);
+    texto = texto.slice(0, m4.index) + hi + ":" + lo;
+  }
+  if((texto.match(/::/g) || []).length > 1) return null;
+  var lados = texto.split("::"), esq = lados[0] ? lados[0].split(":") : [];
+  var dir = lados.length === 2 && lados[1] ? lados[1].split(":") : [];
+  if(lados.length === 1 && esq.length !== 8) return null;
+  var faltam = 8 - esq.length - dir.length;
+  if(faltam < 0 || (lados.length === 2 && faltam < 1)) return null;
+  var partes = esq.concat(new Array(lados.length === 2 ? faltam : 0).fill("0"), dir);
+  if(partes.length !== 8) return null;
+  var v = 0n;
+  for(var i=0;i<8;i++){
+    if(!/^[0-9a-f]{1,4}$/.test(partes[i])) return null;
+    v = (v << 16n) + BigInt(parseInt(partes[i],16));
+  }
+  return v;
+}
+function ipPertenceCIDR(ip, cidr){
+  try{
+    var p = String(cidr || "").trim().split("/");
+    if(p.length !== 2) return false;
+    var v6 = p[0].indexOf(":") >= 0, bits = v6 ? 128 : 32;
+    if((String(ip).indexOf(":") >= 0) !== v6) return false;
+    var pref = Number(p[1]);
+    if(!Number.isInteger(pref) || pref < 0 || pref > bits) return false;
+    var a = v6 ? ipv6BigInt(ip) : ipv4BigInt(ip);
+    var n = v6 ? ipv6BigInt(p[0]) : ipv4BigInt(p[0]);
+    if(a === null || n === null) return false;
+    var desloc = BigInt(bits - pref);
+    return desloc === 0n ? a === n : (a >> desloc) === (n >> desloc);
+  }catch(e){ return false; }
+}
+function orgComASN(asn, org){
+  var a = String(asn || "").trim().toUpperCase();
+  if(a && !/^AS\d+$/.test(a) && /^\d+$/.test(a)) a = "AS" + a;
+  var o = String(org || "").trim();
+  if(a && o && o.toUpperCase().indexOf(a) === 0) return o;
+  return (a ? a + " " : "") + o;
+}
+function registraPrefixoCache(cidr, info){
+  if(!cidr || !String(cidr).includes("/") || !info || !info.org) return;
+  if(cachePrefixosASN.some(function(x){ return x.cidr === cidr && x.org === info.org; })) return;
+  cachePrefixosASN.push({cidr:cidr, org:info.org, city:"", region:"", fonte:info.fonte || "cache-prefixo"});
 }
 function operadoraLocalPorIP(ip){
-  var partes = String(ip || "").trim().toLowerCase().split(":");
-  if(partes.length < 2) return null;
-
-  // Registro.br/LACNIC: 2804:18::/32 -> AS26599 -> TELEFÔNICA BRASIL S.A.
-  if(partes[0] === "2804" && partes[1] === "18"){
-    return {org:"AS26599 TELEFÔNICA BRASIL S.A.", city:"", region:"", fonte:"prefixo-local"};
-  }
-
-  // Registro.br/LACNIC: 2804:7f0::/29 -> AS18881 -> TELEFÔNICA BRASIL S.A.
-  // Um /29 iniciado em 0x7f0 abrange os segundos hextetos 7f0 até 7f7.
-  if(partes[0] === "2804" && /^[0-9a-f]+$/.test(partes[1])){
-    var h = parseInt(partes[1], 16);
-    if(h >= 0x7f0 && h <= 0x7f7){
-      return {org:"AS18881 TELEFÔNICA BRASIL S.A.", city:"", region:"", fonte:"prefixo-local"};
+  for(var i=0;i<PREFIXOS_OPERADORAS_VERIFICADOS.length;i++){
+    var p = PREFIXOS_OPERADORAS_VERIFICADOS[i];
+    if(ipPertenceCIDR(ip, p.cidr)){
+      return {org:orgComASN(p.asn,p.org), city:"", region:"", prefix:p.cidr, fonte:p.fonte};
     }
+  }
+  for(var j=0;j<cachePrefixosASN.length;j++){
+    var c = cachePrefixosASN[j];
+    if(ipPertenceCIDR(ip, c.cidr)) return {org:c.org, city:"", region:"", prefix:c.cidr, fonte:c.fonte || "cache-prefixo"};
   }
   return null;
 }
+async function fetchJSON(url, timeoutMs){
+  var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, timeoutMs || 7000) : null;
+  try{
+    var r = await fetch(url, ctrl ? {signal:ctrl.signal} : undefined);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+  finally{ if(timer) clearTimeout(timer); }
+}
+function valorWhois(records, chaves){
+  if(!Array.isArray(records)) return "";
+  var wanted = chaves.map(function(k){return k.toLowerCase();});
+  for(var w=0;w<wanted.length;w++){
+    for(var i=0;i<records.length;i++){
+      var rec = records[i]; if(!Array.isArray(rec)) continue;
+      for(var j=0;j<rec.length;j++){
+        var e = rec[j] || {};
+        if(String(e.key || "").toLowerCase() === wanted[w] && String(e.value || "").trim()) return String(e.value).trim();
+      }
+    }
+  }
+  return "";
+}
+async function buscaRIPEstat(ip){
+  // 1) WHOIS do RIR: prioriza a titularidade/numeração registrada para o endereço.
+  var who = await fetchJSON("https://stat.ripe.net/data/whois/data.json?resource=" + encodeURIComponent(ip), 7000);
+  if(who && who.data){
+    var recs = who.data.records || [];
+    var asn = valorWhois(recs,["aut-num","origin"]);
+    var org = valorWhois(recs,["owner","org-name","orgname","organization","descr","netname"]);
+    var prefix = valorWhois(recs,["inet6num"]);
+    if(!prefix){
+      var inetnum = valorWhois(recs,["inetnum"]);
+      if(inetnum && inetnum.indexOf("/") >= 0) prefix = inetnum;
+    }
+    if(asn || org){
+      var info = {org:orgComASN(asn,org), city:"", region:"", prefix:prefix || "", fonte:"RIPEstat/WHOIS"};
+      if(info.org.trim()) return info;
+    }
+  }
 
+  // 2) Se o WHOIS não trouxer ASN/titular de forma aproveitável, usa dados de roteamento do RIPE RIS.
+  var net = await fetchJSON("https://stat.ripe.net/data/network-info/data.json?resource=" + encodeURIComponent(ip), 7000);
+  if(net && net.data && Array.isArray(net.data.asns) && net.data.asns.length){
+    var asnNum = String(net.data.asns[0]).replace(/^AS/i,"");
+    var asnTxt = "AS" + asnNum;
+    var holder = cacheTitularASN[asnTxt] || "";
+    if(!holder){
+      var ov = await fetchJSON("https://stat.ripe.net/data/as-overview/data.json?resource=" + encodeURIComponent(asnTxt), 7000);
+      holder = ov && ov.data && ov.data.holder ? String(ov.data.holder).trim() : "";
+      if(holder) cacheTitularASN[asnTxt] = holder;
+    }
+    return {org:orgComASN(asnTxt,holder), city:"", region:"", prefix:(net.data.prefix || ""), fonte:"RIPEstat/RIS"};
+  }
+  return null;
+}
 async function buscaIP(ip, token){
-  // Para blocos cuja titularidade estável já é conhecida, não depender de API externa.
   var local = operadoraLocalPorIP(ip);
   if(local) return local;
 
+  var ripe = await buscaRIPEstat(ip);
+  if(ripe && ripe.org){
+    if(ripe.prefix) registraPrefixoCache(ripe.prefix, ripe);
+    return ripe;
+  }
+
+  // Alternativa 1: ipinfo (token opcional)
   try{
-    var u = "https://ipinfo.io/" + ip + "/json" + (token ? "?token=" + encodeURIComponent(token) : "");
-    var r = await fetch(u);
-    if(r.ok){
-      var j = await r.json();
-      if(j.org || j.asn) return {org: j.org || (j.asn && j.asn.name) || "", city: j.city || "", region: j.region || ""};
-    }
+    var u = "https://ipinfo.io/" + encodeURIComponent(ip) + "/json" + (token ? "?token=" + encodeURIComponent(token) : "");
+    var j = await fetchJSON(u, 7000);
+    if(j && (j.org || j.asn)) return {org:j.org || (j.asn && j.asn.name) || "", city:j.city || "", region:j.region || "", fonte:"ipinfo"};
   }catch(e){}
+
+  // Alternativa 2: ipwho.is
   try{
-    var r2 = await fetch("https://ipwho.is/" + ip);
-    var j2 = await r2.json();
+    var j2 = await fetchJSON("https://ipwho.is/" + encodeURIComponent(ip), 7000);
     if(j2 && j2.success !== false){
       var c = j2.connection || {};
-      return {org: (c.asn ? "AS" + c.asn + " " : "") + (c.org || c.isp || ""), city: j2.city || "", region: j2.region || ""};
+      var org2 = (c.asn ? "AS" + c.asn + " " : "") + (c.org || c.isp || "");
+      if(org2.trim()) return {org:org2.trim(), city:j2.city || "", region:j2.region || "", fonte:"ipwho.is"};
     }
   }catch(e){}
   return null;
+}
+async function consultaASN(){
+  var b = document.getElementById("btnASN"); b.disabled = true;
+  var token = document.getElementById("token").value.trim();
+  var pend = [];
+  atual.forEach(function(l){
+    var a = estado.asn[l.ip];
+    // Resultado vazio de tentativa anterior NÃO bloqueia nova tentativa.
+    if(!a || !a.org) pend.push(l.ip);
+  });
+  pend = Array.from(new Set(pend));
+  if(!pend.length){ b.disabled = false; msg("Todos os IPs já estavam identificados."); return; }
+
+  var concluidos = 0;
+  for(var i=0;i<pend.length;i++){
+    var ip = pend[i];
+    if(estado.asn[ip] && estado.asn[ip].org){ concluidos++; continue; }
+
+    // Antes de consultar a internet, verifica se um prefixo já confirmado cobre este IP.
+    var cached = operadoraLocalPorIP(ip);
+    var info = cached || await buscaIP(ip, token);
+    if(info && info.org){
+      estado.asn[ip] = info;
+      if(info.prefix){
+        registraPrefixoCache(info.prefix, info);
+        // Reaproveita apenas para endereços realmente contidos no CIDR confirmado.
+        for(var j=i+1;j<pend.length;j++){
+          var outro = pend[j];
+          if((!estado.asn[outro] || !estado.asn[outro].org) && ipPertenceCIDR(outro, info.prefix)){
+            estado.asn[outro] = {org:info.org, city:"", region:"", prefix:info.prefix, fonte:info.fonte || "prefixo-confirmado"};
+          }
+        }
+      }
+    }
+    concluidos = pend.filter(function(x){ return estado.asn[x] && estado.asn[x].org; }).length;
+    barra((i+1) / pend.length);
+    if(i % 10 === 0 || i === pend.length-1) msg("Identificando operadoras… " + concluidos + "/" + pend.length + " identificados");
+  }
+
+  barra(1);
+  var identificados = pend.filter(function(ip){ return estado.asn[ip] && estado.asn[ip].org; }).length;
+  var falhas = pend.length - identificados;
+  msg(falhas
+      ? identificados + " de " + pend.length + " IPs identificados. " + falhas + " não responderam às fontes consultadas; é possível tentar novamente e, opcionalmente, informar um token do ipinfo."
+      : pend.length + " IPs identificados.",
+      falhas ? "var(--alerta)" : "var(--ok)");
+  b.disabled = false;
+  processa();
 }
 
 // ---------------- exportação ----------------
