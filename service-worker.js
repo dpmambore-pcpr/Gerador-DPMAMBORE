@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.21';
+const CACHE_VERSION='pcpr-central-v3.0.22';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -20,6 +20,7 @@ const CORE_FILES=[
   './erb.html',
   './favicon.png',
   './filtro-ip.html',
+  './filtro-ip-core.js',
   './fundo-rotativo-certidoes.html',
   './fundo-rotativo.html',
   './icon-192.png',
