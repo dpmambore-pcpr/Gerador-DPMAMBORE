@@ -903,17 +903,25 @@ input:focus,select:focus,textarea:focus{border-color:#6a9a84;box-shadow:0 0 0 3p
 .filterpill{display:none;align-items:center;gap:5px;background:#604d21;color:#f9e3a2;border:1px solid #80672b;border-radius:999px;padding:5px 8px;font-size:8.7px;font-weight:900;pointer-events:auto}.filterpill.show{display:flex}
 .coordbar{position:absolute;z-index:920;left:50px;bottom:8px;background:rgba(7,15,12,.92);border:1px solid #3b5c4e;border-radius:7px;padding:6px 8px;font:9.7px monospace;cursor:pointer}
 .timelinebar{position:absolute;z-index:910;left:50%;transform:translateX(-50%);bottom:42px;width:min(820px,78%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px;display:none;box-shadow:var(--shadow)}.timelinebar.show{display:block}
-.timescrub{position:absolute;z-index:912;left:42%;transform:translateX(-50%);bottom:42px;width:min(560px,54%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px 10px;display:none;box-shadow:var(--shadow)}
+.timescrub{position:absolute;z-index:912;left:42%;transform:translateX(-50%);bottom:42px;width:min(640px,62%);background:rgba(7,15,12,.96);border:1px solid #3b5c4e;border-radius:10px;padding:8px 12px 9px;display:none;box-shadow:var(--shadow)}
 .timescrub.show{display:block}
-.timescrub-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px}
+.timescrub-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px}
 .timescrub-head b{font-size:9.4px;letter-spacing:.06em;color:#f0d890}
 .timescrub-head span{font-size:10.2px;font-weight:850;color:#e8efe9;font-variant-numeric:tabular-nums}
-.timescrub input[type=range]{width:100%;margin:3px 0 4px;accent-color:#c5a253;cursor:pointer;height:18px}
-.timescrub-meta{display:flex;justify-content:space-between;gap:8px;font-size:8.7px;color:#c6d6ce;line-height:1.35}
+.timescrub-hint{font-size:8.2px;color:#9eb0a8;line-height:1.35;margin:0 0 4px}
+.timescrub-dual{position:relative;height:28px;margin:0 10px 2px;touch-action:none;cursor:pointer}
+.timescrub-rail{position:absolute;left:0;right:0;top:12px;height:5px;background:#1d3329;border:1px solid #3b5c4e;border-radius:99px;pointer-events:none}
+.timescrub-fill{position:absolute;top:12px;height:5px;background:#c5a253;border-radius:99px;pointer-events:none;min-width:0}
+.timescrub-thumb{position:absolute;top:3px;width:22px;height:22px;margin-left:-11px;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 6px rgba(0,0,0,.45);cursor:ew-resize;z-index:2;padding:0;touch-action:none}
+.timescrub-thumb.start{background:#8fcdb0;z-index:3}
+.timescrub-thumb.end{background:#c5a253;z-index:4}
+.timescrub-thumb:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.timescrub-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:8.7px;color:#c6d6ce;line-height:1.35}
 .timescrub-meta strong{color:#f5e0a3}
-.mapwrap.has-timescrub .timelinebar{bottom:118px}
-.mapwrap.has-timescrub .map3d-hint{bottom:118px}
-.mapwrap.has-timescrub .heat-legend,.mapwrap.has-timescrub .geo{bottom:118px}
+.timescrub-meta .muted-k{display:block;font-size:7.8px;letter-spacing:.04em;color:#8ea198;font-weight:800;margin-bottom:1px}
+.mapwrap.has-timescrub .timelinebar{bottom:138px}
+.mapwrap.has-timescrub .map3d-hint{bottom:138px}
+.mapwrap.has-timescrub .heat-legend,.mapwrap.has-timescrub .geo{bottom:138px}
 .mapwrap.has-timescrub .coordbar{bottom:8px}
 .timelinehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.timeitems{display:flex;gap:6px;overflow:auto}.timeitem{min-width:150px;border:1px solid #335244;background:#102019;border-radius:7px;padding:6px;cursor:pointer;font-size:8.9px}.timeitem.active{border-color:#fff}
 .drawerback{position:fixed;inset:0;z-index:1600;background:rgba(0,0,0,.42);display:none}.drawerback.show{display:block}.drawer{position:absolute;top:0;right:0;width:min(440px,94vw);height:100%;background:#0e1b16;border-left:1px solid #36594a;box-shadow:-10px 0 35px rgba(0,0,0,.35);overflow:auto;padding:14px}
@@ -1228,8 +1236,17 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 
   <div class="timescrub" id="timeScrub">
     <div class="timescrub-head"><b>LINHA DO TEMPO</b><span id="timeScrubCount">0 conexões</span></div>
-    <input id="timeScrubRange" type="range" min="0" max="0" value="0" step="1" aria-label="Arrastar a linha do tempo das conexões">
-    <div class="timescrub-meta"><span id="timeScrubWhen">—</span><span id="timeScrubErb">Arraste para inserir as ERBs em ordem cronológica</span></div>
+    <div class="timescrub-hint">Ponto da direita avança. Ponto da esquerda puxa do início e vai diminuindo até o fim.</div>
+    <div class="timescrub-dual" id="timeScrubTrack" role="group" aria-label="Janela da linha do tempo">
+      <div class="timescrub-rail"></div>
+      <div class="timescrub-fill" id="timeScrubFill"></div>
+      <button type="button" class="timescrub-thumb start" id="timeScrubThumbStart" aria-label="Início da linha do tempo"></button>
+      <button type="button" class="timescrub-thumb end" id="timeScrubThumbEnd" aria-label="Fim da linha do tempo"></button>
+    </div>
+    <div class="timescrub-meta">
+      <span id="timeScrubStartMeta"><span class="muted-k">INÍCIO</span>—</span>
+      <span id="timeScrubErb"><span class="muted-k">FIM</span>Arraste para inserir as ERBs em ordem cronológica</span>
+    </div>
   </div>
 
   <div class="timelinebar" id="timelinebar">
@@ -1244,7 +1261,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
     <div class="route-note">Trajeto cronológico estimado a partir da sequência de ERBs/CGIs após os filtros aplicados. A linha entre antenas serve para visualizar a ordem de utilização das ERBs e <b>não representa percurso GPS, via efetivamente utilizada ou posição exata do terminal</b>.</div>
   </div>
 
-  <div class="heat-legend" id="heatLegend"><b>MAPA DE CALOR / INCIDÊNCIA</b><div class="heat-scale"></div><div>Intensidade representa recorrência de conexões no local até o ponto da linha do tempo. Ao voltar a uma ERB, o calor aumenta. Não representa localização exata do terminal.</div></div>
+  <div class="heat-legend" id="heatLegend"><b>MAPA DE CALOR / INCIDÊNCIA</b><div class="heat-scale"></div><div>Intensidade representa recorrência de conexões no recorte da linha do tempo. Ao avançar, o calor cresce; ao puxar o início em direção ao fim, as conexões diminuem. Não representa localização exata do terminal.</div></div>
 
   <div class="geo" id="geoPanel">
     <h3>INTERSEÇÃO — ÁREA DE CONVERGÊNCIA ESTIMADA</h3><div class="muted" style="margin:-3px 0 8px">Inferência geométrica dos setores visíveis; não representa a posição exata do aparelho.</div>
@@ -1514,32 +1531,61 @@ function chronoDated(f=state.filters){
   });
 }
 function locHeatKey(ev){return `${Number(ev.lat).toFixed(5)}|${Number(ev.lng).toFixed(5)}`}
+function storedTimeScrub(value){
+  if(value==null||value==='')return null;
+  if(Number.isInteger(value))return {from:0,to:value};
+  if(typeof value==='object'){
+    const from=Number.isInteger(value.from)?value.from:(Number.isInteger(value.start)?value.start:null);
+    const to=Number.isInteger(value.to)?value.to:(Number.isInteger(value.end)?value.end:null);
+    if(from==null&&to==null)return null;
+    return {from:from||0,to:to==null?from||0:to};
+  }
+  const n=Number(value);
+  return Number.isFinite(n)?{from:0,to:n}:null;
+}
+function timeScrubWindow(f=state.filters){
+  const chrono=chronoDated(f),last=Math.max(0,chrono.length-1);
+  const raw=storedTimeScrub(state.timeScrub);
+  let from=0,to=last;
+  if(raw){from=raw.from;to=raw.to}
+  from=Math.max(0,Math.min(last,from|0));
+  to=Math.max(0,Math.min(last,to|0));
+  if(from>to)from=to;
+  return {from,to,last,chrono,full:!chrono.length||(from===0&&to===last)};
+}
 function timeScrubIndex(){
-  const chrono=chronoDated();
-  if(!chrono.length)return null;
-  if(state.timeScrub==null||state.timeScrub==='')return chrono.length-1;
-  return Math.max(0,Math.min(chrono.length-1,Number(state.timeScrub)||0));
+  const w=timeScrubWindow();
+  return w.chrono.length?w.to:null;
 }
 function setTimeScrub(index){
   const chrono=chronoDated();
   if(!chrono.length){state.timeScrub=null;return null}
   if(index==null||index===''){state.timeScrub=null;return chrono.length-1}
-  state.timeScrub=Math.max(0,Math.min(chrono.length-1,Number(index)||0));
+  const w=timeScrubWindow();
+  const to=Math.max(0,Math.min(chrono.length-1,Number(index)||0));
+  state.timeScrub={from:Math.min(w.from,to),to};
+  return state.timeScrub.to;
+}
+function setTimeScrubWindow(from,to){
+  const chrono=chronoDated();
+  if(!chrono.length){state.timeScrub=null;return null}
+  const last=chrono.length-1;
+  from=Math.max(0,Math.min(last,from|0));
+  to=Math.max(0,Math.min(last,to|0));
+  if(from>to)from=to;
+  state.timeScrub={from,to};
   return state.timeScrub;
 }
 function timeScrubSlice(){
-  const chrono=chronoDated(),idx=timeScrubIndex();
-  if(idx==null)return[];
-  return chrono.slice(0,idx+1);
+  const {from,to,chrono}=timeScrubWindow();
+  return chrono.length?chrono.slice(from,to+1):[];
 }
 function filteredEvents(f=state.filters,opts={}){
   const list=matchedEvents(f,opts);
   if(opts.ignoreTimeScrub)return list;
-  const chrono=chronoDated(f);
-  if(!chrono.length)return list;
-  const idx=timeScrubIndex();
-  if(idx==null||idx>=chrono.length-1)return list;
-  const allowed=new Set(chrono.slice(0,idx+1).map(x=>x.ev.id));
+  const w=timeScrubWindow(f);
+  if(!w.chrono.length||w.full)return list;
+  const allowed=new Set(w.chrono.slice(w.from,w.to+1).map(x=>x.ev.id));
   return list.filter(ev=>allowed.has(ev.id));
 }
 function sectorGroups(){
@@ -1725,32 +1771,46 @@ function drawTimeScrubPath(){
     L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.32}).addTo(pathG);
     L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#c5a253',weight:4,opacity:.92}).addTo(pathG);
   }
-  if(cfg.showSeq)slice.forEach((x,i)=>{
-    const current=i===slice.length-1;
-    const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
-    L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
-  });
+  if(cfg.showSeq){
+    const from=timeScrubWindow().from;
+    slice.forEach((x,i)=>{
+      const current=i===slice.length-1;
+      const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(from+i+1),iconSize:[26,26],iconAnchor:[13,13]});
+      L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
+    });
+  }
 }
 function updateTimeScrubUi(){
-  const bar=$('timeScrub'),range=$('timeScrubRange'),wrap=$('mapWrap');
-  if(!bar||!range)return;
-  const chrono=chronoDated();
+  const bar=$('timeScrub'),track=$('timeScrubTrack'),fill=$('timeScrubFill'),startThumb=$('timeScrubThumbStart'),endThumb=$('timeScrubThumbEnd'),wrap=$('mapWrap');
+  if(!bar||!track)return;
+  const w=timeScrubWindow(),chrono=w.chrono;
   if(!chrono.length){
     bar.classList.remove('show');wrap?.classList.remove('has-timescrub');
     return;
   }
   bar.classList.add('show');wrap?.classList.add('has-timescrub');
-  const idx=timeScrubIndex(),slice=chrono.slice(0,idx+1),cur=slice[slice.length-1];
-  if(range.max!==String(chrono.length-1))range.max=String(chrono.length-1);
-  range.min='0';
-  if(range.value!==String(idx))range.value=String(idx);
+  const {from,to,last}=w,slice=chrono.slice(from,to+1),first=slice[0],cur=slice[slice.length-1];
+  const pct=last===0?50:100*from/last,pctTo=last===0?50:100*to/last;
+  if(fill){fill.style.left=pct+'%';fill.style.width=Math.max(0,pctTo-pct)+'%'}
+  if(startThumb){
+    startThumb.style.left=pct+'%';
+    startThumb.setAttribute('aria-valuemin','1');
+    startThumb.setAttribute('aria-valuemax',String(chrono.length));
+    startThumb.setAttribute('aria-valuenow',String(from+1));
+  }
+  if(endThumb){
+    endThumb.style.left=pctTo+'%';
+    endThumb.setAttribute('aria-valuemin','1');
+    endThumb.setAttribute('aria-valuemax',String(chrono.length));
+    endThumb.setAttribute('aria-valuenow',String(to+1));
+  }
   const locCounts=new Map();
   slice.forEach(x=>{const k=locHeatKey(x.ev);locCounts.set(k,(locCounts.get(k)||0)+1)});
   const here=cur?locCounts.get(locHeatKey(cur.ev))||1:0;
   const places=locCounts.size;
-  if($('timeScrubCount'))$('timeScrubCount').textContent=`${slice.length} conexão(ões) · ${places} local(is)`;
-  if($('timeScrubWhen'))$('timeScrubWhen').textContent=cur?cur.d.toLocaleString('pt-BR'):'—';
-  if($('timeScrubErb'))$('timeScrubErb').innerHTML=cur?`<strong>${esc(erbDisplayName(cur.ev))}</strong>${here>1?' · '+here+' conexões neste local':''}`:'Arraste para inserir as ERBs';
+  if($('timeScrubCount'))$('timeScrubCount').textContent=`${from+1}→${to+1} · ${slice.length} conexão(ões) · ${places} local(is)`;
+  if($('timeScrubStartMeta'))$('timeScrubStartMeta').innerHTML=`<span class="muted-k">INÍCIO · ${from+1}</span>${first?`<strong>${esc(erbDisplayName(first.ev))}</strong><br>${esc(first.d.toLocaleString('pt-BR'))}`:'—'}`;
+  if($('timeScrubErb'))$('timeScrubErb').innerHTML=`<span class="muted-k">FIM · ${to+1}</span>${cur?`<strong>${esc(erbDisplayName(cur.ev))}</strong>${here>1?' · '+here+' conexões neste local':''}<br>${esc(cur.d.toLocaleString('pt-BR'))}`:'Arraste para inserir as ERBs'}`;
 }
 function drawHeatmap(groups=sectorGroups()){
   const scrubOn=chronoDated().length>0;
@@ -4257,7 +4317,7 @@ function applySnapshot(o){
     state.events.forEach(e=>{if(!e.displayMode)e.displayMode='normal';if(!e.radiusSource)e.radiusSource='LEGADO / NÃO INFORMADO';e.az=normAz(Number(e.az));if(!e.sourceFile&&e.source)e.sourceFile=e.source});
     state.filters=normalizedFilters(o.filters||{},Number(o.filterSchema||0)<2);state.heatMode=['normal','heat','both'].includes(o.heatMode)?o.heatMode:'normal';
     state.trajectorySelection=o.trajectorySelection&&typeof o.trajectorySelection==='object'?{enabled:Boolean(o.trajectorySelection.enabled),lotIds:Array.isArray(o.trajectorySelection.lotIds)?o.trajectorySelection.lotIds:[],cgis:Array.isArray(o.trajectorySelection.cgis)?o.trajectorySelection.cgis:[]}:{enabled:false,lotIds:[],cgis:[]};
-    state.trajectoryVisible=Boolean(o.trajectoryVisible);state.trajectoryIndex=Number(o.trajectoryIndex)||0;state.timeScrub=Number.isInteger(o.timeScrub)?o.timeScrub:null;state.onlyGeo=Boolean(o.onlyGeo);
+    state.trajectoryVisible=Boolean(o.trajectoryVisible);state.trajectoryIndex=Number(o.trajectoryIndex)||0;state.timeScrub=storedTimeScrub(o.timeScrub);state.onlyGeo=Boolean(o.onlyGeo);
     pruneEmptyImportedLots();
     if(o.cfg){for(const k of ['showLabels','showPath','showSeq','view3d'])if(typeof o.cfg[k]==='boolean')cfg[k]=o.cfg[k];for(const k of ['defaultDist','defaultMargin'])if(Number.isFinite(o.cfg[k])&&o.cfg[k]>0)cfg[k]=o.cfg[k];if(bases[o.cfg.base])cfg.base=o.cfg.base}
     cfg.labelMode=resolvedLabelMode(o.cfg?.labelMode,o.filterSchema);syncLabelControls();
@@ -5023,7 +5083,10 @@ async function runSelfTest(){
     state.timeScrub=1;const mid=filteredEvents();
     state.timeScrub=2;const all=filteredEvents();
     const heat=sectorGroups().find(g=>g[0].cgi==='X');
-    add('Linha do tempo / calor',first.length===1&&mid.length===2&&all.length===3&&heat&&heat.length===2,'insere ERBs na ordem e acumula conexões ao voltar ao mesmo local');
+    state.timeScrub={from:1,to:2};const win=filteredEvents();
+    state.timeScrub={from:2,to:2};const tail=filteredEvents();
+    const heatTail=sectorGroups().find(g=>g[0].cgi==='X');
+    add('Linha do tempo / calor',first.length===1&&mid.length===2&&all.length===3&&heat&&heat.length===2&&win.length===2&&win.every(e=>e.id!=='a')&&tail.length===1&&heatTail&&heatTail.length===1,'avança, acumula ao voltar ao local e diminui ao puxar o início');
     state.lots=backup.lots;state.events=backup.events;state.filters=backup.filters;state.timeScrub=backup.timeScrub;state.activeLotId=backup.activeLotId;storageSuspended=prior;
   }catch(e){add('Linha do tempo / calor',false,e.message)}
   try{
@@ -5104,10 +5167,61 @@ $('toggleMap3d').onclick=()=>toggleMap3d();$('toggleMap3dBtn').onclick=()=>toggl
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
 $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
 (function bindTimeScrub(){
-  const bar=$('timeScrub'),range=$('timeScrubRange');if(!bar||!range)return;
+  const bar=$('timeScrub'),track=$('timeScrubTrack'),startThumb=$('timeScrubThumbStart'),endThumb=$('timeScrubThumbEnd');
+  if(!bar||!track)return;
   L.DomEvent.disableClickPropagation(bar);L.DomEvent.disableScrollPropagation(bar);
-  const apply=()=>{setTimeScrub(Number(range.value));redraw(false)};
-  range.addEventListener('input',apply);range.addEventListener('change',apply);
+  let drag=null;
+  const indexAt=clientX=>{
+    const r=track.getBoundingClientRect(),n=chronoDated().length;
+    if(n<=1)return 0;
+    const t=Math.max(0,Math.min(1,(clientX-r.left)/Math.max(1,r.width)));
+    return Math.round(t*(n-1));
+  };
+  const apply=(which,idx)=>{
+    const w=timeScrubWindow();
+    if(which==='from')setTimeScrubWindow(Math.min(idx,w.to),w.to);
+    else setTimeScrubWindow(w.from,Math.max(idx,w.from));
+    redraw(false);
+  };
+  const decideWhich=(idx,from,to,dx)=>{
+    if(from===to)return dx<0?'from':'to';
+    return Math.abs(idx-from)<=Math.abs(idx-to)?'from':'to';
+  };
+  track.addEventListener('pointerdown',e=>{
+    if(e.button!=null&&e.button!==0)return;
+    e.preventDefault();
+    const w=timeScrubWindow(),idx=indexAt(e.clientX);
+    const which=e.target===startThumb?'from':e.target===endThumb?'to':decideWhich(idx,w.from,w.to,0);
+    drag={which:w.from===w.to&&e.target!==startThumb&&e.target!==endThumb?'pending':which,startX:e.clientX,idx};
+    track.setPointerCapture?.(e.pointerId);
+    if(drag.which!=='pending')apply(drag.which,idx);
+  });
+  track.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    const idx=indexAt(e.clientX);
+    if(drag.which==='pending'){
+      if(Math.abs(e.clientX-drag.startX)<4)return;
+      drag.which=decideWhich(idx,timeScrubWindow().from,timeScrubWindow().to,e.clientX-drag.startX);
+    }
+    apply(drag.which,idx);
+  });
+  const stop=()=>{drag=null};
+  track.addEventListener('pointerup',stop);track.addEventListener('pointercancel',stop);
+  const stepThumb=(which,delta)=>{
+    const w=timeScrubWindow();
+    if(which==='from')setTimeScrubWindow(w.from+delta,w.to);else setTimeScrubWindow(w.from,w.to+delta);
+    redraw(false);
+  };
+  startThumb?.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'||e.key==='ArrowDown'){e.preventDefault();stepThumb('from',-1)}
+    if(e.key==='ArrowRight'||e.key==='ArrowUp'){e.preventDefault();stepThumb('from',1)}
+    if(e.key==='Home'){e.preventDefault();stepThumb('from',-1e6)}
+  });
+  endThumb?.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'||e.key==='ArrowDown'){e.preventDefault();stepThumb('to',-1)}
+    if(e.key==='ArrowRight'||e.key==='ArrowUp'){e.preventDefault();stepThumb('to',1)}
+    if(e.key==='End'){e.preventDefault();const w=timeScrubWindow();setTimeScrubWindow(w.from,w.last);redraw(false)}
+  });
 })();
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(mapPickMode)cancelMapPick();hideMapContext();closeDrawer();$('geoPanel').classList.remove('show')}});
@@ -5159,7 +5273,10 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     trajectoryData,
     chronoDated,
     setTimeScrub,
+    setTimeScrubWindow,
     timeScrubIndex,
+    timeScrubWindow,
+    timeScrubSlice,
     filteredEvents,
     liveApplyFilters,
     erbDisplayName,
