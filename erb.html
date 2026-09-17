@@ -1580,6 +1580,9 @@ function timeScrubSlice(){
   const {from,to,chrono}=timeScrubWindow();
   return chrono.length?chrono.slice(from,to+1):[];
 }
+function timeScrubSeq(i){
+  return i+1;
+}
 function filteredEvents(f=state.filters,opts={}){
   const list=matchedEvents(f,opts);
   if(opts.ignoreTimeScrub)return list;
@@ -1786,10 +1789,9 @@ function drawTimeScrubPath(){
     L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#c5a253',weight:4,opacity:.92,interactive:false}).addTo(pathG);
   }
   if(cfg.showSeq){
-    const from=timeScrubWindow().from;
     slice.forEach((x,i)=>{
       const group=slice.filter(y=>locHeatKey(y.ev)===locHeatKey(x.ev)).map(y=>y.ev);
-      addSeqMarker(x.ev,from+i+1,i===slice.length-1,group);
+      addSeqMarker(x.ev,timeScrubSeq(i),i===slice.length-1,group);
     });
   }
 }
@@ -1821,9 +1823,9 @@ function updateTimeScrubUi(){
   slice.forEach(x=>{const k=locHeatKey(x.ev);locCounts.set(k,(locCounts.get(k)||0)+1)});
   const here=cur?locCounts.get(locHeatKey(cur.ev))||1:0;
   const places=locCounts.size;
-  if($('timeScrubCount'))$('timeScrubCount').textContent=`${from+1}→${to+1} · ${slice.length} conexão(ões) · ${places} local(is)`;
-  if($('timeScrubStartMeta'))$('timeScrubStartMeta').innerHTML=`<span class="muted-k">INÍCIO · ${from+1}</span>${first?`<strong>${esc(erbDisplayName(first.ev))}</strong><br>${esc(first.d.toLocaleString('pt-BR'))}`:'—'}`;
-  if($('timeScrubErb'))$('timeScrubErb').innerHTML=`<span class="muted-k">FIM · ${to+1}</span>${cur?`<strong>${esc(erbDisplayName(cur.ev))}</strong>${here>1?' · '+here+' conexões neste local':''}<br>${esc(cur.d.toLocaleString('pt-BR'))}`:'Arraste para inserir as ERBs'}`;
+  if($('timeScrubCount'))$('timeScrubCount').textContent=`1→${slice.length} · ${slice.length} conexão(ões) · ${places} local(is)`;
+  if($('timeScrubStartMeta'))$('timeScrubStartMeta').innerHTML=`<span class="muted-k">INÍCIO · 1</span>${first?`<strong>${esc(erbDisplayName(first.ev))}</strong><br>${esc(first.d.toLocaleString('pt-BR'))}`:'—'}`;
+  if($('timeScrubErb'))$('timeScrubErb').innerHTML=`<span class="muted-k">FIM · ${slice.length}</span>${cur?`<strong>${esc(erbDisplayName(cur.ev))}</strong>${here>1?' · '+here+' conexões neste local':''}<br>${esc(cur.d.toLocaleString('pt-BR'))}`:'Arraste para inserir as ERBs'}`;
 }
 function drawHeatmap(groups=sectorGroups()){
   const scrubOn=chronoDated().length>0;
@@ -4757,10 +4759,11 @@ function map3dCollections(){
     seq.push({type:'Feature',properties:{label:String(i+1),current:i===lastIdx?1:0,popup:eventPopup(group,{ev:x.ev,seq:i+1})},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
   });
   else if(cfg.showSeq){
-    const slice=timeScrubSlice(),from=timeScrubWindow().from;
+    const slice=timeScrubSlice();
     slice.forEach((x,i)=>{
       const group=slice.filter(y=>locHeatKey(y.ev)===locHeatKey(x.ev)).map(y=>y.ev);
-      seq.push({type:'Feature',properties:{label:String(from+i+1),current:i===slice.length-1?1:0,popup:eventPopup(group,{ev:x.ev,seq:from+i+1})},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
+      const n=timeScrubSeq(i);
+      seq.push({type:'Feature',properties:{label:String(n),current:i===slice.length-1?1:0,popup:eventPopup(group,{ev:x.ev,seq:n})},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
     });
   }
   if(state.routeCursor&&Number.isFinite(state.routeCursor.lat)&&Number.isFinite(state.routeCursor.lng)){
@@ -5145,6 +5148,23 @@ async function runSelfTest(){
     const html=eventPopup([ev],{ev,seq:3});
     add('Clique no número da ERB',typeof addSeqMarker==='function'&&typeof openErbPopup==='function'&&/ERB 3/.test(html)&&/15\/09\/2026 08:12:00/.test(html)&&/Antena: ERB Centro/.test(html)&&/Cidade: Mamborê/.test(html), 'popup com hora, antena, cidade e conexões');
   }catch(e){add('Clique no número da ERB',false,e.message)}
+  try{
+    const backup={lots:state.lots,events:state.events,filters:state.filters,timeScrub:state.timeScrub,activeLotId:state.activeLotId,trajectoryVisible:state.trajectoryVisible,showSeq:cfg.showSeq};
+    const prior=storageSuspended;storageSuspended=true;
+    state.lots=[{id:'t',name:'T',type:'DADOS',color:'#2f81f7',visible:true}];
+    state.activeLotId='t';state.filters=defaultFilters();state.trajectoryVisible=false;cfg.showSeq=true;
+    state.events=Array.from({length:5},(_,i)=>({id:'e'+i,lotId:'t',name:'ERB '+(i+1),station:'ERB '+(i+1),city:'Mamborê',sector:String(i+1),cgi:'X'+i,lat:-24.3-i*0.01,lng:-52.5+i*0.01,az:90,datetime:'15/09/2026 0'+(8+i)+':00:00',dist:1,margin:45,visible:true,displayMode:'normal'}));
+    setTimeScrubWindow(0,4);redraw(false,{persist:false});
+    const full=[];seqG.eachLayer(m=>{const h=m.options?.icon?.options?.html;if(h!=null)full.push(String(h))});
+    setTimeScrubWindow(2,4);redraw(false,{persist:false});
+    const win=[];seqG.eachLayer(m=>{const h=m.options?.icon?.options?.html;if(h!=null)win.push(String(h))});
+    const count=$('timeScrubCount')?.textContent||'';
+    const start=$('timeScrubStartMeta')?.textContent||'';
+    const end=$('timeScrubErb')?.textContent||'';
+    const three=timeScrubSlice().map((_,i)=>timeScrubSeq(i));
+    add('Numeração na janela',full.join(',')==='1,2,3,4,5'&&win.join(',')==='1,2,3'&&three.join(',')==='1,2,3'&&/^1→3\b/.test(count)&&/INÍCIO · 1/.test(start)&&/FIM · 3/.test(end),'8,9,10 na janela passam a 1,2,3');
+    state.lots=backup.lots;state.events=backup.events;state.filters=backup.filters;state.timeScrub=backup.timeScrub;state.activeLotId=backup.activeLotId;state.trajectoryVisible=backup.trajectoryVisible;cfg.showSeq=backup.showSeq;storageSuspended=prior;redraw(false,{persist:false});
+  }catch(e){add('Numeração na janela',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.8.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
@@ -5334,6 +5354,7 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     timeScrubIndex,
     timeScrubWindow,
     timeScrubSlice,
+    timeScrubSeq,
     filteredEvents,
     eventPopup,
     addSeqMarker,
