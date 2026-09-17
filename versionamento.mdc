@@ -1,0 +1,53 @@
+---
+description: Versionamento semântico e histórico de atualizações obrigatórios para todas as alterações deste projeto.
+globs: "**/*"
+alwaysApply: true
+---
+
+# VERSIONAMENTO OBRIGATÓRIO
+
+Toda implementação concluída neste projeto deve avaliar e atualizar automaticamente o versionamento quando houver modificação efetiva de código, configuração ou artefato do sistema.
+
+## Esquema
+
+Usar sempre `MAJOR.MINOR.PATCH`.
+
+- **MAJOR**: grandes mudanças estruturais, de arquitetura ou incompatíveis com versões anteriores.
+- **MINOR**: novas funcionalidades compatíveis com a versão atual.
+- **PATCH**: correções de erro, adaptações, melhorias pequenas, ajustes visuais, de texto, layout ou compatibilidade.
+
+Quando uma mesma tarefa contiver mudanças de níveis diferentes, aplicar somente o maior nível, obedecendo à prioridade:
+
+`MAJOR > MINOR > PATCH`
+
+Cada tarefa deve gerar normalmente apenas um incremento de versão.
+
+Ao aumentar:
+- MAJOR: zerar MINOR e PATCH.
+- MINOR: zerar PATCH.
+
+## Fluxo obrigatório em toda alteração
+
+1. analisar a alteração solicitada;
+2. classificar em MAJOR, MINOR ou PATCH;
+3. implementar a alteração;
+4. executar os testes pertinentes e verificar regressões;
+5. atualizar a fonte única da versão;
+6. atualizar todos os locais da interface que exibem a versão;
+7. inserir a nova versão na aba **ATUALIZAÇÃO**;
+8. preservar integralmente o histórico das versões anteriores;
+9. somente então considerar a implementação concluída.
+
+O usuário não precisa solicitar expressamente “atualize a versão”.
+
+## Quando NÃO incrementar
+
+Não alterar a versão quando não houver modificação efetiva do projeto, por exemplo:
+- mera análise;
+- resposta a uma pergunta;
+- inspeção de código sem alteração;
+- execução de teste sem mudança no código.
+
+## Histórico
+
+Nunca apagar entradas anteriores da aba **ATUALIZAÇÃO**. A versão mais recente deve aparecer primeiro, seguida das versões anteriores.
