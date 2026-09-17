@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
-const VERSION='3.0.0';
-const VERSION_DATE='12/09/2026';
+const VERSION='3.0.1';
+const VERSION_DATE='17/09/2026';
 const HISTORY_KEY='pcpr.documentos.historico.v1';
 const HISTORY_REV_KEY='pcpr.documentos.historico.rev.v1';
 const HISTORY_CHANNEL='pcpr-documentos-historico-v1';
