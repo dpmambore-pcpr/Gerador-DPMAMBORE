@@ -932,7 +932,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .geo{position:absolute;z-index:930;right:10px;bottom:50px;width:300px;background:rgba(7,15,12,.97);border:1px solid #456858;border-radius:10px;padding:10px;box-shadow:var(--shadow);display:none}.geo.show{display:block}.geo h3{font-size:10.5px;margin:0 0 8px}.geogrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.geokpi{background:#11251c;border:1px solid #2c4d3e;border-radius:7px;padding:7px;font-size:8.7px}.geokpi b{display:block;font-size:13px;color:#f0d890;margin-top:2px}
 .legend{background:rgba(7,14,12,.95);color:#e7efeb;padding:8px 9px;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.4);font-size:9px;max-width:280px}
 .erb-label{background:#0d1814!important;color:#fff!important;border:1px solid #557466!important;border-radius:4px!important;font-size:9px!important;font-weight:900!important;padding:2px 5px!important}.erb-label:before{display:none!important}
-.seqicon{background:#fff;color:#111;border:2px solid #111;border-radius:50%;font-weight:900;text-align:center;line-height:22px;width:26px!important;height:26px!important}
+.seqicon{background:#fff;color:#111;border:2px solid #111;border-radius:50%;font-weight:900;text-align:center;line-height:22px;width:26px!important;height:26px!important;cursor:pointer}
 .poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
 .mapwrap.pick-point #map{cursor:crosshair!important}
 .mapwrap.pick-point .leaflet-overlay-pane,
@@ -1597,8 +1597,10 @@ function sectorGroups(){
   });
   return [...m.values()];
 }
-function eventPopup(group){
-  const ev=group[0],lot=lotById(ev.lotId),op=currentOperator(ev),ids=group.map(x=>x.id).join(',');
+function eventPopup(group,opts={}){
+  const ev=opts.ev||group[0],lot=lotById(ev.lotId),op=currentOperator(ev),ids=group.map(x=>x.id).join(',');
+  const seq=opts.seq,when=ev.datetime||'Horário não informado';
+  const antenna=[ev.station,ev.name].map(v=>String(v||'').trim()).find(Boolean)||'';
   const rows=group.slice(0,40).map(x=>
     `<div style="margin-top:5px;padding-top:5px;border-top:1px solid #ddd">
       ${x.datetime?'<b>'+esc(x.datetime)+'</b><br>':''}
@@ -1612,8 +1614,13 @@ function eventPopup(group){
     </div>`).join('');
   const address=ev.address||ev.obs||'';
   return `<div style="min-width:250px;max-width:370px">
+    ${seq?`<div style="font-size:10px;font-weight:900;letter-spacing:.05em;color:#8a6d22;margin-bottom:5px">ERB ${seq} · ${group.length} conexão(ões) neste local</div>`:''}
     <b>${esc(erbDisplayName(ev))}</b><br>
+    <b>${esc(when)}</b><br>
     <span>${esc(lot?.name||'Lote')} · ${esc(lot?.type||ev.eventType||'')}</span><br>
+    ${antenna?`Antena: ${esc(antenna)}<br>`:''}
+    ${ev.sector!=null&&String(ev.sector).trim()?`Setor: ${esc(ev.sector)}<br>`:''}
+    ${ev.city?`Cidade: ${esc(ev.city)}<br>`:''}
     Lat.: ${fmt(ev.lat)} · Long.: ${fmt(ev.lng)}<br>
     Az.: ${fmt(ev.az,1)}° · Raio: ${fmt(ev.dist,2)} km · ±${fmt(ev.margin,1)}°
     <br>Origem do raio: ${esc(ev.radiusSource||'ESTIMADO / NÃO INFORMADO')}
@@ -1636,6 +1643,13 @@ function eventPopup(group){
       <button class="popup-btn" data-groupmode="hidden" data-groupids="${ids}">Ocultar</button>
     </div>
   </div>`;
+}
+function addSeqMarker(ev,n,current,group){
+  const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(n),iconSize:[26,26],iconAnchor:[13,13]});
+  const marker=L.marker([ev.lat,ev.lng],{icon:ic,zIndexOffset:current?900:400,erbId:ev.id,mapRole:'seq'}).addTo(seqG);
+  marker.bindPopup(eventPopup(group&&group.length?group:[ev],{ev,seq:n}),{maxWidth:380,autoPan:true});
+  marker.on('click',()=>{state.focusEventId=ev.id;document.querySelectorAll('[data-time]').forEach(x=>x.classList.toggle('active',x.dataset.time===ev.id))});
+  return marker;
 }
 function timelineData(){
   return filteredEvents().map(ev=>({ev,d:parseDate(ev.datetime)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);
@@ -1732,7 +1746,7 @@ function fitTrajectory(){
   if(cfg.view3d){fitMap3d(pts);return}
   if(pts.length===1)map.setView(pts[0],15);else map.fitBounds(pts,{padding:[45,45],maxZoom:15});
 }
-function redraw(fit=false){
+function redraw(fit=false,opts={}){
   sectorG.clearLayers();markerG.clearLayers();poiG.clearLayers();pathG.clearLayers();seqG.clearLayers();geoG.clearLayers();heatFallbackG.clearLayers();
   if(heatLayer){try{map.removeLayer(heatLayer)}catch(e){}heatLayer=null}
   const groups=sectorGroups(),bounds=[];
@@ -1761,22 +1775,21 @@ function redraw(fit=false){
     if(cfg.view3d)fitMap3d(bounds);else map.fitBounds(bounds,{padding:[38,38],maxZoom:16});
   }
   syncMap3d();
-  autosave(true);
+  if(opts.persist!==false)autosave(true);
 }
 function drawTimeScrubPath(){
   if(state.trajectoryVisible)return;
   const slice=timeScrubSlice();
   if(slice.length<1)return;
   if(cfg.showPath&&slice.length>1){
-    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.32}).addTo(pathG);
-    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#c5a253',weight:4,opacity:.92}).addTo(pathG);
+    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#fff',weight:2.2,dashArray:'8 6',opacity:.32,interactive:false}).addTo(pathG);
+    L.polyline(slice.map(x=>[x.ev.lat,x.ev.lng]),{color:'#c5a253',weight:4,opacity:.92,interactive:false}).addTo(pathG);
   }
   if(cfg.showSeq){
     const from=timeScrubWindow().from;
     slice.forEach((x,i)=>{
-      const current=i===slice.length-1;
-      const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(from+i+1),iconSize:[26,26],iconAnchor:[13,13]});
-      L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
+      const group=slice.filter(y=>locHeatKey(y.ev)===locHeatKey(x.ev)).map(y=>y.ev);
+      addSeqMarker(x.ev,from+i+1,i===slice.length-1,group);
     });
   }
 }
@@ -1850,9 +1863,8 @@ function drawTimelineLayers(){
     }
   }
   if(showRoute&&cfg.showSeq)t.forEach((x,i)=>{
-    const current=progress&&i===lastIdx;
-    const ic=L.divIcon({className:'seqicon'+(current?' current':''),html:String(i+1),iconSize:[26,26],iconAnchor:[13,13]});
-    L.marker([x.ev.lat,x.ev.lng],{icon:ic,zIndexOffset:current?900:0}).addTo(seqG);
+    const group=x.events?.length?x.events:[x.ev];
+    addSeqMarker(x.ev,i+1,progress&&i===lastIdx,group);
   });
   if(showRoute&&progress&&cursor&&Number.isFinite(cursor.lat)&&Number.isFinite(cursor.lng)){
     const pin=L.divIcon({className:'routepin',html:'<span></span>',iconSize:[24,24],iconAnchor:[12,12]});
@@ -1889,6 +1901,12 @@ function focusEvent(id){
   state.focusEventId=id;lookAtErb(ev.lat,ev.lng);
   document.querySelectorAll('[data-time]').forEach(x=>x.classList.toggle('active',x.dataset.time===id));
   updateMap3dHud();
+  openErbPopup(id);
+}
+function openErbPopup(id){
+  let opened=false;
+  seqG.eachLayer(l=>{if(!opened&&l.options.erbId===id&&l.getPopup?.()){l.openPopup();opened=true}});
+  if(!opened)markerG.eachLayer(l=>{if(!opened&&l.options.erbId===id&&l.getPopup?.()){l.openPopup();opened=true}});
 }
 function poiSymbol(t){return({'Casa':'⌂','Carro':'C','Crime':'!','Interesse':'★','Moto':'M','Alcance':'A'}[t]||'P')}
 function renderLegend(){
@@ -4735,8 +4753,16 @@ function map3dCollections(){
     if(drawn.length>1)route.push({type:'Feature',properties:{kind:'progress'},geometry:{type:'LineString',coordinates:drawn}});
   }
   if(state.trajectoryVisible&&cfg.showSeq)t.forEach((x,i)=>{
-    seq.push({type:'Feature',properties:{label:String(i+1),current:i===lastIdx?1:0},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
+    const group=x.events?.length?x.events:[x.ev];
+    seq.push({type:'Feature',properties:{label:String(i+1),current:i===lastIdx?1:0,popup:eventPopup(group,{ev:x.ev,seq:i+1})},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
   });
+  else if(cfg.showSeq){
+    const slice=timeScrubSlice(),from=timeScrubWindow().from;
+    slice.forEach((x,i)=>{
+      const group=slice.filter(y=>locHeatKey(y.ev)===locHeatKey(x.ev)).map(y=>y.ev);
+      seq.push({type:'Feature',properties:{label:String(from+i+1),current:i===slice.length-1?1:0,popup:eventPopup(group,{ev:x.ev,seq:from+i+1})},geometry:{type:'Point',coordinates:[x.ev.lng,x.ev.lat]}});
+    });
+  }
   if(state.routeCursor&&Number.isFinite(state.routeCursor.lat)&&Number.isFinite(state.routeCursor.lng)){
     cursor.push({type:'Feature',properties:{},geometry:{type:'Point',coordinates:[state.routeCursor.lng,state.routeCursor.lat]}});
   }
@@ -4761,8 +4787,18 @@ function ensureMap3dLayers(){
     const f=e.features?.[0];if(!f?.properties?.popup||!map3dPopup)return;
     map3dPopup.setLngLat(e.lngLat).setHTML(f.properties.popup).addTo(map3d);
   });
+  const open3dSeq=e=>{
+    const f=e.features?.[0];if(!f?.properties?.popup||!map3dPopup)return;
+    map3dPopup.setLngLat(e.lngLat).setHTML(f.properties.popup).addTo(map3d);
+  };
+  map3d.on('click','erb-seq',open3dSeq);
+  map3d.on('click','erb-seq-num',open3dSeq);
   map3d.on('mouseenter','erb-towers',()=>map3d.getCanvas().style.cursor='pointer');
   map3d.on('mouseleave','erb-towers',()=>map3d.getCanvas().style.cursor='');
+  map3d.on('mouseenter','erb-seq',()=>map3d.getCanvas().style.cursor='pointer');
+  map3d.on('mouseleave','erb-seq',()=>map3d.getCanvas().style.cursor='');
+  map3d.on('mouseenter','erb-seq-num',()=>map3d.getCanvas().style.cursor='pointer');
+  map3d.on('mouseleave','erb-seq-num',()=>map3d.getCanvas().style.cursor='');
   map3dLayersReady=true;
 }
 function updateMap3dHud(point){
@@ -5104,6 +5140,11 @@ async function runSelfTest(){
     add('Nome padrão cidade + setor',cfg.labelMode==='citySector'&&cityName==='Mamborê · COSM01 · Setor 7'&&codeName==='724-04-00683-19247'&&migrated,cityName+' · padrão '+cfg.labelMode);
     cfg.labelMode=prev;syncLabelControls();
   }catch(e){add('Nome padrão cidade + setor',false,e.message)}
+  try{
+    const ev={id:'z',name:'ERB Centro',station:'ERB Centro',city:'Mamborê',sector:'1',cgi:'724-04-001-1',datetime:'15/09/2026 08:12:00',lat:-24.3,lng:-52.5,az:90,dist:5,margin:45};
+    const html=eventPopup([ev],{ev,seq:3});
+    add('Clique no número da ERB',typeof addSeqMarker==='function'&&typeof openErbPopup==='function'&&/ERB 3/.test(html)&&/15\/09\/2026 08:12:00/.test(html)&&/Antena: ERB Centro/.test(html)&&/Cidade: Mamborê/.test(html), 'popup com hora, antena, cidade e conexões');
+  }catch(e){add('Clique no número da ERB',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
   $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.8.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
@@ -5166,6 +5207,12 @@ $('pngMap').onclick=exportPng;$('pngRouteArrows').onclick=exportTrajectoryImage;
 $('toggleMap3d').onclick=()=>toggleMap3d();$('toggleMap3dBtn').onclick=()=>toggleMap3d();
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)$('mapWrap').requestFullscreen?.();else document.exitFullscreen?.()};
 $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textContent.replace('Lat.: ','').replace(' | Long.: ',','));status('Coordenada copiada.')};
+let scrubRedrawRaf=0;
+function liveScrubRedraw(){
+  updateTimeScrubUi();
+  if(scrubRedrawRaf)return;
+  scrubRedrawRaf=requestAnimationFrame(()=>{scrubRedrawRaf=0;redraw(false,{persist:false})});
+}
 (function bindTimeScrub(){
   const bar=$('timeScrub'),track=$('timeScrubTrack'),startThumb=$('timeScrubThumbStart'),endThumb=$('timeScrubThumbEnd');
   if(!bar||!track)return;
@@ -5179,9 +5226,12 @@ $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textCont
   };
   const apply=(which,idx)=>{
     const w=timeScrubWindow();
-    if(which==='from')setTimeScrubWindow(Math.min(idx,w.to),w.to);
-    else setTimeScrubWindow(w.from,Math.max(idx,w.from));
-    redraw(false);
+    const from=which==='from'?Math.min(idx,w.to):w.from;
+    const to=which==='from'?w.to:Math.max(idx,w.from);
+    const cur=storedTimeScrub(state.timeScrub);
+    if(cur&&cur.from===from&&cur.to===to){updateTimeScrubUi();return}
+    setTimeScrubWindow(from,to);
+    liveScrubRedraw();
   };
   const decideWhich=(idx,from,to,dx)=>{
     if(from===to)return dx<0?'from':'to';
@@ -5205,11 +5255,18 @@ $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textCont
     }
     apply(drag.which,idx);
   });
-  const stop=()=>{drag=null};
+  const stop=()=>{
+    if(!drag)return;
+    drag=null;
+    if(scrubRedrawRaf){cancelAnimationFrame(scrubRedrawRaf);scrubRedrawRaf=0}
+    updateTimeScrubUi();
+    redraw(false);
+  };
   track.addEventListener('pointerup',stop);track.addEventListener('pointercancel',stop);
   const stepThumb=(which,delta)=>{
     const w=timeScrubWindow();
     if(which==='from')setTimeScrubWindow(w.from+delta,w.to);else setTimeScrubWindow(w.from,w.to+delta);
+    updateTimeScrubUi();
     redraw(false);
   };
   startThumb?.addEventListener('keydown',e=>{
@@ -5220,7 +5277,7 @@ $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textCont
   endThumb?.addEventListener('keydown',e=>{
     if(e.key==='ArrowLeft'||e.key==='ArrowDown'){e.preventDefault();stepThumb('to',-1)}
     if(e.key==='ArrowRight'||e.key==='ArrowUp'){e.preventDefault();stepThumb('to',1)}
-    if(e.key==='End'){e.preventDefault();const w=timeScrubWindow();setTimeScrubWindow(w.from,w.last);redraw(false)}
+    if(e.key==='End'){e.preventDefault();const w=timeScrubWindow();setTimeScrubWindow(w.from,w.last);updateTimeScrubUi();redraw(false)}
   });
 })();
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
@@ -5278,6 +5335,9 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     timeScrubWindow,
     timeScrubSlice,
     filteredEvents,
+    eventPopup,
+    addSeqMarker,
+    openErbPopup,
     redraw,
     setTrajectoryVisible(v){state.trajectoryVisible=Boolean(v);if(!v)$('timelinebar')?.classList.remove('show')},
     liveApplyFilters,
