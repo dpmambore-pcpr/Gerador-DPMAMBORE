@@ -56,6 +56,7 @@ tbody tr:hover{background:#f4f8ff}
 .op{border:1px solid var(--borda);border-radius:5px;padding:10px 12px;margin-bottom:8px}
 .op h3{margin:0 0 4px;font-size:13px;color:var(--azul)}
 .op small{color:var(--suave);font-size:11.5px}
+.op .asns{display:block;margin-top:3px;font-size:11px;color:var(--suave)}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 14px;margin-bottom:6px}
 .form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--suave)}
 .form input{width:100%}
@@ -147,6 +148,7 @@ footer{color:var(--suave)!important}
 
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
+<script src="filtro-ip-core.js?v=3.0.1"></script>
 </head>
 <body>
 <header>
@@ -288,7 +290,7 @@ footer{color:var(--suave)!important}
 
     <div style="margin-top:12px">
       <label style="font-size:12px;color:var(--suave)">Texto do ofício — parágrafos separados por linha em branco. Marcadores disponíveis:
-        <span class="mono">{INQUERITO} {CRIME} {FUNDAMENTO} {SERVICO} {CONTA} {EMAIL} {PRAZO} {CIDADE} {NOTA_IP} {TABELA}</span>
+        <span class="mono">{INQUERITO} {CRIME} {FUNDAMENTO} {ORIGEM} {SERVICO} {CONTA} {EMAIL} {PRAZO} {CIDADE} {NOTA_IP} {TABELA}</span>
         <textarea id="cfModelo" style="min-height:200px;margin-top:5px"></textarea></label>
       <button class="sec" id="btnModeloPadrao" style="margin-top:6px">Restaurar texto padrão</button>
     </div>
@@ -357,22 +359,13 @@ footer{color:var(--suave)!important}
   pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(blob);
 })();
 
-// ---------------- expressões ----------------
-var IPV6 = "(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,7}:"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}"
-  + "|(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}"
-  + "|[0-9A-Fa-f]{1,4}:(?::[0-9A-Fa-f]{1,4}){1,6}";
-var IPV4 = "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)";
-var TS   = "(\\d{4}-\\d{2}-\\d{2})[ T]+(\\d{2}:\\d{2}:\\d{2})(?:\\s*(?:UTC|Z))?";
-var SCAN = new RegExp("(" + TS + ")|(" + IPV6 + ")|(" + IPV4 + ")", "g");
+// ---------------- extração de texto / parser (núcleo compartilhado) ----------------
+var estado = { linhas: [], asn: {}, arquivos: [], origem: null };
+function textoDoHTML(str){ return FiltroIpCore.textoDoHTML(str); }
+function parse(texto, origem){ return FiltroIpCore.parse(texto, origem); }
+function ehV4(ip){ return FiltroIpCore.ehV4(ip); }
+function ajustaFuso(l){ return FiltroIpCore.ajustaFuso(l, document.getElementById("fuso").value); }
 
-var estado = { linhas: [], asn: {}, arquivos: [] };
-
-// ---------------- extração de texto ----------------
 async function textoDoPDF(buffer, nome){
   var pdf = await pdfjsLib.getDocument({data:buffer}).promise;
   var partes = [];
@@ -384,117 +377,14 @@ async function textoDoPDF(buffer, nome){
   }
   return partes.join("\n");
 }
-function textoDoHTML(str){
-  var doc = new DOMParser().parseFromString(str, "text/html");
-  return doc.body ? doc.body.innerText || doc.body.textContent : str;
-}
-
-// ---------------- parser ----------------
-// Casa cada RÓTULO com o PRÓXIMO valor compatível. Assim sobrevive a textos
-// intercalados pela paginação do provedor ("... Page 103 ...") entre rótulo e valor.
-var RE_VARRE = new RegExp(
-    "(Timestamp|Time(?![a-z])|IP Address|Address|Port(?![a-z]))"      // 1: rótulo
-  + "|(" + TS + ")"                                                    // 2,3,4: data/hora
-  + "|(" + IPV6 + "|" + IPV4 + ")"                                     // 5: endereço
-  + "|(\\b\\d{1,5}\\b)", "g");                                          // 6: número (porta)
-
-function parse(texto, origem){
-  var servico = (texto.match(/Service[:\s]+([A-Za-z][A-Za-z]{2,19})/) || [,""])[1].trim();
-  var ident   = (texto.match(/(?:Account\s+)?Identifier[:\s]*([^\s]{4,40})/) || [,""])[1].trim();
-
-  var out = [], reg = {}, esperando = null, m;
-  function guarda(campo, valor){
-    if(reg[campo] !== undefined){ empurra(); }
-    reg[campo] = valor;
-  }
-  function empurra(){
-    if(reg.data && reg.ip)
-      out.push({servico:servico, identificador:ident, ip:reg.ip, data:reg.data,
-                hora:reg.hora, porta:reg.porta || "", arquivo:origem});
-    reg = {};
-  }
-
-  RE_VARRE.lastIndex = 0;
-  while((m = RE_VARRE.exec(texto)) !== null){
-    if(m[1]){
-      esperando = /Port/.test(m[1]) ? "porta" : (/Address/.test(m[1]) ? "ip" : "ts");
-      continue;
-    }
-    if(m[2] && esperando === "ts"){ guarda("data", m[3]); reg.hora = m[4]; esperando = null; continue; }
-    if(m[5] && esperando === "ip"){ guarda("ip", m[5]); esperando = null; continue; }
-    if(m[6] && esperando === "porta"){
-      // ignora numeração de rodapé do provedor ("Page 103")
-      if(/Page\s*$/i.test(texto.slice(Math.max(0, m.index - 10), m.index))) continue;
-      guarda("porta", m[6]); esperando = null; continue;
-    }
-  }
-  empurra();
-
-  // arquivos sem rótulo algum: pareamento sequencial (formato antigo)
-  if(!out.length){
-    var pIP = null, pTS = null;
-    var SIMPLES = new RegExp("(" + TS + ")|(" + IPV6 + "|" + IPV4 + ")", "g");
-    while((m = SIMPLES.exec(texto)) !== null){
-      if(m[1]){ pTS = {data:m[2], hora:m[3]}; } else { pIP = m[4]; }
-      if(pIP && pTS){
-        out.push({servico:servico, identificador:ident, ip:pIP, data:pTS.data,
-                  hora:pTS.hora, porta:"", arquivo:origem});
-        pIP = null; pTS = null;
-      }
-    }
-  }
-  return out;
-}
-
-function ehV4(ip){ return ip.indexOf(":") === -1; }
-
-function ajustaFuso(l){
-  var h = parseInt(document.getElementById("fuso").value, 10);
-  if(h === 0) return {data:l.data, hora:l.hora};
-  var d = new Date(l.data + "T" + l.hora + "Z");
-  d.setUTCHours(d.getUTCHours() + h);
-  var p = function(n){ return String(n).padStart(2,"0"); };
-  return {
-    data: d.getUTCFullYear() + "-" + p(d.getUTCMonth()+1) + "-" + p(d.getUTCDate()),
-    hora: p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + ":" + p(d.getUTCSeconds())
-  };
-}
 
 function processa(){
-  var brutas = estado.linhas.slice();
-  var totalBruto = brutas.length;
-  var modoIP = document.getElementById("verIP").value;
-
-  var v4semPorta = brutas.filter(function(l){ return ehV4(l.ip) && !l.porta; }).length;
-  var v4comPorta = brutas.filter(function(l){ return ehV4(l.ip) && l.porta; }).length;
-
-  brutas = brutas.filter(function(l){
-    if(modoIP === "tudo") return true;
-    if(modoIP === "v6")  return !ehV4(l.ip);
-    if(modoIP === "v4")  return ehV4(l.ip);
-    return ehV4(l.ip) && !!l.porta;                     // v4p
+  var r = FiltroIpCore.processarLinhas(estado.linhas, {
+    modoIP: document.getElementById("verIP").value,
+    dedup: document.getElementById("dedup").value,
+    fuso: document.getElementById("fuso").value
   });
-
-  var conv = brutas.map(function(l){
-    var f = ajustaFuso(l);
-    return {servico:l.servico, identificador:l.identificador, ip:l.ip, porta:l.porta || "",
-            data:f.data, hora:f.hora, utc:l.data+" "+l.hora, arquivo:l.arquivo};
-  });
-
-  var modo = document.getElementById("dedup").value, vistos = {}, fim = [];
-  conv.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
-  conv.forEach(function(l){
-    var k;
-    if(modo === "ip") k = l.ip;
-    else if(modo === "ipdia") k = l.ip + "|" + l.data;
-    else if(modo === "ipporta") k = l.ip + "|" + l.porta;
-    else k = Math.random();
-    if(vistos[k]) return;
-    vistos[k] = 1; fim.push(l);
-  });
-  fim.sort(function(a,b){ return (a.data+a.hora) > (b.data+b.hora) ? -1 : 1; });
-
-  render(fim, totalBruto, {v4semPorta: v4semPorta, v4comPorta: v4comPorta, modoIP: modo, filtro: modoIP});
+  render(r.finais, r.totalBruto, r.info);
 }
 
 // ---------------- interface ----------------
@@ -561,22 +451,24 @@ function br(d){ var p = d.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 
 function renderOps(){
-  var grupos = {}, temASN = false;
-  atual.forEach(function(l){
+  var lista = gruposLista();
+  var temASN = atual.some(function(l){
     var a = estado.asn[l.ip];
-    if(a && a.org) temASN = true;
-    var nome = (a && a.org) ? a.org : "(operadora não consultada)";
-    (grupos[nome] = grupos[nome] || []).push(l);
+    return a && (a.org || a.owner || a.asn);
   });
   if(!temASN){ document.getElementById("cardOp").classList.add("hide"); return; }
   document.getElementById("cardOp").classList.remove("hide");
 
-  document.getElementById("ops").innerHTML = Object.keys(grupos).sort().map(function(nome, idx){
-    var ls = grupos[nome];
+  document.getElementById("ops").innerHTML = lista.map(function(g, idx){
+    var ls = g.linhas || [];
     var ipsU = {}; ls.forEach(function(l){ ipsU[l.ip] = 1; });
     var bloco = ls.map(function(l){ return l.ip + "  —  " + br(l.data) + " às " + l.hora; }).join("\n");
-    return '<div class="op"><h3>' + esc(nome) + "</h3>"
-      + "<small>" + ls.length + " registro(s) · " + Object.keys(ipsU).length + " IP(s) único(s)</small><br>"
+    var asns = (g.asns && g.asns.length)
+      ? '<small class="asns">ASNs identificados: ' + esc(g.asns.join(", ")) + "</small>"
+      : "";
+    return '<div class="op"><h3>' + esc(g.nome) + "</h3>"
+      + "<small>" + ls.length + " registro(s) · " + Object.keys(ipsU).length + " IP(s) único(s)</small>"
+      + asns + "<br>"
       + '<div class="linha" style="margin-top:8px">'
       + '<button onclick="baixaOficio(' + idx + ')">Ofício .docx</button>'
       + '<button onclick="baixaOficioPDF(' + idx + ')">Ofício .pdf</button>'
@@ -620,15 +512,15 @@ async function buscaIP(ip, token){
     var r = await fetch(u);
     if(r.ok){
       var j = await r.json();
-      if(j.org || j.asn) return {org: j.org || (j.asn && j.asn.name) || "", city: j.city || "", region: j.region || ""};
+      var n = FiltroIpCore.normalizaRespostaConsulta(j, "ipinfo");
+      if(n && (n.org || n.asn || n.owner)) return n;
     }
   }catch(e){}
   try{
     var r2 = await fetch("https://ipwho.is/" + ip);
     var j2 = await r2.json();
     if(j2 && j2.success !== false){
-      var c = j2.connection || {};
-      return {org: (c.asn ? "AS" + c.asn + " " : "") + (c.org || c.isp || ""), city: j2.city || "", region: j2.region || ""};
+      return FiltroIpCore.normalizaRespostaConsulta(j2, "ipwho");
     }
   }catch(e){}
   return null;
@@ -789,7 +681,7 @@ var CFG_PADRAO = {
 };
 var MODELO_PADRAO = [
 "Na qualidade de autoridade policial responsável pela presidência do Inquérito Policial nº {INQUERITO}, instaurado nesta Delegacia de Polícia para apurar, em tese, a prática do delito de {CRIME}, {FUNDAMENTO} a Vossa Senhoria o fornecimento dos dados cadastrais dos assinantes vinculados aos endereços IP adiante relacionados, nas respectivas datas e horários.",
-"Os registros decorrem de resposta a requisição dirigida ao provedor de aplicações {SERVICO}{CONTA}, e encontram-se convertidos para o horário oficial de Brasília (UTC-3):",
+"{ORIGEM}",
 "{TABELA}",
 "Para cada registro, requisito a informação de: a) nome ou razão social do assinante; b) CPF ou CNPJ; c) filiação e data de nascimento, quando pessoa natural; d) endereço completo do local de instalação do serviço; e) telefones e endereços eletrônicos de contato; e f) datas de início e, se for o caso, de encerramento da contratação.",
 "{NOTA_IP}",
@@ -811,9 +703,13 @@ function textoOficio(c, temPorta){
     : "com fundamento no art. 6º, incisos II e III, do Código de Processo Penal, no art. 2º, §2º, "
       + "da Lei nº 12.830/2013 e no art. 10, §3º, da Lei nº 12.965/2014 (Marco Civil da Internet), "
       + "c/c o art. 11 do Decreto nº 8.771/2016, REQUISITO";
+  var fusoEl = document.getElementById("fuso");
+  var fuso = fusoEl ? fusoEl.value : -3;
+  var origem = c.origem || { provedor: c.servico, identificador: c.identificador, tipo: (c.servico || "").toLowerCase() };
   var subs = {
     "{INQUERITO}": c.inquerito || "___", "{CRIME}": c.crime || "___",
-    "{FUNDAMENTO}": fundamento, "{SERVICO}": c.servico || "de internet",
+    "{FUNDAMENTO}": fundamento, "{ORIGEM}": FiltroIpCore.textoOrigemRegistros(origem, fuso),
+    "{SERVICO}": c.servico || "de internet",
     "{CONTA}": c.identificador ? ", referente à conta " + c.identificador : "",
     "{NOTA_IP}": nota, "{EMAIL}": c.emails || CFG.emails.join(", "),
     "{PRAZO}": c.prazo || "10 (dez)", "{CIDADE}": CFG.cidade
@@ -1042,13 +938,10 @@ function xlsx(abas){
 
 // ================= montagem dos dados =================
 function grupos(){
-  var g = {};
-  atual.forEach(function(l){
-    var a = estado.asn[l.ip];
-    var nome = (a && a.org) ? a.org : "Operadora não identificada";
-    (g[nome] = g[nome] || []).push(l);
-  });
-  return g;
+  return FiltroIpCore.groupRecordsByOperator(atual, estado.asn);
+}
+function gruposLista(){
+  return FiltroIpCore.gruposOrdenados(grupos());
 }
 function linhasPlan(ls){
   var cab = ["Nº","Serviço","Identificador","Endereço IP","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF"];
@@ -1067,14 +960,16 @@ function limpaNome(s){
   return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "operadora";
 }
-function cfgOficio(nome, ls, seq){
+function cfgOficio(nome, ls, seq, grupo){
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
   var base = parseInt(g("ofNum"), 10);
+  var origem = ((ls[0] || {}).origem) || estado.origem || { provedor: (ls[0] || {}).servico || "", identificador: (ls[0] || {}).identificador || "" };
   return {
     numero: isFinite(base) ? String(base + seq).padStart(3, "0") : "___",
     inquerito: g("ofIP"), crime: crimeEscolhido(), autos: document.getElementById("ofJud").checked ? g("ofAutos") : "",
     assinante: g("ofAssin"), cargo: g("ofCargo"), data: g("ofData"), prazo: g("ofPrazo"),
-    operadora: String(nome).replace(/^AS\d+\s*/, ""), servico: (ls[0] || {}).servico || "", identificador: (ls[0] || {}).identificador || "",
+    operadora: String(nome).replace(/^AS\d+\s*/, ""), servico: origem.provedor || (ls[0] || {}).servico || "", identificador: origem.identificador || "",
+    origem: origem, asns: (grupo && grupo.asns) || [],
     emails: emailsSelecionados(),
     linhas: ls.map(function(l){ return {ip: l.ip, dataBR: br(l.data), hora: l.hora, porta: l.porta || ""}; })
   };
@@ -1132,58 +1027,61 @@ function acrescentaEmail(){
 
 // ================= ações dos botões =================
 function baixaOficio(idx){
-  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  var bytes = docxOficio(cfgOficio(nome, g[nome], idx));
-  baixaBin(bytes, "Oficio-" + limpaNome(nome) + ".docx",
+  var lista = gruposLista(), g = lista[idx];
+  if(!g) return;
+  var bytes = docxOficio(cfgOficio(g.nome, g.linhas, idx, g));
+  baixaBin(bytes, "Oficio-" + limpaNome(g.nome) + ".docx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 }
 function baixaOficioPDF(idx){
-  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  pdfOficio(cfgOficio(nome, g[nome], idx), function(bytes){
+  var lista = gruposLista(), g = lista[idx];
+  if(!g) return;
+  pdfOficio(cfgOficio(g.nome, g.linhas, idx, g), function(bytes){
     if(!bytes){ msg("Não foi possível montar o PDF.", "var(--erro)"); return; }
-    baixaBin(bytes, "Oficio-" + limpaNome(nome) + ".pdf", "application/pdf");
+    baixaBin(bytes, "Oficio-" + limpaNome(g.nome) + ".pdf", "application/pdf");
   });
 }
 function baixaCSVOperadora(idx){
-  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  baixaBin(u8(csvDe(g[nome])), "IPs-" + limpaNome(nome) + ".csv", "text/csv;charset=utf-8");
+  var lista = gruposLista(), g = lista[idx];
+  if(!g) return;
+  baixaBin(u8(csvDe(g.linhas)), "IPs-" + limpaNome(g.nome) + ".csv", "text/csv;charset=utf-8");
 }
 function baixaXLSX(){
-  var g = grupos(), usados = {}, abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
-  Object.keys(g).sort().forEach(function(n){
-    abas.push({nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])});
+  var lista = gruposLista(), usados = {}, abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
+  lista.forEach(function(g){
+    abas.push({nome: nomeAba(g.nome.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g.linhas)});
   });
   baixaBin(xlsx(abas), "IPs-por-operadora-" + new Date().toISOString().slice(0,10) + ".xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 function baixaPacote(){
-  var g = grupos(), nomes = Object.keys(g).sort(), arqs = [];
+  var lista = gruposLista(), arqs = [];
   var comPDF = document.getElementById("incPDF") && document.getElementById("incPDF").checked;
 
-  nomes.forEach(function(n, i){
-    arqs.push({name: "oficios/Oficio-" + limpaNome(n) + ".docx", data: docxOficio(cfgOficio(n, g[n], i))});
-    arqs.push({name: "planilhas/IPs-" + limpaNome(n) + ".csv", data: u8(csvDe(g[n]))});
+  lista.forEach(function(g, i){
+    arqs.push({name: "oficios/Oficio-" + limpaNome(g.nome) + ".docx", data: docxOficio(cfgOficio(g.nome, g.linhas, i, g))});
+    arqs.push({name: "planilhas/IPs-" + limpaNome(g.nome) + ".csv", data: u8(csvDe(g.linhas))});
   });
   var usados = {};
   arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(
-    [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}].concat(nomes.map(function(n){
-      return {nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])};
+    [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}].concat(lista.map(function(g){
+      return {nome: nomeAba(g.nome.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g.linhas)};
     })))});
 
   var fecha = function(){
     baixaBin(zip(arqs), "Oficios-e-planilhas-" + new Date().toISOString().slice(0,10) + ".zip", "application/zip");
-    msg(nomes.length + " ofício(s) e planilhas gerados no pacote .zip.", "var(--ok)");
+    msg(lista.length + " ofício(s) e planilhas gerados no pacote .zip.", "var(--ok)");
   };
   if(!comPDF){ fecha(); return; }
 
   var i = 0;
   msg("Montando os PDFs…");
   (function proximo(){
-    if(i >= nomes.length){ fecha(); return; }
-    var n = nomes[i];
-    pdfOficio(cfgOficio(n, g[n], i), function(bytes){
-      if(bytes) arqs.push({name: "oficios-pdf/Oficio-" + limpaNome(n) + ".pdf", data: bytes});
-      i++; barra(i / nomes.length); proximo();
+    if(i >= lista.length){ fecha(); return; }
+    var g = lista[i];
+    pdfOficio(cfgOficio(g.nome, g.linhas, i, g), function(bytes){
+      if(bytes) arqs.push({name: "oficios-pdf/Oficio-" + limpaNome(g.nome) + ".pdf", data: bytes});
+      i++; barra(i / lista.length); proximo();
     });
   })();
 }
@@ -1624,18 +1522,21 @@ drop.addEventListener("drop", function(ev){ carrega(ev.dataTransfer.files); });
 inp.onchange = function(){ carrega(inp.files); };
 
 async function carrega(files){
-  estado.linhas = []; estado.arquivos = [];
+  estado.linhas = []; estado.arquivos = []; estado.origem = null;
   msg("Lendo…");
   for(var i = 0; i < files.length; i++){
-    var f = files[i], texto = "";
+    var f = files[i], texto = "", r = [];
     try{
-      if(/\.pdf$/i.test(f.name))      texto = await textoDoPDF(await f.arrayBuffer(), f.name);
-      else if(/\.html?$/i.test(f.name)) texto = textoDoHTML(await f.text());
-      else                            texto = await f.text();
+      if(/\.pdf$/i.test(f.name)){
+        texto = await textoDoPDF(await f.arrayBuffer(), f.name);
+        r = parse(texto, f.name);
+      } else {
+        r = FiltroIpCore.parseArquivo(await f.text(), f.name);
+      }
     }catch(e){ msg("Erro ao ler " + esc(f.name) + ": " + esc(e.message), "var(--erro)"); continue; }
-    var r = parse(texto, f.name);
     estado.linhas = estado.linhas.concat(r);
     estado.arquivos.push(f.name);
+    if(!estado.origem && r[0] && r[0].origem) estado.origem = r[0].origem;
   }
   barra(1);
   if(!estado.linhas.length){ msg("Nenhum registro de IP + data/hora localizado neste arquivo.", "var(--erro)"); return; }
@@ -1655,6 +1556,7 @@ document.getElementById("btnProcTexto").onclick = function(){
   var t = document.getElementById("texto").value;
   if(!t.trim()) return;
   estado.linhas = parse(t, "texto colado");
+  estado.origem = (estado.linhas[0] && estado.linhas[0].origem) || FiltroIpCore.detectarOrigem(t);
   if(!estado.linhas.length){ msg("Nenhum registro localizado no texto.", "var(--erro)"); return; }
   msg(estado.linhas.length + " registro(s) lidos do texto.", "var(--ok)");
   processa();
