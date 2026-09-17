@@ -13,7 +13,7 @@ usuário aciona essa função.
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Análise de ERBs e Antenas v9.7.0 — PCPR</title>
+<title>Análise de ERBs e Antenas v9.8.0 — PCPR</title>
 
 <style data-bundled="leaflet.css">/* required styles */
 
@@ -926,7 +926,22 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
 .erb-label{background:#0d1814!important;color:#fff!important;border:1px solid #557466!important;border-radius:4px!important;font-size:9px!important;font-weight:900!important;padding:2px 5px!important}.erb-label:before{display:none!important}
 .seqicon{background:#fff;color:#111;border:2px solid #111;border-radius:50%;font-weight:900;text-align:center;line-height:22px;width:26px!important;height:26px!important}
 .poiicon{background:#ffd84d;color:#171717;border:2px solid #171717;border-radius:50%;font-weight:900;text-align:center;line-height:20px;width:25px!important;height:25px!important}
-.mapwrap.pick-point #map{cursor:crosshair!important}.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
+.mapwrap.pick-point #map{cursor:crosshair!important}
+.mapwrap.pick-point .leaflet-overlay-pane,
+.mapwrap.pick-point .leaflet-marker-pane,
+.mapwrap.pick-point .leaflet-tooltip-pane,
+.mapwrap.pick-point .leaflet-shadow-pane,
+.mapwrap.pick-point .leaflet-popup-pane{pointer-events:none!important}
+.pickhint{position:absolute;z-index:980;left:50%;top:58px;transform:translateX(-50%);background:rgba(9,22,17,.96);border:1px solid #5b806f;color:#f2f7f4;padding:8px 12px;border-radius:8px;font-size:9.8px;font-weight:850;box-shadow:var(--shadow);display:none}.pickhint.show{display:block}
+.map-ctx{position:absolute;z-index:1400;min-width:228px;max-width:280px;padding:6px;background:#0d1c16;border:1px solid #4a6d5c;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.45);display:none}
+.map-ctx.show{display:block}
+.map-ctx .ctx-meta{font-size:8.6px;color:#9eb2a8;padding:4px 8px 6px;line-height:1.35}
+.map-ctx .ctx-title{font-size:9.2px;font-weight:900;color:#f0d890;padding:4px 8px 2px;text-transform:uppercase;letter-spacing:.4px}
+.map-ctx button{width:100%;border:0;background:transparent;color:#e7efeb;padding:8px;border-radius:6px;text-align:left;font-size:9.7px;font-weight:750;cursor:pointer}
+.map-ctx button:hover{background:#183128}
+.map-ctx button.danger{color:#ffb4b0}
+.map-ctx .ctx-sep{height:1px;background:#29483b;margin:5px 0}
+.capture .map-ctx,.capture .pickhint{display:none!important}
 .status{position:fixed;z-index:5000;left:50%;transform:translateX(-50%);bottom:18px;padding:9px 12px;border-radius:8px;background:#17653e;color:#fff;display:none;box-shadow:var(--shadow)}.status.show{display:block}.status.error{background:#972631}
 .capture .topbar,.capture .coordbar,.capture .timelinebar,.capture .timescrub,.capture .leaflet-control,.capture .geo,.capture .route-rec,.capture .map3d-hint,.capture .map3d-hud,.capture .maplibregl-ctrl-top-left,.capture .maplibregl-ctrl-bottom-right,.capture .maplibregl-ctrl-attrib{display:none!important}
 .route-rec{position:absolute;z-index:1250;left:12px;top:58px;display:none;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;background:#7f1d1d;color:#fff;font-size:11px;font-weight:850;box-shadow:0 3px 14px rgba(0,0,0,.42)}
@@ -1026,7 +1041,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
   <div class="brand">
     <div class="brandrow">
       <div class="seal">ERB</div>
-      <div><h1>Análise de ERBs e Antenas <small>v9.7.0</small></h1><p>Satélite com ruas e nomes · filtros múltiplos · seleção de antenas</p></div>
+      <div><h1>Análise de ERBs e Antenas <small>v9.8.0</small></h1><p>Satélite com ruas e nomes · filtros múltiplos · seleção de antenas</p></div>
     </div>
   </div>
   <div class="sec"><b>Execução local:</b> arquivos são processados neste navegador. O projeto é salvo automaticamente. Use <b>Copiar link do projeto</b> para abrir este mesmo projeto depois. O mapa de fundo precisa de internet.</div>
@@ -1118,6 +1133,7 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
           <button class="dropitem" data-open="block">ERBs em bloco</button>
           <button class="dropitem" data-open="poi">Ponto por coordenadas / endereço</button>
           <button class="dropitem" id="pickPoiMenu">Ponto — clicar no mapa</button>
+          <button class="dropitem" id="pickErbMenu">ERB — clicar no mapa</button>
         </div>
       </div>
 
@@ -1206,7 +1222,8 @@ details{border:1px solid #29483b;border-radius:8px;padding:8px;margin:8px 0;back
     </div>
   </div>
 
-  <div class="pickhint" id="pickHint">Clique no mapa para escolher a posição do ponto · ESC para cancelar</div>
+  <div class="pickhint" id="pickHint">Clique em qualquer ponto do mapa, inclusive dentro do leque da ERB · ESC para cancelar</div>
+  <div class="map-ctx" id="mapCtx" hidden></div>
   <div class="coordbar" id="coordbar">Lat.: — | Long.: —</div>
 
   <div class="timescrub" id="timeScrub">
@@ -1673,9 +1690,9 @@ function redraw(fit=false){
     groups.forEach((group,gi)=>{
       const ev=group[0],lot=lotById(ev.lotId),color=lot?.color||COLORS[gi%COLORS.length],s=sector(ev);
       const dim=group.every(x=>x.displayMode==='dim');
-      L.polygon(s.ll,{color,weight:2,opacity:dim?.22:1,fillColor:color,fillOpacity:dim?.035:.16}).addTo(sectorG).bindPopup(eventPopup(group));
-      L.polyline([[ev.lat,ev.lng],destination(ev.lat,ev.lng,ev.az,ev.dist)],{color,weight:2.5,opacity:dim?.18:.9}).addTo(sectorG);
-      const m=L.circleMarker([ev.lat,ev.lng],{radius:6,color:'#111',weight:1.4,fillColor:color,fillOpacity:dim?.28:1,opacity:dim?.35:1}).addTo(markerG).bindPopup(eventPopup(group));
+      L.polygon(s.ll,{color,weight:2,opacity:dim?.22:1,fillColor:color,fillOpacity:dim?.035:.16,erbId:ev.id,mapRole:'sector'}).addTo(sectorG).bindPopup(eventPopup(group));
+      L.polyline([[ev.lat,ev.lng],destination(ev.lat,ev.lng,ev.az,ev.dist)],{color,weight:2.5,opacity:dim?.18:.9,interactive:false,erbId:ev.id,mapRole:'azimuth'}).addTo(sectorG);
+      const m=L.circleMarker([ev.lat,ev.lng],{radius:6,color:'#111',weight:1.4,fillColor:color,fillOpacity:dim?.28:1,opacity:dim?.35:1,erbId:ev.id,mapRole:'erb'}).addTo(markerG).bindPopup(eventPopup(group));
       if(cfg.showLabels)m.bindTooltip(esc(erbDisplayName(ev))+`${group.length>1?' ×'+group.length:''}`,{permanent:true,direction:'top',offset:[0,-8],className:'erb-label'});
       s.ll.forEach(p=>bounds.push(p));
     });
@@ -1683,7 +1700,7 @@ function redraw(fit=false){
   state.pois.forEach(p=>{
     if(!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lng)))return;
     const ic=L.divIcon({className:'poiicon',html:poiSymbol(p.type),iconSize:[25,25],iconAnchor:[12,12]});
-    L.marker([p.lat,p.lng],{icon:ic}).addTo(poiG).bindTooltip(esc(p.name),{permanent:true,direction:'right',className:'erb-label'})
+    L.marker([p.lat,p.lng],{icon:ic,poiId:p.id,mapRole:'poi'}).addTo(poiG).bindTooltip(esc(p.name),{permanent:true,direction:'right',className:'erb-label'})
       .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.type)}<br>${fmt(p.lat)} / ${fmt(p.lng)}${p.datetime?'<br>'+esc(p.datetime):''}${p.obs?'<br>'+esc(p.obs):''}`);
     bounds.push([p.lat,p.lng]);
   });
@@ -2170,10 +2187,12 @@ async function openDrawer(kind,preset={}){
       <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doCreateLot">Criar lote</button></div>`;
     $('doCreateLot').onclick=createLotFromForm;
   }else if(kind==='erb'){
-    title.textContent='ERB / setor manual';
+    title.textContent=preset.id?'Editar ERB / setor':'ERB / setor manual';
     body.innerHTML=erbFormHtml();
+    fillErbForm(preset);
     $('doSaveErb').onclick=saveManualErb;
     $('useCenter').onclick=()=>{const c=map.getCenter();$('fLat').value=c.lat.toFixed(6);$('fLng').value=c.lng.toFixed(6)};
+    $('erbPickMap').onclick=()=>startMapPick('erb',readErbForm());
   }else if(kind==='block'){
     title.textContent='ERBs em bloco';
     body.innerHTML=`<div class="muted">Formato simples por linha: <b>nome;latitude;longitude;azimute;datahora;operadora;cellid</b>. Também aceita cabeçalhos reconhecíveis.</div>
@@ -2182,24 +2201,19 @@ async function openDrawer(kind,preset={}){
       <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doBlock">Importar</button></div>`;
     $('doBlock').onclick=()=>importDelimitedText($('fBlockText').value,$('fBlockLot').value,'');
   }else if(kind==='poi'){
-    title.textContent='Ponto no mapa';
-    body.innerHTML=`<div class="field"><label>Nome</label><input id="fPoiName" placeholder="Ex.: Residência do alvo" value="${esc(preset.name||'')}"></div>
+    title.textContent=preset.id?'Editar ponto':'Ponto no mapa';
+    body.innerHTML=`<input type="hidden" id="fPoiId" value="${esc(preset.id||'')}">
+      <div class="field"><label>Nome</label><input id="fPoiName" placeholder="Ex.: Residência do alvo" value="${esc(preset.name||'')}"></div>
       <div class="grid2"><div class="field"><label>Tipo</label><select id="fPoiType"><option>Casa</option><option>Carro</option><option>Crime</option><option>Interesse</option><option>Moto</option><option>Alcance</option><option>Outro</option></select></div><div class="field"><label>Data/hora (opcional)</label><input id="fPoiDate" type="datetime-local" value="${esc(preset.datetime||'')}"></div></div>
       <div class="grid2"><div class="field"><label>Latitude</label><input id="fPoiLat" value="${preset.lat!=null?Number(preset.lat).toFixed(6):''}"></div><div class="field"><label>Longitude</label><input id="fPoiLng" value="${preset.lng!=null?Number(preset.lng).toFixed(6):''}"></div></div>
       <div class="row"><button class="btn outline small" id="poiPickMap">Escolher no mapa</button><button class="btn outline small" id="poiCenter">Usar centro do mapa</button></div>
       <div class="field" style="margin-top:8px"><label>Endereço (consulta opcional OpenStreetMap)</label><input id="fPoiAddr" placeholder="Rua, nº, cidade/UF" value="${esc(preset.address||'')}"></div>
       <button class="btn outline small" id="poiSearch">Localizar endereço</button>
       <div class="field" style="margin-top:8px"><label>Observação</label><textarea id="fPoiObs">${esc(preset.obs||'')}</textarea></div>
-      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doPoi">Adicionar ponto</button></div>`;
+      <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doPoi">${preset.id?'Salvar alterações':'Adicionar ponto'}</button></div>`;
     if(preset.type)$('fPoiType').value=preset.type;
     $('poiCenter').onclick=()=>{const c=map.getCenter();$('fPoiLat').value=c.lat.toFixed(6);$('fPoiLng').value=c.lng.toFixed(6)};
-    $('poiPickMap').onclick=()=>startPoiPick({
-      name:$('fPoiName').value,
-      type:$('fPoiType').value,
-      datetime:$('fPoiDate').value,
-      address:$('fPoiAddr').value,
-      obs:$('fPoiObs').value
-    });
+    $('poiPickMap').onclick=()=>startMapPick('poi',readPoiForm());
     $('poiSearch').onclick=searchPoiAddress;$('doPoi').onclick=savePoi;
   }else if(kind==='import'){
     title.textContent='Importar arquivo — auditoria';
@@ -2266,7 +2280,7 @@ function closeDrawer(restoreFilters=false){
   clearTimeout(liveApplyTimer);
   if(restoreFilters)cancelLiveFilters();
   filterOpenedFrom=null;
-  importSelectionId++;filterDraft=null;filterErbOptions=[];filterMultiOptions={};$('drawerBack').classList.remove('show');document.querySelector('.drawer').classList.remove('filter-drawer')
+  importSelectionId++;filterDraft=null;filterErbOptions=[];filterMultiOptions={};hideMapContext();$('drawerBack').classList.remove('show');document.querySelector('.drawer').classList.remove('filter-drawer')
 }
 $('drawerClose').onclick=()=>closeDrawer();$('drawerBack').onclick=e=>{if(e.target===$('drawerBack'))closeDrawer()};
 
@@ -2281,7 +2295,7 @@ function erbFormHtml(){
     <div class="field"><label>Nome / identificação</label><input id="fErbName" placeholder="Ex.: ERB Centro — Setor 2"></div>
     <div class="grid2"><div class="field"><label>Latitude</label><input id="fLat" placeholder="-24.318000"></div><div class="field"><label>Longitude</label><input id="fLng" placeholder="-52.530000"></div></div>
     <div class="grid3"><div class="field"><label>Azimute</label><input id="fAz" placeholder="0–360"></div><div class="field"><label>Raio (km)</label><input id="fDist" value="${cfg.defaultDist}"></div><div class="field"><label>Margem (±°)</label><input id="fMargin" value="${cfg.defaultMargin}"></div></div>
-    <div class="row"><button class="btn outline small" id="useCenter">Usar centro do mapa</button></div>
+    <div class="row"><button class="btn outline small" id="useCenter">Usar centro do mapa</button><button class="btn outline small" id="erbPickMap">Escolher no mapa</button></div>
     <div class="grid2" style="margin-top:8px"><div class="field"><label>Data/hora</label><input id="fDate" type="datetime-local"></div><div class="field"><label>Tipo do evento</label><select id="fEventType"><option value="">Herdar do lote</option><option>VOZ</option><option>DADOS</option></select></div></div>
     <details><summary>Mais opções</summary>
       <div class="field"><label for="fErbCity">Cidade da antena (opcional)</label><input id="fErbCity"></div>
@@ -2293,6 +2307,48 @@ function erbFormHtml(){
       <div class="field"><label>Fonte / observação</label><textarea id="fObs"></textarea></div>
     </details>
     <div class="drawerfoot"><button class="btn outline" data-close>Cancelar</button><button class="btn primary" id="doSaveErb">Adicionar</button></div>`
+}
+function fillErbForm(p={}){
+  const set=(id,v)=>{const el=$(id);if(!el||v==null||v==='')return;el.value=v};
+  set('fErbLot',p.lotId);
+  set('fErbName',p.name);set('fStation',p.station);set('fSector',p.sector);set('fErbCity',p.city);
+  set('fLat',p.lat!=null&&Number.isFinite(Number(p.lat))?Number(p.lat).toFixed(6):'');
+  set('fLng',p.lng!=null&&Number.isFinite(Number(p.lng))?Number(p.lng).toFixed(6):'');
+  set('fAz',p.az!=null&&p.az!==''?p.az:'');
+  set('fDist',p.dist);set('fMargin',p.margin);set('fEventType',p.eventType);
+  set('fOperator',p.operator);set('fTech',p.tech);set('fCell',p.cellid);set('fNode',p.enodeb);set('fTac',p.lactac);
+  set('fOrigin',p.origin);set('fDestination',p.destination);set('fImei',p.imei);set('fObs',p.obs);
+  if(p.id){
+    $('doSaveErb').textContent='Salvar alterações';
+    $('doSaveErb').dataset.editId=p.id;
+  }
+}
+function readErbForm(){
+  return{
+    id:$('doSaveErb')?.dataset.editId||'',
+    lotId:$('fErbLot')?.value||'',
+    name:$('fErbName')?.value.trim()||'',
+    station:$('fStation')?.value.trim()||'',
+    sector:$('fSector')?.value.trim()||'',
+    city:$('fErbCity')?.value.trim()||'',
+    lat:$('fLat')?.value||'',lng:$('fLng')?.value||'',az:$('fAz')?.value||'',
+    dist:$('fDist')?.value||'',margin:$('fMargin')?.value||'',
+    datetime:$('fDate')?.value||'',eventType:$('fEventType')?.value||'',
+    operator:$('fOperator')?.value.trim()||'',tech:$('fTech')?.value.trim()||'',
+    cellid:$('fCell')?.value.trim()||'',enodeb:$('fNode')?.value.trim()||'',lactac:$('fTac')?.value.trim()||'',
+    origin:$('fOrigin')?.value.trim()||'',destination:$('fDestination')?.value.trim()||'',
+    imei:$('fImei')?.value.trim()||'',obs:$('fObs')?.value.trim()||''
+  };
+}
+function readPoiForm(){
+  return{
+    id:$('fPoiId')?.value||'',
+    name:$('fPoiName')?.value.trim()||'',
+    type:$('fPoiType')?.value||'Casa',
+    datetime:$('fPoiDate')?.value||'',
+    lat:$('fPoiLat')?.value||'',lng:$('fPoiLng')?.value||'',
+    address:$('fPoiAddr')?.value||'',obs:$('fPoiObs')?.value||''
+  };
 }
 function createLotFromForm(){
   const name=$('fLotName').value.trim();if(!name)return status('Informe o nome do lote.',true);
@@ -2314,34 +2370,165 @@ function saveManualErb(){
   const lotId=ensureManualLot($('fErbLot')?.value||state.activeLotId);
   const lat=parseCoord($('fLat').value,true),lng=parseCoord($('fLng').value,false),az=parseNum($('fAz').value);
   if(!Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(az))return status('Confira latitude, longitude e azimute.',true);
-  const ev={id:uid(),lotId,name:$('fErbName').value.trim()||`ERB ${state.events.length+1}`,station:$('fStation').value.trim(),sector:$('fSector').value.trim(),city:$('fErbCity')?.value.trim()||'',
+  const editId=$('doSaveErb')?.dataset.editId;
+  const payload={lotId,name:$('fErbName').value.trim()||`ERB ${state.events.length+1}`,station:$('fStation').value.trim(),sector:$('fSector').value.trim(),city:$('fErbCity')?.value.trim()||'',
     lat,lng,az:normAz(az),dist:parseNum($('fDist').value)||cfg.defaultDist,margin:parseNum($('fMargin').value)||cfg.defaultMargin,
     datetime:$('fDate').value?new Date($('fDate').value).toLocaleString('pt-BR'):'',eventType:$('fEventType').value,
     operator:$('fOperator').value.trim(),tech:$('fTech').value.trim(),cellid:$('fCell').value.trim(),enodeb:$('fNode').value.trim(),lactac:$('fTac').value.trim(),radiusSource:'MANUAL',
-    origin:$('fOrigin').value.trim(),destination:$('fDestination').value.trim(),imei:$('fImei').value.trim(),obs:$('fObs').value.trim(),visible:true};
-  state.events.push(ev);closeDrawer();redraw(true);status('ERB adicionada.')
+    origin:$('fOrigin').value.trim(),destination:$('fDestination').value.trim(),imei:$('fImei').value.trim(),obs:$('fObs').value.trim(),visible:true,displayMode:'normal'};
+  const existing=editId?state.events.find(e=>e.id===editId):null;
+  if(existing){
+    Object.assign(existing,payload);
+    closeDrawer();redraw(true);status('ERB atualizada.');
+    return;
+  }
+  state.events.push({id:uid(),...payload});closeDrawer();redraw(true);status('ERB adicionada.')
 }
 
-let poiPickMode=false,poiPickPreset=null;
-function startPoiPick(preset={}){
-  poiPickMode=true;
-  poiPickPreset=preset||{};
+let mapPickMode=null,mapPickPreset=null,mapCtxState=null;
+function startMapPick(kind='poi',preset={}){
+  mapPickMode=kind==='erb'?'erb':'poi';
+  mapPickPreset=preset||{};
+  hideMapContext();
   closeDrawer();
   $('mapWrap').classList.add('pick-point');
-  $('pickHint').classList.add('show');
-  status('Clique no mapa para escolher a posição do ponto.');
+  const hint=$('pickHint');
+  hint.textContent=mapPickMode==='erb'
+    ? 'Clique em qualquer ponto do mapa, inclusive dentro do leque da ERB, para posicionar a antena · ESC cancela'
+    : 'Clique em qualquer ponto do mapa, inclusive dentro do leque da ERB, para posicionar o ponto · ESC cancela';
+  hint.classList.add('show');
+  status(mapPickMode==='erb'?'Clique no mapa para posicionar a ERB, inclusive dentro do raio/leque.':'Clique no mapa para posicionar o ponto, inclusive dentro do raio/leque.');
 }
-function cancelPoiPick(){
-  poiPickMode=false;poiPickPreset=null;
+function startPoiPick(preset={}){startMapPick('poi',preset)}
+function cancelMapPick(){
+  mapPickMode=null;mapPickPreset=null;
   $('mapWrap').classList.remove('pick-point');
   $('pickHint').classList.remove('show');
 }
-map.on('click',e=>{
-  if(!poiPickMode)return;
-  const preset={...(poiPickPreset||{}),lat:e.latlng.lat,lng:e.latlng.lng};
-  cancelPoiPick();
-  openDrawer('poi',preset);
+function cancelPoiPick(){cancelMapPick()}
+function finishMapPick(latlng){
+  if(!mapPickMode||!latlng)return false;
+  const kind=mapPickMode,preset={...(mapPickPreset||{}),lat:latlng.lat,lng:latlng.lng};
+  cancelMapPick();
+  openDrawer(kind,preset);
   status('Posição selecionada no mapa.');
+  return true;
+}
+function pixelDist(a,b){
+  return map.latLngToContainerPoint(a).distanceTo(map.latLngToContainerPoint(b));
+}
+function nearestPoiAt(ll,maxPx=22){
+  let best=null,bestD=maxPx;
+  for(const p of state.pois){
+    if(!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lng)))continue;
+    const d=pixelDist(ll,[p.lat,p.lng]);
+    if(d<bestD){best=p;bestD=d}
+  }
+  return best;
+}
+function nearestErbAt(ll,maxPx=22){
+  let best=null,bestD=maxPx;
+  for(const ev of filteredEvents()){
+    const d=pixelDist(ll,[ev.lat,ev.lng]);
+    if(d<bestD){best=ev;bestD=d}
+  }
+  return best;
+}
+function isManualErb(ev){return Boolean(ev)&&ev.radiusSource==='MANUAL'&&!ev.sourceFile&&!ev.parser&&!ev.fileHash}
+function hideMapContext(){
+  mapCtxState=null;
+  const el=$('mapCtx');if(!el)return;
+  el.classList.remove('show');el.hidden=true;el.innerHTML='';
+}
+function placeMapContext(latlng){
+  const el=$('mapCtx'),wrap=$('mapWrap'),mapEl=$('map');
+  if(!el||!wrap||!mapEl||!latlng)return;
+  el.hidden=false;el.classList.add('show');
+  const wrapR=wrap.getBoundingClientRect(),mapR=mapEl.getBoundingClientRect();
+  const pt=map.latLngToContainerPoint(latlng);
+  let x=pt.x+(mapR.left-wrapR.left)+8,y=pt.y+(mapR.top-wrapR.top)+8;
+  const mw=el.offsetWidth||240,mh=el.offsetHeight||220;
+  if(x+mw>wrapR.width-8)x=wrapR.width-mw-8;
+  if(y+mh>wrapR.height-8)y=wrapR.height-mh-8;
+  if(x<8)x=8;if(y<8)y=8;
+  el.style.left=x+'px';el.style.top=y+'px';
+}
+function showMapContextMenu(e){
+  if(e?.originalEvent)L.DomEvent.preventDefault(e.originalEvent);
+  L.DomEvent.stop(e);
+  if(!e?.latlng)return;
+  closeAllMenus();
+  const layerRole=e.layer?.options?.mapRole||'';
+  const poi=layerRole==='poi'&&e.layer?.options?.poiId?state.pois.find(p=>p.id===e.layer.options.poiId):nearestPoiAt(e.latlng);
+  const erb=layerRole==='erb'&&e.layer?.options?.erbId?state.events.find(x=>x.id===e.layer.options.erbId):nearestErbAt(e.latlng);
+  mapCtxState={lat:e.latlng.lat,lng:e.latlng.lng,poi:poi||null,erb:erb||null,openedAt:Date.now()};
+  const ll=`${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+  const rows=[];
+  rows.push(`<div class="ctx-meta">Lat. ${fmt(e.latlng.lat)} · Long. ${fmt(e.latlng.lng)}</div>`);
+  if(poi){
+    rows.push(`<div class="ctx-title">Ponto · ${esc(poi.name)}</div>`);
+    rows.push(`<button type="button" data-ctx="edit-poi">Editar ponto</button>`);
+    rows.push(`<button type="button" class="danger" data-ctx="del-poi">Excluir ponto</button>`);
+    rows.push('<div class="ctx-sep"></div>');
+  }
+  if(erb){
+    rows.push(`<div class="ctx-title">ERB · ${esc(erbDisplayName(erb))}</div>`);
+    rows.push(`<button type="button" data-ctx="open-erb">Abrir ficha da ERB</button>`);
+    if(isManualErb(erb)){
+      rows.push(`<button type="button" data-ctx="edit-erb">Editar ERB / setor</button>`);
+      rows.push(`<button type="button" class="danger" data-ctx="del-erb">Excluir ERB</button>`);
+    }
+    rows.push('<div class="ctx-sep"></div>');
+  }
+  rows.push(`<div class="ctx-title">Adicionar neste ponto</div>`);
+  rows.push(`<button type="button" data-ctx="add-poi">Adicionar ponto aqui</button>`);
+  rows.push(`<button type="button" data-ctx="add-erb">Adicionar ERB / setor aqui</button>`);
+  rows.push('<div class="ctx-sep"></div>');
+  rows.push(`<button type="button" data-ctx="copy">${esc('Copiar coordenadas')}</button>`);
+  $('mapCtx').innerHTML=rows.join('');
+  placeMapContext(e.latlng);
+}
+function handleMapContextAction(action){
+  const ctx=mapCtxState;if(!ctx)return;
+  hideMapContext();
+  if(action==='add-poi')openDrawer('poi',{lat:ctx.lat,lng:ctx.lng,type:'Casa'});
+  else if(action==='add-erb')openDrawer('erb',{lat:ctx.lat,lng:ctx.lng});
+  else if(action==='edit-poi'&&ctx.poi)openDrawer('poi',{...ctx.poi});
+  else if(action==='del-poi'&&ctx.poi){
+    if(!confirm(`Excluir o ponto “${ctx.poi.name}”?`))return;
+    state.pois=state.pois.filter(p=>p.id!==ctx.poi.id);redraw();status('Ponto excluído.');
+  }else if(action==='open-erb'&&ctx.erb){
+    map.setView([ctx.erb.lat,ctx.erb.lng],Math.max(map.getZoom(),15));
+    markerG.eachLayer(layer=>{if(layer.options?.erbId===ctx.erb.id&&layer.openPopup)layer.openPopup()});
+  }else if(action==='edit-erb'&&ctx.erb&&isManualErb(ctx.erb))openDrawer('erb',{...ctx.erb});
+  else if(action==='del-erb'&&ctx.erb&&isManualErb(ctx.erb)){
+    if(!confirm(`Excluir a ERB “${erbDisplayName(ctx.erb)}”?`))return;
+    state.events=state.events.filter(e=>e.id!==ctx.erb.id);redraw();status('ERB excluída.');
+  }else if(action==='copy')copyText(`${ctx.lat},${ctx.lng}`);
+}
+function onMapPointer(e){
+  if(e.type==='contextmenu'){
+    if(mapPickMode){finishMapPick(e.latlng);return}
+    showMapContextMenu(e);return;
+  }
+  hideMapContext();
+  finishMapPick(e.latlng);
+}
+map.on('click',onMapPointer);
+map.on('contextmenu',onMapPointer);
+[sectorG,markerG,poiG,pathG,seqG,geoG].forEach(g=>{
+  g.on('click',onMapPointer);
+  g.on('contextmenu',onMapPointer);
+});
+$('mapCtx')?.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-ctx]');if(!btn)return;
+  e.preventDefault();e.stopPropagation();
+  handleMapContextAction(btn.dataset.ctx);
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest?.('#mapCtx'))return;
+  if(mapCtxState?.openedAt&&Date.now()-mapCtxState.openedAt<250)return;
+  hideMapContext();
 });
 
 async function searchPoiAddress(){
@@ -2356,7 +2543,15 @@ async function searchPoiAddress(){
 function savePoi(){
   const name=$('fPoiName').value.trim(),lat=parseCoord($('fPoiLat').value,true),lng=parseCoord($('fPoiLng').value,false);
   if(!name||!Number.isFinite(lat)||!Number.isFinite(lng))return status('Confira nome e coordenadas.',true);
-  state.pois.push({id:uid(),name,type:$('fPoiType').value,lat,lng,datetime:$('fPoiDate').value?new Date($('fPoiDate').value).toLocaleString('pt-BR'):'',obs:$('fPoiObs').value.trim()});
+  const payload={name,type:$('fPoiType').value,lat,lng,datetime:$('fPoiDate').value?new Date($('fPoiDate').value).toLocaleString('pt-BR'):'',obs:$('fPoiObs').value.trim()};
+  const editId=$('fPoiId')?.value;
+  const existing=editId?state.pois.find(p=>p.id===editId):null;
+  if(existing){
+    Object.assign(existing,payload);
+    closeDrawer();redraw(true);status('Ponto atualizado.');
+    return;
+  }
+  state.pois.push({id:uid(),...payload});
   closeDrawer();redraw(true);status('Ponto adicionado.')
 }
 function applyFilters(){
@@ -4826,12 +5021,19 @@ async function runSelfTest(){
     add('Linha do tempo / calor',first.length===1&&mid.length===2&&all.length===3&&heat&&heat.length===2,'insere ERBs na ordem e acumula conexões ao voltar ao mesmo local');
     state.lots=backup.lots;state.events=backup.events;state.filters=backup.filters;state.timeScrub=backup.timeScrub;state.activeLotId=backup.activeLotId;storageSuspended=prior;
   }catch(e){add('Linha do tempo / calor',false,e.message)}
+  try{
+    const sg=sector({lat:-24.3,lng:-52.5,az:90,dist:5,margin:45});
+    const inside=destination(-24.3,-52.5,90,1.2);
+    const hit=typeof turf.booleanPointInPolygon==='function'?turf.booleanPointInPolygon(turf.point([inside[1],inside[0]]),sg.geo):true;
+    add('Marcação dentro do leque',typeof startMapPick==='function'&&typeof finishMapPick==='function'&&typeof showMapContextMenu==='function'&&hit,'clique/botão direito em qualquer ponto, inclusive no raio/leque');
+  }catch(e){add('Marcação dentro do leque',false,e.message)}
   const ok=tests.filter(t=>t.ok).length,fail=tests.length-ok;
-  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.7.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
+  $('drawerBack').classList.add('show');$('drawerTitle').textContent='Autoteste do módulo v9.8.0';$('drawerBody').innerHTML=`<div class="analysis-grid"><div class="analysis-kpi"><span>Aprovados</span><b>${ok}</b></div><div class="analysis-kpi"><span>Falhas</span><b>${fail}</b></div></div>${tests.map(t=>`<div class="item"><div class="itemname">${t.ok?'✓ APROVADO':'✕ FALHOU'} — ${esc(t.name)}</div><div class="itemmeta">${esc(t.detail||'')}</div></div>`).join('')}<div class="analysis-note">${fail?'Há teste(s) com falha. Não utilize o módulo em produção sem revisar os itens acima.':'Todos os testes executáveis no navegador foram aprovados.'}</div><div class="drawerfoot"><button class="btn primary" data-close>Fechar</button></div>`;$('drawerBody').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeDrawer);status(fail?`Autoteste: ${fail} falha(s).`:'Autoteste concluído sem falhas.',fail>0);
 }
 function setHeatMode(mode){state.heatMode=['normal','heat','both'].includes(mode)?mode:'normal';redraw();status(state.heatMode==='normal'?'Mapa normal.':state.heatMode==='heat'?'Mapa de calor ativado.':'Mapa normal + calor ativado.')}
 function openAnalysisPanel(){document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b.dataset.side==='analysis'));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-analysis').classList.add('active');renderAnalysis();}
 function closeAllMenus(except=null){
+  hideMapContext();
   document.querySelectorAll('.menu.open').forEach(m=>{
     if(m!==except)m.classList.remove('open');
   });
@@ -4870,7 +5072,8 @@ $('selectRankAntennas')?.addEventListener('click',()=>openDrawer('filter'));
 document.querySelectorAll('[data-base]').forEach(x=>x.onclick=()=>{try{map.removeLayer(activeBase)}catch(_){}cfg.base=x.dataset.base;activeBase=addBaseSafely(bases[cfg.base]||osmRaster());syncBaseControls();autosave()});
 document.querySelectorAll('.sidetab').forEach(x=>x.onclick=()=>{document.querySelectorAll('.sidetab').forEach(b=>b.classList.toggle('active',b===x));document.querySelectorAll('.sidepane').forEach(p=>p.classList.remove('active'));$('side-'+x.dataset.side).classList.add('active');if(x.dataset.side==='links')renderSavedLinks()});
 $('activeLot').onchange=()=>{state.activeLotId=$('activeLot').value||null;renderSidebar()};
-$('pickPoiMenu').onclick=()=>startPoiPick({type:'Casa'});
+$('pickPoiMenu').onclick=()=>startMapPick('poi',{type:'Casa'});
+$('pickErbMenu').onclick=()=>startMapPick('erb');
 $('quickNewLot').onclick=()=>openDrawer('lot');$('filterBtn').onclick=()=>openDrawer('filter');$('timelineBtn').onclick=()=>{state.trajectoryVisible=true;$('timelinebar').classList.add('show');drawTimelineLayers();syncMap3d()};$('selectTrajectoryBtn').onclick=openTrajectorySelector;$('removeTrajectoryBtn').onclick=removeTrajectory;$('selectTrajectoryInline').onclick=openTrajectorySelector;$('removeTrajectoryInline').onclick=removeTrajectory;$('closeTimeline').onclick=()=>$('timelinebar').classList.remove('show');
 $('rankOrderLabel')&&document.querySelectorAll('[data-rank-order]').forEach(x=>x.onclick=()=>{state.filters.erbOrder=x.dataset.rankOrder==='asc'?'asc':'desc';renderAnalysis();redraw(true);autosave();status(state.filters.erbOrder==='asc'?'Ranking ordenado do menor para o maior número de conexões.':'Ranking ordenado do maior para o menor número de conexões.')});
 $('playTimeline').onclick=startTimeline;$('playTimeline3d').onclick=startTrajectory3d;$('playTimeline3dBtn').onclick=startTrajectory3d;$('stopTimeline').onclick=stopTimeline;$('prevTimeline').onclick=()=>stepTimeline(-1);$('nextTimeline').onclick=()=>stepTimeline(1);$('fitTimeline').onclick=fitTrajectory;$('geoBtn').onclick=()=>updateGeo(true);$('analysisPanelBtn').onclick=openAnalysisPanel;$('heatNormal').onclick=()=>setHeatMode('normal');$('heatOnly').onclick=()=>setHeatMode('heat');$('heatBoth').onclick=()=>setHeatMode('both');$('geoClose').onclick=()=>$('geoPanel').classList.remove('show');
@@ -4893,7 +5096,7 @@ $('coordbar').onclick=()=>{navigator.clipboard?.writeText($('coordbar').textCont
   range.addEventListener('input',apply);range.addEventListener('change',apply);
 })();
 map.on('mousemove',e=>$('coordbar').textContent=`Lat.: ${e.latlng.lat.toFixed(6)} | Long.: ${e.latlng.lng.toFixed(6)}`);
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(poiPickMode)cancelPoiPick();closeDrawer();$('geoPanel').classList.remove('show')}});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(mapPickMode)cancelMapPick();hideMapContext();closeDrawer();$('geoPanel').classList.remove('show')}});
 window.addEventListener('resize',()=>{setTimeout(()=>{map.invalidateSize();if(map3d&&cfg.view3d)map3d.resize()},80)});
 let fileDragDepth=0;
 document.addEventListener('dragenter',e=>{if(!hasDraggedFiles(e))return;e.preventDefault();fileDragDepth++;$('fileDropOverlay')?.classList.add('show')});
