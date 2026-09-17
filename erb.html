@@ -5278,6 +5278,8 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     timeScrubWindow,
     timeScrubSlice,
     filteredEvents,
+    redraw,
+    setTrajectoryVisible(v){state.trajectoryVisible=Boolean(v);if(!v)$('timelinebar')?.classList.remove('show')},
     liveApplyFilters,
     erbDisplayName,
     setLabelMode,
