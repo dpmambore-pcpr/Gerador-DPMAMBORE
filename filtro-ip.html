@@ -152,21 +152,23 @@ footer{color:var(--suave)!important}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.1.2",
+  version: "3.2.0",
   releaseDate: "17/09/2026",
   changes: [
-    "Corrigida a identificação de operadora em lotes grandes de IPs, evitando uma consulta externa independente para cada endereço quando vários IPs pertencem ao mesmo prefixo.",
-    "Adicionada consulta primária ao RIPEstat/RIPE NCC para obter prefixo e ASN; ipinfo e ipwho.is permanecem como alternativas quando necessário.",
-    "Implementado cache por prefixo: uma identificação confirmada para um bloco é reaproveitada somente para IPs que realmente pertencem ao CIDR retornado pela fonte.",
-    "Corrigida a possibilidade de tentar novamente IPs que falharam em consulta anterior; falhas não ficam mais gravadas como se fossem resultados válidos.",
-    "Adicionado o bloco 2804:388::/30, registrado para AS22085 Claro S/A, à tabela local de prefixos verificados.",
-    "Mantidos os blocos verificados da Telefônica/Vivo: 2804:18::/32 (AS26599) e 2804:7f0::/29 (AS18881).",
-    "Atualizadas as informações de privacidade da tela para refletir corretamente os serviços externos usados na identificação online."
+    "O campo de ofício agora aceita a digitação compacta do número, ano e iniciais; por exemplo, 012026wpm é convertido para 01/2026 - WPM.",
+    "O campo de inquérito agora aceita a digitação compacta do número e ano; por exemplo, 13542026 é convertido para 1354/2026.",
+    "O cabeçalho do documento combina automaticamente o inquérito e o ofício no padrão solicitado; por exemplo, 1354.2026.01/2026 - WPM.",
+    "O número do inquérito continua sendo preenchido separadamente na linha própria e nos demais pontos do modelo que utilizam {INQUERITO}.",
+    "Adicionado botão para enviar o ofício diretamente à pasta de assinatura da autoridade configurada, reutilizando a integração oficial da Central com o Google Drive.",
+    "O envio para a pasta de assinatura gera e transmite exclusivamente o PDF do ofício; o DOCX não é enviado ao Drive.",
+    "Na geração para múltiplas operadoras, somente a sequência do ofício é incrementada, preservando o ano, as iniciais e o mesmo inquérito."
   ]
 });
 </script>
 <script src="pcpr-core.js"></script>
 <script src="pcpr-config.js"></script>
+<script src="pcpr-drive.js?v=3.0.5"></script>
+<script>window.PCPR_DOCUMENT_TYPE="Ofício - Filtro de IPs";</script>
 <script id="jszip-3.10.1">
 /*!
 
@@ -189,7 +191,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <button id="btnCfgTopo" style="float:right;background:#1d5a94;border:1px solid rgba(255,255,255,.35)">Configurar para outra delegacia</button>
   <p id="hSub">Delegacia de Polícia Civil de Mamborê — 16ª SDP / PCPR · funciona offline, sem instalação · versão <span id="appVersion"></span></p>
 </header>
-<div class="security-note"><b>Processamento:</b> o filtro e a leitura do PDF ocorrem localmente. Somente ao usar “Identificar operadoras (online)” os endereços necessários à identificação são consultados em serviços públicos de informação de rede. A consulta primária usa RIPEstat/RIPE NCC; ipinfo e ipwho.is são alternativas. O token do ipinfo é opcional, usado somente na requisição e não é salvo pela Central.</div>
+<div class="security-note"><b>Processamento:</b> o filtro e a leitura dos arquivos ocorrem localmente. Ao usar “Identificar operadoras (online)”, somente os endereços necessários à identificação são consultados em serviços públicos de informação de rede. Ao escolher “Enviar PDF para pasta do Doutor”, somente o PDF gerado é enviado à pasta de assinatura da autoridade configurada no Google Drive. O token do ipinfo é opcional, usado somente na requisição e não é salvo pela Central.</div>
 
 <main>
 
@@ -259,8 +261,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <h2>3. Por operadora — planilhas e ofícios</h2>
 
   <div class="form">
-    <label>Ofício nº (inicial)<input type="text" id="ofNum" value="001" size="6"></label>
-    <label>Inquérito Policial nº<input type="text" id="ofIP" placeholder="000000/2026"></label>
+    <label>Ofício nº + iniciais<input type="text" id="ofNum" placeholder="Ex.: 012026wpm → 01/2026 - WPM" autocomplete="off"></label>
+    <label>Inquérito Policial nº<input type="text" id="ofIP" placeholder="Ex.: 13542026 → 1354/2026" inputmode="numeric" autocomplete="off"></label>
     <label>Crime apurado<select id="ofCrime"></select>
       <input type="text" id="ofCrimeOutro" class="hide" placeholder="descreva o crime e a capitulação" style="margin-top:5px"></label>
     <label>Data do ofício<input type="date" id="ofData"></label>
@@ -268,6 +270,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <label>Assinante<input type="text" id="ofAssin" value="Anderson Sérgio Romão"></label>
     <label>Cargo<input type="text" id="ofCargo" value="Delegado de Polícia Civil"></label>
   </div>
+  <div style="margin-top:-1px;margin-bottom:10px;font-size:11.5px;color:var(--suave);line-height:1.45"><b>Preenchimento automático:</b> ofício <span class="mono">012026wpm</span> + inquérito <span class="mono">13542026</span> → cabeçalho <span class="mono">1354.2026.01/2026 - WPM</span>. O inquérito também permanece na linha própria como <span class="mono">1354/2026</span>.</div>
   <div style="margin-top:12px">
     <div style="font-size:12px;color:var(--suave);margin-bottom:5px">Respostas devem ser encaminhadas a:</div>
     <div id="listaEmails" class="opts" style="margin-top:0"></div>
@@ -304,7 +307,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <label>Nome da unidade<input type="text" id="cfUnidade"></label>
       <label>Subtítulo (tela)<input type="text" id="cfSub"></label>
       <label>Cidade/UF do ofício<input type="text" id="cfCidade" placeholder="Campo Mourão/PR"></label>
-      <label>Sufixo do nº do ofício<input type="text" id="cfSufixo" placeholder="DPC/CAMPO MOURÃO"></label>
       <label>E-mail para resposta<input type="text" id="cfEmail"></label>
       <label>Assinante padrão<input type="text" id="cfAssin"></label>
       <label>Cargo padrão<input type="text" id="cfCargo"></label>
@@ -357,6 +359,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <h2>5. Atualização</h2>
   <div id="changelogAtual"></div>
   <div class="changelog-entry">
+    <h3>Versão 3.1.3</h3>
+    <div class="date">17/09/2026</div>
+    <ul>
+      <li>O campo “Ofício nº” agora recebe o número completo exatamente como deve aparecer no documento.</li>
+      <li>Removida a configuração separada de sufixo do número do ofício.</li>
+      <li>O ano e o sufixo não são mais acrescentados automaticamente ao documento.</li>
+      <li>Na geração em lote, somente o primeiro bloco numérico é incrementado; o restante do texto digitado é preservado.</li>
+    </ul>
+  </div>
+  <div class="changelog-entry">
+    <h3>Versão 3.1.2</h3>
+    <div class="date">17/09/2026</div>
+    <ul>
+      <li>Corrigida a identificação de operadora em lotes grandes, com reaproveitamento seguro de prefixos CIDR confirmados.</li>
+      <li>Adicionada consulta primária ao RIPEstat/RIPE NCC, mantendo ipinfo e ipwho.is como alternativas.</li>
+      <li>Adicionado o bloco verificado 2804:388::/30 da Claro S/A e mantidos os blocos verificados da Telefônica/Vivo.</li>
+      <li>Falhas temporárias de consulta deixaram de ser armazenadas como resultados definitivos.</li>
+    </ul>
+  </div>
+  <div class="changelog-entry">
     <h3>Versão 3.1.1</h3>
     <div class="date">17/09/2026</div>
     <ul>
@@ -384,7 +406,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 </main>
 
 <footer>
-  Ferramenta local. O conteúdo dos arquivos e os filtros não são enviados pela Central. Na identificação online, somente os endereços IP necessários à consulta são enviados ao RIPEstat/RIPE NCC e, se necessário, aos serviços alternativos ipinfo/ipwho.is.<br>
+  Ferramenta local. O conteúdo dos arquivos e os filtros permanecem no navegador. Na identificação online, somente os IPs necessários são consultados nos serviços de rede. O PDF do ofício somente é enviado ao Google Drive quando o usuário aciona “Enviar PDF para pasta do Doutor”.<br>
   <span id="rodapeTela">Av. Augusto Mendes dos Santos, nº 997 — Centro — Mamborê/PR — CEP 87340-000 · dpmambore@pc.pr.gov.br · (44) 3568-1341</span><br><span>Versão <b id="appVersionRodape"></b></span>
 </footer>
 
@@ -759,6 +781,7 @@ function renderOps(){
       + '<div class="linha" style="margin-top:8px">'
       + '<button onclick="baixaOficio(' + idx + ')">Ofício .docx</button>'
       + '<button onclick="baixaOficioPDF(' + idx + ')">Ofício .pdf</button>'
+      + '<button onclick="enviaOficioDoutor(this,' + idx + ')">Enviar PDF para pasta do Doutor</button>'
       + '<button class="sec" onclick="baixaCSVOperadora(' + idx + ')">CSV</button>'
       + '<button class="sec" onclick="copiar(this,' + idx + ')">Copiar lista</button></div>'
       + '<textarea class="hide" id="blk' + idx + '">' + esc(bloco) + "</textarea></div>";
@@ -1131,7 +1154,6 @@ var CFG_PADRAO = {
   rodape: ["Av. Augusto Mendes dos Santos, nº 997 — Centro — Mamborê/PR — CEP 87340-000",
     "dpmambore@pc.pr.gov.br — (44) 3568-1341"],
   cidade: "Mamborê/PR",
-  sufixo: "DPC/MAMBORÊ",
   email: "dpmambore@pc.pr.gov.br",
   assinante: "Anderson Sérgio Romão",
   cargo: "Delegado de Polícia Civil",
@@ -1243,7 +1265,7 @@ function corpoOficio(c){
   var temPorta = c.linhas.some(function(l){ return l.porta; });
   var p = [];
 
-  p.push(par("OFÍCIO Nº " + c.numero + "/" + hoje.getFullYear() + " — " + CFG.sufixo, {jc:"left", negrito:true}));
+  p.push(par("OFÍCIO Nº " + c.numero, {jc:"left", negrito:true}));
   if(c.inquerito) p.push(par("Inquérito Policial nº " + c.inquerito, {jc:"left", negrito:true}));
   p.push(par(dataExt, {jc:"right"}));
   p.push(par(" ", {espaco:false}));
@@ -1437,12 +1459,79 @@ function limpaNome(s){
   return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "operadora";
 }
+function decompoeOficioDigitado(valor, seq){
+  var bruto = String(valor || "").trim().toUpperCase();
+  if(!bruto) return {valido:false, numero:"", ano:"", iniciais:"", formatado:""};
+
+  // As iniciais são as letras finais (ex.: WPM). O número/ano pode ser digitado
+  // com ou sem sinais; os quatro últimos algarismos são sempre o ano.
+  var mIni = bruto.match(/([A-Z]+)\s*$/);
+  var iniciais = mIni ? mIni[1].toUpperCase() : "";
+  var parteNumero = mIni ? bruto.slice(0, mIni.index) : bruto;
+  var digitos = parteNumero.replace(/\D/g, "");
+
+  if(!iniciais || digitos.length < 5) return {valido:false, numero:"", ano:"", iniciais:iniciais, formatado:""};
+  var ano = digitos.slice(-4);
+  var numero = digitos.slice(0, -4);
+  var n = Number(numero), acrescimo = Number(seq) || 0;
+  if(!numero || !Number.isSafeInteger(n) || !/^\d{4}$/.test(ano))
+    return {valido:false, numero:"", ano:"", iniciais:iniciais, formatado:""};
+
+  var sequencial = String(n + acrescimo).padStart(numero.length, "0");
+  return {
+    valido:true,
+    numero:sequencial,
+    ano:ano,
+    iniciais:iniciais,
+    formatado:sequencial + "/" + ano + " - " + iniciais
+  };
+}
+function formataInqueritoDigitado(valor){
+  var digitos = String(valor || "").replace(/\D/g, "");
+  if(digitos.length < 5) return "";
+  var ano = digitos.slice(-4), numero = digitos.slice(0, -4);
+  if(!numero || !/^\d{4}$/.test(ano)) return "";
+  return numero + "/" + ano;
+}
+function numeroOficioComInquerito(oficioFormatado, inqueritoFormatado){
+  if(!oficioFormatado) return "";
+  if(!inqueritoFormatado) return oficioFormatado;
+  return inqueritoFormatado.replace("/", ".") + "." + oficioFormatado;
+}
+function dadosIdentificacaoOficio(seq){
+  var ofEl = document.getElementById("ofNum"), ipEl = document.getElementById("ofIP");
+  var of = decompoeOficioDigitado(ofEl ? ofEl.value : "", seq);
+  var inquerito = formataInqueritoDigitado(ipEl ? ipEl.value : "");
+  return {
+    oficioValido:of.valido,
+    oficio:of.formatado,
+    inquerito:inquerito,
+    combinado:numeroOficioComInquerito(of.formatado, inquerito)
+  };
+}
+function validaIdentificacaoOficio(){
+  var d = dadosIdentificacaoOficio(0);
+  if(!d.oficioValido){
+    msg("Informe o número do ofício, ano e iniciais. Exemplo: 012026wpm → 01/2026 - WPM.", "var(--erro)");
+    var of = document.getElementById("ofNum"); if(of) of.focus();
+    return false;
+  }
+  if(!d.inquerito){
+    msg("Informe o número do inquérito seguido do ano. Exemplo: 13542026 → 1354/2026.", "var(--erro)");
+    var ip = document.getElementById("ofIP"); if(ip) ip.focus();
+    return false;
+  }
+  return true;
+}
 function cfgOficio(nome, ls, seq){
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
-  var base = parseInt(g("ofNum"), 10);
+  var ident = dadosIdentificacaoOficio(seq);
   return {
-    numero: isFinite(base) ? String(base + seq).padStart(3, "0") : "___",
-    inquerito: g("ofIP"), crime: crimeEscolhido(), autos: document.getElementById("ofJud").checked ? g("ofAutos") : "",
+    // 'numero' é o identificador que vai na linha OFÍCIO Nº do documento.
+    numero: ident.combinado || "___",
+    numeroOficio: ident.oficio,
+    inquerito: ident.inquerito,
+    crime: crimeEscolhido(), autos: document.getElementById("ofJud").checked ? g("ofAutos") : "",
     assinante: g("ofAssin"), cargo: g("ofCargo"), data: g("ofData"), prazo: g("ofPrazo"),
     operadora: String(nome).replace(/^AS\d+\s*/, ""), servico: (ls[0] || {}).servico || "", identificador: (ls[0] || {}).identificador || "",
     emails: emailsSelecionados(),
@@ -1501,18 +1590,80 @@ function acrescentaEmail(){
 }
 
 // ================= ações dos botões =================
+function nomeArquivoOficio(c, nome, extensao){
+  var base = "Oficio-" + limpaNome(c && c.numero ? c.numero : "oficio") + "-" + limpaNome(nome || "operadora");
+  return base + "." + extensao;
+}
 function baixaOficio(idx){
+  if(!validaIdentificacaoOficio()) return;
   var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  var bytes = docxOficio(cfgOficio(nome, g[nome], idx));
-  baixaBin(bytes, "Oficio-" + limpaNome(nome) + ".docx",
+  if(!nome) return;
+  var c = cfgOficio(nome, g[nome], idx);
+  var bytes = docxOficio(c);
+  baixaBin(bytes, nomeArquivoOficio(c, nome, "docx"),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 }
 function baixaOficioPDF(idx){
+  if(!validaIdentificacaoOficio()) return;
   var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
-  pdfOficio(cfgOficio(nome, g[nome], idx), function(bytes){
+  if(!nome) return;
+  var c = cfgOficio(nome, g[nome], idx);
+  pdfOficio(c, function(bytes){
     if(!bytes){ msg("Não foi possível montar o PDF.", "var(--erro)"); return; }
-    baixaBin(bytes, "Oficio-" + limpaNome(nome) + ".pdf", "application/pdf");
+    baixaBin(bytes, nomeArquivoOficio(c, nome, "pdf"), "application/pdf");
   });
+}
+function pdfOficioPromise(c){
+  return new Promise(function(resolve, reject){
+    try{
+      pdfOficio(c, function(bytes){
+        if(bytes) resolve(bytes);
+        else reject(new Error("Não foi possível montar o PDF do ofício."));
+      });
+    }catch(e){ reject(e); }
+  });
+}
+async function enviaOficioDoutor(btn, idx){
+  if(!validaIdentificacaoOficio()) return;
+  if(!window.PCPRDrive || typeof window.PCPRDrive.uploadPdfForAuthority !== "function"){
+    alert("A integração com a pasta de assinatura não foi carregada. Verifique se pcpr-drive.js está na mesma pasta do filtro.");
+    return;
+  }
+
+  var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
+  if(!nome) return;
+  var c = cfgOficio(nome, g[nome], idx);
+  if(!c.assinante){
+    msg("Informe o assinante para localizar a pasta de assinatura correspondente.", "var(--erro)");
+    var a = document.getElementById("ofAssin"); if(a) a.focus();
+    return;
+  }
+
+  var textoAntigo = btn ? btn.textContent : "";
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = "Gerando PDF…"; }
+    var bytes = await pdfOficioPromise(c);
+    if(btn) btn.textContent = "Enviando…";
+
+    // Reutiliza a integração oficial da Central. Este fluxo envia exclusivamente PDF.
+    var result = await window.PCPRDrive.uploadPdfForAuthority({
+      authorityName: c.assinante,
+      fileName: nomeArquivoOficio(c, nome, "pdf"),
+      bytes: bytes,
+      confirm: true
+    });
+    var autoridade = result && result.authority && result.authority.nome ? result.authority.nome : c.assinante;
+    msg("Ofício enviado em PDF para a pasta de assinatura de " + autoridade + ".", "var(--ok)");
+  }catch(e){
+    if(!(e && e.cancelled)){
+      console.error(e);
+      var detalhe = (e && e.message) ? e.message : String(e || "erro desconhecido");
+      msg("Não foi possível enviar o PDF para a pasta de assinatura: " + detalhe, "var(--erro)");
+      alert("Não foi possível enviar o PDF para a pasta do Doutor: " + detalhe);
+    }
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = textoAntigo || "Enviar PDF para pasta do Doutor"; }
+  }
 }
 function baixaCSVOperadora(idx){
   var g = grupos(), nomes = Object.keys(g).sort(), nome = nomes[idx];
@@ -1527,11 +1678,13 @@ function baixaXLSX(){
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 function baixaPacote(){
+  if(!validaIdentificacaoOficio()) return;
   var g = grupos(), nomes = Object.keys(g).sort(), arqs = [];
   var comPDF = document.getElementById("incPDF") && document.getElementById("incPDF").checked;
 
   nomes.forEach(function(n, i){
-    arqs.push({name: "oficios/Oficio-" + limpaNome(n) + ".docx", data: docxOficio(cfgOficio(n, g[n], i))});
+    var c = cfgOficio(n, g[n], i);
+    arqs.push({name: "oficios/" + nomeArquivoOficio(c, n, "docx"), data: docxOficio(c)});
     arqs.push({name: "planilhas/IPs-" + limpaNome(n) + ".csv", data: u8(csvDe(g[n]))});
   });
   var usados = {};
@@ -1550,9 +1703,9 @@ function baixaPacote(){
   msg("Montando os PDFs…");
   (function proximo(){
     if(i >= nomes.length){ fecha(); return; }
-    var n = nomes[i];
-    pdfOficio(cfgOficio(n, g[n], i), function(bytes){
-      if(bytes) arqs.push({name: "oficios-pdf/Oficio-" + limpaNome(n) + ".pdf", data: bytes});
+    var n = nomes[i], c = cfgOficio(n, g[n], i);
+    pdfOficio(c, function(bytes){
+      if(bytes) arqs.push({name: "oficios-pdf/" + nomeArquivoOficio(c, n, "pdf"), data: bytes});
       i++; barra(i / nomes.length); proximo();
     });
   })();
@@ -1807,7 +1960,7 @@ function pdfOficio(c, cb){
     var hoje = c.data ? new Date(c.data + "T12:00:00") : new Date();
     var temPorta = c.linhas.some(function(l){ return l.porta; });
 
-    d.paragrafo("OFÍCIO Nº " + c.numero + "/" + hoje.getFullYear() + " — " + CFG.sufixo, {jc:"left", negrito:true});
+    d.paragrafo("OFÍCIO Nº " + c.numero, {jc:"left", negrito:true});
     if(c.inquerito) d.paragrafo("Inquérito Policial nº " + c.inquerito, {jc:"left", negrito:true});
     d.paragrafo(CFG.cidade + ", " + hoje.getDate() + " de " + MESES[hoje.getMonth()] + " de " + hoje.getFullYear() + ".", {jc:"right"});
     d.espaco(10);
@@ -1860,7 +2013,6 @@ function cfgPreencheForm(){
   document.getElementById("cfCab").value     = CFG.cabecalho.join("\n");
   document.getElementById("cfRod").value     = CFG.rodape.join("\n");
   document.getElementById("cfCidade").value  = CFG.cidade;
-  document.getElementById("cfSufixo").value  = CFG.sufixo;
   document.getElementById("cfEmail").value   = CFG.email;
   document.getElementById("cfAssin").value   = CFG.assinante;
   document.getElementById("cfCargo").value   = CFG.cargo;
@@ -1882,7 +2034,7 @@ function cfgLeForm(){
     subtitulo: v("cfSub"),
     cabecalho: linhas("cfCab").length ? linhas("cfCab") : CFG_PADRAO.cabecalho,
     rodape: linhas("cfRod").length ? linhas("cfRod") : CFG_PADRAO.rodape,
-    cidade: v("cfCidade"), sufixo: v("cfSufixo"), email: v("cfEmail"),
+    cidade: v("cfCidade"), email: v("cfEmail"),
     assinante: v("cfAssin"), cargo: v("cfCargo"),
     emails: linhas("cfEmails").length ? linhas("cfEmails") : CFG_PADRAO.emails,
     crimes: linhas("cfCrimes").length ? linhas("cfCrimes") : CFG_PADRAO.crimes,
