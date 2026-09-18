@@ -223,8 +223,8 @@ footer{color:var(--suave) !important;}
     <label id="lblVitima">Vítima (opcional)<input type="text" id="fVitima"></label>
     <label>Assinante<input type="text" id="fAssin"></label>
     <label>Cargo<input type="text" id="fCargo"></label>
-    <label>Ordem do ofício<input type="text" id="fOrdemOficio" inputmode="numeric" maxlength="2" value="01" placeholder="01"></label>
-    <label>Iniciais no nº do ofício<input type="text" id="fIniciais" placeholder="WPM"></label>
+    <label>Número do Ofício<input type="text" id="fOrdemOficio" inputmode="numeric" maxlength="6" value="01" placeholder="01"></label>
+    <input type="hidden" id="fIniciais">
     <label>Outro e-mail para resposta (opcional)<input type="text" id="fEmailExtra" placeholder="fulano@pc.pr.gov.br"></label>
   </div>
   <div class="linha" style="margin-top:12px">
@@ -1609,8 +1609,15 @@ function blocosParaODT(blocos){
 }
 
 // ===================== pré-visualização em tela =====================
+function papelBgAtual(){
+  try{return localStorage.getItem("PCPR_PAPEL_BG") || "papel-pericia.png";}catch(e){return "papel-pericia.png";}
+}
+function papelBgSalvar(data){
+  try{localStorage.setItem("PCPR_PAPEL_BG", data);}catch(e){}
+}
+
 function blocosParaHTML(blocos){
-  var h='<div class="folha"><img class="papel-bg" src="papel-pericia.png" alt=""><div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
+  var h='<div class="folha"><img class="papel-bg" src="'+esc(papelBgAtual())+'" alt="" id="papelBgPreview"><div class="cab"><img src="data:image/png;base64,'+CFG.brasao+'">'
     +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div>";
   blocos.forEach(function(b){
     if(b.t==="vazio"){h+="<p>&nbsp;</p>";return;}
@@ -2329,6 +2336,21 @@ setTimeout(function(){if(typeof atualizaConferencia==="function")atualizaConfere
 document.getElementById("fEmailExtra").oninput = atualizaDestinos;
 document.getElementById("fOrdemOficio").oninput = function(){ this.value=this.value.replace(/\D/g,"").slice(0,2); };
 document.getElementById("fIniciais").oninput = function(){ this.dataset.tocado = "1"; this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); };
+document.getElementById("filePapelBg").onchange=function(){
+  var f=this.files[0]; if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){
+    papelBgSalvar(r.result);
+    var e=document.getElementById("prevPapelBg");
+    if(e)e.innerHTML="Pré-visualização salva. Gere uma prévia do documento para conferir.";
+  };
+  r.readAsDataURL(f);
+};
+document.getElementById("btnAplicarPapelBg").onclick=function(){
+  var e=document.getElementById("papelBgPreview");
+  if(e)e.src=papelBgAtual();
+  msgCfg("Modelo de papel timbrado aplicado.", "var(--ok)");
+};
 cfgPreencheForm(); cfgAplicaNaTela(); cfgAtualizaFonte(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos(); trocaTipo();
 if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(function(){
   if(CFG_FONTE!=="geral")return;
