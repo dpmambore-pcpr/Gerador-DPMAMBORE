@@ -84,6 +84,8 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 .corr.vazia{background:#fff8e6;border-color:#e8d49a;border-left-color:var(--alerta)}
 .rel-bloco{border:1px solid var(--borda);border-radius:8px;padding:10px 12px;margin-bottom:10px}
 .rel-bloco h3{margin:0 0 6px;font-size:13px;color:var(--azul)}
+tbody tr.coin td{background:#f6e7b8!important}
+.coin-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:#c5a253;color:#183a31;font-size:10px;font-weight:800;letter-spacing:.03em}
 
 </style>
 
@@ -174,12 +176,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.4.3",
+  version: "3.4.4",
   releaseDate: "18/09/2026",
   changes: [
-    "Aceita vários documentos no mesmo inquérito, um por número/alvo, sem substituir o anterior.",
-    "Os ofícios à operadora reúnem os IPs de todos os números, sem informar de qual conta é cada endereço.",
-    "Relatório interno lista as conexões de cada número e aponta IPs coincidentes entre eles."
+    "Nas planilhas, cada conexão indica o número investigado de origem.",
+    "IPs coincidentes entre números saem marcados e destacados em dourado.",
+    "CSV, XLSX e o pacote ZIP usam as mesmas colunas e a marcação de coincidência."
   ]
 });
 </script>
@@ -274,7 +276,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <button class="sec" id="btnASN">Identificar operadoras (online)</button>
     <label style="font-size:12.5px;color:var(--suave)">Token ipinfo (opcional — não é salvo): <input type="password" id="token" size="16" autocomplete="off" placeholder="deixe vazio p/ modo livre"></label>
   </div>
-  <div style="margin-top:6px;font-size:11.5px;color:var(--suave)">A consulta sai pelo navegador e usa a rede/proxy já configurada na máquina. Se um token pessoal for informado, ele é usado somente nesta tela e não é armazenado pela Central.</div>
+  <div style="margin-top:6px;font-size:11.5px;color:var(--suave)">As planilhas trazem o número investigado de cada conexão. IPs coincidentes entre números saem em dourado, com a coluna Coincidência preenchida. A consulta sai pelo navegador e usa a rede/proxy já configurada na máquina. Se um token pessoal for informado, ele é usado somente nesta tela e não é armazenado pela Central.</div>
 </div>
 
 <div class="card hide" id="cardRel">
@@ -321,7 +323,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div class="linha" style="margin:12px 0 16px">
     <button id="btnEnviarOficios">Enviar Doutor</button>
     <button id="btnPacote">Gerar todos os ofícios + planilhas (.zip)</button>
-    <button class="sec" id="btnXLSX">Baixar XLSX (uma aba por operadora)</button>
+    <button class="sec" id="btnXLSX">Baixar XLSX (número investigado + coincidências)</button>
     <label style="font-size:12.5px"><input type="checkbox" id="incPDF" checked> incluir PDF no pacote</label>
   </div>
 
@@ -575,6 +577,24 @@ function correlaciona(linhas){
       return p.ips.some(function(ip){ return !exactos[String(ip).toLowerCase()]; });
     });
   return {porNumero: porNumero, coincidentes: coincidentes, prefixos64: prefixos64};
+}
+function mapaCoincidencias(linhas){
+  var m = {};
+  correlaciona(linhas && linhas.length ? linhas : atual).coincidentes.forEach(function(c){
+    m[String(c.ip).toLowerCase()] = c.numeros;
+  });
+  return m;
+}
+function ehCoincidente(ip, mapa){
+  var nums = (mapa || {})[String(ip || "").toLowerCase()];
+  return !!(nums && nums.length > 1);
+}
+function textoCoincidencia(l, mapa){
+  var nums = (mapa || {})[String((l && l.ip) || "").toLowerCase()];
+  if(!nums || nums.length < 2) return "NÃO";
+  var eu = rotuloNumero(l);
+  var outros = nums.filter(function(n){ return n !== eu; });
+  return outros.length ? "SIM — também " + outros.join(" · ") : "SIM";
 }
 var cachePrefixosASN = [];
 var cacheTitularASN = {};
@@ -853,14 +873,18 @@ function render(linhas, totalBruto, info){
   document.getElementById("avisoV4").innerHTML = avisos.map(function(a){
     return '<div class="aviso">' + a + "</div>"; }).join("");
 
-  var thead = "<tr><th>#</th><th>Número/conta</th><th>Serviço</th><th>Endereço IP</th>"
+  var thead = "<tr><th>#</th><th>Número investigado</th><th>Serviço</th><th>Endereço IP</th>"
     + (temPorta ? "<th>Porta</th>" : "")
-    + "<th>Data</th><th>Hora</th><th>Original (UTC)</th><th>Operadora / ASN</th><th>Cidade</th><th>UF</th></tr>";
+    + "<th>Coincidência</th><th>Data</th><th>Hora</th><th>Original (UTC)</th><th>Operadora / ASN</th><th>Cidade</th><th>UF</th></tr>";
+  var coinSet = mapaCoincidencias(atual.length ? atual : linhas);
   var corpo = linhas.map(function(l, i){
     var a = estado.asn[l.ip] || {};
-    return "<tr><td>" + (i+1) + "</td><td class='mono'>" + esc(rotuloNumero(l)) + "</td><td>" + esc(l.servico) + "</td>"
-      + '<td class="mono' + (ehV4(l.ip) ? " v4" : "") + '">' + esc(l.ip) + "</td>"
+    var coin = ehCoincidente(l.ip, coinSet);
+    return "<tr" + (coin ? ' class="coin"' : "") + "><td>" + (i+1) + "</td><td class='mono'>" + esc(rotuloNumero(l)) + "</td><td>" + esc(l.servico) + "</td>"
+      + '<td class="mono' + (ehV4(l.ip) ? " v4" : "") + '">' + esc(l.ip)
+      + (coin ? '<span class="coin-tag">COINCIDENTE</span>' : "") + "</td>"
       + (temPorta ? '<td class="mono">' + esc(l.porta || "—") + "</td>" : "")
+      + "<td>" + esc(textoCoincidencia(l, coinSet)) + "</td>"
       + "<td>" + br(l.data) + "</td><td>" + l.hora + "</td>"
       + '<td class="mono" style="color:var(--suave)">' + l.utc + "</td>"
       + "<td>" + esc(a.org || "—") + "</td><td>" + esc(a.city || "—") + "</td><td>" + esc(a.region || "—") + "</td></tr>";
@@ -1215,19 +1239,7 @@ async function consultaASN(){
 
 // ---------------- exportação ----------------
 function baixaCSV(){
-  var cab = ["servico","identificador","enderecoIP","data","hora","hora_original_utc","operadora","cidade","uf","arquivo"];
-  var linhas = atual.map(function(l){
-    var a = estado.asn[l.ip] || {};
-    return [l.servico, l.identificador, l.ip, l.data, l.hora, l.utc, a.org || "", a.city || "", a.region || "", l.arquivo];
-  });
-  var csv = [cab].concat(linhas).map(function(r){
-    return r.map(function(c){ return '"' + String(c == null ? "" : c).replace(/"/g, '""') + '"'; }).join(";");
-  }).join("\r\n");
-  var blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "ips-filtrados-" + new Date().toISOString().slice(0,10) + ".csv";
-  a.click();
+  baixaBin(u8(csvDe(atual)), "ips-filtrados-" + new Date().toISOString().slice(0,10) + ".csv", "text/csv;charset=utf-8");
 }
 
 var FONTE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
@@ -1690,11 +1702,12 @@ function colLetra(i){
 }
 function sheetXML(linhas){
   var rows = linhas.map(function(cols, r){
+    var estilo = r === 0 ? ' s="1"' : (cols && cols.coincidencia ? ' s="2"' : "");
     var cs = cols.map(function(v, c){
       var ref = colLetra(c) + (r + 1);
       if(typeof v === "number" && isFinite(v))
-        return '<c r="' + ref + '"><v>' + v + "</v></c>";
-      return '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">' + x(v) + "</t></is></c>";
+        return '<c r="' + ref + '"' + estilo + "><v>" + v + "</v></c>";
+      return '<c r="' + ref + '"' + estilo + ' t="inlineStr"><is><t xml:space="preserve">' + x(v) + "</t></is></c>";
     }).join("");
     return '<row r="' + (r + 1) + '">' + cs + "</row>";
   }).join("");
@@ -1702,12 +1715,35 @@ function sheetXML(linhas){
     + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     + "<sheetData>" + rows + "</sheetData></worksheet>";
 }
+function estilosXlsx(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    + '<fonts count="3">'
+    + '<font><sz val="11"/><color theme="1"/><name val="Calibri"/><family val="2"/></font>'
+    + '<font><b/><sz val="11"/><color rgb="FF183A31"/><name val="Calibri"/><family val="2"/></font>'
+    + '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>'
+    + "</fonts>"
+    + '<fills count="4">'
+    + '<fill><patternFill patternType="none"/></fill>'
+    + '<fill><patternFill patternType="gray125"/></fill>'
+    + '<fill><patternFill patternType="solid"><fgColor rgb="FFF6E7B8"/><bgColor indexed="64"/></patternFill></fill>'
+    + '<fill><patternFill patternType="solid"><fgColor rgb="FF183A31"/><bgColor indexed="64"/></patternFill></fill>'
+    + "</fills>"
+    + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + '<cellXfs count="3">'
+    + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    + '<xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/>'
+    + '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>'
+    + "</cellXfs></styleSheet>";
+}
 function xlsx(abas){
   var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
     + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
     + '<Default Extension="xml" ContentType="application/xml"/>'
     + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+    + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
     + abas.map(function(_, i){
         return '<Override PartName="/xl/worksheets/sheet' + (i+1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
       }).join("")
@@ -1725,6 +1761,7 @@ function xlsx(abas){
     + "</sheets></workbook>";
   var wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    + '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
     + abas.map(function(_, i){
         return '<Relationship Id="rId' + (i+1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i+1) + '.xml"/>';
       }).join("")
@@ -1733,7 +1770,8 @@ function xlsx(abas){
     {name:"[Content_Types].xml", data: ct},
     {name:"_rels/.rels",         data: relsRoot},
     {name:"xl/workbook.xml",     data: wb},
-    {name:"xl/_rels/workbook.xml.rels", data: wbRels}
+    {name:"xl/_rels/workbook.xml.rels", data: wbRels},
+    {name:"xl/styles.xml",       data: estilosXlsx()}
   ];
   abas.forEach(function(a, i){
     arqs.push({name:"xl/worksheets/sheet" + (i+1) + ".xml", data: sheetXML(a.linhas)});
@@ -1764,12 +1802,44 @@ function grupos(){
   return g;
 }
 function linhasPlan(ls){
-  var cab = ["Nº","Serviço","Identificador","Endereço IP","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF"];
-  var corpo = ls.map(function(l, i){
+  var mapa = mapaCoincidencias(atual.length ? atual : ls);
+  var cab = ["Nº","Número investigado","Serviço","Endereço IP","Coincidência","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF","Arquivo"];
+  cab.coincidencia = false;
+  var corpo = (ls || []).map(function(l, i){
     var a = estado.asn[l.ip] || {};
-    return [i+1, l.servico, l.identificador, l.ip, br(l.data), l.hora, l.utc, a.org || "", a.city || "", a.region || ""];
+    var row = [i+1, rotuloNumero(l), l.servico || "", l.ip, textoCoincidencia(l, mapa), br(l.data), l.hora, l.utc || "", a.org || "", a.city || "", a.region || "", l.arquivo || ""];
+    row.coincidencia = ehCoincidente(l.ip, mapa);
+    return row;
   });
   return [cab].concat(corpo);
+}
+function linhasPlanCoincidencias(rel){
+  var cab = ["Endereço IP","Número investigado","Também em","Data","Hora","Porta","Arquivo"];
+  cab.coincidencia = false;
+  var corpo = [];
+  ((rel && rel.coincidentes) || []).forEach(function(c){
+    (c.ocorrencias || []).forEach(function(o){
+      var outros = (c.numeros || []).filter(function(n){ return n !== o.ident; });
+      var row = [c.ip, o.ident, outros.join(" · "), o.data ? br(o.data) : "", o.hora || "", o.porta || "", o.arquivo || ""];
+      row.coincidencia = true;
+      corpo.push(row);
+    });
+  });
+  return [cab].concat(corpo);
+}
+function abasXlsx(){
+  var g = grupos(), usados = {}, rel = correlaciona(atual);
+  var abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
+  rel.porNumero.forEach(function(n){
+    abas.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
+  });
+  if(rel.coincidentes.length){
+    abas.push({nome: nomeAba("Coincidencias", usados), linhas: linhasPlanCoincidencias(rel)});
+  }
+  Object.keys(g).sort().forEach(function(n){
+    abas.push({nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])});
+  });
+  return abas;
 }
 function csvDe(ls){
   return "\ufeff" + linhasPlan(ls).map(function(r){
@@ -2112,20 +2182,7 @@ function baixaPlanilhaOperadora(idx){
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 function baixaXLSX(){
-  var g = grupos(), usados = {}, rel = correlaciona(atual);
-  var abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
-  rel.porNumero.forEach(function(n){
-    abas.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
-  });
-  if(rel.coincidentes.length){
-    abas.push({nome: nomeAba("Coincidencias", usados), linhas: [["Endereço IP","Números/contas","Ocorrências"]].concat(
-      rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), c.ocorrencias.length]; })
-    )});
-  }
-  Object.keys(g).sort().forEach(function(n){
-    abas.push({nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])});
-  });
-  baixaBin(xlsx(abas), "IPs-por-operadora-" + new Date().toISOString().slice(0,10) + ".xlsx",
+  baixaBin(xlsx(abasXlsx()), "IPs-por-operadora-" + new Date().toISOString().slice(0,10) + ".xlsx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 async function baixaPacote(){
@@ -2143,20 +2200,7 @@ async function baixaPacote(){
   });
   var rel = correlaciona(atual);
   arqs.push({name: "relatorio/Relatorio-correlacao-IPs.docx", data: docxDocumentoComPapel(corpoRelatorio(rel), papel.bytes)});
-  var usados = {};
-  var abasX = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
-  rel.porNumero.forEach(function(n){
-    abasX.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
-  });
-  if(rel.coincidentes.length){
-    abasX.push({nome: nomeAba("Coincidencias", usados), linhas: [["Endereço IP","Números/contas","Ocorrências"]].concat(
-      rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), c.ocorrencias.length]; })
-    )});
-  }
-  abasX = abasX.concat(nomes.map(function(n){
-    return {nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])};
-  }));
-  arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(abasX)});
+  arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(abasXlsx())});
 
   var fecha = function(){
     baixaBin(zip(arqs), "Oficios-e-planilhas-" + new Date().toISOString().slice(0,10) + ".zip", "application/zip");
@@ -2852,6 +2896,14 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     prefixoIPv6: prefixoIPv6,
     cfgOficio: cfgOficio,
     textoOficio: textoOficio,
+    mapaCoincidencias: mapaCoincidencias,
+    textoCoincidencia: textoCoincidencia,
+    ehCoincidente: ehCoincidente,
+    linhasPlan: linhasPlan,
+    linhasPlanCoincidencias: linhasPlanCoincidencias,
+    csvDe: csvDe,
+    xlsx: xlsx,
+    abasXlsx: abasXlsx,
     getAtual: function(){ return atual; },
     getEstado: function(){ return estado; },
     processa: processa

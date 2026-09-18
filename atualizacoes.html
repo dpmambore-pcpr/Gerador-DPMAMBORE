@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.4.4: Filtro IP — planilhas com número investigado e destaque de coincidências -->
 <!-- v3.4.3: Filtro IP com vários documentos, ofícios consolidados e correlação de IPs -->
 <!-- v3.0.0: núcleo compartilhado + histórico local de documentos -->
 <!-- v2.8.10: solicitação de KEY/ID integrada ao Gmail -->
@@ -57,7 +58,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.4.3</span>
+      <span class="version">VERSÃO ATUAL · v3.4.4</span>
       <span class="note">Última atualização: 18/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -70,8 +71,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.4.3">
-        <div class="item-head"><span class="item-ver">v3.4.3</span><span class="item-date">18/09/2026</span><span class="tag new">FILTRO IP</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.4.4">
+        <div class="item-head"><span class="item-ver">v3.4.4</span><span class="item-date">18/09/2026</span><span class="tag new">FILTRO IP</span><span class="tag improve">PLANILHAS</span><span class="badge">ATUAL</span></div>
+        <h3>Planilhas com número investigado e coincidências em destaque</h3>
+        <ul>
+          <li>CSV, XLSX e o pacote ZIP passam a informar de qual número investigado partiu cada conexão.</li>
+          <li>IPs coincidentes entre números saem marcados na coluna Coincidência e destacados em dourado na planilha e na tela.</li>
+          <li>A aba Coincidências lista cada ocorrência com o número de origem e com quais outros alvos o IP também aparece.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.4.3">
+        <div class="item-head"><span class="item-ver">v3.4.3</span><span class="item-date">18/09/2026</span><span class="tag new">FILTRO IP</span><span class="tag improve">OFÍCIOS</span></div>
         <h3>Vários números no mesmo inquérito e correlação de IPs</h3>
         <ul>
           <li>O Filtro IP aceita vários documentos no mesmo inquérito (um por número/alvo), acrescentando arquivos sem apagar os anteriores.</li>
