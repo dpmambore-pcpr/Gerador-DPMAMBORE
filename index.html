@@ -32,7 +32,7 @@ quando o usuário executa a consulta, e isso é informado na própria tela.
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Geradores PCPR — Central Integrada</title>
 <style>
-:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--clock:#4da6ff;--red:#8f3037;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70}
+:root{--ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;--clock:#fff;--red:#8f3037;--bg:#f4f2ec;--line:#d8d3c8;--muted:#626b70}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Arial,Helvetica,sans-serif}
 .module-nav{position:sticky;top:0;z-index:1000;background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);border-bottom:5px solid var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.15)}
@@ -40,10 +40,10 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 .brand{display:flex;gap:9px;align-items:center;margin-right:2px}
 .version-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.08);color:#f4e7bd;font-size:10.5px;font-weight:800;letter-spacing:.45px;white-space:nowrap}
 .nav-clock{margin-left:auto;display:flex;align-items:center;gap:10px;padding:5px 10px 5px 12px;border-left:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap}
-.clock-icon{width:30px;height:30px;border:1px solid rgba(77,166,255,.58);border-radius:50%;display:grid;place-items:center;color:var(--clock);font-size:14px;background:rgba(255,255,255,.04)}
+.clock-icon{width:30px;height:30px;border:1px solid rgba(255,255,255,.58);border-radius:50%;display:grid;place-items:center;color:var(--clock);font-size:14px;background:rgba(255,255,255,.04)}
 .clock-text{text-align:right;line-height:1.08}
 .clock-time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;letter-spacing:.7px;color:var(--clock)}
-.clock-date{margin-top:3px;font-size:9.5px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;color:#b8dcff}
+.clock-date{margin-top:3px;font-size:9.5px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;color:#fff}
 
 .brand-mark{width:35px;height:35px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);border-radius:8px;color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.05em;background:rgba(255,255,255,.05)}
 .nav-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#f1ede2;margin-right:4px;white-space:nowrap}
@@ -446,14 +446,14 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 /* Versão — relógio — hora, em uma única linha */
 .nav-clock{padding-top:2px;padding-bottom:2px}
 .clock-topline{flex-wrap:nowrap;gap:8px}
-.clock-separator{color:rgba(184,220,255,.72);font-size:15px;font-weight:700;line-height:1}
-.clock-icon.compact{width:27px;height:27px;flex:0 0 27px;border-color:rgba(77,166,255,.58);font-size:13px}
+.clock-separator{color:rgba(255,255,255,.72);font-size:15px;font-weight:700;line-height:1}
+.clock-icon.compact{width:27px;height:27px;flex:0 0 27px;border-color:rgba(255,255,255,.58);font-size:13px}
 .clock-time{white-space:nowrap}
 @media(max-width:760px){
   .clock-topline{flex-wrap:wrap}
 }
 </style>
-<script src="pcpr-core.js?v=3.0.1"></script>
+<script src="pcpr-core.js?v=3.6.1"></script>
 <script src="pwa.js?v=3.0.11" defer></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
 </head>
@@ -481,7 +481,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         <div class="nav-clock" aria-label="Versão, data e hora atuais">
           <div class="clock-text">
             <div class="clock-topline">
-              <span class="version-badge" id="centralVersion">v3.0.1 · 13/09/2026</span>
+              <span class="version-badge" id="centralVersion">v3.6.1 · 18/09/2026</span>
               <span class="clock-separator" aria-hidden="true">—</span>
               <span class="clock-icon compact" aria-hidden="true">◷</span>
               <div class="clock-time" id="liveClock">--:--:--</div>
@@ -538,7 +538,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
             <input id="moduleSearch" class="module-search" type="search" autocomplete="off" placeholder="Pesquisar ferramenta..." aria-label="Pesquisar módulos da Central">
             <span class="module-search-icon" aria-hidden="true">⌕</span>
           </div>
-          <div class="home-version" id="homeVersion">CENTRAL PCPR · v3.0.1</div>
+          <div class="home-version" id="homeVersion">CENTRAL PCPR · v3.6.1</div>
         </div>
         <div class="recent-wrap" id="recentWrap" aria-label="Módulos acessados recentemente"><span class="recent-label">Acessados recentemente:</span><span id="recentList"></span></div>
         <details class="security-details">
@@ -657,7 +657,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.6.0"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.0"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.1"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
   <iframe id="frameGoogleAnalise" class="module-frame" title="Analisador de Respostas Google" data-src="analisador-google.html?v=1.0.0"></iframe>
   <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.2.0"></iframe>
@@ -666,8 +666,8 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 <script>
 (() => {
 'use strict';
-const CENTRAL_VERSION=window.PCPRCore?.VERSION||'3.0.1';
-const CENTRAL_VERSION_DATE=window.PCPRCore?.VERSION_DATE||'13/09/2026';
+const CENTRAL_VERSION=window.PCPRCore?.VERSION||'3.6.1';
+const CENTRAL_VERSION_DATE=window.PCPRCore?.VERSION_DATE||'18/09/2026';
 const versionBadge=document.getElementById('centralVersion');
 if(versionBadge) versionBadge.textContent=`v${CENTRAL_VERSION} · ${CENTRAL_VERSION_DATE}`;
 const homeVersion=document.getElementById('homeVersion');
