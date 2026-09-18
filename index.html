@@ -40,9 +40,9 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
 .brand{display:flex;gap:9px;align-items:center;margin-right:2px}
 .version-badge{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(255,255,255,.08);color:#f4e7bd;font-size:10.5px;font-weight:800;letter-spacing:.45px;white-space:nowrap}
 .nav-clock{margin-left:auto;display:flex;align-items:center;gap:10px;padding:5px 10px 5px 12px;border-left:1px solid rgba(255,255,255,.18);color:#fff;white-space:nowrap}
-.clock-icon{width:30px;height:30px;border:1px solid rgba(255,255,255,.58);border-radius:50%;display:grid;place-items:center;color:var(--clock);font-size:14px;background:rgba(255,255,255,.04)}
+.clock-icon{width:30px;height:30px;border:1px solid rgba(255,255,255,.75);border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;background:rgba(255,255,255,.04)}
 .clock-text{text-align:right;line-height:1.08}
-.clock-time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;letter-spacing:.7px;color:var(--clock)}
+.clock-time{font-variant-numeric:tabular-nums;font-size:18px;font-weight:800;letter-spacing:.7px;color:#fff}
 .clock-date{margin-top:3px;font-size:9.5px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;color:#fff}
 
 .brand-mark{width:35px;height:35px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.3);border-radius:8px;color:var(--gold);font-size:10px;font-weight:900;letter-spacing:.05em;background:rgba(255,255,255,.05)}
@@ -63,7 +63,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:#17202a;font-family:Aria
   .version-badge{font-size:9.5px;min-height:26px;padding:0 7px}
   .nav-clock{margin-left:0;margin-right:0;border-left:0;border-top:1px solid rgba(255,255,255,.12);width:100%;justify-content:center;padding:6px 4px}
   .clock-text{text-align:center}
-  .clock-time{font-size:16px}
+  .clock-time{font-size:16px;color:#fff}
   .clock-date{font-size:9px}
 
   .brand{width:100%}
@@ -248,8 +248,8 @@ body:not(.home-mode).nav-collapsed .module-frame{min-height:calc(100vh - 46px)}
 .nav-clock{margin-left:0;border-left:1px solid rgba(255,255,255,.18);padding:3px 0 3px 12px;gap:10px}
 .clock-text{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.08}
 .clock-topline{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
-.clock-time{font-size:20px}
-.clock-date{margin-top:3px;font-size:10px}
+.clock-time{font-size:20px;color:#fff}
+.clock-date{margin-top:3px;font-size:10px;color:#fff}
 .version-badge{min-height:24px;padding:0 8px;font-size:10px}
 .nav-data-right{display:flex;justify-content:flex-end;width:100%;font-size:10px;font-weight:800;color:#e7d9b3;letter-spacing:.4px;text-transform:uppercase}
 .nav-data-right .local-data{gap:6px}
@@ -413,8 +413,8 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 .nav-clock{margin-left:0;display:flex;align-items:center;gap:10px;padding:3px 0 3px 12px;border-left:1px solid rgba(255,255,255,.18);width:auto;justify-content:flex-end}
 .clock-text{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.08}
 .clock-topline{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
-.clock-time{font-size:20px}
-.clock-date{margin-top:3px;font-size:10px}
+.clock-time{font-size:20px;color:#fff}
+.clock-date{margin-top:3px;font-size:10px;color:#fff}
 .version-badge{min-height:24px;padding:0 8px;font-size:10px}
 .nav-data-right{display:flex;justify-content:flex-end;width:100%;font-size:10px;font-weight:800;color:#e7d9b3;letter-spacing:.4px;text-transform:uppercase}
 .nav-data-right .local-data{gap:6px}
@@ -446,11 +446,25 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
 /* Versão — relógio — hora, em uma única linha */
 .nav-clock{padding-top:2px;padding-bottom:2px}
 .clock-topline{flex-wrap:nowrap;gap:8px}
-.clock-separator{color:rgba(255,255,255,.72);font-size:15px;font-weight:700;line-height:1}
-.clock-icon.compact{width:27px;height:27px;flex:0 0 27px;border-color:rgba(255,255,255,.58);font-size:13px}
+.clock-separator{color:#fff;font-size:15px;font-weight:700;line-height:1}
+.clock-icon.compact{width:27px;height:27px;flex:0 0 27px;border-color:rgba(255,255,255,.75);font-size:13px}
 .clock-time{white-space:nowrap}
 @media(max-width:760px){
   .clock-topline{flex-wrap:wrap}
+}
+</style>
+<style id="clock-white-force-css">
+#liveClock,
+.nav-clock .clock-time,
+.nav-clock .clock-icon,
+.nav-clock .clock-separator,
+.nav-clock .clock-date{
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+.nav-clock .clock-icon,
+.nav-clock .clock-icon.compact{
+  border-color:rgba(255,255,255,.75) !important;
 }
 </style>
 <script src="pcpr-core.js?v=3.6.1"></script>
@@ -681,6 +695,14 @@ function updateCentralClock(){
     timeEl.textContent=new Intl.DateTimeFormat('pt-BR',{
       hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
     }).format(now);
+    timeEl.style.color='#fff';
+    timeEl.style.webkitTextFillColor='#fff';
+  }
+  const clockIcon=document.querySelector('.nav-clock .clock-icon');
+  if(clockIcon){
+    clockIcon.style.color='#fff';
+    clockIcon.style.webkitTextFillColor='#fff';
+    clockIcon.style.borderColor='rgba(255,255,255,.75)';
   }
   if(dateEl){
     const date=new Intl.DateTimeFormat('pt-BR',{
