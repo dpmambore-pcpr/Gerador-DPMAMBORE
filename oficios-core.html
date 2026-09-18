@@ -46,13 +46,16 @@ button.sec:hover{background:var(--claro)}
 .mono{font-family:Consolas,monospace}
 #msg{font-size:13px;margin-top:10px;color:var(--suave)}
 #driveStatus{font-size:11.5px;margin-top:8px;color:var(--suave);line-height:1.45}#driveStatus.ok{color:var(--ok);font-weight:700}#driveStatus.err{color:var(--erro)}#driveStatus a{color:inherit;font-weight:800}
-.folha{background:#fff;border:1px solid var(--borda);padding:182px 42px 72px 42px;font-family:Arial,Helvetica,sans-serif;
+.folha{background:#fff;border:1px solid var(--borda);padding:220px 42px 72px 42px;font-family:Arial,Helvetica,sans-serif;
   font-size:13px;line-height:1.5;max-width:780px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);position:relative;overflow:hidden;isolation:isolate;min-height:1120px}
 .folha > *{position:relative;z-index:1}
 .folha .papel-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;z-index:0;pointer-events:none}
 .folha p{margin:0 0 6px}
 .folha .cab,.folha .rod{display:none !important}
 .folha .cab img{height:72px;display:block;margin:0 auto 6px}
+.folha .oficio-header-row{display:flex;justify-content:space-between;align-items:baseline;gap:24px;margin:0 0 8px;line-height:1.35}
+.folha .oficio-header-row .oficio-num{font-weight:700;white-space:nowrap}
+.folha .oficio-header-row .oficio-data{text-align:right;white-space:nowrap;margin-left:auto}
 .folha table.tv{border-collapse:collapse;width:100%;font-size:11px;margin:8px 0}
 .folha table.tv th,.folha table.tv td{border:1px solid #000;padding:3px 5px;text-align:center}
 .folha table.tv th{background:#e1e7f2}
@@ -220,7 +223,8 @@ footer{color:var(--suave) !important;}
     <label id="lblVitima">Vítima (opcional)<input type="text" id="fVitima"></label>
     <label>Assinante<input type="text" id="fAssin"></label>
     <label>Cargo<input type="text" id="fCargo"></label>
-    <label>Iniciais no nº do ofício<input type="text" id="fIniciais" placeholder="THL"></label>
+    <label>Ordem do ofício<input type="text" id="fOrdemOficio" inputmode="numeric" maxlength="2" value="01" placeholder="01"></label>
+    <label>Iniciais no nº do ofício<input type="text" id="fIniciais" placeholder="WPM"></label>
     <label>Outro e-mail para resposta (opcional)<input type="text" id="fEmailExtra" placeholder="fulano@pc.pr.gov.br"></label>
   </div>
   <div class="linha" style="margin-top:12px">
@@ -603,9 +607,19 @@ function assina(blocos, opcoes){
   }
 }
 
-// número no padrão usado pela unidade: 384659/2026-17082026-THL
+// Formato legado mantido para os demais tipos de ofício.
 function numeroOficio(d){
   return d.inquerito + "/" + d.ano + "-" + ddmmaaaa(d.data) + (d.iniciais ? "-" + d.iniciais : "");
+}
+// Ofício genérico: IP.ANO.ORDEM/ANO - INICIAIS (sem data no número).
+// Ex.: 223602.2026.01/2026 - WPM
+function numeroOficioGenerico(d){
+  var inq=String(d.inquerito||"").replace(/\D/g,"")||"___";
+  var ano=(String(d.ano||"").match(/\d{4}/)||[String(d.ano||"")])[0]||String(new Date().getFullYear());
+  var ordem=String(d.ordemOficio||"01").replace(/\D/g,"").slice(0,2)||"01";
+  ordem=ordem.padStart(2,"0");
+  var iniciais=String(d.iniciais||"").trim().toUpperCase();
+  return inq+"."+ano+"."+ordem+"/"+ano+(iniciais?" - "+iniciais:"");
 }
 function periodoTexto(d){
   if(d.perIni && d.perFim) return dataBR(d.perIni) + " e " + dataBR(d.perFim);
@@ -1146,8 +1160,7 @@ function oficioPlataforma(d){
 // ===================== ofício genérico =====================
 function oficioGenerico(d){
   var b = [];
-  b.push(P([{x:"Ofício nº " + numeroOficio(d), b:true}], {jc:"left"}));
-  b.push(P(CFG.cidade + ", " + dataExtenso(d.data) + ".", {jc:"right"}));
+  b.push(CABOFICIO("Ofício nº " + numeroOficioGenerico(d), CFG.cidade + ", " + dataExtenso(d.data) + "."));
   b.push(VAZIO());
   d.destinatario.split("\n").forEach(function(l, i){
     if(l.trim()) b.push(P([{x:l.trim(), b: i === 0}], {jc:"left"}));
@@ -1163,7 +1176,7 @@ function oficioGenerico(d){
             {x:", com referência ao número deste ofício."}], {recuo:true}));
   b.push(VAZIO());
   assina(b, {porOrdem:d.porOrdem, textoOrdem:"POR ORDEM DE"});
-  return {blocos:b, arquivo:"oficio_" + limpaNome(d.assunto || "geral") + "_" + ddmmaaaa(d.data)};
+  return {blocos:b, arquivo:"oficio_" + limpaNome(d.assunto || "geral") + "_" + limpaNome(numeroOficioGenerico(d))};
 }
 
 // ===================== ZIP (store) =====================
@@ -1222,6 +1235,7 @@ function dataBR(iso){var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0];}
 // vazio: {t:"vazio"}
 function P(txt,o){o=o||{};o.t="p";o.runs=(typeof txt==="string")?[{x:txt}]:txt;return o;}
 function VAZIO(){return {t:"vazio"};}
+function CABOFICIO(esq,dir){return {t:"caboficio",esq:String(esq||""),dir:String(dir||"")};}
 
 // ===================== fontes (PDF) =====================
 function winansi(s){
@@ -1324,6 +1338,15 @@ PDFDoc.prototype.par=function(bl){
     self.y-=entre;
   });
   self.y-=(bl.compacto?0:5);
+};
+PDFDoc.prototype.caboficio=function(bl){
+  var tam=12, entre=tam*1.5;
+  if(this.y<PGP.base+entre)this.nova();
+  var esq=""+bl.esq, dir=""+bl.dir;
+  this.palavra(esq,PGP.esq,this.y,tam,true,false,false);
+  var wd=larg(dir,tam,false);
+  this.palavra(dir,PGP.l-PGP.dir-wd,this.y,tam,false,false,false);
+  this.y-=entre+5;
 };
 PDFDoc.prototype.tabela=function(bl){
   var tam=10,lh=12,disp=PGP.l-PGP.esq-PGP.dir;
@@ -1443,6 +1466,7 @@ function blocosParaPDF(blocos,cb){
     var d=new PDFDoc();d.nova();
     blocos.forEach(function(b){
       if(b.t==="vazio")d.y-=10;
+      else if(b.t==="caboficio")d.caboficio(b);
       else if(b.t==="tab")d.tabela(b);
       else if(b.t==="lista"){
         b.itens.forEach(function(it,k){
@@ -1497,10 +1521,19 @@ function odtTable(bl,idx){
   });
   return c+'</table:table>';
 }
+function odtCabOficio(bl,idx){
+  return '<table:table table:name="CabOficio'+idx+'" table:style-name="TableCab">'
+    +'<table:table-column table:style-name="ColCab"/><table:table-column table:style-name="ColCab"/>'
+    +'<table:table-row>'
+    +'<table:table-cell table:style-name="CellCab" office:value-type="string"><text:p text:style-name="PCabLeft"><text:span text:style-name="TB">'+x(bl.esq)+'</text:span></text:p></table:table-cell>'
+    +'<table:table-cell table:style-name="CellCab" office:value-type="string"><text:p text:style-name="PCabRight">'+x(bl.dir)+'</text:p></table:table-cell>'
+    +'</table:table-row></table:table>';
+}
 function blocosParaODT(blocos){
   var body="",ti=0;
   blocos.forEach(function(b){
     if(b.t==="vazio"){body+='<text:p text:style-name="PLeft"> </text:p>';return;}
+    if(b.t==="caboficio"){body+=odtCabOficio(b,++ti);return;}
     if(b.t==="tab"){body+=odtTable(b,++ti);return;}
     if(b.t==="lista"){
       (b.itens||[]).forEach(function(it,k){
@@ -1523,6 +1556,11 @@ function blocosParaODT(blocos){
     +'<style:style style:name="Col1" style:family="table-column"><style:table-column-properties style:rel-column-width="1*"/></style:style>'
     +'<style:style style:name="Cell" style:family="table-cell"><style:table-cell-properties fo:border="0.5pt solid #000000" fo:padding="0.04in"/></style:style>'
     +'<style:style style:name="CellHead" style:family="table-cell"><style:table-cell-properties fo:border="0.5pt solid #000000" fo:background-color="#E1E7F2" fo:padding="0.04in"/></style:style>'
+    +'<style:style style:name="TableCab" style:family="table"><style:table-properties table:align="center" style:width="100%"/></style:style>'
+    +'<style:style style:name="ColCab" style:family="table-column"><style:table-column-properties style:rel-column-width="1*"/></style:style>'
+    +'<style:style style:name="CellCab" style:family="table-cell"><style:table-cell-properties fo:border="none" fo:padding="0in"/></style:style>'
+    +'<style:style style:name="PCabLeft" style:family="paragraph"><style:paragraph-properties fo:text-align="left" fo:margin-bottom="0.12in"/></style:style>'
+    +'<style:style style:name="PCabRight" style:family="paragraph"><style:paragraph-properties fo:text-align="right" fo:margin-bottom="0.12in"/></style:style>'
     +'</office:automatic-styles>';
   var content='<?xml version="1.0" encoding="UTF-8"?>'
     +'<office:document-content '+ns+' office:version="1.2">'
@@ -1576,6 +1614,10 @@ function blocosParaHTML(blocos){
     +CFG.cabecalho.map(function(l){return "<div>"+esc(l)+"</div>";}).join("")+"</div>";
   blocos.forEach(function(b){
     if(b.t==="vazio"){h+="<p>&nbsp;</p>";return;}
+    if(b.t==="caboficio"){
+      h+='<div class="oficio-header-row"><span class="oficio-num">'+esc(b.esq)+'</span><span class="oficio-data">'+esc(b.dir)+'</span></div>';
+      return;
+    }
     if(b.t==="tab"){
       h+="<table class='tv'>"+(b.cab?"<tr>"+b.cab.map(function(c){return "<th>"+esc(c)+"</th>";}).join("")+"</tr>":"")
         +b.linhas.map(function(l){return "<tr>"+l.map(function(c){return "<td>"+esc(c)+"</td>";}).join("")+"</tr>";}).join("")+"</table>";
@@ -1647,7 +1689,7 @@ function dadosComuns(){
     crime: crimeAtual() || "___", data: val("fData") || new Date().toISOString().slice(0,10),
     prazo: val("fPrazo") || "10 (dez) dias", vitima: val("fVitima"),
     nomeAgente: ag.nome, emailAgente: ag.email, foneAgente: ag.fone,
-    iniciais: val("fIniciais"), perIni: val("fPerIni"), perFim: val("fPerFim"),
+    ordemOficio: val("fOrdemOficio") || "01", iniciais: val("fIniciais"), perIni: val("fPerIni"), perFim: val("fPerFim"),
     emailExtra: val("fEmailExtra"),
     porOrdem: document.getElementById("fPorOrdem").checked,
     assinante: val("fAssin") || CFG.assinante, cargo: val("fCargo") || CFG.cargo
@@ -2285,7 +2327,8 @@ document.getElementById("fAgente").onchange = function(){ atualizaIniciais(); at
 });
 setTimeout(function(){if(typeof atualizaConferencia==="function")atualizaConferencia();},0);
 document.getElementById("fEmailExtra").oninput = atualizaDestinos;
-document.getElementById("fIniciais").oninput = function(){ this.dataset.tocado = "1"; };
+document.getElementById("fOrdemOficio").oninput = function(){ this.value=this.value.replace(/\D/g,"").slice(0,2); };
+document.getElementById("fIniciais").oninput = function(){ this.dataset.tocado = "1"; this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); };
 cfgPreencheForm(); cfgAplicaNaTela(); cfgAtualizaFonte(); renderCrimes(); renderAgentes(); renderOperadoras(); renderBancos(); atualizaDestinos(); trocaTipo();
 if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(function(){
   if(CFG_FONTE!=="geral")return;
