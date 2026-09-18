@@ -311,6 +311,7 @@ function obsFitPt(text,isPJ){
     if(density>240)return 11;
     return 12;
   }
+  if(density>520)return 5.5;
   if(density>420)return 6.5;
   if(density>320)return 7.5;
   if(density>230)return 8.5;
@@ -323,10 +324,11 @@ function fitObservacoesCells(){
     const pj=el.closest('.info-grid')?.classList.contains('tipo-pj');
     let pt=obsFitPt(el.textContent,pj);
     el.style.fontSize=pt+'pt';
-    el.style.lineHeight='1.12';
-    for(let k=0;k<24 && el.scrollHeight>el.clientHeight+1 && pt>6;k++){
+    el.style.lineHeight=pt<8?'1.05':'1.12';
+    for(let k=0;k<40 && el.scrollHeight>el.clientHeight+1 && pt>5;k++){
       pt-=0.25;
       el.style.fontSize=pt+'pt';
+      if(pt<8) el.style.lineHeight='1.05';
     }
   });
 }
