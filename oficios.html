@@ -110,8 +110,8 @@ iframe{
 <body>
 <div class="wrap">
 <nav class="tabs" id="oficiosTabs">
-<button class="tab active" data-src="oficios-core.html?v=3.0.11">Ofícios</button>
-<button class="tab tab-informacao" data-src="informacao.html?v=3.0.11">Informação</button>
+<button class="tab active" data-src="oficios-core.html?v=3.5.0">Ofícios</button>
+<button class="tab tab-informacao" data-src="informacao.html?v=3.5.0">Folha de Rosto</button>
 <button class="tab" data-src="oficio-diaria.html?v=3.0.0">Diárias</button>
 <button class="tab" data-src="pericia.html?v=3.0.0">Perícia</button>
 <button class="tab" data-src="oitiva-penitenciaria.html?v=3.0.0">Oitiva em Penitenciária</button>
@@ -120,7 +120,7 @@ iframe{
 <button class="tab" data-src="diario-bordo.html?v=3.0.0">Diário de Bordo</button>
 <button class="tab" data-src="oficio-coffee-break.html?v=3.0.0">Coffee Break</button>
 </nav>
-<div class="frame"><iframe id="f" src="oficios-core.html?v=3.0.11" title="Central de Ofícios"></iframe></div>
+<div class="frame"><iframe id="f" src="oficios-core.html?v=3.5.0" title="Central de Ofícios"></iframe></div>
 </div>
 <script>
 const f=document.getElementById('f');
@@ -134,8 +134,8 @@ function activateTab(b){
 
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateTab(b));
 
-const wantInformacao=/informacao/i.test(String(location.hash||'')+String(location.search||''));
-if(wantInformacao){
+const wantFolha=/(informacao|folha)/i.test(String(location.hash||'')+String(location.search||''));
+if(wantFolha){
   activateTab(document.querySelector('.tab[data-src*="informacao.html"]'));
 }
 </script>

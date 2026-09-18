@@ -184,10 +184,10 @@ footer{color:var(--suave) !important;}
 
 <div class="card atalho-informacao">
   <div>
-    <h2>Informação</h2>
-    <p class="micro-note">Expediente institucional com texto, formatação e fotos. Não é ofício de operadora, banco ou plataforma. O título do documento é só INFORMAÇÃO, sem número.</p>
+    <h2>Folha de Rosto</h2>
+    <p class="micro-note">Expediente institucional com texto, formatação e fotos. Escolha Informação, Relatório, Auto de local, Despacho, Certidão ou preencha o nome do documento na mão. Não é ofício de operadora, banco ou plataforma.</p>
   </div>
-  <button type="button" id="btnAbrirInformacao">Abrir Informação</button>
+  <button type="button" id="btnAbrirInformacao">Abrir Folha de Rosto</button>
 </div>
 
 <div class="card">
@@ -2231,7 +2231,7 @@ function cfgImportaJSON(file){
 }
 
 function abrirInformacao(){
-  var url="informacao.html?v=3.0.11";
+  var url="informacao.html?v=3.5.0";
   try{
     var parentTabs=parent&&parent!==window?parent.document.querySelectorAll(".tab"):[];
     var parentFrame=parent&&parent!==window?parent.document.getElementById("f"):null;
