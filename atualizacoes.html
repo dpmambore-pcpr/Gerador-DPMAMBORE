@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.4.3: Filtro IP com vários documentos, ofícios consolidados e correlação de IPs -->
 <!-- v3.0.0: núcleo compartilhado + histórico local de documentos -->
 <!-- v2.8.10: solicitação de KEY/ID integrada ao Gmail -->
 <!-- v2.8.9: simplificação da integração Google para compartilhamento entre DPs -->
@@ -56,8 +57,8 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.0.0</span>
-      <span class="note">Última atualização: 12/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
+      <span class="version">VERSÃO ATUAL · v3.4.3</span>
+      <span class="note">Última atualização: 18/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
 
@@ -69,8 +70,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.0.0">
-        <div class="item-head"><span class="item-ver">v3.0.0</span><span class="item-date">12/09/2026</span><span class="tag new">NÚCLEO CENTRAL</span><span class="tag improve">HISTÓRICO</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.4.3">
+        <div class="item-head"><span class="item-ver">v3.4.3</span><span class="item-date">18/09/2026</span><span class="tag new">FILTRO IP</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+        <h3>Vários números no mesmo inquérito e correlação de IPs</h3>
+        <ul>
+          <li>O Filtro IP aceita vários documentos no mesmo inquérito (um por número/alvo), acrescentando arquivos sem apagar os anteriores.</li>
+          <li>Os ofícios às operadoras reúnem os IPs de todos os números, sem indicar de qual conta é cada endereço.</li>
+          <li>Relatório interno lista as conexões de cada número e destaca IPs coincidentes, inclusive redes IPv6 /64 compartilhadas.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.0.0">
+        <div class="item-head"><span class="item-ver">v3.0.0</span><span class="item-date">12/09/2026</span><span class="tag new">NÚCLEO CENTRAL</span><span class="tag improve">HISTÓRICO</span></div>
         <h3>Núcleo compartilhado e Histórico de Documentos</h3>
         <ul>
           <li>Consolidados os arquivos compartilhados da Central em <b>pcpr-core.js</b>, <b>pcpr-config.js</b>, <b>pcpr-drive.js</b>, <b>pcpr-documento.js</b> e <b>pwa.js</b>, todos na mesma versão.</li>

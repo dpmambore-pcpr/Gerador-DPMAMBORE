@@ -75,6 +75,15 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 .changelog-entry .date{font-size:11.5px;color:var(--suave);margin-bottom:7px}
 .changelog-entry ul{margin:6px 0 0 18px;padding:0;font-size:12.5px;line-height:1.55}
 .version-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#f0eadc;border:1px solid #d8d3c8;font-size:11px;font-weight:700}
+.arqs{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.arq{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--borda);border-radius:8px;padding:8px 10px;background:#f8f5ed;font-size:12.5px}
+.arq b{color:var(--azul)}
+.arq small{color:var(--suave)}
+.arq button{min-height:32px;padding:4px 10px}
+.corr{background:#edf4f1;border:1px solid #cfe1d9;border-left:4px solid var(--ok);padding:10px 12px;border-radius:4px;margin-bottom:12px;font-size:12.5px}
+.corr.vazia{background:#fff8e6;border-color:#e8d49a;border-left-color:var(--alerta)}
+.rel-bloco{border:1px solid var(--borda);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.rel-bloco h3{margin:0 0 6px;font-size:13px;color:var(--azul)}
 
 </style>
 
@@ -165,13 +174,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.4.2",
-  releaseDate: "17/09/2026",
+  version: "3.4.3",
+  releaseDate: "18/09/2026",
   changes: [
-    "Aplicado papel-pericia.png como papel timbrado de fundo em todas as páginas dos ofícios PDF e DOCX.",
-    "O PDF incorpora diretamente o PNG oficial, sem depender de captura de tela e sem duplicar cabeçalho ou rodapé.",
-    "O DOCX usa o mesmo papel-pericia.png como imagem de fundo repetida em todas as páginas.",
-    "Mantidas a pré-visualização, impressão, downloads, planilhas e envio em PDF para a pasta do Doutor."
+    "Aceita vários documentos no mesmo inquérito, um por número/alvo, sem substituir o anterior.",
+    "Os ofícios à operadora reúnem os IPs de todos os números, sem informar de qual conta é cada endereço.",
+    "Relatório interno lista as conexões de cada número e aponta IPs coincidentes entre eles."
   ]
 });
 </script>
@@ -206,12 +214,13 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 <main>
 
 <div class="card">
-  <h2>1. Carregar o arquivo</h2>
+  <h2>1. Carregar os arquivos</h2>
   <div id="drop">
-    <b>Arraste aqui o arquivo ZIP da Meta/WhatsApp</b>
-    <span>ou clique para escolher — aceita .zip, .pdf, .html (records.html), .htm, .txt e .csv</span>
+    <b>Arraste aqui os arquivos ZIP/PDF da Meta/WhatsApp — um por número</b>
+    <span>No mesmo inquérito dá para juntar vários documentos. Aceita .zip, .pdf, .html (records.html), .htm, .txt e .csv. Novos arquivos são acrescentados aos já carregados.</span>
     <input type="file" id="file" class="hide" accept=".zip,.pdf,.html,.htm,.txt,.csv" multiple>
   </div>
+  <div id="listaArqs" class="arqs"></div>
 
   <div class="opts">
     <label>Fuso:
@@ -240,6 +249,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 
   <div class="linha" style="margin-top:12px">
+    <button class="sec" id="btnAddDocs">Acrescentar outro documento</button>
     <button class="sec" id="btnColar">Colar texto em vez de arquivo</button>
     <button class="sec" id="btnLimpar">Limpar tudo</button>
   </div>
@@ -267,8 +277,18 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div style="margin-top:6px;font-size:11.5px;color:var(--suave)">A consulta sai pelo navegador e usa a rede/proxy já configurada na máquina. Se um token pessoal for informado, ele é usado somente nesta tela e não é armazenado pela Central.</div>
 </div>
 
+<div class="card hide" id="cardRel">
+  <h2>3. Relatório por número e correlação</h2>
+  <div class="aviso">Uso interno. O ofício enviado à operadora não indica de qual número é cada IP. Este relatório separa as conexões por conta e destaca endereços coincidentes.</div>
+  <div id="relatorio"></div>
+  <div class="linha" style="margin-top:12px">
+    <button id="btnRelDocx">Baixar relatório .docx</button>
+    <button class="sec" id="btnRelPdf">Baixar relatório .pdf</button>
+  </div>
+</div>
+
 <div class="card hide" id="cardOp">
-  <h2>3. Por operadora — planilhas e ofícios</h2>
+  <h2>4. Por operadora — planilhas e ofícios</h2>
 
   <div class="form">
     <label>Ofício nº + iniciais<input type="text" id="ofNum" placeholder="Ex.: 012026wpm → 01/2026 - WPM" autocomplete="off"></label>
@@ -310,7 +330,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 
 <div class="card">
-  <h2 style="cursor:pointer" id="tglCfg">4. Configuração da unidade ▸ <span style="text-transform:none;font-weight:400;color:var(--suave);letter-spacing:0">clique para usar esta ferramenta em outra delegacia</span></h2>
+  <h2 style="cursor:pointer" id="tglCfg">5. Configuração da unidade ▸ <span style="text-transform:none;font-weight:400;color:var(--suave);letter-spacing:0">clique para usar esta ferramenta em outra delegacia</span></h2>
   <div id="boxCfg" class="hide">
     <div class="aviso">Preencha os dados da sua unidade e clique em <b>Baixar versão personalizada</b>. O arquivo gerado já abre com o seu cabeçalho, brasão e rodapé — basta distribuí-lo. O original continua intacto.</div>
 
@@ -438,6 +458,124 @@ var TS   = "(\\d{4}-\\d{2}-\\d{2})[ T]+(\\d{2}:\\d{2}:\\d{2})(?:\\s*(?:UTC|Z))?"
 var SCAN = new RegExp("(" + TS + ")|(" + IPV6 + ")|(" + IPV4 + ")", "g");
 
 var estado = { linhas: [], asn: {}, arquivos: [] };
+
+function unicos(arr){
+  var o = {}, out = [];
+  (arr || []).forEach(function(x){
+    var k = String(x == null ? "" : x).trim();
+    if(!k || o[k]) return;
+    o[k] = 1; out.push(k);
+  });
+  return out;
+}
+function extraiIdentificador(texto, origem){
+  var t = String(texto || "");
+  var ident = (t.match(/(?:Account\s+)?Identifier[:\s]*([^\s]{4,40})/i) || [,""])[1].trim();
+  if(!ident){
+    var tel = t.match(/(?:Phone(?:\s+number)?|MSISDN|N[uú]mero(?:\s+do\s+alvo)?)[:\s]*([+\d][\d\s().-]{8,22})/i);
+    if(tel) ident = tel[1].replace(/[^\d+]/g, "");
+  }
+  if(!ident){
+    var n = String(origem || "").match(/(\+?\d{10,15})/);
+    if(n) ident = n[1];
+  }
+  return ident;
+}
+function rotuloNumero(l){
+  var id = String((l && l.identificador) || "").trim();
+  if(id) return id;
+  return String((l && (l.arquivoOrigem || l.arquivo)) || "sem identificador");
+}
+function modoDedup(){
+  var e = document.getElementById("dedup");
+  return e ? e.value : "ipdia";
+}
+function chaveDedup(l, modo){
+  modo = modo || modoDedup();
+  if(modo === "ip") return String(l.ip || "").toLowerCase();
+  if(modo === "ipdia") return String(l.ip || "").toLowerCase() + "|" + (l.data || "");
+  if(modo === "ipporta") return String(l.ip || "").toLowerCase() + "|" + (l.porta || "");
+  return [l.ip, l.data, l.hora, l.porta || ""].join("|").toLowerCase();
+}
+function linhasUnicasOficio(ls){
+  var modo = modoDedup(), vistos = {}, fim = [];
+  (ls || []).forEach(function(l){
+    var k = chaveDedup(l, modo);
+    if(vistos[k]) return;
+    vistos[k] = 1;
+    fim.push({ip: l.ip, dataBR: br(l.data), hora: l.hora, porta: l.porta || ""});
+  });
+  return fim;
+}
+function expandeIPv6(ip){
+  if(!ip || String(ip).indexOf(":") === -1) return "";
+  ip = String(ip).toLowerCase();
+  var halves = ip.split("::");
+  var pad = function(g){ return ("0000" + g).slice(-4); };
+  if(halves.length === 1){
+    var g = ip.split(":").filter(Boolean);
+    return g.length === 8 ? g.map(pad).join(":") : ip;
+  }
+  var head = halves[0] ? halves[0].split(":").filter(Boolean) : [];
+  var tail = halves[1] ? halves[1].split(":").filter(Boolean) : [];
+  var miss = 8 - head.length - tail.length, mid = [];
+  for(var i = 0; i < miss; i++) mid.push("0000");
+  return head.concat(mid).concat(tail).map(pad).join(":");
+}
+function prefixoIPv6(ip){
+  var e = expandeIPv6(ip);
+  if(!e) return "";
+  return e.split(":").slice(0, 4).join(":") + "::/64";
+}
+function correlaciona(linhas){
+  var porMap = {}, ipMap = {}, prefMap = {};
+  (linhas || []).forEach(function(l){
+    var ident = rotuloNumero(l);
+    var g = porMap[ident] || (porMap[ident] = {ident: ident, arquivos: [], servicos: [], linhas: [], ips: {}});
+    g.linhas.push(l);
+    if(l.arquivo) g.arquivos.push(l.arquivo);
+    if(l.servico) g.servicos.push(l.servico);
+    g.ips[String(l.ip).toLowerCase()] = 1;
+
+    var ipk = String(l.ip || "").toLowerCase();
+    var slot = ipMap[ipk] || (ipMap[ipk] = {ip: l.ip, numeros: {}, ocorrencias: []});
+    slot.numeros[ident] = 1;
+    slot.ocorrencias.push({ident: ident, data: l.data, hora: l.hora, porta: l.porta || "", arquivo: l.arquivo || ""});
+
+    var pref = prefixoIPv6(l.ip);
+    if(pref){
+      var p = prefMap[pref] || (prefMap[pref] = {prefixo: pref, ips: {}, numeros: {}});
+      p.ips[ipk] = l.ip;
+      p.numeros[ident] = 1;
+    }
+  });
+  var porNumero = Object.keys(porMap).sort().map(function(k){
+    var g = porMap[k];
+    return {
+      ident: g.ident,
+      arquivos: unicos(g.arquivos),
+      servicos: unicos(g.servicos),
+      linhas: g.linhas,
+      ipsUnicos: Object.keys(g.ips).length
+    };
+  });
+  var coincidentes = Object.keys(ipMap).map(function(k){ return ipMap[k]; })
+    .map(function(s){ return {ip: s.ip, numeros: Object.keys(s.numeros).sort(), ocorrencias: s.ocorrencias}; })
+    .filter(function(s){ return s.numeros.length > 1; })
+    .sort(function(a,b){ return b.numeros.length - a.numeros.length || a.ip.localeCompare(b.ip); });
+  var exactos = {};
+  coincidentes.forEach(function(c){ exactos[String(c.ip).toLowerCase()] = 1; });
+  var prefixos64 = Object.keys(prefMap).map(function(k){ return prefMap[k]; })
+    .map(function(p){
+      var ips = Object.keys(p.ips).map(function(k){ return p.ips[k]; });
+      return {prefixo: p.prefixo, ips: ips, numeros: Object.keys(p.numeros).sort()};
+    })
+    .filter(function(p){
+      if(p.numeros.length < 2 || p.ips.length < 2) return false;
+      return p.ips.some(function(ip){ return !exactos[String(ip).toLowerCase()]; });
+    });
+  return {porNumero: porNumero, coincidentes: coincidentes, prefixos64: prefixos64};
+}
 var cachePrefixosASN = [];
 var cacheTitularASN = {};
 
@@ -578,7 +716,7 @@ var RE_VARRE = new RegExp(
 
 function parse(texto, origem){
   var servico = (texto.match(/Service[:\s]+([A-Za-z][A-Za-z]{2,19})/) || [,""])[1].trim();
-  var ident   = (texto.match(/(?:Account\s+)?Identifier[:\s]*([^\s]{4,40})/) || [,""])[1].trim();
+  var ident   = extraiIdentificador(texto, origem);
 
   var out = [], reg = {}, esperando = null, m;
   function guarda(campo, valor){
@@ -588,7 +726,7 @@ function parse(texto, origem){
   function empurra(){
     if(reg.data && reg.ip)
       out.push({servico:servico, identificador:ident, ip:reg.ip, data:reg.data,
-                hora:reg.hora, porta:reg.porta || "", arquivo:origem});
+                hora:reg.hora, porta:reg.porta || "", arquivo:origem, arquivoOrigem:origem});
     reg = {};
   }
 
@@ -616,7 +754,7 @@ function parse(texto, origem){
       if(m[1]){ pTS = {data:m[2], hora:m[3]}; } else { pIP = m[4]; }
       if(pIP && pTS){
         out.push({servico:servico, identificador:ident, ip:pIP, data:pTS.data,
-                  hora:pTS.hora, porta:"", arquivo:origem});
+                  hora:pTS.hora, porta:"", arquivo:origem, arquivoOrigem:origem});
         pIP = null; pTS = null;
       }
     }
@@ -656,17 +794,13 @@ function processa(){
   var conv = brutas.map(function(l){
     var f = ajustaFuso(l);
     return {servico:l.servico, identificador:l.identificador, ip:l.ip, porta:l.porta || "",
-            data:f.data, hora:f.hora, utc:l.data+" "+l.hora, arquivo:l.arquivo};
+            data:f.data, hora:f.hora, utc:l.data+" "+l.hora, arquivo:l.arquivo, arquivoOrigem:l.arquivoOrigem || l.arquivo};
   });
 
   var modo = document.getElementById("dedup").value, vistos = {}, fim = [];
   conv.sort(function(a,b){ return (a.data+a.hora) < (b.data+b.hora) ? -1 : 1; });
   conv.forEach(function(l){
-    var k;
-    if(modo === "ip") k = l.ip;
-    else if(modo === "ipdia") k = l.ip + "|" + l.data;
-    else if(modo === "ipporta") k = l.ip + "|" + l.porta;
-    else k = Math.random();
+    var k = rotuloNumero(l) + "|" + chaveDedup(l, modo);
     if(vistos[k]) return;
     vistos[k] = 1; fim.push(l);
   });
@@ -694,8 +828,11 @@ function render(linhas, totalBruto, info){
 
   var ips = {}; linhas.forEach(function(l){ ips[l.ip] = 1; });
   var dias = {}; linhas.forEach(function(l){ dias[l.data] = 1; });
+  var nums = unicos(linhas.map(rotuloNumero));
   document.getElementById("stats").innerHTML =
-      pill("Registros no arquivo", totalBruto)
+      pill("Documentos", unicos(estado.arquivos).length || unicos(linhas.map(function(l){ return l.arquivoOrigem || l.arquivo; })).length)
+    + pill("Números/contas", nums.length)
+    + pill("Registros lidos", totalBruto)
     + pill("Após filtro", linhas.length)
     + pill("IPs únicos", Object.keys(ips).length)
     + pill("Dias distintos", Object.keys(dias).length)
@@ -716,12 +853,12 @@ function render(linhas, totalBruto, info){
   document.getElementById("avisoV4").innerHTML = avisos.map(function(a){
     return '<div class="aviso">' + a + "</div>"; }).join("");
 
-  var thead = "<tr><th>#</th><th>Serviço</th><th>Endereço IP</th>"
+  var thead = "<tr><th>#</th><th>Número/conta</th><th>Serviço</th><th>Endereço IP</th>"
     + (temPorta ? "<th>Porta</th>" : "")
     + "<th>Data</th><th>Hora</th><th>Original (UTC)</th><th>Operadora / ASN</th><th>Cidade</th><th>UF</th></tr>";
   var corpo = linhas.map(function(l, i){
     var a = estado.asn[l.ip] || {};
-    return "<tr><td>" + (i+1) + "</td><td>" + esc(l.servico) + "</td>"
+    return "<tr><td>" + (i+1) + "</td><td class='mono'>" + esc(rotuloNumero(l)) + "</td><td>" + esc(l.servico) + "</td>"
       + '<td class="mono' + (ehV4(l.ip) ? " v4" : "") + '">' + esc(l.ip) + "</td>"
       + (temPorta ? '<td class="mono">' + esc(l.porta || "—") + "</td>" : "")
       + "<td>" + br(l.data) + "</td><td>" + l.hora + "</td>"
@@ -731,12 +868,93 @@ function render(linhas, totalBruto, info){
   document.getElementById("tbl").tHead.innerHTML = thead;
   document.getElementById("tbl").tBodies[0].innerHTML = corpo;
 
+  renderListaArqs();
+  renderRelatorio();
   renderOps();
 }
 
 function pill(r, v){ return '<span class="pill">' + r + ": <b>" + v + "</b></span>"; }
 function br(d){ var p = d.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+
+function renderListaArqs(){
+  var box = document.getElementById("listaArqs");
+  if(!box) return;
+  var gruposArq = {};
+  estado.linhas.forEach(function(l){
+    var k = l.arquivoOrigem || l.arquivo || "arquivo";
+    var g = gruposArq[k] || (gruposArq[k] = {nome: k, n: 0, idents: []});
+    g.n++;
+    if(l.identificador) g.idents.push(l.identificador);
+  });
+  var nomes = Object.keys(gruposArq);
+  if(!nomes.length){ box.innerHTML = ""; return; }
+  box.innerHTML = nomes.map(function(nome){
+    var g = gruposArq[nome];
+    var idents = unicos(g.idents);
+    return '<div class="arq"><div><b>' + esc(nome) + "</b><br><small>"
+      + g.n + " registro(s)"
+      + (idents.length ? " · " + esc(idents.join(", ")) : "")
+      + '</small></div><button type="button" class="sec" data-remove-arq="' + esc(nome) + '">Remover</button></div>';
+  }).join("");
+}
+function removeDocumento(nome){
+  estado.linhas = estado.linhas.filter(function(l){ return (l.arquivoOrigem || l.arquivo) !== nome; });
+  estado.arquivos = estado.arquivos.filter(function(a){ return a !== nome && String(a).indexOf(nome) !== 0; });
+  if(!estado.linhas.length){
+    atual = [];
+    document.getElementById("cardRes").classList.add("hide");
+    document.getElementById("cardRel").classList.add("hide");
+    document.getElementById("cardOp").classList.add("hide");
+    renderListaArqs();
+    msg("Documento removido. Nenhum registro restante.");
+    return;
+  }
+  processa();
+}
+function renderRelatorio(){
+  var card = document.getElementById("cardRel"), box = document.getElementById("relatorio");
+  if(!card || !box) return;
+  if(!atual.length){ card.classList.add("hide"); return; }
+  card.classList.remove("hide");
+  var rel = correlaciona(atual);
+  var html = "";
+  if(rel.coincidentes.length){
+    html += '<div class="corr"><b>' + rel.coincidentes.length + " IP(s) coincidente(s)</b> entre dois ou mais números.<ul>"
+      + rel.coincidentes.map(function(c){
+          return "<li><span class='mono'>" + esc(c.ip) + "</span> — "
+            + esc(c.numeros.join(" · ")) + " (" + c.ocorrencias.length + " conexão(ões))</li>";
+        }).join("")
+      + "</ul></div>";
+  } else {
+    html += '<div class="corr vazia"><b>Nenhum IP coincidente</b> entre os números carregados neste inquérito.</div>';
+  }
+  if(rel.prefixos64.length){
+    html += '<div class="corr"><b>Redes IPv6 /64 coincidentes</b> (endereços distintos na mesma rede):<ul>'
+      + rel.prefixos64.map(function(p){
+          return "<li><span class='mono'>" + esc(p.prefixo) + "</span> — "
+            + esc(p.numeros.join(" · ")) + " · " + p.ips.length + " endereço(s)</li>";
+        }).join("")
+      + "</ul></div>";
+  }
+  html += rel.porNumero.map(function(g){
+    var temPorta = g.linhas.some(function(l){ return l.porta; });
+    return '<div class="rel-bloco"><h3>Número/conta ' + esc(g.ident)
+      + (g.servicos.length ? " · " + esc(g.servicos.join(" / ")) : "")
+      + "</h3><small>" + g.linhas.length + " conexão(ões) · " + g.ipsUnicos + " IP(s) único(s)"
+      + (g.arquivos.length ? " · " + esc(g.arquivos.join(", ")) : "")
+      + "</small><div class='wrap' style='max-height:220px;margin-top:8px'><table><thead><tr><th>#</th><th>IP</th>"
+      + (temPorta ? "<th>Porta</th>" : "")
+      + "<th>Data</th><th>Hora</th></tr></thead><tbody>"
+      + g.linhas.map(function(l, i){
+          return "<tr><td>" + (i+1) + "</td><td class='mono'>" + esc(l.ip) + "</td>"
+            + (temPorta ? "<td class='mono'>" + esc(l.porta || "—") + "</td>" : "")
+            + "<td>" + br(l.data) + "</td><td>" + esc(l.hora) + "</td></tr>";
+        }).join("")
+      + "</tbody></table></div></div>";
+  }).join("");
+  box.innerHTML = html;
+}
 
 function renderOps(){
   var agrupados = grupos(), temASN = false;
@@ -1123,6 +1341,23 @@ function tabelaIPs(linhas){
        + larg.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join("")
        + "</w:tblGrid>" + cab + corpo + "</w:tbl>";
 }
+function tabelaDoc(cabs, rows, largs){
+  largs = largs || cabs.map(function(){ return Math.floor(7900 / Math.max(1, cabs.length)); });
+  var cab = '<w:tr><w:trPr><w:tblHeader/></w:trPr>'
+          + cabs.map(function(t, i){ return celula(t, largs[i], 1); }).join("") + "</w:tr>";
+  var corpo = rows.map(function(cols){
+    return "<w:tr>" + cols.map(function(t, k){ return celula(t, largs[k]); }).join("") + "</w:tr>";
+  }).join("");
+  var total = largs.reduce(function(a,b){ return a+b; }, 0);
+  return '<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="' + total + '" w:type="dxa"/>'
+       + '<w:jc w:val="center"/><w:tblBorders>'
+       + ["top","left","bottom","right","insideH","insideV"].map(function(b){
+           return '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>';
+         }).join("")
+       + "</w:tblBorders></w:tblPr><w:tblGrid>"
+       + largs.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join("")
+       + "</w:tblGrid>" + cab + corpo + "</w:tbl>";
+}
 var CFG_PADRAO = {
   unidade: "Delegacia de Polícia Civil de Mamborê",
   subtitulo: "16ª SDP / PCPR",
@@ -1323,13 +1558,70 @@ function corpoOficio(c){
   return p.map(function(el){ return el.tabela ? tabelaIPs(c.linhas) : el; }).join("");
 }
 
+function corpoRelatorio(rel){
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
+  var p = [];
+  p.push(par("RELATÓRIO INTERNO — IPs POR NÚMERO E CORRELAÇÃO", {jc:"left", negrito:true}));
+  if(g("ofIP")) p.push(par("Inquérito Policial nº " + g("ofIP"), {jc:"left", negrito:true}));
+  p.push(par("Uso interno da autoridade policial. Este documento não deve ser encaminhado à operadora.", {jc:"both"}));
+  p.push(par("Os ofícios às operadoras reúnem os endereços IP de todos os números investigados, sem indicar de qual conta é cada conexão. A correspondência por número fica somente neste relatório.", {jc:"both", recuo:true}));
+
+  if(rel.coincidentes.length){
+    p.push(par("IPs coincidentes entre números", {jc:"left", negrito:true}));
+    p.push(tabelaDoc(
+      ["Endereço IP","Números/contas","Ocorrências"],
+      rel.coincidentes.map(function(c){
+        return [c.ip, c.numeros.join(" · "), String(c.ocorrencias.length)];
+      }),
+      [2800, 3600, 1500]
+    ));
+  } else {
+    p.push(par("Não foram localizados endereços IP coincidentes entre os números carregados.", {jc:"both", recuo:true}));
+  }
+
+  if(rel.prefixos64.length){
+    p.push(par("Redes IPv6 /64 coincidentes (endereços distintos na mesma rede)", {jc:"left", negrito:true}));
+    p.push(tabelaDoc(
+      ["Prefixo /64","Números/contas","Endereços"],
+      rel.prefixos64.map(function(x){
+        return [x.prefixo, x.numeros.join(" · "), x.ips.join(", ")];
+      }),
+      [2500, 2500, 2900]
+    ));
+  }
+
+  rel.porNumero.forEach(function(grp){
+    var temPorta = grp.linhas.some(function(l){ return l.porta; });
+    p.push(par("Número/conta " + grp.ident + (grp.servicos.length ? " — " + grp.servicos.join(" / ") : ""), {jc:"left", negrito:true}));
+    p.push(par(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s)"
+      + (grp.arquivos.length ? " · " + grp.arquivos.join(", ") : "") + ".", {jc:"both"}));
+    var cabs = temPorta ? ["Nº","Endereço IP","Data","Hora (UTC-3)","Porta"] : ["Nº","Endereço IP","Data","Hora (UTC-3)"];
+    var largs = temPorta ? [500, 3000, 1400, 1400, 1100] : [700, 3600, 1600, 1600];
+    var rows = grp.linhas.map(function(l, i){
+      var r = [String(i+1), l.ip, br(l.data), l.hora];
+      if(temPorta) r.push(l.porta || "—");
+      return r;
+    });
+    p.push(tabelaDoc(cabs, rows, largs));
+  });
+  return p.join("");
+}
+
+async function docxRelatorio(rel){
+  var papel = await carregaPapelPericia();
+  return docxDocumentoComPapel(corpoRelatorio(rel), papel.bytes);
+}
+
 function docxOficioComPapel(cfg, papelBytes){
+  return docxDocumentoComPapel(corpoOficio(cfg), papelBytes);
+}
+function docxDocumentoComPapel(bodyInner, papelBytes){
   var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>'
     + '<w:pgSz w:w="11906" w:h="16838"/>'
     + '<w:pgMar w:top="3005" w:right="1418" w:bottom="1418" w:left="1701" w:header="0" w:footer="0" w:gutter="0"/>'
     + '</w:sectPr>';
   var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:document")
-    + '<w:body>' + corpoOficio(cfg) + sect + '</w:body></w:document>';
+    + '<w:body>' + bodyInner + sect + '</w:body></w:document>';
 
   var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + NS("w:styles")
     + '<w:docDefaults><w:rPrDefault><w:rPr>'
@@ -1555,6 +1847,8 @@ function validaIdentificacaoOficio(){
 function cfgOficio(nome, ls, seq){
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
   var ident = dadosIdentificacaoOficio(seq);
+  var contas = unicos((ls || []).map(function(l){ return l.identificador; }));
+  var servicos = unicos((ls || []).map(function(l){ return l.servico; }));
   return {
     // 'numero' é o identificador que vai na linha OFÍCIO Nº do documento.
     numero: ident.combinado || "___",
@@ -1562,9 +1856,11 @@ function cfgOficio(nome, ls, seq){
     inquerito: ident.inquerito,
     crime: crimeEscolhido(), autos: document.getElementById("ofJud").checked ? g("ofAutos") : "",
     assinante: g("ofAssin"), cargo: g("ofCargo"), data: g("ofData"), prazo: g("ofPrazo"),
-    operadora: String(nome).replace(/^AS\d+\s*/, ""), servico: (ls[0] || {}).servico || "", identificador: (ls[0] || {}).identificador || "",
+    operadora: String(nome).replace(/^AS\d+\s*/, ""),
+    servico: servicos.join(" / ") || (ls[0] || {}).servico || "",
+    identificador: contas.length === 1 ? contas[0] : "",
     emails: emailsSelecionados(),
-    linhas: ls.map(function(l){ return {ip: l.ip, dataBR: br(l.data), hora: l.hora, porta: l.porta || ""}; })
+    linhas: linhasUnicasOficio(ls)
   };
 }
 
@@ -1816,7 +2112,16 @@ function baixaPlanilhaOperadora(idx){
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 function baixaXLSX(){
-  var g = grupos(), usados = {}, abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
+  var g = grupos(), usados = {}, rel = correlaciona(atual);
+  var abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
+  rel.porNumero.forEach(function(n){
+    abas.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
+  });
+  if(rel.coincidentes.length){
+    abas.push({nome: nomeAba("Coincidencias", usados), linhas: [["Endereço IP","Números/contas","Ocorrências"]].concat(
+      rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), c.ocorrencias.length]; })
+    )});
+  }
   Object.keys(g).sort().forEach(function(n){
     abas.push({nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])});
   });
@@ -1836,26 +2141,43 @@ async function baixaPacote(){
     arqs.push({name: "oficios/" + nomeArquivoOficio(c, n, "docx"), data: docxOficioComPapel(c, papel.bytes)});
     arqs.push({name: "planilhas/IPs-" + limpaNome(n) + ".csv", data: u8(csvDe(g[n]))});
   });
+  var rel = correlaciona(atual);
+  arqs.push({name: "relatorio/Relatorio-correlacao-IPs.docx", data: docxDocumentoComPapel(corpoRelatorio(rel), papel.bytes)});
   var usados = {};
-  arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(
-    [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}].concat(nomes.map(function(n){
-      return {nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])};
-    })))});
+  var abasX = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
+  rel.porNumero.forEach(function(n){
+    abasX.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
+  });
+  if(rel.coincidentes.length){
+    abasX.push({nome: nomeAba("Coincidencias", usados), linhas: [["Endereço IP","Números/contas","Ocorrências"]].concat(
+      rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), c.ocorrencias.length]; })
+    )});
+  }
+  abasX = abasX.concat(nomes.map(function(n){
+    return {nome: nomeAba(n.replace(/^AS\d+\s*/, ""), usados), linhas: linhasPlan(g[n])};
+  }));
+  arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(abasX)});
 
   var fecha = function(){
     baixaBin(zip(arqs), "Oficios-e-planilhas-" + new Date().toISOString().slice(0,10) + ".zip", "application/zip");
-    msg(nomes.length + " ofício(s) e planilhas gerados no pacote .zip.", "var(--ok)");
+    msg(nomes.length + " ofício(s), planilhas e relatório de correlação gerados no pacote .zip.", "var(--ok)");
   };
   if(!comPDF){ fecha(); return; }
 
   var i = 0;
   msg("Montando os PDFs…");
   (function proximo(){
-    if(i >= nomes.length){ fecha(); return; }
+    if(i >= nomes.length){
+      pdfRelatorio(rel, function(bytes){
+        if(bytes) arqs.push({name: "relatorio/Relatorio-correlacao-IPs.pdf", data: bytes});
+        fecha();
+      });
+      return;
+    }
     var n = nomes[i], c = cfgOficio(n, g[n], i);
     pdfOficio(c, function(bytes){
       if(bytes) arqs.push({name: "oficios-pdf/" + nomeArquivoOficio(c, n, "pdf"), data: bytes});
-      i++; barra(i / nomes.length); proximo();
+      i++; barra(i / (nomes.length + 1)); proximo();
     });
   })();
 }
@@ -2179,6 +2501,66 @@ function pdfOficio(c, cb){
   });
 }
 
+function pdfRelatorio(rel, cb){
+  papelPericiaImagemPDF(function(j, erroPapel){
+    if(!j){
+      console.error(erroPapel || "Falha ao carregar papel-pericia.png");
+      cb(null); return;
+    }
+    var d = new PDFDoc();
+    d.novaPagina();
+    var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
+    d.paragrafo("RELATÓRIO INTERNO — IPs POR NÚMERO E CORRELAÇÃO", {jc:"left", negrito:true});
+    if(g("ofIP")) d.paragrafo("Inquérito Policial nº " + g("ofIP"), {jc:"left", negrito:true});
+    d.paragrafo("Uso interno da autoridade policial. Este documento não deve ser encaminhado à operadora.", {jc:"left"});
+    d.espaco(8);
+    if(rel.coincidentes.length){
+      d.paragrafo("IPs coincidentes entre números", {jc:"left", negrito:true});
+      d.tabela(["Endereço IP","Números/contas","Ocorrências"],
+        rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), String(c.ocorrencias.length)]; }),
+        [170, 230, 70]);
+      d.espaco(10);
+    } else {
+      d.paragrafo("Não foram localizados endereços IP coincidentes entre os números carregados.", {jc:"left"});
+    }
+    if(rel.prefixos64.length){
+      d.paragrafo("Redes IPv6 /64 coincidentes", {jc:"left", negrito:true});
+      d.tabela(["Prefixo /64","Números/contas","Endereços"],
+        rel.prefixos64.map(function(x){ return [x.prefixo, x.numeros.join(" · "), x.ips.join(", ")]; }),
+        [150, 160, 160]);
+      d.espaco(10);
+    }
+    rel.porNumero.forEach(function(grp){
+      var temPorta = grp.linhas.some(function(l){ return l.porta; });
+      d.paragrafo("Número/conta " + grp.ident, {jc:"left", negrito:true});
+      d.paragrafo(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s).", {jc:"left"});
+      var cab = temPorta ? ["Nº","Endereço IP","Data","Hora","Porta"] : ["Nº","Endereço IP","Data","Hora"];
+      var largs = temPorta ? [28, 216, 72, 82, 58] : [32, 226, 78, 82];
+      d.tabela(cab, grp.linhas.map(function(l, i){
+        var r = [String(i+1), l.ip, br(l.data), l.hora];
+        if(temPorta) r.push(l.porta || "—");
+        return r;
+      }), largs);
+      d.espaco(12);
+    });
+    cb(montaPDF(d.paginas, j));
+  });
+}
+
+async function baixaRelatorioDocx(){
+  if(!atual.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
+  var bytes = await docxRelatorio(correlaciona(atual));
+  baixaBin(bytes, "Relatorio-correlacao-IPs.docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+}
+function baixaRelatorioPdf(){
+  if(!atual.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
+  pdfRelatorio(correlaciona(atual), function(bytes){
+    if(!bytes){ msg("Não foi possível montar o PDF do relatório.", "var(--erro)"); return; }
+    baixaBin(bytes, "Relatorio-correlacao-IPs.pdf", "application/pdf");
+  });
+}
+
 
 // ================= configuração da unidade =================
 function cfgAplicaNaTela(){
@@ -2327,19 +2709,23 @@ drop.onclick = function(){ inp.click(); };
 ["dragenter","dragover"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add("hot"); }); });
 ["dragleave","drop"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.remove("hot"); }); });
 drop.addEventListener("drop", function(ev){ carrega(ev.dataTransfer.files); });
-inp.onchange = function(){ carrega(inp.files); };
+inp.onchange = function(){ carrega(inp.files); inp.value = ""; };
 
 async function carrega(files){
-  estado.linhas = []; estado.arquivos = [];
   var ultimoErroEspecifico = "";
   var zipSucesso = 0;
-  msg("Lendo…");
+  var nomesNovos = {};
+  msg(estado.linhas.length ? "Acrescentando documentos…" : "Lendo…");
 
   for(var i = 0; i < files.length; i++){
     var f = files[i];
+    nomesNovos[f.name] = 1;
     try{
       var recebido = await processaArquivoEnviado(f);
       var r = parse(recebido.texto, recebido.origem);
+      r.forEach(function(l){ l.arquivoOrigem = f.name; if(!l.arquivo) l.arquivo = recebido.origem; });
+      estado.linhas = estado.linhas.filter(function(l){ return (l.arquivoOrigem || l.arquivo) !== f.name; });
+      estado.arquivos = estado.arquivos.filter(function(a){ return a !== f.name && a !== recebido.origem; });
       estado.linhas = estado.linhas.concat(r);
       estado.arquivos.push(recebido.origem);
       if(recebido.zip) zipSucesso++;
@@ -2363,14 +2749,18 @@ async function carrega(files){
   var prefixo = zipSucesso
     ? (zipSucesso === 1 ? "records.html extraído e analisado com sucesso. " : zipSucesso + " arquivos ZIP analisados com sucesso. ")
     : "";
+  var nDocs = unicos(estado.linhas.map(function(l){ return l.arquivoOrigem || l.arquivo; })).length;
+  var nContas = unicos(estado.linhas.map(rotuloNumero)).length;
 
   if(comPorta){
     document.getElementById("verIP").value = "tudo";
     document.getElementById("dedup").value = "tudo";
-    msg(prefixo + "Lido: <b>" + esc(estado.arquivos.join(", ")) + "</b> — " + comPorta
+    msg(prefixo + "Lido: <b>" + esc(estado.arquivos.join(", ")) + "</b> — " + nDocs + " documento(s) · "
+      + nContas + " número(s) · " + comPorta
       + " conexão(ões) com porta lógica; filtros ajustados para não descartar registros.", "var(--ok)");
   } else {
-    msg(prefixo + "Lido: <b>" + esc(estado.arquivos.join(", ")) + "</b>", "var(--ok)");
+    msg(prefixo + "Lido: <b>" + esc(estado.arquivos.join(", ")) + "</b> — "
+      + nDocs + " documento(s) · " + nContas + " número(s).", "var(--ok)");
   }
   processa();
 }
@@ -2378,12 +2768,26 @@ async function carrega(files){
 document.getElementById("btnProcTexto").onclick = function(){
   var t = document.getElementById("texto").value;
   if(!t.trim()) return;
-  estado.linhas = parse(t, "texto colado");
-  if(!estado.linhas.length){ msg("Nenhum registro localizado no texto.", "var(--erro)"); return; }
-  msg(estado.linhas.length + " registro(s) lidos do texto.", "var(--ok)");
+  var origem = "texto colado";
+  var n = 1;
+  while(estado.arquivos.indexOf(origem) >= 0){ n++; origem = "texto colado " + n; }
+  var r = parse(t, origem);
+  r.forEach(function(l){ l.arquivoOrigem = origem; });
+  if(!r.length){ msg("Nenhum registro localizado no texto.", "var(--erro)"); return; }
+  estado.linhas = estado.linhas.concat(r);
+  estado.arquivos.push(origem);
+  msg(r.length + " registro(s) lidos do texto. " + unicos(estado.linhas.map(rotuloNumero)).length + " número(s) no inquérito.", "var(--ok)");
   processa();
 };
 document.getElementById("btnColar").onclick = function(){ document.getElementById("areaColar").classList.toggle("hide"); };
+document.getElementById("btnAddDocs").onclick = function(){ inp.click(); };
+document.getElementById("listaArqs").addEventListener("click", function(e){
+  var b = e.target.closest("[data-remove-arq]");
+  if(!b) return;
+  removeDocumento(b.getAttribute("data-remove-arq"));
+});
+document.getElementById("btnRelDocx").onclick = baixaRelatorioDocx;
+document.getElementById("btnRelPdf").onclick = baixaRelatorioPdf;
 document.getElementById("btnLimpar").onclick = function(){ location.reload(); };
 document.addEventListener("keydown", function(e){ if(e.key === "Escape") fechaPreviaOficio(); });
 var modalPrevia = document.getElementById("modalPreviaOficio");
@@ -2400,7 +2804,7 @@ document.getElementById("ofData").value = new Date().toISOString().slice(0,10);
 document.getElementById("tglCfg").onclick = function(){
   var b = document.getElementById("boxCfg");
   b.classList.toggle("hide");
-  this.firstChild.nodeValue = b.classList.contains("hide") ? "4. Configuração da unidade \u25B8 " : "4. Configuração da unidade \u25BE ";
+  this.firstChild.nodeValue = b.classList.contains("hide") ? "5. Configuração da unidade \u25B8 " : "5. Configuração da unidade \u25BE ";
 };
 document.getElementById("btnAplicaCfg").onclick = cfgAplica;
 document.getElementById("btnCfgGeral").onclick = cfgUsarGeral;
@@ -2436,6 +2840,23 @@ document.getElementById("btnIPs").onclick = function(){
 ["fuso","dedup","verIP"].forEach(function(id){
   document.getElementById(id).onchange = function(){ if(estado.linhas.length) processa(); };
 });
+if(/[?&]test=1(?:&|$)/.test(location.search)){
+  window.__pcprFiltroIpTest = {
+    parse: parse,
+    extraiIdentificador: extraiIdentificador,
+    rotuloNumero: rotuloNumero,
+    chaveDedup: chaveDedup,
+    linhasUnicasOficio: linhasUnicasOficio,
+    correlaciona: correlaciona,
+    expandeIPv6: expandeIPv6,
+    prefixoIPv6: prefixoIPv6,
+    cfgOficio: cfgOficio,
+    textoOficio: textoOficio,
+    getAtual: function(){ return atual; },
+    getEstado: function(){ return estado; },
+    processa: processa
+  };
+}
 </script>
 </body>
 </html>
