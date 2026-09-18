@@ -124,8 +124,14 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
 .ig-observacoes{
   text-align:center;
   white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
   justify-content:center;
   align-items:center;
+  align-self:stretch;
+  min-height:0;
+  overflow:hidden;
+  line-height:1.12;
 }
 .info-photo{width:32.5%;height:89mm}.info-label{width:23.5%;text-align:center;font-size:11pt;padding:4px 3px;vertical-align:middle}.info-value{width:44%;font-size:11pt;padding:4px 6px;vertical-align:middle}.info-value.name{font-weight:700;font-size:12pt;text-align:center}.info-value.center{text-align:center}
 .obs-label{height:26mm;vertical-align:top;font-size:11pt;padding-top:7px}.obs-value{height:26mm;font-size:10.8pt;padding:5px 6px;white-space:pre-wrap;text-align:center!important;vertical-align:middle!important}.photo-title{text-align:center;font-size:11pt;padding-top:4px}
@@ -223,10 +229,10 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
   </div>
   <div class="topbar hiddenprint">
     <div class="titlebox"><h1>Envelope de Busca</h1><p>Alvos, fotos, localização, QR Code, Auto de Arrecadação e Kit da Busca em um único fluxo.</p></div>
-    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">v3.6.0</span></div>
+    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">v3.6.1</span></div>
   </div>
   <div class="grid">
-    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="dupTargetBtn">Duplicar alvo</button><button type="button" class="alt" id="openFooterConfig">Editar dados da unidade</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Informe o nº dos autos em cada envelope. Duplicar alvo copia a identificação, a foto e o nº dos autos, e limpa o endereço. <b>Baixar tudo</b> gera os envelopes e o Auto de Arrecadação de cada alvo no mesmo ZIP.</div>
+    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="dupTargetBtn">Duplicar alvo</button><button type="button" class="alt" id="openFooterConfig">Editar dados da unidade</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Informe o nº dos autos em cada envelope. <b>Baixar tudo</b> gera, no mesmo ZIP, o envelope e o Auto de Arrecadação de cada alvo. O texto das observações reduz o tamanho da letra para caber no quadro.</div>
 <div class="unit-hint">Cabeçalho e rodapé são lidos da <strong>Configuração Geral da Unidade</strong>, evitando dados divergentes entre os módulos.</div>
 <div style="display:none"><button id="downloadOdtBtn" type="button">Baixar ODT</button><button id="printBtn" type="button">Imprimir / Salvar PDF</button></div>
 <div id="footerConfigPanel" class="footer-config-panel" hidden>
@@ -292,6 +298,38 @@ function odtDos(){const d=new Date(),y=Math.max(1980,d.getFullYear());return{tim
 function odtBuild(entries){const dt=odtDos(),locals=[],centrals=[];let offset=0;for(const e of entries){const nameBytes=ODT_ENC.encode(e.name),data=e.data,crc=odtCrc32(data);const local=odtConcat([odtU32(0x04034b50),odtU16(20),odtU16(0x0800),odtU16(0),odtU16(dt.time),odtU16(dt.date),odtU32(crc),odtU32(data.length),odtU32(data.length),odtU16(nameBytes.length),odtU16(0),nameBytes,data]);locals.push(local);const central=odtConcat([odtU32(0x02014b50),odtU16(20),odtU16(20),odtU16(0x0800),odtU16(0),odtU16(dt.time),odtU16(dt.date),odtU32(crc),odtU32(data.length),odtU32(data.length),odtU16(nameBytes.length),odtU16(0),odtU16(0),odtU16(0),odtU16(0),odtU32(0),odtU32(offset),nameBytes]);centrals.push(central);offset+=local.length;}const centralBytes=odtConcat(centrals);const eocd=odtConcat([odtU32(0x06054b50),odtU16(0),odtU16(0),odtU16(entries.length),odtU16(entries.length),odtU32(centralBytes.length),odtU32(offset),odtU16(0)]);return odtConcat([...locals,centralBytes,eocd]);}
 function xmlEscape(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function xmlEscapeMultiline(s){const raw=String(s??'').trim();if(!raw)return' ';return raw.split(/\r?\n/).map(xmlEscape).join('<text:line-break/>');}
+function obsFitPt(text,isPJ){
+  const raw=String(text||'').trim();
+  if(!raw)return isPJ?12:11;
+  const n=raw.length, lines=Math.max(1,raw.split(/\r?\n/).length);
+  const density=n+lines*18;
+  if(isPJ){
+    if(density>1400)return 7;
+    if(density>1000)return 8;
+    if(density>700)return 9;
+    if(density>420)return 10;
+    if(density>240)return 11;
+    return 12;
+  }
+  if(density>420)return 6.5;
+  if(density>320)return 7.5;
+  if(density>230)return 8.5;
+  if(density>150)return 9.5;
+  if(density>80)return 10.5;
+  return 11;
+}
+function fitObservacoesCells(){
+  document.querySelectorAll('.page .ig-observacoes').forEach(el=>{
+    const pj=el.closest('.info-grid')?.classList.contains('tipo-pj');
+    let pt=obsFitPt(el.textContent,pj);
+    el.style.fontSize=pt+'pt';
+    el.style.lineHeight='1.12';
+    for(let k=0;k<24 && el.scrollHeight>el.clientHeight+1 && pt>6;k++){
+      pt-=0.25;
+      el.style.fontSize=pt+'pt';
+    }
+  });
+}
 function dataURLToBytes(dataURL){const m=/^data:([^;,]+)?(?:;base64)?,(.*)$/.exec(dataURL||'');if(!m)throw new Error('Imagem inválida.');const mime=m[1]||'application/octet-stream';const bin=atob(m[2]);const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return{mime,bytes:out};}
 function extFromMime(mime){if(mime==='image/png')return'png';if(mime==='image/jpeg')return'jpg';if(mime==='image/webp')return'webp';if(mime==='image/gif')return'gif';return'bin';}
 function pad2(n){return String(n).padStart(2,'0');} function markText(v){if(v==='SIM')return'(X) SIM   ( ) NÃO';if(v==='NAO')return'( ) SIM   (X) NÃO';return'( ) SIM   ( ) NÃO';}
@@ -643,10 +681,11 @@ function renderPreview(){
   applyPapelEnvelope();
   document.getElementById('counter').textContent=
     state.alvos.length+(state.alvos.length===1?' alvo no documento':' alvos no documento');
+  requestAnimationFrame(()=>fitObservacoesCells());
 }
 
 function render(){renderForm();renderPreview();}
-async function buildEnvelopeOdt(){if(!state.alvos.length)throw new Error('Não há alvos para gerar.');const entries=getTemplateEntries();const contentEntry=entries.find(e=>e.name==='content.xml');const manifestEntry=entries.find(e=>e.name==='META-INF/manifest.xml');if(!contentEntry||!manifestEntry)throw new Error('Modelo ODT interno não encontrado.');let contentXml=ODT_DEC.decode(contentEntry.data);if(!contentXml.includes('style:name="Tabela4.PJOBS"')){contentXml=contentXml.replace('<style:style style:name="PENVOBS"','<style:style style:name="Tabela4.PJROW" style:family="table-row"><style:table-row-properties fo:keep-together="always" style:min-row-height="0.7875cm" style:row-height="0.7875cm"/></style:style><style:style style:name="Tabela4.PJOBS" style:family="table-row"><style:table-row-properties fo:keep-together="always" style:min-row-height="5.75cm" style:row-height="5.75cm"/></style:style><style:style style:name="PENVOBS"');}let manifestXml=ODT_DEC.decode(manifestEntry.data);const pictureEntries=[],manifestLines=[],sections=[];for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i];if(!a.fotoAlvo)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem do alvo.');if(!a.fotoResidencia)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem da residência.');const qrText=ensureQrContent(a);if(!qrText)throw new Error('Alvo nº '+pad2(i+1)+': informe o link do QR Code.');if(!a.qrPreview)throw new Error('Alvo nº '+pad2(i+1)+': clique em Gerar QR Code antes de baixar o ODT.');const qrDataUrl=a.qrPreview;const alvoFile=dataURLToBytes(a.fotoAlvo),resFile=dataURLToBytes(a.fotoResidencia),qrFile=dataURLToBytes(qrDataUrl);const alvoName='Pictures/alvo_'+pad2(i+1)+'.'+extFromMime(alvoFile.mime),resName='Pictures/residencia_'+pad2(i+1)+'.'+extFromMime(resFile.mime),qrName='Pictures/qr_'+pad2(i+1)+'.'+extFromMime(qrFile.mime);pictureEntries.push({name:alvoName,data:alvoFile.bytes},{name:resName,data:resFile.bytes},{name:qrName,data:qrFile.bytes});manifestLines.push('<manifest:file-entry manifest:media-type="'+alvoFile.mime+'" manifest:full-path="'+alvoName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+resFile.mime+'" manifest:full-path="'+resName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+qrFile.mime+'" manifest:full-path="'+qrName+'"/>');let s=tipoPessoaOf(a)==='PJ'?SECTION_TEMPLATE_PJ:SECTION_TEMPLATE;s=s.replaceAll('@@IDX@@',String(i+1)).replaceAll('@@NUM@@',pad2(i+1)).replaceAll('@@TITLE_STYLE@@',i>0?'P48PB':'P48').replaceAll('@@NOME@@',xmlEscape((a.nome||'').toUpperCase()));if(tipoPessoaOf(a)==='PJ'){s=s.replaceAll('@@CNPJ@@',xmlEscape(a.cnpj||''));}else{s=s.replaceAll('@@MAE@@',xmlEscape((a.mae||'').toUpperCase())).replaceAll('@@NASCIMENTO@@',xmlEscape(a.nascimento)).replaceAll('@@RG@@',xmlEscape(a.rg)).replaceAll('@@CPF@@',xmlEscape(a.cpf)).replaceAll('@@CONJUGE@@',xmlEscape((a.conjuge||'').toUpperCase()));}s=s.replaceAll('@@MBA@@',xmlEscape(markText(a.mba))).replaceAll('@@PRISAO@@',xmlEscape(markText(a.prisao))).replaceAll('@@OBS@@',xmlEscapeMultiline((a.observacoes||'').toUpperCase())).replaceAll('@@AUTOS_BLOCK@@',autosOf(a)?('<text:p text:style-name="P4">'+xmlEscape('AUTOS Nº '+autosOf(a).toUpperCase())+'</text:p>'):'').replaceAll('@@ENDERECO@@',xmlEscape((a.endereco||'').toUpperCase())).replaceAll('@@FOTO_ALVO_XML@@',pictureParagraph(alvoName,53,70,'P18')).replaceAll('@@FOTO_RESID_XML@@',pictureParagraph(resName,101,76,'P70')).replaceAll('@@QR_XML@@',pictureParagraph(qrName,48,48,'P44')); sections.push(s);} contentXml=contentXml.replace('@@SECTIONS@@',sections.join('')); manifestXml=manifestXml.replace('</manifest:manifest>',manifestLines.join('')+'</manifest:manifest>'); const outEntries=entries.filter(e=>!/^Pictures\//.test(e.name)).map(e=>{if(e.name==='content.xml')return{name:e.name,data:ODT_ENC.encode(contentXml)}; if(e.name==='META-INF/manifest.xml')return{name:e.name,data:ODT_ENC.encode(manifestXml)}; if(e.name==='styles.xml'){let sx=ODT_DEC.decode(e.data).replaceAll('@@RODAPE1@@',xmlEscape(footerLine1())).replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));return{name:e.name,data:ODT_ENC.encode(sx)}} return e;}); for(const pic of pictureEntries)outEntries.push(pic); return odtBuild(outEntries); }
+async function buildEnvelopeOdt(){if(!state.alvos.length)throw new Error('Não há alvos para gerar.');const entries=getTemplateEntries();const contentEntry=entries.find(e=>e.name==='content.xml');const manifestEntry=entries.find(e=>e.name==='META-INF/manifest.xml');if(!contentEntry||!manifestEntry)throw new Error('Modelo ODT interno não encontrado.');let contentXml=ODT_DEC.decode(contentEntry.data);if(!contentXml.includes('style:name="Tabela4.PJOBS"')){contentXml=contentXml.replace('<style:style style:name="PENVOBS"','<style:style style:name="Tabela4.PJROW" style:family="table-row"><style:table-row-properties fo:keep-together="always" style:min-row-height="0.7875cm" style:row-height="0.7875cm"/></style:style><style:style style:name="Tabela4.PJOBS" style:family="table-row"><style:table-row-properties fo:keep-together="always" style:min-row-height="5.75cm" style:row-height="5.75cm"/></style:style><style:style style:name="PENVOBS"');}let manifestXml=ODT_DEC.decode(manifestEntry.data);const pictureEntries=[],manifestLines=[],sections=[],obsStyles=[];for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i];if(!a.fotoAlvo)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem do alvo.');if(!a.fotoResidencia)throw new Error('Alvo nº '+pad2(i+1)+': informe a imagem da residência.');const qrText=ensureQrContent(a);if(!qrText)throw new Error('Alvo nº '+pad2(i+1)+': informe o link do QR Code.');if(!a.qrPreview)throw new Error('Alvo nº '+pad2(i+1)+': clique em Gerar QR Code antes de baixar o ODT.');const qrDataUrl=a.qrPreview;const alvoFile=dataURLToBytes(a.fotoAlvo),resFile=dataURLToBytes(a.fotoResidencia),qrFile=dataURLToBytes(qrDataUrl);const alvoName='Pictures/alvo_'+pad2(i+1)+'.'+extFromMime(alvoFile.mime),resName='Pictures/residencia_'+pad2(i+1)+'.'+extFromMime(resFile.mime),qrName='Pictures/qr_'+pad2(i+1)+'.'+extFromMime(qrFile.mime);pictureEntries.push({name:alvoName,data:alvoFile.bytes},{name:resName,data:resFile.bytes},{name:qrName,data:qrFile.bytes});manifestLines.push('<manifest:file-entry manifest:media-type="'+alvoFile.mime+'" manifest:full-path="'+alvoName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+resFile.mime+'" manifest:full-path="'+resName+'"/>');manifestLines.push('<manifest:file-entry manifest:media-type="'+qrFile.mime+'" manifest:full-path="'+qrName+'"/>');let s=tipoPessoaOf(a)==='PJ'?SECTION_TEMPLATE_PJ:SECTION_TEMPLATE;s=s.replaceAll('@@IDX@@',String(i+1)).replaceAll('@@NUM@@',pad2(i+1)).replaceAll('@@TITLE_STYLE@@',i>0?'P48PB':'P48').replaceAll('@@NOME@@',xmlEscape((a.nome||'').toUpperCase()));if(tipoPessoaOf(a)==='PJ'){s=s.replaceAll('@@CNPJ@@',xmlEscape(a.cnpj||''));}else{s=s.replaceAll('@@MAE@@',xmlEscape((a.mae||'').toUpperCase())).replaceAll('@@NASCIMENTO@@',xmlEscape(a.nascimento)).replaceAll('@@RG@@',xmlEscape(a.rg)).replaceAll('@@CPF@@',xmlEscape(a.cpf)).replaceAll('@@CONJUGE@@',xmlEscape((a.conjuge||'').toUpperCase()));}s=s.replaceAll('@@MBA@@',xmlEscape(markText(a.mba))).replaceAll('@@PRISAO@@',xmlEscape(markText(a.prisao))).replaceAll('@@OBS@@',xmlEscapeMultiline((a.observacoes||'').toUpperCase())).replaceAll('@@AUTOS_BLOCK@@',autosOf(a)?('<text:p text:style-name="P4">'+xmlEscape('AUTOS Nº '+autosOf(a).toUpperCase())+'</text:p>'):'').replaceAll('@@ENDERECO@@',xmlEscape((a.endereco||'').toUpperCase())).replaceAll('@@FOTO_ALVO_XML@@',pictureParagraph(alvoName,53,70,'P18')).replaceAll('@@FOTO_RESID_XML@@',pictureParagraph(resName,101,76,'P70')).replaceAll('@@QR_XML@@',pictureParagraph(qrName,48,48,'P44')); s=s.replaceAll('text:style-name="PENVOBS"','text:style-name="PENVOBS_'+pad2(i+1)+'"');const _opt=obsFitPt(a.observacoes,tipoPessoaOf(a)==='PJ');obsStyles.push('<style:style style:name="PENVOBS_'+pad2(i+1)+'" style:family="paragraph" style:parent-style-name="PENVOBS"><style:paragraph-properties fo:text-align="center" fo:margin-top="0cm" fo:margin-bottom="0cm"/><style:text-properties style:font-name="Times New Roman" fo:font-size="'+_opt+'pt" style:font-size-asian="'+_opt+'pt" style:font-size-complex="'+_opt+'pt"/></style:style>');sections.push(s);}contentXml=contentXml.replace('</office:automatic-styles>',obsStyles.join('')+'</office:automatic-styles>');contentXml=contentXml.replace('@@SECTIONS@@',sections.join('')); manifestXml=manifestXml.replace('</manifest:manifest>',manifestLines.join('')+'</manifest:manifest>'); const outEntries=entries.filter(e=>!/^Pictures\//.test(e.name)).map(e=>{if(e.name==='content.xml')return{name:e.name,data:ODT_ENC.encode(contentXml)}; if(e.name==='META-INF/manifest.xml')return{name:e.name,data:ODT_ENC.encode(manifestXml)}; if(e.name==='styles.xml'){let sx=ODT_DEC.decode(e.data).replaceAll('@@RODAPE1@@',xmlEscape(footerLine1())).replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));return{name:e.name,data:ODT_ENC.encode(sx)}} return e;}); for(const pic of pictureEntries)outEntries.push(pic); return odtBuild(outEntries); }
 function docFileBaseName(){if(state.alvos.length===1){const nome=(state.alvos[0].nome||'ALVO').trim().toUpperCase().replace(/[^A-Z0-9À-ÿ]+/g,'_'); return 'ENVELOPE_BUSCA_'+(nome||'ALVO');} return 'ENVELOPE_BUSCA_'+state.alvos.length+'_ALVOS';}
 document.getElementById('openFooterConfig').addEventListener('click',openUnitConfig);
 document.getElementById('closeFooterConfig')?.addEventListener('click',()=>document.getElementById('footerConfigPanel').classList.remove('open'));
@@ -721,7 +760,7 @@ function printTargetsOnly(){
     .ig-photo{border-right:0.55pt solid #000!important}
     .ig-label{border-right:0.55pt solid #000!important}
     .ig-row-border{border-bottom:0.55pt solid #000!important}
-    .ig-observacoes{text-align:center!important;justify-content:center!important;align-items:center!important}
+  .ig-observacoes{text-align:center!important;justify-content:center!important;align-items:center!important;overflow:hidden!important;word-break:break-word!important}
 
     .info-table td,.addr-table td{
       border:0.55pt solid #000!important;
@@ -849,46 +888,60 @@ async function saveCurrentSet(){const name=(document.getElementById('saveSetName
 async function renderSaved(){const box=document.getElementById('savedList');if(!box)return;let all=await idbAll();all.sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));box.innerHTML='';if(!all.length){box.innerHTML='<div class="emptySaved">Nenhum conjunto de alvos salvo ainda.</div>';return}const autoMap=getAutoMap();all.forEach(rec=>{const card=document.createElement('div');card.className='saved-card';const d=new Date(rec.savedAt);card.innerHTML='<div class="saved-head"><div><div class="saved-title">'+escapeHtml(rec.name)+'</div><div class="saved-meta">'+rec.alvos.length+' alvo(s) · salvo em '+d.toLocaleString('pt-BR')+'</div></div><div class="small-actions"><button class="green loadSaved">Carregar</button><button class="red deleteSaved">Excluir</button></div></div>';rec.alvos.forEach((a,i)=>{const am=autoMap[a.id]||{};const row=document.createElement('div');row.className='saved-target';row.innerHTML='<div><div class="saved-target-name">ALVO Nº '+pad2(i+1)+' — '+escapeHtml(a.nome||'SEM NOME')+'</div><div class="saved-target-info">'+escapeHtml(a.endereco||'Sem endereço')+'<br>Auto de Arrecadação: '+((a.autos||am.autos)?'<b>'+escapeHtml(a.autos||am.autos)+'</b>':'não preenchido')+(am.odtGerado?' · ODT gerado':'')+(am.pdfAberto?' · impressão aberta':'')+'</div></div><div class="small-actions"><button class="gold openSavedAuto">Auto de Arrecadação</button></div>';row.querySelector('.openSavedAuto').onclick=()=>{if(!a.endereco)return alert('Este alvo salvo não possui endereço.');const qs=new URLSearchParams({endereco:a.endereco,alvo:pad2(i+1),nome:a.nome||'',targetId:a.id||'',autos:a.autos||am.autos||''});window.open('auto-arrecadacao.html?v=3.6.0&'+qs.toString(),'_blank');};card.appendChild(row)});card.querySelector('.loadSaved').onclick=async()=>{const r=await idbGet(rec.id);state.alvos=(r.alvos||[]).map(a=>{const n={...novoAlvo(),...a,id:a.id||uidTarget()};if(!n.tipoPessoa)n.tipoPessoa='PF';return n});document.getElementById('saveSetName').value=r.name||'';switchEnvTab('ativos');render();};card.querySelector('.deleteSaved').onclick=async()=>{if(!confirm('Excluir este conjunto salvo?'))return;await idbDelete(rec.id);renderSaved();};box.appendChild(card)})}
 function switchEnvTab(tab){document.querySelectorAll('.envTab').forEach(b=>b.classList.toggle('active',b.dataset.envtab===tab));document.getElementById('activeTargetsArea').style.display=tab==='ativos'?'':'none';document.getElementById('savedTargetsArea').style.display=tab==='salvos'?'':'none';if(tab==='salvos')renderSaved()}
 function buildAutoOdtForTarget(a,autos){const h=getHeaderConfig();const entries=odtParseStored(odtB64Bytes(AUTO_KIT_ODT_B64)).map(e=>{if(e.name==='content.xml'){let s=ODT_DEC.decode(e.data).replace('@@AUTOS@@',xmlEscape(autos||'__________________________')).replace('@@ENDERECO@@',xmlEscape((a.endereco||'').toUpperCase()));return {name:e.name,data:ODT_ENC.encode(s)}}if(e.name==='styles.xml'){let s=ODT_DEC.decode(e.data).replaceAll('@@HDR_ESTADO@@',xmlEscape(h.estado)).replaceAll('@@HDR_SECRETARIA@@',xmlEscape(h.secretaria)).replaceAll('@@HDR_DEPARTAMENTO@@',xmlEscape(h.departamento)).replaceAll('@@HDR_SUBDIVISAO@@',xmlEscape(h.subdivisao)).replaceAll('@@HDR_UNIDADE@@',xmlEscape(h.unidade)).replaceAll('@@RODAPE1@@',xmlEscape(footerLine1())).replaceAll('@@RODAPE2@@',xmlEscape(footerLine2()));return {name:e.name,data:ODT_ENC.encode(s)}}return e});return odtBuild(entries)}
-function kitSummary(){const rows=state.alvos.map((a,i)=>{hydrateAlvoAutos(a);const miss=essentialMissing(a),autos=autosOf(a);return{idx:i,complete:miss.length===0,missing:miss,auto:Boolean(autos),autos};});return{total:rows.length,complete:rows.filter(x=>x.complete).length,incomplete:rows.filter(x=>!x.complete).length,autos:rows.filter(x=>x.auto).length,autosPending:rows.filter(x=>!x.auto).length,rows}}
-function updateKitPreflight(){const box=document.getElementById('kitPreflight');if(!box)return;const s=kitSummary();box.classList.toggle('show',s.incomplete>0||s.autosPending>0);if(!box.classList.contains('show')){box.innerHTML='';return}box.innerHTML='<b>Checagem do kit:</b> '+s.total+' alvo(s) · '+s.complete+' envelope(s) completo(s) · '+s.incomplete+' com pendência · '+s.autos+' Auto(s) com nº dos autos · '+s.autosPending+' sem nº dos autos. <b>Baixar tudo</b> gera os envelopes e o Auto de Arrecadação de cada alvo. O kit pode ser gerado mesmo com pendências.'}
+function kitSummary(){const rows=state.alvos.map((a,i)=>{hydrateAlvoAutos(a);const miss=essentialMissing(a),autos=autosOf(a);return{idx:i,complete:miss.length===0,missing:miss,auto:Boolean(autos),autos,envelopeReady:envelopeBuildable(a)};});return{total:rows.length,complete:rows.filter(x=>x.complete).length,incomplete:rows.filter(x=>!x.complete).length,autos:rows.filter(x=>x.auto).length,autosPending:rows.filter(x=>!x.auto).length,envelopesReady:rows.filter(x=>x.envelopeReady).length,rows}}
+function updateKitPreflight(){const box=document.getElementById('kitPreflight');if(!box)return;const s=kitSummary();box.classList.toggle('show',s.incomplete>0||s.autosPending>0);if(!box.classList.contains('show')){box.innerHTML='';return}box.innerHTML='<b>Checagem do kit:</b> '+s.total+' alvo(s) · '+s.envelopesReady+' envelope(s) prontos para o ZIP · '+s.incomplete+' com pendência · '+s.autos+' Auto(s) com nº dos autos. <b>Baixar tudo</b> coloca o envelope e o Auto de cada alvo juntos na raiz do ZIP.'}
+function envelopeBuildable(a){return Boolean(a&&a.fotoAlvo&&a.fotoResidencia&&(a.qrPreview||ensureQrContent(a)))}
+function kitFileBase(i,a){return 'ALVO_'+pad2(i+1)+'_'+alvoPasta(i,a).replace(/^ALVO_\d+_/,'')}
+async function ensureAlvoQr(a){
+  if(a.qrPreview)return a.qrPreview;
+  const text=ensureQrContent(a);
+  if(!text)return '';
+  try{a.qrPreview=await canvasToDataURL(text);return a.qrPreview}catch(e){console.error(e);return ''}
+}
 async function buildEnvelopeOdtFromList(list){const prev=state.alvos;state.alvos=list;try{return await buildEnvelopeOdt()}finally{state.alvos=prev}}
 async function generateKit(opts){
   opts=opts||{};
   const btn=document.getElementById('kitBtn'),old=btn?btn.textContent:'';
+  for(const a of state.alvos) await ensureAlvoQr(a);
   const s=kitSummary();
   if(!opts.silent && (s.incomplete||s.autosPending)){
     const details=s.rows.filter(x=>!x.complete||!x.auto).map(x=>{const parts=[];if(!x.complete)parts.push('envelope: '+x.missing.join(', '));if(!x.auto)parts.push('Auto sem número dos autos');return 'ALVO '+pad2(x.idx+1)+' — '+parts.join(' | ')}).join('\n');
-    if(!confirm('CHECAGEM DO KIT\n\n'+s.total+' alvo(s)\n'+s.complete+' envelope(s) completo(s)\n'+s.incomplete+' envelope(s) com pendência\n'+s.autos+' Auto(s) com nº dos autos\n'+s.autosPending+' Auto(s) sem número dos autos\n\n'+details+'\n\nDeseja gerar o Kit mesmo assim?'))return null;
+    if(!confirm('CHECAGEM DO KIT\n\n'+s.total+' alvo(s)\n'+s.envelopesReady+' envelope(s) com foto e QR prontos\n'+s.incomplete+' com pendência de preenchimento\n'+s.autos+' Auto(s) com nº dos autos\n'+s.autosPending+' Auto(s) sem número dos autos\n\n'+details+'\n\nO ZIP terá o envelope e o Auto de cada alvo que estiver possível gerar.\nDeseja continuar?'))return null;
   }
   if(btn){btn.disabled=true;btn.textContent='Gerando kit...';}
   try{
     state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget();hydrateAlvoAutos(a);persistAutos(a)});
-    const files=[],lines=['KIT DA BUSCA — ENVELOPES + AUTOS DE ARRECADAÇÃO','Gerado em: '+new Date().toLocaleString('pt-BR'),''];
-    if(s.incomplete===0){
-      files.push({name:'01_ENVELOPES_DE_BUSCA.odt',data:await buildEnvelopeOdt()});
+    const files=[],lines=['KIT DA BUSCA — ENVELOPES + AUTOS DE ARRECADAÇÃO','Cada alvo sai com o envelope e o Auto de Arrecadação na raiz do ZIP.','Gerado em: '+new Date().toLocaleString('pt-BR'),''];
+    const ready=state.alvos.filter(envelopeBuildable);
+    if(ready.length){
+      try{files.push({name:'00_ENVELOPES_TODOS.odt',data:await buildEnvelopeOdtFromList(ready)});}
+      catch(err){lines.push('Aviso: ODT consolidado dos envelopes não gerado: '+(err.message||err));lines.push('');}
     }else{
-      lines.push('ATENÇÃO: o arquivo 01_ENVELOPES_DE_BUSCA.odt não foi incluído porque existem envelopes incompletos.');
-      lines.push('O kit inclui o Auto de Arrecadação de cada alvo e o envelope individual dos alvos que já estão completos.');
+      lines.push('ATENÇÃO: nenhum envelope pôde ser gerado (faltam foto do alvo, foto da residência ou QR).');
       lines.push('');
     }
     for(let i=0;i<state.alvos.length;i++){
-      const a=state.alvos[i],autos=autosOf(a),pasta=alvoPasta(i,a);
-      const autoName=pasta+'/AUTO_ARRECADACAO'+(autos?'_'+autos.replace(/[^0-9A-Za-z]+/g,'_'):'_PREENCHER_AUTOS')+'.odt';
+      const a=state.alvos[i],autos=autosOf(a),base=kitFileBase(i,a);
+      const autoName=pad2(i+1)+'_'+base+'_AUTO_ARRECADACAO'+(autos?'_'+autos.replace(/[^0-9A-Za-z]+/g,'_'):'_PREENCHER')+'.odt';
       files.push({name:autoName,data:buildAutoOdtForTarget(a,autos)});
-      const envMiss=essentialMissing(a).filter(x=>x!=='nº dos autos');
-      if(envMiss.length===0){
+      let envOk=false, envErr='';
+      if(envelopeBuildable(a)){
         try{
-          files.push({name:pasta+'/ENVELOPE_BUSCA.odt',data:await buildEnvelopeOdtFromList([a])});
+          await ensureAlvoQr(a);
+          files.push({name:pad2(i+1)+'_'+base+'_ENVELOPE_BUSCA.odt',data:await buildEnvelopeOdtFromList([a])});
+          envOk=true;
         }catch(err){
-          lines.push('ALVO '+pad2(i+1)+' — envelope individual não gerado: '+(err.message||err));
+          envErr=String(err.message||err);
+          lines.push('ALVO '+pad2(i+1)+' — envelope não gerado: '+envErr);
         }
+      }else{
+        envErr='faltam '+(essentialMissing(a).filter(x=>['foto do alvo','foto da residência','QR Code'].includes(x)).join(', ')||'foto/QR');
       }
       lines.push('ALVO '+pad2(i+1)+' — '+(a.nome||'SEM NOME'));
-      lines.push('Pasta: '+pasta);
       lines.push('Endereço: '+(a.endereco||'NÃO INFORMADO'));
       lines.push('Autos: '+(autos||'NÃO PREENCHIDO'));
-      lines.push('Status envelope: '+(essentialMissing(a).length?'FALTAM '+essentialMissing(a).join(', '):'COMPLETO'));
-      lines.push('Arquivos: Auto de Arrecadação'+(envMiss.length===0?' + Envelope':' (envelope pendente)'));
+      lines.push('Envelope: '+(envOk?'GERADO ('+pad2(i+1)+'_'+base+'_ENVELOPE_BUSCA.odt)':'NÃO GERADO — '+envErr));
+      lines.push('Auto: GERADO ('+autoName+')');
       lines.push('');
     }
     files.push({name:'RESUMO_KIT.txt',data:new TextEncoder().encode(lines.join('\r\n'))});
@@ -918,6 +971,8 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     persistAutos,
     kitSummary,
     generateKit,
+    envelopeBuildable,
+    obsFitPt,
     lastKit:null
   };
 }
