@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.0: Envelope — nº dos autos no alvo e kit com envelopes + autos -->
 <!-- v3.5.1: Envelope de Busca — duplicar copia identificação e limpa endereço -->
 <!-- v3.5.0: Folha de Rosto com tipos de documento e nome na mão -->
 <!-- v3.4.4: Filtro IP — planilhas com número investigado e destaque de coincidências -->
@@ -60,7 +61,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.5.1</span>
+      <span class="version">VERSÃO ATUAL · v3.6.0</span>
       <span class="note">Última atualização: 18/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -73,8 +74,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.5.1">
-        <div class="item-head"><span class="item-ver">v3.5.1</span><span class="item-date">18/09/2026</span><span class="tag fix">ENVELOPE DE BUSCA</span><span class="tag improve">ALVOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.0">
+        <div class="item-head"><span class="item-ver">v3.6.0</span><span class="item-date">18/09/2026</span><span class="tag new">ENVELOPE DE BUSCA</span><span class="tag improve">KIT</span><span class="badge">ATUAL</span></div>
+        <h3>Número dos autos no envelope e kit com Auto de Arrecadação de cada alvo</h3>
+        <ul>
+          <li>Cada alvo ganha o campo <b>Nº dos autos</b>, usado no envelope e no Auto de Arrecadação.</li>
+          <li><b>Baixar tudo</b> gera, no mesmo ZIP, os envelopes e o Auto de Arrecadação respectivo de cada alvo.</li>
+          <li>É possível aplicar o mesmo número dos autos a todos os alvos da operação.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.5.1">
+        <div class="item-head"><span class="item-ver">v3.5.1</span><span class="item-date">18/09/2026</span><span class="tag fix">ENVELOPE DE BUSCA</span><span class="tag improve">ALVOS</span></div>
         <h3>Duplicar alvo copia a pessoa e libera o endereço; Adicionar alvo abre cadastro vazio</h3>
         <ul>
           <li><b>Duplicar alvo</b> copia identificação, medidas e a foto da pessoa, e limpa o endereço, o QR e a foto da residência para o novo local.</li>
