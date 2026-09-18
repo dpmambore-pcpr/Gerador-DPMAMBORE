@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.24';
+const CACHE_VERSION='pcpr-central-v3.0.25';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[

@@ -214,7 +214,7 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
   <div class="sticky-actions hiddenprint">
     <div class="left">
       <span class="label">ENVELOPE DE BUSCA</span>
-      <button type="button" class="green" id="topSaveBtn">Salvar alvos</button>
+      <button type="button" class="green" id="topAddTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="topDupTargetBtn">Duplicar alvo</button><button type="button" class="green" id="topSaveBtn">Salvar alvos</button>
       <button type="button" class="gold" id="topKitBtn">Gerar Kit</button>
       <button type="button" class="alt" id="topOdtBtn">Baixar ODT</button>
       <button type="button" class="alt" id="topPdfBtn">Salvar PDF</button>
@@ -223,10 +223,10 @@ textarea{min-height:82px;resize:vertical}input[type=file]{width:100%;border:1px 
   </div>
   <div class="topbar hiddenprint">
     <div class="titlebox"><h1>Envelope de Busca</h1><p>Alvos, fotos, localização, QR Code, Auto de Arrecadação e Kit da Busca em um único fluxo.</p></div>
-    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">Fluxo operacional v2.0</span></div>
+    <div class="badges"><span class="badge">Modelo ODT oficial</span><span class="badge">PDF por impressão A4</span><span class="badge">v3.5.1</span></div>
   </div>
   <div class="grid">
-    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="openFooterConfig">Editar dados da unidade</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Preencha identificação, endereço, imagens e localização. O status de cada alvo mostra imediatamente o que ainda falta para o envelope e para o Kit da Busca.</div>
+    <section class="panel hiddenprint"><h2>Preenchimento</h2><div class="body"><div class="toolbar"><button type="button" class="green" id="addTargetBtn">Adicionar alvo</button><button type="button" class="alt" id="dupTargetBtn">Duplicar alvo</button><button type="button" class="alt" id="openFooterConfig">Editar dados da unidade</button><button type="button" class="red" id="clearBtn">Limpar tudo</button></div><div class="form-note">Adicionar alvo abre um cadastro vazio. Duplicar alvo copia a identificação e a foto da pessoa, e limpa o endereço para o novo local.</div>
 <div class="unit-hint">Cabeçalho e rodapé são lidos da <strong>Configuração Geral da Unidade</strong>, evitando dados divergentes entre os módulos.</div>
 <div style="display:none"><button id="downloadOdtBtn" type="button">Baixar ODT</button><button id="printBtn" type="button">Imprimir / Salvar PDF</button></div>
 <div id="footerConfigPanel" class="footer-config-panel" hidden>
@@ -642,7 +642,10 @@ document.getElementById('closeFooterConfig')?.addEventListener('click',()=>docum
 document.getElementById('saveFooterConfig')?.addEventListener('click',saveFooterConfig);
 document.getElementById('useGeneralFooterConfig')?.addEventListener('click',useGeneralFooterConfig);
 document.getElementById('resetFooterConfig')?.addEventListener('click',resetFooterConfig);
-document.getElementById('addTargetBtn').addEventListener('click',()=>{state.alvos.push(novoAlvo());render();});
+document.getElementById('addTargetBtn').addEventListener('click',adicionarAlvoVazio);
+document.getElementById('dupTargetBtn')?.addEventListener('click',()=>duplicarAlvo(Math.max(0,state.alvos.length-1)));
+document.getElementById('topAddTargetBtn')?.addEventListener('click',adicionarAlvoVazio);
+document.getElementById('topDupTargetBtn')?.addEventListener('click',()=>duplicarAlvo(Math.max(0,state.alvos.length-1)));
 document.getElementById('clearBtn').addEventListener('click',()=>{if(!confirm('Limpar todos os dados e reiniciar o gerador?'))return; state.alvos=[novoAlvo()]; render();});
 function printTargetsOnly(){
   const source=document.getElementById('pages');
@@ -772,7 +775,59 @@ async function idbAll(){const db=await openSavedDB();return new Promise((res,rej
 async function idbGet(id){const db=await openSavedDB();return new Promise((res,rej)=>{const r=db.transaction(SAVED_STORE).objectStore(SAVED_STORE).get(id);r.onsuccess=()=>{db.close();res(r.result)};r.onerror=()=>rej(r.error)})}
 async function idbDelete(id){const db=await openSavedDB();return new Promise((res,rej)=>{const t=db.transaction(SAVED_STORE,'readwrite');t.objectStore(SAVED_STORE).delete(id);t.oncomplete=()=>{db.close();res()};t.onerror=()=>rej(t.error)})}
 function essentialMissing(a){const x=[];const pj=tipoPessoaOf(a)==='PJ';if(!(a.nome||'').trim())x.push('nome');if(pj){if(!(a.cnpj||'').trim())x.push('CNPJ')}else{if(!(a.nascimento||'').trim())x.push('nascimento');if(!(a.rg||'').trim())x.push('RG');if(!(a.cpf||'').trim())x.push('CPF')}if(!(a.endereco||'').trim())x.push('endereço');if(!a.fotoAlvo)x.push('foto do alvo');if(!a.fotoResidencia)x.push('foto da residência');if(!a.qrPreview)x.push('QR Code');return x}
-function decorateTargetCards(){const autoMap=getAutoMap();document.querySelectorAll('#targetsContainer .target-card').forEach((card,idx)=>{const a=state.alvos[idx];if(!a)return;if(!a.id)a.id=uidTarget();card.querySelector('.target-status')?.remove();card.querySelector('.missing-line')?.remove();const sub=card.querySelector('.target-sub');if(sub){const miss=essentialMissing(a),auto=autoMap[a.id],photos=Boolean(a.fotoAlvo&&a.fotoResidencia),qr=Boolean(a.qrPreview);const box=document.createElement('div');box.className='target-status';box.innerHTML='<span class="status-pill '+(miss.length?'warn':'ok')+'">'+(miss.length?'ENVELOPE: FALTAM '+miss.length:'ENVELOPE ✓')+'</span><span class="status-pill auto '+(auto&&auto.autos?'ok':'warn')+'">'+(auto&&auto.autos?'AUTO ✓ '+escapeHtml(auto.autos):'AUTO PENDENTE')+'</span><span class="status-pill qr '+(qr?'ok':'warn')+'">'+(qr?'QR ✓':'QR PENDENTE')+'</span><span class="status-pill photo '+(photos?'ok':'warn')+'">'+(photos?'FOTOS ✓':'FOTOS PENDENTES')+'</span>';sub.insertAdjacentElement('afterend',box);if(miss.length){const ml=document.createElement('div');ml.className='missing-line';ml.textContent='Faltando: '+miss.join(', ');box.insertAdjacentElement('afterend',ml)}}const actions=card.querySelector('.small-actions');if(actions&&!card.querySelector('.duplicate-target')){const bt=document.createElement('button');bt.type='button';bt.className='alt duplicate-target';bt.textContent='Duplicar alvo';bt.onclick=()=>{const n=novoAlvo();n.endereco=a.endereco||'';n.fotoResidencia=a.fotoResidencia||'';n.qrConteudo=a.qrConteudo||'';n.qrPreview=a.qrPreview||'';state.alvos.splice(idx+1,0,n);render();};actions.insertBefore(bt,actions.querySelector('.auto-arrecadacao')||actions.firstChild)}})}
+function focusAlvoCampo(idx,key){
+  requestAnimationFrame(()=>{
+    const cards=document.querySelectorAll('#targetsContainer .target-card');
+    const card=cards[idx];
+    if(!card)return;
+    const cc=card.querySelector('.card-content');
+    if(cc)cc.style.display='';
+    card.scrollIntoView({behavior:'smooth',block:'start'});
+    const el=card.querySelector('[data-k="'+key+'"]');
+    if(el){try{el.focus();if(typeof el.select==='function')el.select();}catch(_){}}
+  });
+}
+function mostrarAlvosAtivos(){
+  if(typeof switchEnvTab==='function') switchEnvTab('ativos');
+  else{
+    document.querySelectorAll('.envTab').forEach(b=>b.classList.toggle('active',b.dataset.envtab==='ativos'));
+    const a=document.getElementById('activeTargetsArea'), s=document.getElementById('savedTargetsArea');
+    if(a)a.style.display='';
+    if(s)s.style.display='none';
+  }
+}
+function duplicarAlvo(idx){
+  const a=state.alvos[idx];
+  if(!a){adicionarAlvoVazio();return;}
+  const n=novoAlvo();
+  n.tipoPessoa=a.tipoPessoa||'PF';
+  n.nome=a.nome||'';
+  n.mae=a.mae||'';
+  n.nascimento=a.nascimento||'';
+  n.rg=a.rg||'';
+  n.cpf=a.cpf||'';
+  n.cnpj=a.cnpj||'';
+  n.conjuge=a.conjuge||'';
+  n.mba=a.mba;
+  n.prisao=a.prisao;
+  n.observacoes=a.observacoes||'';
+  n.fotoAlvo=a.fotoAlvo||'';
+  n.endereco='';
+  n.qrConteudo='';
+  n.qrPreview='';
+  n.fotoResidencia='';
+  state.alvos.splice(idx+1,0,n);
+  mostrarAlvosAtivos();
+  render();
+  focusAlvoCampo(idx+1,'endereco');
+}
+function adicionarAlvoVazio(){
+  mostrarAlvosAtivos();
+  state.alvos.push(novoAlvo());
+  render();
+  focusAlvoCampo(state.alvos.length-1,'nome');
+}
+function decorateTargetCards(){const autoMap=getAutoMap();document.querySelectorAll('#targetsContainer .target-card').forEach((card,idx)=>{const a=state.alvos[idx];if(!a)return;if(!a.id)a.id=uidTarget();card.querySelector('.target-status')?.remove();card.querySelector('.missing-line')?.remove();const sub=card.querySelector('.target-sub');if(sub){const miss=essentialMissing(a),auto=autoMap[a.id],photos=Boolean(a.fotoAlvo&&a.fotoResidencia),qr=Boolean(a.qrPreview);const box=document.createElement('div');box.className='target-status';box.innerHTML='<span class="status-pill '+(miss.length?'warn':'ok')+'">'+(miss.length?'ENVELOPE: FALTAM '+miss.length:'ENVELOPE ✓')+'</span><span class="status-pill auto '+(auto&&auto.autos?'ok':'warn')+'">'+(auto&&auto.autos?'AUTO ✓ '+escapeHtml(auto.autos):'AUTO PENDENTE')+'</span><span class="status-pill qr '+(qr?'ok':'warn')+'">'+(qr?'QR ✓':'QR PENDENTE')+'</span><span class="status-pill photo '+(photos?'ok':'warn')+'">'+(photos?'FOTOS ✓':'FOTOS PENDENTES')+'</span>';sub.insertAdjacentElement('afterend',box);if(miss.length){const ml=document.createElement('div');ml.className='missing-line';ml.textContent='Faltando: '+miss.join(', ');box.insertAdjacentElement('afterend',ml)}}const actions=card.querySelector('.small-actions');if(actions&&!card.querySelector('.duplicate-target')){const bt=document.createElement('button');bt.type='button';bt.className='alt duplicate-target';bt.textContent='Duplicar alvo';bt.onclick=()=>duplicarAlvo(idx);actions.insertBefore(bt,actions.querySelector('.auto-arrecadacao')||actions.firstChild)}})}
 async function saveCurrentSet(){const name=(document.getElementById('saveSetName').value||'').trim()||('Alvos '+new Date().toLocaleString('pt-BR'));state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget()});const rec={id:'set_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),name,savedAt:new Date().toISOString(),alvos:JSON.parse(JSON.stringify(state.alvos))};await idbPut(rec);document.getElementById('saveSetName').value=name;await renderSaved();alert('Alvos salvos na aba “Alvos salvos”.')}
 async function renderSaved(){const box=document.getElementById('savedList');if(!box)return;let all=await idbAll();all.sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)));box.innerHTML='';if(!all.length){box.innerHTML='<div class="emptySaved">Nenhum conjunto de alvos salvo ainda.</div>';return}const autoMap=getAutoMap();all.forEach(rec=>{const card=document.createElement('div');card.className='saved-card';const d=new Date(rec.savedAt);card.innerHTML='<div class="saved-head"><div><div class="saved-title">'+escapeHtml(rec.name)+'</div><div class="saved-meta">'+rec.alvos.length+' alvo(s) · salvo em '+d.toLocaleString('pt-BR')+'</div></div><div class="small-actions"><button class="green loadSaved">Carregar</button><button class="red deleteSaved">Excluir</button></div></div>';rec.alvos.forEach((a,i)=>{const am=autoMap[a.id]||{};const row=document.createElement('div');row.className='saved-target';row.innerHTML='<div><div class="saved-target-name">ALVO Nº '+pad2(i+1)+' — '+escapeHtml(a.nome||'SEM NOME')+'</div><div class="saved-target-info">'+escapeHtml(a.endereco||'Sem endereço')+'<br>Auto de Arrecadação: '+(am.autos?'<b>'+escapeHtml(am.autos)+'</b>':'não preenchido')+(am.odtGerado?' · ODT gerado':'')+(am.pdfAberto?' · impressão aberta':'')+'</div></div><div class="small-actions"><button class="gold openSavedAuto">Auto de Arrecadação</button></div>';row.querySelector('.openSavedAuto').onclick=()=>{if(!a.endereco)return alert('Este alvo salvo não possui endereço.');const qs=new URLSearchParams({endereco:a.endereco,alvo:pad2(i+1),nome:a.nome||'',targetId:a.id||'',autos:am.autos||''});window.open('auto-arrecadacao.html?v=3.0.0&'+qs.toString(),'_blank');};card.appendChild(row)});card.querySelector('.loadSaved').onclick=async()=>{const r=await idbGet(rec.id);state.alvos=(r.alvos||[]).map(a=>{const n={...novoAlvo(),...a,id:a.id||uidTarget()};if(!n.tipoPessoa)n.tipoPessoa='PF';return n});document.getElementById('saveSetName').value=r.name||'';switchEnvTab('ativos');render();};card.querySelector('.deleteSaved').onclick=async()=>{if(!confirm('Excluir este conjunto salvo?'))return;await idbDelete(rec.id);renderSaved();};box.appendChild(card)})}
 function switchEnvTab(tab){document.querySelectorAll('.envTab').forEach(b=>b.classList.toggle('active',b.dataset.envtab===tab));document.getElementById('activeTargetsArea').style.display=tab==='ativos'?'':'none';document.getElementById('savedTargetsArea').style.display=tab==='salvos'?'':'none';if(tab==='salvos')renderSaved()}
@@ -782,7 +837,16 @@ function updateKitPreflight(){const box=document.getElementById('kitPreflight');
 async function generateKit(){const btn=document.getElementById('kitBtn'),old=btn.textContent;const s=kitSummary();if(s.incomplete||s.autosPending){const details=s.rows.filter(x=>!x.complete||!x.auto).map(x=>{const parts=[];if(!x.complete)parts.push('envelope: '+x.missing.join(', '));if(!x.auto)parts.push('Auto sem número dos autos');return 'ALVO '+pad2(x.idx+1)+' — '+parts.join(' | ')}).join('\n');if(!confirm('CHECAGEM DO KIT\\n\\n'+s.total+' alvo(s)\\n'+s.complete+' envelope(s) completo(s)\\n'+s.incomplete+' envelope(s) com pendência\\n'+s.autos+' Auto(s) identificado(s)\\n'+s.autosPending+' Auto(s) sem número dos autos\\n\\n'+details+'\\n\\nDeseja gerar o Kit mesmo assim?'))return}btn.disabled=true;btn.textContent='Gerando kit...';try{state.alvos.forEach(a=>{if(!a.id)a.id=uidTarget()});const autoMap=getAutoMap(),files=[],lines=['KIT DA BUSCA','Gerado em: '+new Date().toLocaleString('pt-BR'),''];if(s.incomplete===0){files.push({name:'01_ENVELOPES_DE_BUSCA.odt',data:await buildEnvelopeOdt()})}else{lines.push('ATENÇÃO: o arquivo 01_ENVELOPES_DE_BUSCA.odt não foi incluído porque existem envelopes incompletos.');lines.push('Complete as pendências e gere novamente para obter o ODT consolidado dos envelopes.');lines.push('')}for(let i=0;i<state.alvos.length;i++){const a=state.alvos[i],am=autoMap[a.id]||{},autos=am.autos||'';files.push({name:'AUTO_ARRECADACAO_ALVO_'+pad2(i+1)+(autos?'_'+autos.replace(/[^0-9A-Za-z]+/g,'_'):'_PREENCHER_AUTOS')+'.odt',data:buildAutoOdtForTarget(a,autos)});lines.push('ALVO '+pad2(i+1)+' — '+(a.nome||'SEM NOME'));lines.push('Endereço: '+(a.endereco||'NÃO INFORMADO'));lines.push('Autos: '+(autos||'NÃO PREENCHIDO'));lines.push('Status envelope: '+(essentialMissing(a).length?'FALTAM '+essentialMissing(a).join(', '):'COMPLETO'));lines.push('')}files.push({name:'RESUMO_KIT.txt',data:new TextEncoder().encode(lines.join('\r\n'))});const zip=odtBuild(files);triggerDownload(new Blob([zip],{type:'application/zip'}),'KIT_BUSCA_'+state.alvos.length+'_ALVOS.zip')}catch(e){console.error(e);alert('Não foi possível gerar o kit: '+(e.message||e))}finally{btn.disabled=false;btn.textContent=old}}
 function initEnvelopeFeatures(){document.querySelectorAll('.envTab').forEach(b=>b.addEventListener('click',()=>switchEnvTab(b.dataset.envtab)));document.getElementById('saveSetBtn').addEventListener('click',saveCurrentSet);document.getElementById('kitBtn').addEventListener('click',generateKit);document.getElementById('topSaveBtn')?.addEventListener('click',()=>document.getElementById('saveSetBtn').click());document.getElementById('topKitBtn')?.addEventListener('click',()=>document.getElementById('kitBtn').click());document.getElementById('topOdtBtn')?.addEventListener('click',()=>document.getElementById('downloadOdtBtn').click());document.getElementById('topPdfBtn')?.addEventListener('click',()=>document.getElementById('printBtn').click());document.getElementById('topConfigBtn')?.addEventListener('click',openUnitConfig);window.addEventListener('storage',e=>{if(e.key===AUTO_MAP_KEY){decorateTargetCards();renderSaved();updateKitPreflight()}if(e.key===FOOTER_CONFIG_KEY){footerConfig=loadFooterConfig();fillFooterConfig();updateFooterCfgSource();renderPreview()}});if(window.PCPRConfig&&PCPRConfig.onChange)PCPRConfig.onChange(()=>{if(localStorage.getItem(FOOTER_CONFIG_KEY))return;footerConfig=loadFooterConfig();fillFooterConfig();updateFooterCfgSource();renderPreview();});updateFooterCfgSource();updateKitPreflight()}
 
-const _renderBase=render;render=function(){_renderBase();decorateTargetCards();updateKitPreflight();};const _renderPreviewBase=renderPreview;renderPreview=function(){_renderPreviewBase();decorateTargetCards();};initEnvelopeFeatures();render();})();
+const _renderBase=render;render=function(){_renderBase();decorateTargetCards();updateKitPreflight();};const _renderPreviewBase=renderPreview;renderPreview=function(){_renderPreviewBase();decorateTargetCards();};initEnvelopeFeatures();render();
+if(/[?&]test=1(?:&|$)/.test(location.search)){
+  window.__pcprEnvelopeTest={
+    getAlvos:()=>state.alvos,
+    adicionarAlvoVazio,
+    duplicarAlvo,
+    novoAlvo
+  };
+}
+})();
 </script>
 <script id="v2EnvelopeScript">function v2SalvarODT(){const all=[...document.querySelectorAll('button,a')];const btn=all.find(x=>x.closest('.v2bar')===null&&/odt/i.test((x.textContent||''))&&x.offsetParent!==null);if(btn){btn.click();return;}alert('Preencha os dados e utilize a opção ODT disponível no próprio formulário.');}</script></body>
 </html>
