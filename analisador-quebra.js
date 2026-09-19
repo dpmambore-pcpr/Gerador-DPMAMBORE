@@ -510,22 +510,50 @@ function currentAccount() {
   return (DB.accounts[0] || {}).primary_email || '';
 }
 
+function mergeBag(bag) {
+  DB.files.push(...bag.files);
+  DB.zips.push(...bag.zips);
+  Object.entries(bag.products || {}).forEach(([k, v]) => {
+    DB.products[k] = DB.products[k] || { key: k, name: v.name, n: 0 };
+    DB.products[k].n += v.n;
+  });
+  Object.entries(bag.ext || {}).forEach(([e, n]) => { DB.ext[e] = (DB.ext[e] || 0) + n; });
+}
+
+function alreadyImported(hash) {
+  return DB.imports.some(i => i.sha256 === hash);
+}
+
+function finishAccounts() {
+  const seen = new Set();
+  DB.accounts = DB.accounts.filter(a => {
+    const k = (a.primary_email || '').toLowerCase();
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  const acc = currentAccount();
+  DB.files.forEach(f => { if (!f.account) f.account = acc; });
+  DB.emails.forEach(m => { if (!m.account) m.account = acc; });
+}
+
 async function ingestZip(blob, originalName) {
-  $('progress').textContent = 'Lendo ZIP principal…';
+  $('progress').textContent = 'Lendo ' + originalName + '…';
   const buf = await blob.arrayBuffer();
   const hash = await sha256(buf);
+  if (alreadyImported(hash)) {
+    $('progress').textContent = originalName + ' já estava na análise (mesmo SHA-256).';
+    return { skipped: true };
+  }
   const bag = { files: [], zips: [], payloads: [], products: {}, ext: {} };
   await walkZip(buf, originalName, originalName, 0, bag);
-  DB.files = bag.files;
-  DB.zips = bag.zips;
-  DB.products = bag.products;
-  DB.ext = bag.ext;
+  mergeBag(bag);
   DB.imports.push({
     name: originalName, sha256: hash, size: blob.size,
     count: bag.files.length, zips: bag.zips.length, when: new Date()
   });
   renderImport();
-  $('progress').textContent = 'Inventário pronto: ' + bag.files.length + ' arquivos, ' + bag.zips.length + ' ZIPs internos. Analisando produtos…';
+  $('progress').textContent = 'Inventário: +' + bag.files.length + ' arquivos, +' + bag.zips.length + ' ZIPs internos em ' + originalName + '. Analisando…';
   await tick();
 
   const jsonByPath = {};
@@ -609,17 +637,92 @@ async function ingestZip(blob, originalName) {
     if (photo.gps) addLoc({ ts: photo.ts, lat: Number(photo.lat), lon: Number(photo.lon), accuracy: null, duration: null, place: name, source: 'Google Photos', device: photo.device });
   }
 
-  const seen = new Set();
-  DB.accounts = DB.accounts.filter(a => {
-    const k = (a.primary_email || '').toLowerCase();
-    if (!k || seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-  const acc = currentAccount();
-  DB.files.forEach(f => { if (!f.account) f.account = acc; });
-  DB.emails.forEach(m => { if (!m.account) m.account = acc; });
-  $('progress').textContent = 'Concluído. ' + bag.zips.length + ' ZIPs internos · ' + bag.files.length + ' arquivos.';
+  finishAccounts();
+  return { skipped: false, files: bag.files.length, zips: bag.zips.length };
+}
+
+function looseHandle(file) {
+  return {
+    uncompressedSize: file.size,
+    async(kind) {
+      if (kind === 'string') return file.text();
+      if (kind === 'blob') return Promise.resolve(file);
+      return file.arrayBuffer();
+    }
+  };
+}
+
+async function ingestLooseFile(file) {
+  const buf = await file.arrayBuffer();
+  const hash = await sha256(buf);
+  if (alreadyImported(hash)) {
+    $('progress').textContent = file.name + ' já estava na análise (mesmo SHA-256).';
+    return { skipped: true };
+  }
+  const u8 = new Uint8Array(buf.slice(0, 8));
+  if (looksLikeZip(file.name, u8)) return ingestZip(new Blob([buf]), file.name);
+  const ext = (file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.') + 1) : '').toLowerCase();
+  const rec = {
+    path: file.name, name: file.name, ext, size: file.size,
+    originZip: '(arquivo avulso)', product: classify(file.name), account: '', depth: 0, isZip: false, sha256: hash
+  };
+  const bag = { files: [rec], zips: [], payloads: [{ rec, file: looseHandle(new File([buf], file.name)) }], products: {}, ext: {} };
+  bag.ext[ext || '(sem)'] = 1;
+  bag.products[rec.product] = { key: rec.product, name: LABELS[rec.product] || rec.product, n: 1 };
+  mergeBag(bag);
+  DB.imports.push({ name: file.name, sha256: hash, size: file.size, count: 1, zips: 0, when: new Date() });
+  renderImport();
+  $('progress').textContent = 'Analisando arquivo avulso ' + file.name + '…';
+  await tick();
+  const jsonByPath = {};
+  const media = [];
+  let n = 0;
+  for (const item of bag.payloads) {
+    n++;
+    const { rec: itemRec, file: zf } = item;
+    const path = itemRec.path;
+    const name = itemRec.name;
+    const low = path.toLowerCase();
+    const prod = itemRec.product;
+    if (/\.(jpe?g|png|webp|gif|heic|mp4)$/i.test(name)) { media.push(item); continue; }
+    let text = '';
+    try { text = await zf.async('string'); } catch (_) { continue; }
+    itemRec.sha256 = hash;
+    if (prod === 'account' || /subscriberinfo|googleaccount|profile\.json/i.test(low)) parseAccount(text, path);
+    if (prod === 'android_device' || /deviceanduserprofile|androiddevice/i.test(low)) parseDevices(text, path);
+    if (prod === 'timeline' || /records\.json|semantic location|location history|timeline/i.test(low)) parseLocations(text, path);
+    if (prod === 'activity' || (/myactivity|my activity/i.test(low) && /\.json$/i.test(low))) parseActivity(text, path);
+    if (prod === 'access_log') parseAccess(text, path);
+    if (prod === 'chrome') parseChrome(text, path);
+    if (prod === 'drive' && !/whatsapp/i.test(low)) parseDrive(name, text, path, itemRec);
+    if (prod === 'gmail' || /\.mbox$/i.test(low)) {
+      if (/\.mbox$/i.test(low)) parseMbox(text, path);
+      else if (/\.csv$/i.test(low)) parsePayCsv(text, path);
+      else if (/\.json$/i.test(low)) addIndex({ file: path, product: 'Mail', ts: '', account: '', context: name, text });
+    }
+    if (prod === 'pay') {
+      if (/\.csv$/i.test(low)) parsePayCsv(text, path);
+      else if (/\.json$/i.test(low)) parsePayJson(text, path);
+    }
+    if (prod === 'drive_backup' || prod === 'whatsapp' || /msgstore\.db\.crypt/i.test(low)) parseBackup(name, text, path, itemRec);
+    if (/\.json$/i.test(low)) jsonByPath[path] = text;
+    if (/\.(html?|txt|csv)$/i.test(low) && !['account', 'android_device', 'gmail', 'pay', 'drive'].includes(prod)) {
+      addIndex({ file: path, product: LABELS[prod] || prod, ts: '', account: '', context: name, text: text.slice(0, 8000) });
+    }
+  }
+  for (const item of media) {
+    const { rec: itemRec, file: zf } = item;
+    const blob = await zf.async('blob');
+    const url = URL.createObjectURL(blob);
+    const photo = {
+      name: itemRec.name, path: itemRec.path, url, kind: /\.mp4$/i.test(itemRec.name) ? 'vídeo' : 'foto',
+      ts: null, lat: null, lon: null, gps: false, device: '', original: itemRec.name, meta: {}
+    };
+    DB.photos.push(photo);
+    addEvent({ ts: photo.ts, type: photo.kind, product: 'Google Photos', device: '', desc: itemRec.name });
+  }
+  finishAccounts();
+  return { skipped: false, files: 1, zips: 0 };
 }
 
 function alerts() {
@@ -651,7 +754,13 @@ function renderImport() {
     groups[f.product] = groups[f.product] || [];
     groups[f.product].push(f);
   });
-  $('productTree').innerHTML = '<details open><summary>PRODUÇÃO GOOGLE · ' + DB.files.length + ' arquivos</summary>' +
+  if ($('importList')) {
+    $('importList').innerHTML = table(
+      ['Arquivo enviado', 'Tamanho', 'Arquivos finais', 'ZIPs internos', 'SHA-256', 'Quando'],
+      DB.imports.map(i => `<tr><td>${esc(i.name)}</td><td>${(i.size / 1024 / 1024).toFixed(2)} MB</td><td>${i.count}</td><td>${i.zips}</td><td class="hash">${esc(i.sha256)}</td><td>${esc(fmt(i.when))}</td></tr>`)
+    );
+  }
+  $('productTree').innerHTML = '<details open><summary>PRODUÇÃO GOOGLE · ' + DB.files.length + ' arquivos · ' + DB.imports.length + ' envio(s)</summary>' +
     Object.keys(groups).sort().map(k => {
       const list = groups[k];
       return '<details><summary>' + esc(LABELS[k] || k) + ' · ' + list.length + '</summary>' +
@@ -888,16 +997,41 @@ function show(name) {
   try { parent.postMessage({ type: 'pcpr-fit', module: 'googleanalise' }, '*'); } catch (_) {}
 }
 
-async function runFile(file) {
-  reset();
-  $('progress').textContent = 'Analisando ' + file.name + '…';
+async function ingestOne(file) {
+  const buf = await file.slice(0, 8).arrayBuffer();
+  const u8 = new Uint8Array(buf);
+  if (looksLikeZip(file.name, u8) || /\.zip$/i.test(file.name)) return ingestZip(file, file.name);
+  return ingestLooseFile(file);
+}
+
+async function runFiles(fileList, opts = {}) {
+  const files = [...fileList].filter(Boolean);
+  if (!files.length) return;
+  if (opts.reset) reset();
+  let added = 0, skipped = 0, zips = 0;
   try {
-    await ingestZip(file, file.name);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      $('progress').textContent = 'Arquivo ' + (i + 1) + '/' + files.length + ': ' + file.name;
+      await tick();
+      const out = await ingestOne(file);
+      if (out && out.skipped) skipped++;
+      else {
+        added++;
+        zips += (out && out.zips) || 0;
+      }
+    }
+    finishAccounts();
     renderImport();
+    $('progress').textContent = 'Concluído. ' + added + ' arquivo(s) novos, ' + skipped + ' repetido(s). Total: ' + DB.imports.length + ' envios · ' + DB.zips.length + ' ZIPs internos · ' + DB.files.length + ' arquivos.';
     show('inventario');
   } catch (err) {
     $('progress').textContent = 'Falha: ' + err.message;
   }
+}
+
+async function runFile(file) {
+  return runFiles([file], { reset: true });
 }
 
 function tinyJpg() {
@@ -1020,12 +1154,18 @@ $('nav').addEventListener('click', e => {
   const b = e.target.closest('button[data-view]');
   if (b) show(b.dataset.view);
 });
-$('pick').onclick = () => $('file').click();
-$('file').onchange = e => { if (e.target.files[0]) runFile(e.target.files[0]); };
+$('pick').onclick = () => { $('file').dataset.mode = 'add'; $('file').click(); };
+$('addMore').onclick = () => { $('file').dataset.mode = 'add'; $('file').click(); };
+$('clearAll').onclick = () => { reset(); renderImport(); $('progress').textContent = 'Análise limpa. Selecione os arquivos da produção.'; show('importar'); };
+$('file').onchange = e => {
+  const list = e.target.files;
+  if (list && list.length) runFiles(list, { reset: false });
+  e.target.value = '';
+};
 $('demo').onclick = demo;
 $('drop').addEventListener('click', e => { if (e.target.id === 'drop' || (e.target.closest('.drop') === $('drop') && !e.target.closest('button,input'))) $('file').click(); });
 ['dragenter', 'dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); }));
-$('drop').addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files[0]) runFile(e.dataTransfer.files[0]); });
+$('drop').addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) runFiles(e.dataTransfer.files, { reset: false }); });
 $('evFilter').onclick = renderEvents;
 $('alFilter').onclick = renderAccess;
 $('nearOnly').onchange = renderMap;
@@ -1050,5 +1190,5 @@ $('crimeDate').addEventListener('change', () => { const v = document.querySelect
 if (!window.JSZip) $('progress').textContent = 'Atualize a página se o seletor de ZIP não abrir.';
 try { parent.postMessage({ type: 'pcpr-fit', module: 'googleanalise' }, '*'); } catch (_) {}
 document.documentElement.dataset.quebraReady = '1';
-window.PCPRQuebra = { ingestZip, walkZip, classify, DB, demo, runFile };
+window.PCPRQuebra = { ingestZip, ingestLooseFile, walkZip, classify, DB, demo, runFile, runFiles, reset };
 })();

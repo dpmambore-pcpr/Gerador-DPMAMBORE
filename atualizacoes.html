@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.10: Quebra Google — vários arquivos/ZIPs separados da produção -->
 <!-- v3.6.9: Quebra Google — extração recursiva de ZIPs internos LERS -->
 <!-- v3.6.8: Quebra Google no navegador (celular) — corrige tela preta -->
 <!-- v3.6.7: Análise Google unifica ofício e quebra de sigilo -->
@@ -70,7 +71,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.9</span>
+      <span class="version">VERSÃO ATUAL · v3.6.10</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -83,8 +84,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.9">
-        <div class="item-head"><span class="item-ver">v3.6.9</span><span class="item-date">19/09/2026</span><span class="tag fix">QUEBRA</span><span class="tag new">ZIP INTERNO</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.10">
+        <div class="item-head"><span class="item-ver">v3.6.10</span><span class="item-date">19/09/2026</span><span class="tag new">QUEBRA</span><span class="tag improve">VÁRIOS ARQUIVOS</span><span class="badge">ATUAL</span></div>
+        <h3>Quebra Google aceita vários ZIPs separados da produção</h3>
+        <ul>
+          <li>A Google costuma mandar Mail, Photos, Account e outros produtos em ZIPs distintos. Selecione todos de uma vez ou use <b>Acrescentar arquivos</b> depois.</li>
+          <li>Cada envio entra na mesma análise: inventário, painel, IMEI, Gmail, fotos e relatório ficam unidos. Arquivo com o mesmo SHA-256 não é lido de novo.</li>
+          <li><b>Nova análise</b> limpa a tela para outra produção. ZIP interno continua sendo aberto até o arquivo final.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.9">
+        <div class="item-head"><span class="item-ver">v3.6.9</span><span class="item-date">19/09/2026</span><span class="tag fix">QUEBRA</span><span class="tag new">ZIP INTERNO</span></div>
         <h3>Quebra Google abre ZIPs dentro de ZIPs até os arquivos finais</h3>
         <ul>
           <li>O ZIP principal é percorrido por inteiro: cada <b>.zip</b> interno é aberto de novo, pasta a pasta, sem parar no primeiro nível.</li>
