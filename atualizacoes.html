@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.5: Analisador Google Forense (LERS Flask) -->
 <!-- v3.6.4: Relatório de Viagem — adicionar servidores no mesmo documento -->
 <!-- v3.6.3: Filtro IP — ofício unificado ou um quadro por número de interesse -->
 <!-- v3.6.2: Filtro IP — relatório de correlação com todos os IPs, por número e WhatsApp -->
@@ -65,7 +66,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.4</span>
+      <span class="version">VERSÃO ATUAL · v3.6.5</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -78,8 +79,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.4">
-        <div class="item-head"><span class="item-ver">v3.6.4</span><span class="item-date">19/09/2026</span><span class="tag new">RELATÓRIO DE VIAGEM</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.5">
+        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag new">GOOGLE FORENSE</span><span class="tag improve">LERS</span><span class="badge">ATUAL</span></div>
+        <h3>Analisador Google Forense para produções LERS</h3>
+        <ul>
+          <li>Novo módulo Flask local importa ZIP do Google, calcula hash, identifica produtos e organiza a investigação em SQLite.</li>
+          <li>Painel da conta, IMEI com alerta de múltiplas contas, linha do tempo, mapa, fotos EXIF, Drive, Gmail, Google Pay, pesquisas e backup do WhatsApp (sem quebra de cifra).</li>
+          <li>Gera relatório policial em DOCX e PDF com os vínculos encontrados.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.4">
+        <div class="item-head"><span class="item-ver">v3.6.4</span><span class="item-date">19/09/2026</span><span class="tag new">RELATÓRIO DE VIAGEM</span><span class="tag improve">OFÍCIOS</span></div>
         <h3>Relatório de viagem admite vários servidores no mesmo documento</h3>
         <ul>
           <li>O botão <b>Adicionar servidor</b> inclui quem viajou junto, cada um com nome e RG.</li>

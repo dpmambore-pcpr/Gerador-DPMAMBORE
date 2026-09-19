@@ -500,6 +500,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
     <div class="tabs-row" id="mainTabsRow">
       <button class="module-tab home-tab active" id="homeBtn" type="button">⌂ Início</button>
       <button class="module-tab" data-key="googleanalise" type="button">Análise Google</button>
+      <button class="module-tab" data-key="googleforense" type="button">Google Forense</button>
       <button class="module-tab" data-key="atualizacoes" type="button">Atualizações</button>
       <button class="module-tab" data-key="configuracoes" type="button">⚙ Configurações</button>
       <button class="module-tab" data-key="imei" type="button">Consulta IMEI</button>
@@ -552,6 +553,12 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
         <div class="card-title">Analisador de Respostas Google</div>
         <div class="card-desc">Cruza IMEI, Android ID, aparelhos, contas Google, datas de criação, logins e vínculos investigativos.</div>
         <div class="card-subtags"><span class="card-subtag">IMEI</span><span class="card-subtag">ANDROID ID</span><span class="card-subtag">CONTAS</span><span class="card-subtag">LINHA DO TEMPO</span></div>
+      </button>
+      <button class="module-card" type="button" data-open-module="googleforense">
+        <div class="card-top"><div class="card-icon">GF</div><div class="card-arrow">›</div></div>
+        <div class="card-title">Analisador Google Forense</div>
+        <div class="card-desc">Importa ZIP LERS, extrai conta, IMEI, mapa, fotos, Drive, Gmail, pagamentos e gera relatório policial.</div>
+        <div class="card-subtags"><span class="card-subtag">LERS</span><span class="card-subtag">IMEI</span><span class="card-subtag">MAPA</span><span class="card-subtag">RELATÓRIO</span></div>
       </button>
       <button class="module-card update-card" type="button" data-open-module="atualizacoes">
         <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
@@ -657,9 +664,10 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.6.1"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.4"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.5"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
   <iframe id="frameGoogleAnalise" class="module-frame" title="Analisador de Respostas Google" data-src="analisador-google.html?v=1.0.0"></iframe>
+  <iframe id="frameGoogleForense" class="module-frame" title="Analisador Google Forense" data-src="analisador-google-forense.html?v=1.0.0"></iframe>
   <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.2.0"></iframe>
 </main>
 
@@ -737,6 +745,7 @@ const modules={
   atualizacoes:{frame:document.getElementById('frameAtualizacoes'),tab:document.querySelector('[data-key="atualizacoes"]'),min:900},
   historico:{frame:document.getElementById('frameHistorico'),tab:document.querySelector('[data-key="historico"]'),min:900},
   googleanalise:{frame:document.getElementById('frameGoogleAnalise'),tab:document.querySelector('[data-key="googleanalise"]'),min:980},
+  googleforense:{frame:document.getElementById('frameGoogleForense'),tab:document.querySelector('[data-key="googleforense"]'),min:980},
   transcritor:{frame:document.getElementById('frameTranscritor'),tab:document.querySelector('[data-key="transcritor"]'),min:980}
 };
 const loading=document.getElementById('loading');
@@ -760,6 +769,7 @@ function trackModule(key){
       atualizacoes:'sobre_atualizacoes',
       historico:'historico_documentos',
       googleanalise:'analisador_respostas_google',
+      googleforense:'analisador_google_forense',
       transcritor:'transcritor_audio_video'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
@@ -810,7 +820,7 @@ const homeBtn=document.getElementById('homeBtn');
 const MODULE_LABELS={
   atualizacoes:'Atualizações', historico:'Histórico de Documentos', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas', fundorotativo:'Fundo Rotativo',
-  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', googleanalise:'Analisador de Respostas Google', transcritor:'Transcritor de Áudio e Vídeo'
+  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', googleanalise:'Analisador de Respostas Google', googleforense:'Analisador Google Forense', transcritor:'Transcritor de Áudio e Vídeo'
 };
 const RECENT_KEY='pcprCentralRecentModulesV2';
 const UPDATE_SEEN_KEY='pcprCentralUpdatesSeenVersion';
