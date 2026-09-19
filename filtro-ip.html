@@ -2999,6 +2999,7 @@ function cfgImportaJSON(file){
 // ---------------- eventos ----------------
 inicializaVersao();
 var drop = document.getElementById("drop"), inp = document.getElementById("file");
+if(inp) inp.multiple = true;
 drop.onclick = function(){ inp.click(); };
 ["dragenter","dragover"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add("hot"); }); });
 ["dragleave","drop"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.remove("hot"); }); });
