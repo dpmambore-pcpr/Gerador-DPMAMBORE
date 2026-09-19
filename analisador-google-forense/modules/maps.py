@@ -24,7 +24,7 @@ def build_map(case_id: int, crime_date: str | None = None, window_hours: int = 2
 
     pts = [(r["lat"], r["lon"]) for r in rows] + [(p["lat"], p["lon"]) for p in photos]
     center = [sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)]
-    fmap = folium.Map(location=center, zoom_start=13, tiles="CartoDB positron")
+    fmap = folium.Map(location=center, zoom_start=13, tiles="OpenStreetMap")
     near = folium.FeatureGroup(name="Próximos da DATA DO CRIME")
     other = folium.FeatureGroup(name="Demais localizações")
     cluster = MarkerCluster(name="Agrupamento").add_to(other)
@@ -60,7 +60,7 @@ def build_map(case_id: int, crime_date: str | None = None, window_hours: int = 2
         is_near = bool(crime_date) and within_window(photo.get("taken_at"), crime_date, window_hours)
         folium.Marker(
             location=[photo["lat"], photo["lon"]],
-            icon=folium.Icon(color="red" if is_near else "blue", icon="camera", prefix="fa"),
+            icon=folium.Icon(color="red" if is_near else "blue", icon="info-sign"),
             popup=html,
             tooltip=photo.get("filename"),
         ).add_to(near if is_near else other)

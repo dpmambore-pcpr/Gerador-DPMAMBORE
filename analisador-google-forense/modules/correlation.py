@@ -29,18 +29,24 @@ def multi_account_imei_alerts(case_id: int) -> list[dict]:
             if device.get("model"):
                 bucket["models"].add(device["model"])
     alerts = []
+    seen_devices: set[tuple] = set()
     for imei, bucket in by_imei.items():
         accounts = sorted(bucket["accounts"])
-        if len(accounts) >= 2:
-            alerts.append(
-                {
-                    "alert": "Mesmo aparelho vinculado a múltiplas contas",
-                    "imei": imei,
-                    "accounts": accounts,
-                    "device_ids": bucket["devices"],
-                    "models": sorted(bucket["models"]),
-                }
-            )
+        if len(accounts) < 2:
+            continue
+        device_key = tuple(sorted(bucket["devices"]))
+        if device_key in seen_devices:
+            continue
+        seen_devices.add(device_key)
+        alerts.append(
+            {
+                "alert": "Mesmo aparelho vinculado a múltiplas contas",
+                "imei": imei,
+                "accounts": accounts,
+                "device_ids": bucket["devices"],
+                "models": sorted(bucket["models"]),
+            }
+        )
     return alerts
 
 
