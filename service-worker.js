@@ -9,6 +9,8 @@ const CORE_FILES=[
   './analisador-quebra.html',
   './analisador-quebra.js',
   './jszip.min.js',
+  './leaflet.js',
+  './leaflet.css',
   './MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt',
   './apple-touch-icon-precomposed.png',
   './apple-touch-icon.png',

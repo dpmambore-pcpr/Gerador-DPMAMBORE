@@ -120,7 +120,7 @@ function parseAccount(text, path) {
     google_account: em[0],
     display_name: map.Name || map.name || map['Full Name'] || map['display name'] || '',
     primary_email: map['Primary Email'] || map.email || map['e-Mail'] || em[0],
-    alternate_emails: em.slice(1).concat(emails(map['Alternate Emails'] || map['Alternate e-Mails'] || '')).filter(e => e !== em[0]),
+    alternate_emails: uniq(em.slice(1).concat(emails(map['Alternate Emails'] || map['Alternate e-Mails'] || ''))).filter(e => e !== em[0]),
     phones: phones(blob),
     created_on: map['Account Created'] || map.created || map['Created on'],
     last_activity: map['Last Activity'] || map['last activity'] || map['Last Logins'],
@@ -600,4 +600,5 @@ $('crimeDate').addEventListener('change', () => { const v = document.querySelect
 
 if (!window.JSZip) $('progress').textContent = 'Atualize a página se o seletor de ZIP não abrir.';
 try { parent.postMessage({ type: 'pcpr-fit', module: 'googleanalise' }, '*'); } catch (_) {}
+document.documentElement.dataset.quebraReady = '1';
 })();

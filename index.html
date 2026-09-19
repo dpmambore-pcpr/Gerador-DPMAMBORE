@@ -659,7 +659,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
   <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.8"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
-  <iframe id="frameGoogleAnalise" class="module-frame" title="Análise Google" data-src="analisador-google-hub.html?v=1.0.2"></iframe>
+  <iframe id="frameGoogleAnalise" class="module-frame" title="Análise Google" data-src="analisador-google-hub.html?v=1.0.4"></iframe>
   <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.2.0"></iframe>
 </main>
 
@@ -1105,7 +1105,12 @@ if(!document.getElementById('backTop')){
 
   const STORAGE_KEY='pcprCentralMenuCollapsedV1';
   let preferredCollapsed=false;
-  try{preferredCollapsed=localStorage.getItem(STORAGE_KEY)==='1'}catch(e){}
+  try{
+    const stored=localStorage.getItem(STORAGE_KEY);
+    if(stored==='1') preferredCollapsed=true;
+    else if(stored==='0') preferredCollapsed=false;
+    else preferredCollapsed=window.matchMedia('(max-width:780px)').matches;
+  }catch(e){}
 
   function activeModuleName(){
     const active=row.querySelector('.module-tab.active:not(.home-tab)');
