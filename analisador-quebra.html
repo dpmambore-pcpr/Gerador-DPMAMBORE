@@ -246,13 +246,27 @@ input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:
   </section>
   <section class="view" id="view-relatorio">
     <div class="panel">
-      <p>Gera relatório HTML para imprimir ou salvar em PDF pelo navegador.</p>
-      <button class="btn green" id="makeReport" type="button">GERAR RELATÓRIO</button>
+      <h3>Relatório de análise investigativa</h3>
+      <p>Relatório analítico da produção: correlações, recorrências de IP (IPv6 primeiro), vínculos IMEI ↔ conta, linha do tempo, fotos de interesse e considerações. Somente dados encontrados nos arquivos; nada é presumido.</p>
+      <div class="filters">
+        <label><input type="checkbox" id="optPhotos" checked> Incluir fotos selecionadas</label>
+        <label><input type="checkbox" id="optOnlyRelevant" checked> Só registros de interesse</label>
+        <label>Máx. fotos <input type="number" id="optPhotoMax" value="12" min="1" max="60" style="width:76px"></label>
+        <button class="btn" id="refreshReport" type="button">Atualizar prévia</button>
+      </div>
+      <button class="btn green" id="makeReport" type="button">RELATÓRIO / PDF</button>
+      <button class="btn gold" id="makeDocx" type="button">BAIXAR DOCX</button>
+      <p id="reportStatus"></p>
+    </div>
+    <div class="panel">
+      <h3>Prévia analítica</h3>
+      <div id="reportPreview"></div>
     </div>
   </section>
 </main>
 <script src="jszip.min.js"></script>
 <script src="leaflet.js"></script>
-<script src="analisador-quebra.js?v=2.1.0"></script>
+<script src="analisador-quebra.js?v=2.2.0"></script>
+<script src="analisador-relatorio.js?v=1.0.0"></script>
 </body>
 </html>

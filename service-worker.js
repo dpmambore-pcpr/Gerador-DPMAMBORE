@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.36';
+const CACHE_VERSION='pcpr-central-v3.0.37';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -8,6 +8,7 @@ const CORE_FILES=[
   './analisador-google-forense.html',
   './analisador-quebra.html',
   './analisador-quebra.js',
+  './analisador-relatorio.js',
   './jszip.min.js',
   './leaflet.js',
   './leaflet.css',

@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const KEYWORDS = ['PIX','CPF','CNPJ','BANCO','ARMA','DROGA','NOME','TELEFONE','VALOR','IMEI','PLACA'];
+const KEYWORDS = ['PIX','CPF','CNPJ','RG','BANCO','VALOR','NOME','TELEFONE','ENDEREÇO','DOCUMENTO','CONTRATO','ARMA','DROGA','IMEI','PLACA'];
 const MAX_NEST = 16;
 const NA = 'Não disponível na produção';
 const $ = id => document.getElementById(id);
@@ -12,6 +12,32 @@ const fold = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '
 const emails = t => uniq((String(t || '').match(/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/ig) || []).map(x => x.toLowerCase()));
 const phones = t => uniq(String(t || '').match(/(?:\+?55[\s\-]?)?(?:\(?\d{2}\)?[\s\-]?)?\d{4,5}[\s\-]?\d{4}/g) || []);
 const ips = t => uniq(String(t || '').match(/\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g) || []);
+function isIpv6(v) {
+  const s = String(v || '').trim();
+  if (!/^[0-9A-Fa-f:]+$/.test(s) || !s.includes(':')) return false;
+  const parts = s.split('::');
+  if (parts.length > 2) return false;
+  const groups = parts.map(p => (p ? p.split(':') : []));
+  if (groups.some(g => g.some(x => !/^[0-9A-Fa-f]{1,4}$/.test(x)))) return false;
+  const total = groups.reduce((n, g) => n + g.length, 0);
+  if (parts.length === 2) return total <= 7;
+  return total === 8;
+}
+const ipv6s = t => uniq((String(t || '').match(/[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}/g) || [])
+  .map(x => x.replace(/^:(?!:)/, '').replace(/(?<!:):$/, ''))
+  .filter(isIpv6));
+const ipsAny = t => uniq(ipv6s(t).concat(ips(t)));
+function kwHits(text) {
+  const t = fold(text);
+  return KEYWORDS.filter(k => new RegExp('(^|[^a-z0-9])' + fold(k) + '([^a-z0-9]|$)').test(t));
+}
+function kwSnippet(text, keyword) {
+  const t = fold(text);
+  const m = t.match(new RegExp('(^|[^a-z0-9])' + fold(keyword) + '([^a-z0-9]|$)'));
+  if (!m) return '';
+  const at = Math.max(0, t.indexOf(m[0]) - 60);
+  return String(text).slice(at, at + 200).replace(/\s+/g, ' ').trim();
+}
 const links = t => uniq(String(t || '').match(/https?:\/\/[^\s<>"']+/ig) || []);
 const tick = () => new Promise(r => setTimeout(r, 0));
 
@@ -130,6 +156,14 @@ function classify(path) {
   if (/\.zip$/i.test(p)) return 'zip';
   for (const [key, re] of PRODUCT_RULES) if (re.test(p)) return key;
   return 'outros';
+}
+const MIMES = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  webp: 'image/webp', heic: 'image/heic', mp4: 'video/mp4'
+};
+function mimeFor(name) {
+  const ext = String(name || '').split('.').pop().toLowerCase();
+  return MIMES[ext] || 'application/octet-stream';
 }
 function looksLikeZip(name, u8) {
   if (/\.zip$/i.test(name)) return true;
@@ -295,7 +329,11 @@ function coord(v) {
 function addLoc(rec) {
   if (rec.lat == null || rec.lon == null) return;
   DB.locations.push(rec);
-  addEvent({ ts: rec.ts, type: 'localizacao', product: 'Timeline', device: rec.device, desc: rec.place || `Lat ${rec.lat}, Lon ${rec.lon}`, lat: rec.lat, lon: rec.lon });
+  addEvent({
+    ts: rec.ts, type: 'localizacao', product: 'Timeline', device: rec.device,
+    desc: rec.place || `Lat ${rec.lat}, Lon ${rec.lon}`, lat: rec.lat, lon: rec.lon,
+    place: rec.place || `${rec.lat}, ${rec.lon}`
+  });
 }
 function parseLocations(text, path) {
   let payload;
@@ -354,7 +392,8 @@ function parseAccess(text, path) {
   }
   walkObjs(payload).forEach(rec => {
     const ts = parseDt(pick(rec, ['timestamp', 'time', 'date', 'eventTime']));
-    const ip = pick(rec, ['ipAddress', 'ip', 'IP']) || ips(JSON.stringify(rec))[0] || '';
+    const raw = JSON.stringify(rec);
+    const ip = pick(rec, ['ipAddress', 'ip', 'IP', 'ipv6', 'remoteIp']) || ipsAny(raw)[0] || '';
     const ev = {
       ts, service: pick(rec, ['service', 'product', 'application']) || '',
       event: pick(rec, ['event', 'activity', 'action', 'type', 'title']) || '',
@@ -366,7 +405,7 @@ function parseAccess(text, path) {
     };
     if (!ev.ts && !ev.ip && !ev.event) return;
     DB.access.push(ev);
-    addEvent({ ts, type: 'access_log', product: 'Access Log Activity', device: ev.device, desc: [ev.service, ev.event, ev.ip].filter(Boolean).join(' · ') });
+    addEvent({ ts, type: 'access_log', product: 'Access Log Activity', device: ev.device, ip: ev.ip, place: ev.location, desc: [ev.service, ev.event, ev.ip].filter(Boolean).join(' · ') });
     if (ev.ip) addIndex({ file: path, product: 'Access Log Activity', ts, account: ev.account, context: 'IP', text: ev.ip + ' ' + ev.event });
   });
 }
@@ -406,7 +445,7 @@ function parseChrome(text, path) {
 function parseDrive(name, text, path, rec) {
   let meta = {};
   try { if (/\.json$/i.test(path)) meta = JSON.parse(text) || {}; } catch (_) {}
-  const hits = KEYWORDS.filter(k => fold(name + '\n' + text).includes(fold(k)));
+  const hits = kwHits(name + '\n' + text);
   const row = {
     name, type: rec.ext, mime: pick(meta, ['mimeType', 'mime']) || '',
     size: rec.size || pick(meta, ['size']) || '',
@@ -437,12 +476,12 @@ function parseMbox(text, path) {
       id: get('Message-ID') || get('Message-Id'),
       from: get('From'), to: get('To'), cc: get('Cc'),
       date: parseDt(get('Date')), subject: get('Subject'),
-      body, ip: ips(head)[0] || '',
+      body, ip: ipsAny(head)[0] || '',
       links: links(blob), phones: phones(blob), emails: emails(blob),
       attach, headers: head.slice(0, 2000), source: path
     };
     DB.emails.push(rec);
-    addEvent({ ts: rec.date, type: 'email', product: 'Mail', device: '', desc: rec.subject || '(sem assunto)' });
+    addEvent({ ts: rec.date, type: 'email', product: 'Mail', device: '', ip: rec.ip, desc: rec.subject || '(sem assunto)' });
     addIndex({ file: path, product: 'Mail', ts: rec.date, account: rec.to || rec.from, context: rec.subject, text: blob });
   });
 }
@@ -618,9 +657,9 @@ async function ingestZip(blob, originalName) {
     const geo = sidecar.geoData || sidecar.geoDataExif || sidecar.geo || {};
     const taken = (sidecar.photoTakenTime && (sidecar.photoTakenTime.timestamp || sidecar.photoTakenTime.formatted)) ||
       (sidecar.creationTime && sidecar.creationTime.timestamp) || sidecar.creationTime || sidecar.photoTakenTime;
-    const blob = await file.async('blob');
-    rec.sha256 = await sha256(await blob.arrayBuffer());
-    const url = URL.createObjectURL(blob);
+    const raw = await file.async('arraybuffer');
+    rec.sha256 = await sha256(raw);
+    const url = URL.createObjectURL(new Blob([raw], { type: mimeFor(name) }));
     const photo = {
       name, path, url, kind: /\.mp4$/i.test(name) ? 'vídeo' : 'foto',
       ts: parseDt(taken),
@@ -712,8 +751,8 @@ async function ingestLooseFile(file) {
   }
   for (const item of media) {
     const { rec: itemRec, file: zf } = item;
-    const blob = await zf.async('blob');
-    const url = URL.createObjectURL(blob);
+    const raw = await zf.async('arraybuffer');
+    const url = URL.createObjectURL(new Blob([raw], { type: mimeFor(itemRec.name) }));
     const photo = {
       name: itemRec.name, path: itemRec.path, url, kind: /\.mp4$/i.test(itemRec.name) ? 'vídeo' : 'foto',
       ts: null, lat: null, lon: null, gps: false, device: '', original: itemRec.name, meta: {}
@@ -987,7 +1026,7 @@ const loaders = {
   importar: renderImport, inventario: renderInventario, painel: renderPainel, dispositivos: renderDevices,
   accesslog: renderAccess, eventos: renderEvents, mapa: renderMap, fotos: renderPhotos, chrome: renderChrome,
   arquivos: renderFiles, backups: renderBackups, gmail: renderMail, pagamentos: renderPay,
-  busca: renderBusca, fato: renderFato, correlacao: renderCorr
+  busca: renderBusca, fato: renderFato, correlacao: renderCorr, relatorio: renderRelatorio
 };
 
 function show(name) {
@@ -1034,12 +1073,26 @@ async function runFile(file) {
   return runFiles([file], { reset: true });
 }
 
-function tinyJpg() {
-  const b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wAAAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI/8AAEQgAAQABAwEiAAIRAQMRAf/EABQAAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGf/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwB//9k=';
-  const bin = atob(b64);
-  const u8 = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-  return u8;
+async function demoJpg(label, tone) {
+  const c = document.createElement('canvas');
+  c.width = 640; c.height = 360;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, 640, 360);
+  grad.addColorStop(0, tone || '#1d3f38');
+  grad.addColorStop(1, '#0f1c19');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 640, 360);
+  g.fillStyle = 'rgba(197,162,83,.28)';
+  for (let i = 0; i < 9; i++) g.fillRect(40 + i * 66, 240 - (i % 4) * 42, 46, 120 + (i % 4) * 42);
+  g.fillStyle = '#f4e7bd';
+  g.font = 'bold 26px Arial';
+  g.fillText('DEMONSTRAÇÃO', 30, 56);
+  g.font = 'bold 20px Arial';
+  g.fillText(label, 30, 88);
+  g.font = '15px Arial';
+  g.fillText('Imagem gerada para teste — não é foto de produção', 30, 330);
+  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 async function putZip(jszip, name, files) {
@@ -1082,16 +1135,25 @@ async function demo() {
     { header: 'Search', title: 'Pesquisou por PIX banco', time: '2024-09-10T20:05:00.000Z', titleUrl: 'https://www.google.com/search?q=PIX+banco', deviceInformation: { deviceType: 'ANDROID' } },
     { header: 'Search', title: 'Pesquisou por arma de fogo curitiba', time: '2024-09-10T20:22:00.000Z', deviceInformation: { deviceType: 'ANDROID' } }
   ]);
+  const v6 = '2804:14d:5c81:8c0e:1d2f:aa01:9f3c:22b1';
+  const v6b = '2804:14d:5c81:9a11:0000:0000:0000:0042';
   const access = JSON.stringify([
-    { timestamp: '2024-09-10T20:01:00Z', service: 'Gmail', event: 'Login', ipAddress: '200.152.44.18', device: 'ANDROID', location: 'Curitiba/PR' },
-    { timestamp: '2024-09-10T21:12:00Z', service: 'Drive', event: 'Download', ipAddress: '200.152.44.18', device: 'ANDROID' }
+    { timestamp: '2024-09-09T18:40:00Z', service: 'Gmail', event: 'Login', ipAddress: v6, device: 'SM-G991B', location: 'Curitiba/PR' },
+    { timestamp: '2024-09-10T20:01:00Z', service: 'Gmail', event: 'Login', ipAddress: v6, device: 'SM-G991B', location: 'Curitiba/PR' },
+    { timestamp: '2024-09-10T20:44:00Z', service: 'Chrome Sync', event: 'Sync', ipAddress: v6, device: 'SM-G991B' },
+    { timestamp: '2024-09-10T21:12:00Z', service: 'Drive', event: 'Download', ipAddress: v6, device: 'SM-G991B' },
+    { timestamp: '2024-09-10T21:40:00Z', service: 'Google Photos', event: 'Upload', ipAddress: v6, device: 'SM-G991B' },
+    { timestamp: '2024-09-11T08:05:00Z', service: 'Gmail', event: 'Login', ipAddress: v6b, device: 'moto g54 5G' },
+    { timestamp: '2024-09-11T09:20:00Z', service: 'Drive', event: 'Upload', ipAddress: '200.152.44.18', device: 'moto g54 5G' },
+    { timestamp: '2024-09-12T10:00:00Z', service: 'Gmail', event: 'Logout', ipAddress: '200.152.44.18', device: 'SM-G991B' }
   ]);
-  const mbox = 'From MAILER-DAEMON\nFrom: banco.alertas@bancoexemplo.com.br\nTo: joao.silva.investigado@gmail.com\nCc: jcsilva.alt@gmail.com\nSubject: Comprovante PIX no valor de R$ 4.800,00\nDate: Tue, 10 Sep 2024 18:12:11 -0300\nMessage-ID: <pix-4800@bancoexemplo.com.br>\nX-Originating-IP: [200.152.44.18]\nContent-Disposition: attachment; filename="comprovante.pdf"\n\nTransferência PIX CPF 123.456.789-09.\n';
+  const mbox = 'From MAILER-DAEMON\nFrom: banco.alertas@bancoexemplo.com.br\nTo: joao.silva.investigado@gmail.com\nCc: jcsilva.alt@gmail.com\nSubject: Comprovante PIX no valor de R$ 4.800,00\nDate: Tue, 10 Sep 2024 18:12:11 -0300\nMessage-ID: <pix-4800@bancoexemplo.com.br>\nX-Originating-IP: [' + v6 + ']\nContent-Disposition: attachment; filename="comprovante.pdf"\n\nTransferência PIX CPF 123.456.789-09.\n';
   const payCsv = 'Date,Description,Amount,Currency,Transaction ID,Type\n2024-09-10 18:12:00,PIX Banco Exemplo,4800.00,BRL,TX-PIX-4800,purchase\n';
   const chromeHist = JSON.stringify({ 'Browser History': [{ title: 'Banco Exemplo', url: 'https://bancoexemplo.com.br/pix', time_usec: 1726006320000000 }] });
   const chromeBm = JSON.stringify({ roots: { bookmark_bar: { name: 'Barra', children: [{ name: 'Maps', url: 'https://maps.google.com/' }] } } });
   const photoJson = JSON.stringify({ title: 'fachada_centro.jpg', photoTakenTime: { timestamp: '1726011000' }, geoData: { latitude: -25.4284, longitude: -49.2733 } });
-  const jpg = tinyJpg();
+  const jpg = await demoJpg('fachada_centro.jpg', '#24504a');
+  const jpg2 = await demoJpg('rua_lateral.jpg', '#3a2f24');
 
   await putZip(root, 'Oficio_123/GoogleAccount.zip', { 'GoogleAccount.SubscriberInfo/GoogleAccount.SubscriberInfo.html': accHtml });
   await putZip(root, 'Oficio_123/AndroidDeviceConfigurationService.zip', { 'AndroidDeviceConfigurationService.DeviceAndUserProfile/DeviceAndUserProfile.json': devices });
@@ -1108,7 +1170,7 @@ async function demo() {
   photosZip.file('GooglePhotos.PhotoResourceLegal/fachada.jpg', jpg);
   photosZip.file('GooglePhotos.PhotoResourceLegal/fachada.jpg.json', photoJson);
   const nestedPhotos = new JSZip();
-  nestedPhotos.file('GooglePhotos.PhotoResourceLegal/rua.jpg', jpg);
+  nestedPhotos.file('GooglePhotos.PhotoResourceLegal/rua.jpg', jpg2);
   nestedPhotos.file('GooglePhotos.PhotoResourceLegal/rua.jpg.json', JSON.stringify({ title: 'rua.jpg', photoTakenTime: { timestamp: '1726012200' }, geoData: { latitude: -25.4429, longitude: -49.2673 } }));
   photosZip.file('extra/mais_fotos.zip', await nestedPhotos.generateAsync({ type: 'uint8array' }));
   deep.file('GooglePhotos.zip', await photosZip.generateAsync({ type: 'uint8array' }));
@@ -1132,22 +1194,24 @@ async function demo() {
   await runFile(new File([blob], 'Google_LERS_Producao_ANINHADA_DEMO.zip'));
 }
 
-function report() {
-  const acc = DB.accounts[0] || {};
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — Quebra Google</title>
-  <style>body{font-family:Arial;max-width:860px;margin:24px auto;color:#111}h1{color:#183a31}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:6px;font-size:12px}</style></head><body>
-  <h1>POLÍCIA CIVIL DO PARANÁ — RELATÓRIO DE QUEBRA GOOGLE</h1>
-  <p>Gerado em ${fmt(new Date())}. Conferir com os originais da produção. Campos ausentes constam como “Não disponível na produção”.</p>
-  <h2>1. Custódia</h2>${DB.imports.map(i => `<p>${esc(i.name)} SHA-256 ${esc(i.sha256)} · ${i.zips} ZIPs internos · ${i.count} arquivos</p>`).join('')}
-  <h2>2. Conta</h2><p>${esc(plain(acc.display_name))} — ${esc(plain(acc.primary_email))} — ${esc(plain((acc.phones || []).join(', ')))}</p>
-  <h2>3. Dispositivos</h2>${DB.devices.map(d => `<p>${esc(plain(d.model))} IMEI ${esc(plain(d.imei1))} contas ${esc((d.accounts || []).join(', '))}</p>`).join('')}
-  <h2>4. Alertas</h2>${alerts().map(a => `<p><b>${esc(a.alert)}</b> ${esc(a.imei)} ${esc(a.accounts.join(', '))}</p>`).join('') || '<p>Nenhum</p>'}
-  <h2>5. ZIPs internos</h2>${DB.zips.map(z => `<p>${esc(z.path)}</p>`).join('')}
-  </body></html>`;
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  w.focus();
+function relatorio() {
+  if (!window.PCPRRelatorio) {
+    $('reportStatus').textContent = 'Módulo de relatório não carregou. Atualize a página.';
+    return null;
+  }
+  return window.PCPRRelatorio;
+}
+function renderRelatorio() {
+  const mod = relatorio();
+  if (mod) mod.preview();
+}
+async function report() {
+  const mod = relatorio();
+  if (mod) await mod.open();
+}
+async function reportDocx() {
+  const mod = relatorio();
+  if (mod) await mod.docx();
 }
 
 $('nav').addEventListener('click', e => {
@@ -1182,6 +1246,8 @@ $('globalQ').addEventListener('keydown', e => { if (e.key === 'Enter') renderBus
 $('fatoGo').onclick = renderFato;
 $('invQ').addEventListener('keydown', e => { if (e.key === 'Enter') renderInventario(); });
 $('makeReport').onclick = report;
+$('makeDocx').onclick = reportDocx;
+$('refreshReport').onclick = renderRelatorio;
 $('crimeWindow').addEventListener('change', () => {
   $('customWinWrap').hidden = $('crimeWindow').value !== 'custom';
 });
@@ -1190,5 +1256,12 @@ $('crimeDate').addEventListener('change', () => { const v = document.querySelect
 if (!window.JSZip) $('progress').textContent = 'Atualize a página se o seletor de ZIP não abrir.';
 try { parent.postMessage({ type: 'pcpr-fit', module: 'googleanalise' }, '*'); } catch (_) {}
 document.documentElement.dataset.quebraReady = '1';
-window.PCPRQuebra = { ingestZip, ingestLooseFile, walkZip, classify, DB, demo, runFile, runFiles, reset };
+window.PCPRQuebra = {
+  ingestZip, ingestLooseFile, walkZip, classify, DB, demo, runFile, runFiles, reset, alerts,
+  helpers: {
+    $, esc, dash, plain, fold, uniq, fmt, fmtDate, fmtTime, parseDt, emails, phones,
+    ips, ipv6s, ipsAny, isIpv6, kwHits, kwSnippet, nearCrime, crimeHours, currentAccount,
+    KEYWORDS, LABELS, NA
+  }
+};
 })();

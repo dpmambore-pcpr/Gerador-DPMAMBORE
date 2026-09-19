@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.11: Quebra Google — relatório de análise investigativa (PDF e DOCX) -->
 <!-- v3.6.10: Quebra Google — vários arquivos/ZIPs separados da produção -->
 <!-- v3.6.9: Quebra Google — extração recursiva de ZIPs internos LERS -->
 <!-- v3.6.8: Quebra Google no navegador (celular) — corrige tela preta -->
@@ -71,7 +72,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.10</span>
+      <span class="version">VERSÃO ATUAL · v3.6.11</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -84,8 +85,20 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.10">
-        <div class="item-head"><span class="item-ver">v3.6.10</span><span class="item-date">19/09/2026</span><span class="tag new">QUEBRA</span><span class="tag improve">VÁRIOS ARQUIVOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.11">
+        <div class="item-head"><span class="item-ver">v3.6.11</span><span class="item-date">19/09/2026</span><span class="tag new">RELATÓRIO</span><span class="tag improve">ANÁLISE</span><span class="badge">ATUAL</span></div>
+        <h3>Relatório de análise investigativa da quebra Google</h3>
+        <ul>
+          <li>O relatório deixa de ser só listagem: traz resumo automático dos elementos, vínculos IMEI ↔ conta, correlação IP × conta × dispositivo e considerações analíticas.</li>
+          <li>Seção exclusiva de <b>conexões IP</b> com IPv6 em primeiro lugar, agrupamento por recorrência, datas, contas e produtos de cada endereço.</li>
+          <li>Linha do tempo com data, hora, evento, produto, local, dispositivo e IP; fotos de interesse com GPS e metadados; Drive por termos (PIX, CPF, RG, BANCO, CONTRATO…); ranking de e-mails; análise financeira; comportamento antes, durante e depois do fato; grafo de correlações clicável.</li>
+          <li>Exportação em <b>PDF</b> (capa, sumário, tabelas, fotos e hashes) e em <b>DOCX</b> editável com o mesmo conteúdo.</li>
+          <li>Somente dados encontrados na produção. Sem conclusão sobre conduta de pessoa; o texto usa vinculado, associado, identificado e registrado.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.10">
+        <div class="item-head"><span class="item-ver">v3.6.10</span><span class="item-date">19/09/2026</span><span class="tag new">QUEBRA</span><span class="tag improve">VÁRIOS ARQUIVOS</span></div>
         <h3>Quebra Google aceita vários ZIPs separados da produção</h3>
         <ul>
           <li>A Google costuma mandar Mail, Photos, Account e outros produtos em ZIPs distintos. Selecione todos de uma vez ou use <b>Acrescentar arquivos</b> depois.</li>
