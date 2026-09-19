@@ -41,11 +41,7 @@ def _extract_zip(zip_path: Path, dest: Path, nested_level: int = 0) -> int:
                         raise ValueError("Limite de extração excedido.")
                     out.write(chunk)
             extracted += 1
-            if (
-                nested_level < MAX_NESTED_ZIP
-                and target.suffix.lower() == ".zip"
-                and zipfile.is_zipfile(target)
-            ):
+            if nested_level < MAX_NESTED_ZIP and zipfile.is_zipfile(target):
                 nested_dir = target.with_suffix("") / "_unzipped"
                 extracted += _extract_zip(target, nested_dir, nested_level + 1)
     return extracted

@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.9: Quebra Google — extração recursiva de ZIPs internos LERS -->
 <!-- v3.6.8: Quebra Google no navegador (celular) — corrige tela preta -->
 <!-- v3.6.7: Análise Google unifica ofício e quebra de sigilo -->
 <!-- v3.6.6: Analisador Google Forense (LERS Flask) -->
@@ -69,7 +70,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.8</span>
+      <span class="version">VERSÃO ATUAL · v3.6.9</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -82,8 +83,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.8">
-        <div class="item-head"><span class="item-ver">v3.6.8</span><span class="item-date">19/09/2026</span><span class="tag fix">CELULAR</span><span class="tag new">QUEBRA</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.9">
+        <div class="item-head"><span class="item-ver">v3.6.9</span><span class="item-date">19/09/2026</span><span class="tag fix">QUEBRA</span><span class="tag new">ZIP INTERNO</span><span class="badge">ATUAL</span></div>
+        <h3>Quebra Google abre ZIPs dentro de ZIPs até os arquivos finais</h3>
+        <ul>
+          <li>O ZIP principal é percorrido por inteiro: cada <b>.zip</b> interno é aberto de novo, pasta a pasta, sem parar no primeiro nível.</li>
+          <li>Inventário com caminho completo, extensão, tamanho, ZIP de origem, produto e conta; parsers para Account, Android Device, Mail/MBOX, My Activity, Access Log, Photos, Pay, Chrome, Timeline, Drive e backups.</li>
+          <li>Busca em toda a produção, Data do fato e correlações IMEI ↔ contas sem afirmar identidade.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.8">
+        <div class="item-head"><span class="item-ver">v3.6.8</span><span class="item-date">19/09/2026</span><span class="tag fix">CELULAR</span><span class="tag new">QUEBRA</span></div>
         <h3>Quebra de sigilo Google abre no celular, sem tela preta</h3>
         <ul>
           <li>A análise da quebra deixa de depender do Python em localhost: o ZIP LERS é lido no próprio navegador, inclusive no telefone.</li>

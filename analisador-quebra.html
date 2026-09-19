@@ -37,7 +37,7 @@ main{padding:12px}
 .btn.gold{background:var(--gold);border-color:#aa8a42;color:var(--ink)}
 .btn.green{background:var(--accent);border-color:#0f241f;color:#fff}
 .alert{background:#2a171c;color:#ffb1b9;border:1px solid var(--danger);border-radius:10px;padding:10px;margin:8px 0;font-weight:800}
-.kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:13px}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:6px;font-size:13px}
 .kv b{color:var(--muted)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .stat{background:#f8f6f1;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
@@ -45,21 +45,28 @@ main{padding:12px}
 .stat span{font-size:11px;color:var(--muted);font-weight:700}
 .view{display:none}
 .view.active{display:block}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:70vh}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{padding:7px 8px;border-bottom:1px solid #ece7dc;text-align:left;vertical-align:top}
 th{background:#183a31;color:#f4e7bd;position:sticky;top:0}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
 input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:0 8px;font:inherit}
-.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
 .photos figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:11px}
-.photos img{width:100%;height:110px;object-fit:cover;background:#111}
+.photos img,.photos video{width:100%;height:120px;object-fit:cover;background:#111}
 .photos figcaption{padding:7px}
 #map{height:320px;border-radius:10px;border:1px solid var(--line);margin-bottom:10px}
 .chip{display:inline-block;border:1px solid #d8d3c8;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin:2px}
 .chip.warn{border-color:var(--danger);color:var(--danger)}
 .hash{font-size:10px;word-break:break-all;font-family:ui-monospace,Consolas,monospace}
 .notice{font-size:13px;color:#42534d;background:#f4faf6;border:1px solid #cdd9d2;border-radius:8px;padding:10px;margin-bottom:10px}
+.tree{font-size:12px;line-height:1.45}
+.tree details{margin:2px 0 2px 10px}
+.tree summary{cursor:pointer;font-weight:700}
+.na{color:#8a8070;font-style:italic}
+.corr-block{border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;background:#fff}
+.corr-block ul{margin:6px 0 0 18px}
+#progress{font-weight:800;color:var(--accent)}
 @media(max-width:640px){
   .kv{grid-template-columns:1fr}
   .stats{grid-template-columns:repeat(2,1fr)}
@@ -71,82 +78,167 @@ input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:
 <header>
   <div class="kicker">POLÍCIA CIVIL DO PARANÁ</div>
   <h1>Análise de quebra de sigilo</h1>
-  <p class="sub">Produção Google LERS neste aparelho — sem enviar arquivos.</p>
+  <p class="sub">Produção Google LERS neste aparelho — ZIP internos abertos um a um, sem alterar o original.</p>
   <nav class="nav" id="nav">
     <button data-view="importar" class="active" type="button">Importar</button>
+    <button data-view="inventario" type="button">Inventário</button>
     <button data-view="painel" type="button">Painel</button>
     <button data-view="dispositivos" type="button">Dispositivos</button>
-    <button data-view="eventos" type="button">Eventos</button>
-    <button data-view="mapa" type="button">Mapa</button>
+    <button data-view="accesslog" type="button">Access Log</button>
+    <button data-view="eventos" type="button">Atividade</button>
+    <button data-view="mapa" type="button">Timeline</button>
     <button data-view="fotos" type="button">Fotos</button>
-    <button data-view="arquivos" type="button">Arquivos</button>
+    <button data-view="chrome" type="button">Chrome</button>
+    <button data-view="arquivos" type="button">Drive</button>
+    <button data-view="backups" type="button">Backups</button>
     <button data-view="gmail" type="button">Gmail</button>
-    <button data-view="pagamentos" type="button">Pagamentos</button>
-    <button data-view="pesquisas" type="button">Pesquisas</button>
-    <button data-view="whatsapp" type="button">WhatsApp</button>
-    <button data-view="correlacao" type="button">Correlação</button>
+    <button data-view="pagamentos" type="button">Google Pay</button>
+    <button data-view="busca" type="button">Busca</button>
+    <button data-view="fato" type="button">Data do fato</button>
+    <button data-view="correlacao" type="button">Correlações</button>
     <button data-view="relatorio" type="button">Relatório</button>
   </nav>
 </header>
 <main>
   <section class="view active" id="view-importar">
     <div class="panel drop" id="drop">
-      <b>Toque para escolher o ZIP da quebra Google</b>
-      <p>O arquivo original não é alterado. A extração ocorre só na memória deste aparelho.</p>
-      <button class="btn gold" id="pick" type="button">Selecionar ZIP</button>
-      <button class="btn" id="demo" type="button">Carregar demonstração</button>
-      <input id="file" type="file" accept=".zip,application/zip" hidden>
+      <b>Toque para escolher o ZIP principal da quebra Google</b>
+      <p>O analisador abre o ZIP principal e, em seguida, cada ZIP interno, pasta a pasta, até os arquivos finais. O original não é alterado.</p>
+      <button class="btn gold" id="pick" type="button">Selecionar ZIP principal</button>
+      <button class="btn" id="demo" type="button">Carregar demonstração aninhada</button>
+      <input id="file" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden>
       <p id="progress"></p>
     </div>
     <div class="panel">
-      <h3>Produtos encontrados</h3>
-      <div id="products"></div>
+      <h3>Árvore da produção</h3>
+      <div id="productTree" class="tree"></div>
+      <h3>Extensões</h3>
+      <div id="extCounts"></div>
+      <h3>ZIPs internos</h3>
+      <div id="innerZips" class="table-wrap"></div>
       <h3>Custódia</h3>
       <div id="custody" class="hash"></div>
     </div>
   </section>
+  <section class="view" id="view-inventario">
+    <div class="notice">Inventário da extração recursiva: caminho completo, ZIP de origem, produto e extensão. Nenhum original é excluído.</div>
+    <div class="filters"><input id="invQ" type="search" placeholder="Filtrar caminho, nome, produto, ZIP"></div>
+    <div id="invStats" class="stats"></div>
+    <div id="invTable" class="table-wrap"></div>
+  </section>
   <section class="view" id="view-painel">
     <div class="filters">
-      <label>DATA DO CRIME <input type="datetime-local" id="crimeDate"></label>
-      <label>Janela (h) <input type="number" id="crimeWindow" value="24" min="1" max="720" style="width:72px"></label>
+      <label>DATA DO FATO <input type="datetime-local" id="crimeDate"></label>
+      <label>Janela
+        <select id="crimeWindow">
+          <option value="1">1 hora</option>
+          <option value="3">3 horas</option>
+          <option value="6">6 horas</option>
+          <option value="12">12 horas</option>
+          <option value="24" selected>24 horas</option>
+          <option value="48">48 horas</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </label>
+      <label id="customWinWrap" hidden>Horas <input type="number" id="crimeWindowCustom" value="24" min="1" max="8760" style="width:80px"></label>
     </div>
     <div id="alerts"></div>
     <div class="stats" id="stats"></div>
     <div id="accounts"></div>
   </section>
-  <section class="view" id="view-dispositivos"><div id="deviceAlerts"></div><div id="deviceTable" class="table-wrap"></div></section>
+  <section class="view" id="view-dispositivos">
+    <div class="notice">O alerta de IMEI em várias contas registra o vínculo encontrado. Não afirma que as contas pertençam à mesma pessoa.</div>
+    <div id="deviceAlerts"></div>
+    <div id="deviceTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-accesslog">
+    <div class="filters">
+      <input type="datetime-local" id="alFrom" title="De">
+      <input type="datetime-local" id="alTo" title="Até">
+      <input id="alIp" type="search" placeholder="IP">
+      <input id="alDevice" type="search" placeholder="Dispositivo">
+      <input id="alAccount" type="search" placeholder="Conta">
+      <button class="btn gold" id="alFilter" type="button">Filtrar</button>
+    </div>
+    <div id="accessTable" class="table-wrap"></div>
+  </section>
   <section class="view" id="view-eventos">
     <div class="filters"><input type="datetime-local" id="evFrom"><input type="datetime-local" id="evTo"><button class="btn gold" id="evFilter" type="button">Filtrar</button></div>
     <div id="eventTable" class="table-wrap"></div>
   </section>
   <section class="view" id="view-mapa">
-    <label class="notice"><input type="checkbox" id="nearOnly"> Somente próximos da DATA DO CRIME</label>
+    <div class="filters">
+      <label>De <input type="datetime-local" id="mapFrom"></label>
+      <label>Até <input type="datetime-local" id="mapTo"></label>
+      <label><input type="checkbox" id="nearOnly"> Somente na janela da DATA DO FATO</label>
+      <button class="btn gold" id="mapFilter" type="button">Aplicar</button>
+    </div>
     <div id="map"></div>
     <div id="locTable" class="table-wrap"></div>
   </section>
   <section class="view" id="view-fotos">
     <div class="filters">
-      <label><input type="checkbox" id="photoNear"> Próximas ao crime</label>
+      <label><input type="checkbox" id="photoNear"> Próximas ao fato</label>
       <label><input type="checkbox" id="photoGps"> Com GPS</label>
     </div>
     <div id="photoGrid" class="photos"></div>
   </section>
+  <section class="view" id="view-chrome">
+    <div class="filters">
+      <input id="chromeQ" type="search" placeholder="Buscar URL, título, endereço">
+      <input type="datetime-local" id="chFrom">
+      <input type="datetime-local" id="chTo">
+      <button class="btn gold" id="chFilter" type="button">Filtrar</button>
+    </div>
+    <div id="chromeTable" class="table-wrap"></div>
+  </section>
   <section class="view" id="view-arquivos">
-    <div class="filters"><input id="fileQ" type="search" placeholder="PIX CPF BANCO ARMA DROGA NOME TELEFONE VALOR"></div>
+    <div class="filters"><input id="fileQ" type="search" placeholder="Pesquisar nome ou conteúdo do Drive"></div>
     <div id="kw"></div>
     <div id="fileTable" class="table-wrap"></div>
   </section>
+  <section class="view" id="view-backups">
+    <div class="notice"><b>Política forense:</b> identifica backup no Drive. Não há tentativa de quebra de cifra.</div>
+    <div id="backupTable" class="table-wrap"></div>
+  </section>
   <section class="view" id="view-gmail">
-    <div class="filters"><input id="mailQ" type="search" placeholder="Buscar e-mail, assunto, IP, ID"></div>
+    <div class="filters"><input id="mailQ" type="search" placeholder="nome CPF CNPJ telefone PIX valor banco IMEI placa"></div>
     <div id="mailTable" class="table-wrap"></div>
   </section>
-  <section class="view" id="view-pagamentos"><div id="payTable" class="table-wrap"></div></section>
-  <section class="view" id="view-pesquisas"><div id="searchTable" class="table-wrap"></div></section>
-  <section class="view" id="view-whatsapp">
-    <div class="notice"><b>Política forense:</b> só identifica backup no Drive. Não há tentativa de quebra de cifra.</div>
-    <div id="waTable" class="table-wrap"></div>
+  <section class="view" id="view-pagamentos">
+    <div class="filters">
+      <input type="datetime-local" id="payFrom">
+      <input type="datetime-local" id="payTo">
+      <button class="btn gold" id="payFilter" type="button">Filtrar</button>
+    </div>
+    <div class="notice">Os valores são os que constam na produção. Nenhuma transação é classificada como crime.</div>
+    <div id="payTable" class="table-wrap"></div>
   </section>
-  <section class="view" id="view-correlacao"><div id="chain"></div><div id="corrAlerts"></div><div id="corrList"></div></section>
+  <section class="view" id="view-busca">
+    <div class="panel">
+      <label>Pesquisar em toda a produção
+        <input id="globalQ" type="search" placeholder="nome CPF CNPJ telefone e-mail IMEI IP PIX valor placa endereço" style="width:100%;margin-top:6px">
+      </label>
+      <button class="btn gold" id="globalGo" type="button">Pesquisar</button>
+    </div>
+    <div id="globalHits" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-fato">
+    <div class="panel">
+      <p>Informe data, hora e local do fato. O sistema lista acessos, IPs, localização, fotos, e-mails, pesquisas, Chrome, Drive e pagamentos na janela configurada no Painel.</p>
+      <div class="filters">
+        <label>Local do fato <input id="fatoLocal" type="text" placeholder="opcional"></label>
+        <button class="btn gold" id="fatoGo" type="button">Buscar eventos do fato</button>
+      </div>
+    </div>
+    <div id="fatoTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-correlacao">
+    <div class="notice">Correlações investigativas: vínculos encontrados nos arquivos. Sem afirmação de autoria.</div>
+    <div id="chain"></div>
+    <div id="corrAlerts"></div>
+    <div id="corrList"></div>
+  </section>
   <section class="view" id="view-relatorio">
     <div class="panel">
       <p>Gera relatório HTML para imprimir ou salvar em PDF pelo navegador.</p>
@@ -156,6 +248,6 @@ input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:
 </main>
 <script src="jszip.min.js"></script>
 <script src="leaflet.js"></script>
-<script src="analisador-quebra.js?v=1.0.3"></script>
+<script src="analisador-quebra.js?v=2.0.0"></script>
 </body>
 </html>

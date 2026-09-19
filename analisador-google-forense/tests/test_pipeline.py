@@ -109,6 +109,23 @@ class PipelineTest(unittest.TestCase):
         self.assertTrue(wa[0]["encrypted"])
         self.assertIn("não tenta quebrar", wa[0]["note"].lower())
 
+    def test_nested_zip_reaches_final_files(self):
+        import zipfile
+        wrap1 = self.tmp / "produto.zip"
+        wrap0 = self.tmp / "principal.zip"
+        with zipfile.ZipFile(wrap1, "w") as zf:
+            zf.write(self.zip_path, "subpasta/outro.zip")
+        with zipfile.ZipFile(wrap0, "w") as zf:
+            zf.write(wrap1, "produto.zip")
+        case_id = db.create_case("Produção aninhada")
+        imported = importer.import_zip(case_id, wrap0, "principal.zip")
+        extract = Path(imported["extract_path"])
+        finals = [p for p in extract.rglob("*") if p.is_file() and p.suffix.lower() != ".zip"]
+        names = " ".join(p.name.lower() for p in finals)
+        self.assertGreaterEqual(len(finals), 8, "extração recursiva não chegou aos arquivos finais")
+        self.assertTrue("subscriberinfo" in names or "profile.json" in names)
+        self.assertGreaterEqual(imported["file_count"], 3)
+
     def test_reports(self):
         docx = reports.generate_docx(self.case_id)
         pdf = reports.generate_pdf(self.case_id)

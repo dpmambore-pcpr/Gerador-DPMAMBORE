@@ -45,6 +45,8 @@ PRODUCT_LABELS = {
     "calendar": "Agenda",
     "keep": "Google Keep",
     "activity": "My Activity",
+    "access_log": "Access Log Activity",
+    "drive_backup": "Drive Mobile Backups",
     "unknown": "Arquivos não classificados",
 }
 
