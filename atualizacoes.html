@@ -43,8 +43,9 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
-<!-- v3.6.6: Análise Google unifica ofício e quebra de sigilo -->
-<!-- v3.6.5: Analisador Google Forense (LERS Flask) -->
+<!-- v3.6.7: Análise Google unifica ofício e quebra de sigilo -->
+<!-- v3.6.6: Analisador Google Forense (LERS Flask) -->
+<!-- v3.6.5: Filtro IP — selecionar vários arquivos de uma vez -->
 <!-- v3.6.4: Relatório de Viagem — adicionar servidores no mesmo documento -->
 <!-- v3.6.3: Filtro IP — ofício unificado ou um quadro por número de interesse -->
 <!-- v3.6.2: Filtro IP — relatório de correlação com todos os IPs, por número e WhatsApp -->
@@ -67,7 +68,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.6</span>
+      <span class="version">VERSÃO ATUAL · v3.6.7</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -80,23 +81,33 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.6">
-        <div class="item-head"><span class="item-ver">v3.6.6</span><span class="item-date">19/09/2026</span><span class="tag new">ANÁLISE GOOGLE</span><span class="tag improve">QUEBRA</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.7">
+        <div class="item-head"><span class="item-ver">v3.6.7</span><span class="item-date">19/09/2026</span><span class="tag new">ANÁLISE GOOGLE</span><span class="tag improve">QUEBRA</span><span class="badge">ATUAL</span></div>
         <h3>Análise Google reúne resposta de ofício e quebra de sigilo</h3>
         <ul>
           <li>O botão <b>Análise Google</b> abre um hub com duas opções: <b>respostas de ofício</b> e <b>quebra de sigilo</b>.</li>
           <li>Respostas de ofício continuam no navegador, cruzando IMEI, Android ID, contas e linha do tempo.</li>
-          <li>Quebra de sigilo importa a produção LERS no analisador Flask local e gera o relatório policial.</li>
+          <li>Quebra de sigilo importa a produção LERS no analisador local e gera o relatório policial.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.6">
+        <div class="item-head"><span class="item-ver">v3.6.6</span><span class="item-date">19/09/2026</span><span class="tag new">GOOGLE FORENSE</span><span class="tag improve">LERS</span></div>
+        <h3>Analisador Google Forense para produções LERS</h3>
+        <ul>
+          <li>Novo módulo local importa ZIP do Google, calcula hash, identifica produtos e organiza a investigação em SQLite.</li>
+          <li>Painel da conta, IMEI com alerta de múltiplas contas, linha do tempo, mapa, fotos EXIF, Drive, Gmail, Google Pay, pesquisas e backup do WhatsApp (sem quebra de cifra).</li>
+          <li>Gera relatório policial em DOCX e PDF com os vínculos encontrados.</li>
         </ul>
       </article>
 
       <article class="item" data-version="3.6.5">
-        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag new">GOOGLE FORENSE</span><span class="tag improve">LERS</span></div>
-        <h3>Analisador Google Forense para produções LERS</h3>
+        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">ARQUIVOS</span></div>
+        <h3>Filtro de IPs sobe vários arquivos de uma só seleção</h3>
         <ul>
-          <li>Novo módulo Flask local importa ZIP do Google, calcula hash, identifica produtos e organiza a investigação em SQLite.</li>
-          <li>Painel da conta, IMEI com alerta de múltiplas contas, linha do tempo, mapa, fotos EXIF, Drive, Gmail, Google Pay, pesquisas e backup do WhatsApp (sem quebra de cifra).</li>
-          <li>Gera relatório policial em DOCX e PDF com os vínculos encontrados.</li>
+          <li>Na caixa de arquivos, dá para marcar 3, 4 ou quantos forem: todos sobem no mesmo inquérito.</li>
+          <li>O clique na área, o botão <b>Acrescentar documentos</b> e o arrastar usam a mesma seleção múltipla.</li>
+          <li>Corrigido o caso em que só o primeiro arquivo era lido quando vários eram escolhidos juntos.</li>
         </ul>
       </article>
 

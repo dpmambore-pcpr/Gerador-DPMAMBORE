@@ -180,12 +180,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.6.3",
+  version: "3.6.5",
   releaseDate: "19/09/2026",
   changes: [
-    "No ofício da operadora, dá para unificar os IPs ou separar um quadro por número de interesse.",
-    "O ofício unificado continua sem indicar de qual número é cada endereço.",
-    "A opção vale para o mesmo ofício da operadora — Vivo, por exemplo — quando há dois ou mais números."
+    "No Filtro de IPs, dá para marcar vários arquivos de uma vez: se escolher 3, os 3 sobem.",
+    "O clique e o botão de acrescentar usam a mesma seleção múltipla da caixa de arquivos.",
+    "Arrastar vários ZIP/PDF/HTML para a área também carrega todos no mesmo inquérito."
   ]
 });
 </script>
@@ -222,8 +222,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 <div class="card">
   <h2>1. Carregar os arquivos</h2>
   <div id="drop">
-    <b>Arraste aqui os arquivos ZIP/PDF da Meta/WhatsApp — um por número</b>
-    <span>No mesmo inquérito dá para juntar vários documentos. Aceita .zip, .pdf, .html (records.html), .htm, .txt e .csv. Novos arquivos são acrescentados aos já carregados.</span>
+    <b>Arraste ou clique para escolher os arquivos ZIP/PDF da Meta/WhatsApp</b>
+    <span>Pode marcar vários de uma vez: se escolher 3, os 3 sobem. Aceita .zip, .pdf, .html (records.html), .htm, .txt e .csv. Novos arquivos são acrescentados aos já carregados.</span>
     <input type="file" id="file" class="hide" accept=".zip,.pdf,.html,.htm,.txt,.csv" multiple>
   </div>
   <div id="listaArqs" class="arqs"></div>
@@ -255,7 +255,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
 
   <div class="linha" style="margin-top:12px">
-    <button class="sec" id="btnAddDocs">Acrescentar outro documento</button>
+    <button class="sec" id="btnAddDocs">Acrescentar documentos</button>
     <button class="sec" id="btnColar">Colar texto em vez de arquivo</button>
     <button class="sec" id="btnLimpar">Limpar tudo</button>
   </div>
@@ -2999,13 +2999,25 @@ function cfgImportaJSON(file){
 // ---------------- eventos ----------------
 inicializaVersao();
 var drop = document.getElementById("drop"), inp = document.getElementById("file");
+if(inp) inp.multiple = true;
 drop.onclick = function(){ inp.click(); };
 ["dragenter","dragover"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add("hot"); }); });
 ["dragleave","drop"].forEach(function(e){ drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.remove("hot"); }); });
-drop.addEventListener("drop", function(ev){ carrega(ev.dataTransfer.files); });
-inp.onchange = function(){ carrega(inp.files); inp.value = ""; };
+drop.addEventListener("drop", function(ev){
+  carrega(listaArquivos(ev.dataTransfer && ev.dataTransfer.files));
+});
+inp.onchange = function(){
+  var lista = listaArquivos(inp.files);
+  inp.value = "";
+  carrega(lista);
+};
+
+function listaArquivos(files){
+  return Array.prototype.slice.call(files || []);
+}
 
 async function carrega(files){
+  files = listaArquivos(files);
   var ultimoErroEspecifico = "";
   var zipSucesso = 0;
   var nomesNovos = {};
@@ -3170,7 +3182,9 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     processa: processa,
     corpoRelatorio: corpoRelatorio,
     renderRelatorio: renderRelatorio,
-    getRelatorioHtml: function(){ var e = document.getElementById("relatorio"); return e ? e.innerHTML : ""; }
+    getRelatorioHtml: function(){ var e = document.getElementById("relatorio"); return e ? e.innerHTML : ""; },
+    carrega: carrega,
+    listaArquivos: listaArquivos
   };
 }
 </script>
