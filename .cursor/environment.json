@@ -4,6 +4,10 @@
     {
       "name": "static web server",
       "port": 8000
+    },
+    {
+      "name": "analisador google forense",
+      "port": 5050
     }
   ],
   "terminals": [
@@ -11,6 +15,11 @@
       "name": "static-server",
       "command": "python3 -m http.server 8000",
       "description": "Serves the static PWA (HTML/JS/assets) over HTTP at http://localhost:8000. Open /index.html to use the Central PCPR app."
+    },
+    {
+      "name": "google-forense",
+      "command": "python3 -m pip install -q -r analisador-google-forense/requirements.txt && python3 analisador-google-forense/app.py",
+      "description": "Installs Python deps and runs ANALISADOR GOOGLE FORENSE (quebra de sigilo LERS) at http://localhost:5050."
     }
   ]
 }

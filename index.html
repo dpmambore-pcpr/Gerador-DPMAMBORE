@@ -549,9 +549,9 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
       <div class="module-grid">
       <button class="module-card" type="button" data-open-module="googleanalise">
         <div class="card-top"><div class="card-icon">GG</div><div class="card-arrow">›</div></div>
-        <div class="card-title">Analisador de Respostas Google</div>
-        <div class="card-desc">Cruza IMEI, Android ID, aparelhos, contas Google, datas de criação, logins e vínculos investigativos.</div>
-        <div class="card-subtags"><span class="card-subtag">IMEI</span><span class="card-subtag">ANDROID ID</span><span class="card-subtag">CONTAS</span><span class="card-subtag">LINHA DO TEMPO</span></div>
+        <div class="card-title">Análise Google</div>
+        <div class="card-desc">Respostas de ofício no navegador ou quebra de sigilo LERS: conta, IMEI, mapa, arquivos e relatório policial.</div>
+        <div class="card-subtags"><span class="card-subtag">OFÍCIO</span><span class="card-subtag">QUEBRA</span><span class="card-subtag">IMEI</span><span class="card-subtag">LERS</span></div>
       </button>
       <button class="module-card update-card" type="button" data-open-module="atualizacoes">
         <span class="card-badge" id="updatesNewBadge" hidden>NOVO</span><div class="card-top"><div class="card-icon">AT</div><div class="card-arrow">›</div></div>
@@ -657,9 +657,9 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.6.1"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.5"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.7"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
-  <iframe id="frameGoogleAnalise" class="module-frame" title="Analisador de Respostas Google" data-src="analisador-google.html?v=1.0.0"></iframe>
+  <iframe id="frameGoogleAnalise" class="module-frame" title="Análise Google" data-src="analisador-google-hub.html?v=1.0.1"></iframe>
   <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.2.0"></iframe>
 </main>
 
@@ -759,7 +759,7 @@ function trackModule(key){
       contatos:'diretorio_contatos',
       atualizacoes:'sobre_atualizacoes',
       historico:'historico_documentos',
-      googleanalise:'analisador_respostas_google',
+      googleanalise:'analisador_google',
       transcritor:'transcritor_audio_video'
     };
     window.gtag('event','modulo_aberto',{ modulo: nomes[key] || key });
@@ -810,7 +810,7 @@ const homeBtn=document.getElementById('homeBtn');
 const MODULE_LABELS={
   atualizacoes:'Atualizações', historico:'Histórico de Documentos', configuracoes:'Configurações', contatodppr:'Contatos DP PR', contatos:'Contatos Institucionais',
   imei:'Consulta IMEI', operadora:'Consulta Operadora', envelopebusca:'Envelope de Busca', erb:'ERB / Antenas', fundorotativo:'Fundo Rotativo',
-  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', googleanalise:'Analisador de Respostas Google', transcritor:'Transcritor de Áudio e Vídeo'
+  filtroip:'Filtro IP', lesoes:'Laudo de Lesões', oficios:'Ofícios', qrcode:'QR Code', googleanalise:'Análise Google', transcritor:'Transcritor de Áudio e Vídeo'
 };
 const RECENT_KEY='pcprCentralRecentModulesV2';
 const UPDATE_SEEN_KEY='pcprCentralUpdatesSeenVersion';
@@ -1062,7 +1062,7 @@ if(!document.getElementById('backTop')){
     lesoes:'lesão laudo exame corpo delito ferimento apj',
     oficios:'ofício oficio informação informacao folha de rosto relatório relatorio auto de local despacho certidão certidao diária viagem perícia pericia oitiva penitenciária videoconferência coffee break',
     qrcode:'qr link url código codigo',
-    googleanalise:'google resposta ofício oficio imei android id conta gmail subscriber device profile aparelho celular data criação criacao login vínculo vinculo investigação investigacao',
+    googleanalise:'google resposta ofício oficio quebra sigilo lers forense imei android id conta gmail subscriber device profile aparelho celular data criação criacao login vínculo vinculo investigação investigacao fotos drive mapa pagamento',
     transcritor:'transcrição transcricao áudio audio vídeo video whisper depoimento terceira pessoa fala gravação gravacao mp3 mp4 wav m4a'
   };
   document.querySelectorAll('.module-card[data-open-module]').forEach(card=>{

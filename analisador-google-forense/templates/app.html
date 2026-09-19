@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANALISADOR GOOGLE FORENSE — PCPR</title>
+  <link rel="icon" type="image/png" href="/brasao">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-brasao" src="/brasao" alt="Brasão PCPR">
+        <div>
+          <div class="brand-kicker">POLÍCIA CIVIL DO PARANÁ</div>
+          <div class="brand-title">ANALISADOR GOOGLE FORENSE</div>
+          <div class="brand-sub">Produções Google LERS</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav">
+        <button data-view="importar" class="active">Importação</button>
+        <button data-view="painel">Painel da conta</button>
+        <button data-view="dispositivos">Dispositivos</button>
+        <button data-view="eventos">Eventos</button>
+        <button data-view="mapa">Localização</button>
+        <button data-view="fotos">Fotos</button>
+        <button data-view="arquivos">Arquivos</button>
+        <button data-view="gmail">Gmail</button>
+        <button data-view="pagamentos">Pagamentos</button>
+        <button data-view="pesquisas">Histórico pesquisa</button>
+        <button data-view="whatsapp">WhatsApp backup</button>
+        <button data-view="correlacao">Correlação</button>
+        <button data-view="relatorio">Relatório policial</button>
+      </nav>
+      <div class="sidebar-foot">
+        Processamento local · SQLite · originais preservados
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div>
+          <h1 id="viewTitle">Importação</h1>
+          <p id="viewHint">Selecione ZIPs de produção Google. Os originais não são modificados.</p>
+        </div>
+        <div class="top-actions">
+          <label class="crime-box">
+            <span>DATA DO CRIME</span>
+            <input type="datetime-local" id="crimeDate">
+          </label>
+          <label class="crime-box slim">
+            <span>Janela (h)</span>
+            <input type="number" id="crimeWindow" min="1" max="720" value="24">
+          </label>
+          <button class="btn gold" id="saveCrime" type="button">Aplicar</button>
+          <button class="btn" id="newCase" type="button">Novo caso</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-importar">
+        <div class="grid-2">
+          <article class="panel drop" id="dropzone">
+            <div class="drop-icon">ZIP</div>
+            <h2>Importar produção Google LERS</h2>
+            <p>Arraste o ZIP da resposta Google ou selecione no computador. O arquivo original é copiado e hasheado (SHA-256 / SHA-1 / MD5). A extração ocorre em pasta separada.</p>
+            <div class="row">
+              <button class="btn gold" id="pickZip" type="button">Selecionar ZIP</button>
+              <button class="btn" id="loadDemo" type="button">Carregar produção de demonstração</button>
+            </div>
+            <input id="zipInput" type="file" accept=".zip,application/zip" multiple hidden>
+            <div class="progress" id="progressWrap" hidden>
+              <div class="bar"><i id="progressFill"></i></div>
+              <div id="progressText">Importando…</div>
+            </div>
+          </article>
+          <article class="panel">
+            <h2>Produtos Google identificados</h2>
+            <div id="productList" class="chips"></div>
+            <h2 class="mt">Cadeia de custódia</h2>
+            <div id="importList" class="table-wrap"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-painel">
+        <div id="alertStrip"></div>
+        <div class="stats" id="statGrid"></div>
+        <div class="grid-2" id="accountCards"></div>
+      </section>
+
+      <section class="view" id="view-dispositivos">
+        <div id="deviceAlerts"></div>
+        <div id="deviceTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-eventos">
+        <div class="filters">
+          <label>De <input type="datetime-local" id="evFrom"></label>
+          <label>Até <input type="datetime-local" id="evTo"></label>
+          <button class="btn gold" id="evFilter" type="button">Filtrar período</button>
+          <button class="btn" id="evClear" type="button">Limpar</button>
+        </div>
+        <div id="eventTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-mapa">
+        <div class="filters">
+          <label class="check"><input type="checkbox" id="nearOnly"> Somente eventos próximos da DATA DO CRIME</label>
+          <button class="btn gold" id="reloadMap" type="button">Atualizar mapa</button>
+        </div>
+        <iframe id="mapFrame" class="map-frame" title="Mapa de localização Google"></iframe>
+        <div id="locTable" class="table-wrap mt"></div>
+      </section>
+
+      <section class="view" id="view-fotos">
+        <div class="filters">
+          <label class="check"><input type="checkbox" id="photoNear"> Fotos próximas ao crime</label>
+          <label class="check"><input type="checkbox" id="photoGps"> Fotos com localização</label>
+          <button class="btn gold" id="photoFilter" type="button">Aplicar filtros</button>
+        </div>
+        <div id="photoGrid" class="photo-grid"></div>
+      </section>
+
+      <section class="view" id="view-arquivos">
+        <div class="filters wrap">
+          <input type="search" id="fileQuery" placeholder="Pesquisar arquivo, proprietário ou palavra-chave">
+          <div class="chips" id="kwChips"></div>
+        </div>
+        <div id="fileTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-gmail">
+        <div class="filters">
+          <input type="search" id="mailQuery" placeholder="Buscar remetente, destinatário, assunto, texto, IP, ID">
+          <button class="btn gold" id="mailSearch" type="button">Buscar</button>
+        </div>
+        <div id="mailTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-pagamentos">
+        <div id="payTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-pesquisas">
+        <div id="searchTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-whatsapp">
+        <div class="notice">
+          <strong>Política forense:</strong> a ferramenta apenas identifica a existência de backup do WhatsApp no Google Drive.
+          Não há tentativa de quebra de criptografia.
+        </div>
+        <div id="waTable" class="table-wrap"></div>
+      </section>
+
+      <section class="view" id="view-correlacao">
+        <div class="chain" id="chain"></div>
+        <div id="corrAlerts"></div>
+        <svg id="graph" class="graph" viewBox="0 0 1200 640"></svg>
+      </section>
+
+      <section class="view" id="view-relatorio">
+        <article class="panel">
+          <h2>Gerar relatório policial</h2>
+          <p>O relatório reúne identificação da conta, dispositivos, linha temporal, locais, arquivos relevantes, fotos, pagamentos e conexões, além dos hashes de custódia dos ZIPs importados.</p>
+          <div class="row">
+            <a class="btn gold" href="/api/report/docx">GERAR RELATÓRIO DOCX</a>
+            <a class="btn gold" href="/api/report/pdf">GERAR RELATÓRIO PDF</a>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card">
+      <header><h3 id="modalTitle">Detalhe</h3><button type="button" id="modalClose">×</button></header>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

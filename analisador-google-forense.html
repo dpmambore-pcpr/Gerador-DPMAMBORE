@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+O Analisador Google Forense é uma aplicação local (SQLite). O conteúdo das
+produções Google LERS permanece neste computador. Esta página inicia o serviço
+local na porta 5050. No GitHub Pages (HTTPS) o navegador não embute http://127.0.0.1
+em iframe; a abertura ocorre em nova janela, por clique do usuário.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quebra de sigilo Google — PCPR</title>
+<style>
+:root{--ink:#111820;--accent:#183a31;--gold:#c5a253;--bg:#0b1210;--text:#e8efe9;--muted:#8ea099}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+.wrap{min-height:100%;display:grid;place-items:center;padding:28px}
+.card{width:min(760px,100%);border:1px solid #2a3f36;border-top:5px solid var(--gold);border-radius:16px;background:linear-gradient(180deg,#121c18,#0e1714);padding:28px}
+.kicker{font-size:11px;letter-spacing:1.2px;font-weight:800;color:var(--gold)}
+h1{margin:8px 0;font-size:24px}
+p{color:var(--muted);line-height:1.5}
+code{background:#0b1411;padding:2px 6px;border-radius:6px;color:#f4e7bd;word-break:break-all}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{appearance:none;border:1px solid #e2cf9d;background:var(--gold);color:var(--ink);border-radius:9px;min-height:42px;padding:0 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.btn.ghost{background:transparent;color:var(--text);border-color:#2a3f36}
+iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:#0b1210}
+.ok{color:#63c59a;font-weight:800}
+.warn{color:#efd994;font-weight:800}
+</style>
+</head>
+<body>
+<iframe id="appFrame" hidden title="Analisador Google Forense"></iframe>
+<div class="wrap" id="gate">
+  <article class="card">
+    <div class="kicker">POLÍCIA CIVIL DO PARANÁ</div>
+    <h1>Análise de quebra de sigilo</h1>
+    <p>Esta opção analisa a produção Google LERS neste computador. O GitHub Pages só hospeda a Central; o conteúdo da quebra não sobe para a internet.</p>
+    <p id="status">Verificando o analisador local na porta 5050…</p>
+    <div class="row">
+      <button class="btn" id="openLocal" type="button">Abrir analisador neste computador</button>
+      <button class="btn ghost" id="retry" type="button">Verificar novamente</button>
+    </div>
+    <p>No computador da delegacia, deixe isto ligado:</p>
+    <p><code>cd analisador-google-forense && python3 -m pip install -r requirements.txt && python3 app.py</code></p>
+    <p>Depois abra <code>http://127.0.0.1:5050</code> ou use o botão acima.</p>
+  </article>
+</div>
+<script>
+const FRAME=document.getElementById('appFrame');
+const GATE=document.getElementById('gate');
+const STATUS=document.getElementById('status');
+const LOCAL='http://127.0.0.1:5050';
+const httpsPage=location.protocol==='https:';
+function canEmbedLocal(){return !httpsPage;}
+async function probe(){
+  if(httpsPage){
+    STATUS.innerHTML='<span class="warn">A Central no GitHub é HTTPS e não consegue embutir o analisador local (HTTP). Clique em “Abrir analisador neste computador” depois de ligar o Python na porta 5050.</span>';
+    return false;
+  }
+  try{
+    const res=await fetch(LOCAL+'/api/health',{cache:'no-store'});
+    if(res.ok){
+      FRAME.src=LOCAL+'/';
+      FRAME.hidden=false;
+      GATE.hidden=true;
+      STATUS.innerHTML='<span class="ok">Serviço local encontrado.</span>';
+      return true;
+    }
+  }catch(_){}
+  STATUS.textContent='Serviço local não encontrado na porta 5050. Inicie o analisador neste computador e tente de novo.';
+  return false;
+}
+document.getElementById('openLocal').onclick=()=>{
+  window.open(LOCAL+'/','google-forense');
+};
+document.getElementById('retry').onclick=probe;
+probe();
+</script>
+</body>
+</html>
