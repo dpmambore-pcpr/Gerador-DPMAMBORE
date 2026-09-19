@@ -191,6 +191,12 @@ def ingest_accounts(case_id: int, root: Path) -> int:
         if key in seen:
             continue
         seen.add(key)
+        already = db.query_one(
+            "SELECT id FROM accounts WHERE case_id = ? AND lower(primary_email) = ?",
+            (case_id, key),
+        )
+        if already:
+            continue
         db.execute(
             """
             INSERT INTO accounts(

@@ -117,7 +117,9 @@ def api_import():
             tmp_path = Path(tmp.name)
         try:
             imported = importer.import_zip(case["id"], tmp_path, storage.filename)
-            analysis = ingest.analyze_import(case["id"], imported["extract_path"])
+            analysis = {}
+            if not imported.get("already_imported"):
+                analysis = ingest.analyze_import(case["id"], imported["extract_path"])
             imported["analysis"] = analysis
             results.append(imported)
         finally:
@@ -133,8 +135,10 @@ def api_demo():
     dest = Path(tempfile.gettempdir()) / f"lers_demo_{case['id']}.zip"
     sample.build_sample_zip(dest)
     imported = importer.import_zip(case["id"], dest, "Google_LERS_Producao_DEMO.zip")
-    analysis = ingest.analyze_import(case["id"], imported["extract_path"])
-    db.update_crime_date(case["id"], iso_or_none(sample.CRIME_ISO), 24)
+    analysis = {}
+    if not imported.get("already_imported"):
+        analysis = ingest.analyze_import(case["id"], imported["extract_path"])
+        db.update_crime_date(case["id"], iso_or_none(sample.CRIME_ISO), 24)
     dest.unlink(missing_ok=True)
     return jsonify(
         {

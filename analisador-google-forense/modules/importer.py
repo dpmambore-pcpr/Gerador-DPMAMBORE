@@ -59,6 +59,23 @@ def import_zip(case_id: int, zip_path: Path, original_name: str | None = None) -
     original_name = original_name or zip_path.name
     hashes = file_hashes(zip_path)
     size_bytes = zip_path.stat().st_size
+    existing = db.query_one(
+        "SELECT * FROM imports WHERE case_id = ? AND sha256 = ?",
+        (case_id, hashes["sha256"]),
+    )
+    if existing:
+        return {
+            "import_id": existing["id"],
+            "original_filename": existing["original_filename"],
+            "stored_path": existing["stored_path"],
+            "extract_path": existing["extract_path"],
+            "file_count": existing["file_count"],
+            "hashes": {"sha256": existing["sha256"], "sha1": existing["sha1"], "md5": existing["md5"]},
+            "size_bytes": existing["size_bytes"],
+            "products": {},
+            "extracted_files": existing["file_count"],
+            "already_imported": True,
+        }
     stamp = now_iso().replace(":", "").replace("+", "_")
     stored_name = f"{stamp}_{hashes['sha256'][:12]}_{Path(original_name).name}"
     stored_path = UPLOAD_DIR / stored_name
