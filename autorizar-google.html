@@ -14,6 +14,7 @@ main{max-width:680px;margin:auto;padding:18px}
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
 .info{border-left:4px solid var(--gold);background:#fffaf0;padding:12px;margin-bottom:14px;line-height:1.5;font-size:14px}
 .field{margin:13px 0}.label{font-size:11px;font-weight:800;text-transform:uppercase;color:#68736e}.value{font-size:15px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.value.mono{font-size:12px;font-weight:600;color:#3d4a45}
 button{width:100%;min-height:54px;border-radius:10px;border:1px solid var(--green2);font-size:16px;font-weight:800;margin-top:10px}
 .primary{background:linear-gradient(#326b58,var(--green));color:#fff}.secondary{background:#f4efe2;color:#17202a;border-color:#cdbd95}
 button:disabled{opacity:.5}
@@ -23,28 +24,31 @@ button:disabled{opacity:.5}
 .hint{font-size:12px;color:#65706b;line-height:1.5;margin-top:12px}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
 <header><b>Central PCPR · Google Drive</b><small>Autorização da pasta de assinatura</small></header>
 <main>
 <div class="card">
-  <div class="info"><b>Autorização direta da pasta.</b><br>Esta página abre fora do quadro da Central para que a autorização do Google seja concluída de forma confiável. Ela autentica a conta institucional e valida diretamente a pasta informada no link — sem abrir o seletor de arquivos.</div>
+  <div class="info" id="flowInfo"><b>Autorização direta da pasta.</b><br>Esta página abre fora do quadro da Central para que o Google conclua a autorização. No computador ela abre o seletor de pastas; no celular, valida o link já cadastrado.</div>
   <div class="field"><div class="label">Autoridade</div><div class="value" id="authority">—</div></div>
   <div class="field"><div class="label">Pasta configurada</div><div class="value" id="folder">—</div></div>
+  <div class="field"><div class="label">Link salvo</div><div class="value mono" id="folderUrl">—</div></div>
   <button id="authorize" class="primary" type="button" disabled>CARREGANDO GOOGLE…</button>
   <button id="back" class="secondary" type="button">VOLTAR À CENTRAL</button>
   <div id="status" class="status"></div>
-  <div class="hint">Entre com a conta institucional da Delegacia cadastrada para a integração. A pasta usada será exatamente a do link salvo na Configuração Geral. Para trocar a pasta, altere primeiro o link. No computador o seletor de pasta continua disponível normalmente.</div>
+  <div class="hint" id="flowHint">Entre com a conta institucional da Delegacia cadastrada para a integração. A pasta usada deve ser a do link salvo na Configuração Geral.</div>
 </div>
 </main>
 <script src="pcpr-config.js?v=3.0.1"></script>
-<script src="pcpr-drive.js?v=3.0.5"></script>
+<script src="pcpr-drive.js?v=3.0.6"></script>
 <script>
 (function(){
   'use strict';
   const $=id=>document.getElementById(id);
   const params=new URLSearchParams(location.search);
   const requested=(params.get('authority')||'').trim();
+  const mobile=!!(window.PCPRDrive&&PCPRDrive.isMobileOrStandalone&&PCPRDrive.isMobileOrStandalone());
 
   function cfg(){return window.PCPRConfig&&PCPRConfig.get?PCPRConfig.get():JSON.parse(localStorage.getItem('pcpr.configGeralUnidade.v1')||'{}')}
   function save(x){return window.PCPRConfig&&PCPRConfig.save?PCPRConfig.save(x):(localStorage.setItem('pcpr.configGeralUnidade.v1',JSON.stringify(x)),x)}
@@ -61,6 +65,7 @@ button:disabled{opacity:.5}
     $('authority').textContent=a?.nome||'Autoridade não encontrada';
     const id=window.PCPRDrive?.extractFolderId(a?.driveFolderId||a?.driveFolderUrl)||'';
     $('folder').textContent=a?.driveFolderName || (id?'Pasta configurada pelo link':'Nenhuma pasta configurada');
+    $('folderUrl').textContent=a?.driveFolderUrl || (id?window.PCPRDrive.folderUrl(id):'—');
     return {c,a,id};
   }
 
@@ -73,20 +78,32 @@ button:disabled{opacity:.5}
     if(!id)return message('Volte à Configuração Geral e cole primeiro o link da pasta.',true);
     const drive=c.drive||{};
     if(!drive.clientId)return message('Importe primeiro o arquivo de integração Google na Configuração Geral.',true);
+    if(!mobile&&!drive.apiKey)return message('A integração Google está incompleta. Importe novamente o arquivo de integração.',true);
 
-    b.disabled=true;b.textContent='AUTORIZANDO CONTA…';
-    message('Aguarde. O Google será aberto somente para autenticar a conta institucional. A Central não abrirá o seletor de pasta no celular.',false);
+    b.disabled=true;
     try{
-      const tok=await PCPRDrive.getAccessToken(drive,true);
-      b.textContent='VALIDANDO PASTA…';
-      const checked=await PCPRDrive.validateConfiguredFolder(drive,id,tok);
+      let picked;
+      if(mobile){
+        b.textContent='AUTORIZANDO CONTA…';
+        message('Aguarde. O Google será aberto somente para autenticar a conta institucional. No celular a Central não abre o seletor de pasta.',false);
+        const tok=await PCPRDrive.getAccessToken(drive,true);
+        b.textContent='VALIDANDO PASTA…';
+        picked=await PCPRDrive.validateConfiguredFolder(drive,id,tok);
+      }else{
+        b.textContent='ABRINDO SELETOR DE PASTA…';
+        message('Selecione no Google a pasta cadastrada para esta autoridade. O seletor precisa permanecer aberto até você escolher a pasta.',false);
+        picked=await PCPRDrive.pickFolder(drive,id);
+        if(picked.id!==id&&!confirm('A pasta selecionada no Google é diferente do link colado.\n\nUsar a pasta selecionada?')){
+          throw new Error('Autorização cancelada para conferência da pasta.');
+        }
+      }
       const target=fold(a.nome);
       c.autoridades=(Array.isArray(c.autoridades)?c.autoridades:[]).map(x=>{
         if(fold(x&&x.nome)!==target)return x;
-        return {...x,driveFolderId:checked.id,driveFolderUrl:checked.url,driveFolderName:checked.name||'Pasta do Google Drive',driveFolderAuthorized:true};
+        return {...x,driveFolderId:picked.id,driveFolderUrl:picked.url,driveFolderName:picked.name||'Pasta do Google Drive',driveFolderAuthorized:true};
       });
       save(c);
-      message('Conta autenticada e pasta validada com sucesso. Você já pode voltar à Central e enviar os documentos.',false);
+      message('Conta autenticada e pasta autorizada com sucesso. Você já pode voltar à Central e enviar os ofícios.',false);
       b.textContent='AUTORIZADA ✓';
       b.disabled=true;
       refresh();
@@ -98,17 +115,34 @@ button:disabled{opacity:.5}
     }
   };
 
-  function waitGoogleReady(){
+  function readyToAuthorize(){
+    return !!(window.PCPRDrive&&window.google?.accounts?.oauth2);
+  }
+  function enableButton(){
     const b=$('authorize');
-    if(window.google?.accounts?.oauth2&&window.PCPRDrive){
+    b.disabled=false;
+    b.textContent='AUTORIZAR PASTA CONFIGURADA';
+  }
+  function waitGoogleReady(started){
+    const b=$('authorize');
+    if(readyToAuthorize()){enableButton();return;}
+    if(Date.now()-started>20000){
       b.disabled=false;
-      b.textContent='AUTORIZAR PASTA CONFIGURADA';
+      b.textContent='TENTAR AUTORIZAR MESMO ASSIM';
+      message('O Google demorou para carregar. Verifique a conexão, permita pop-ups e clique novamente. Se o seletor não abrir, recarregue esta página.',true);
       return;
     }
-    setTimeout(waitGoogleReady,120);
+    setTimeout(()=>waitGoogleReady(started),120);
+  }
+  if(mobile){
+    $('flowInfo').innerHTML='<b>Validação no celular.</b><br>Esta página autentica a conta institucional e confere o link já cadastrado. O seletor de pasta do Google não é usado no celular.';
+    $('flowHint').textContent='Se a validação informar que a pasta ainda não está disponível, autorize a mesma pasta uma vez no computador, com a mesma conta institucional da DP.';
+  }else{
+    $('flowInfo').innerHTML='<b>Seletor de pasta no computador.</b><br>Esta página abre fora do quadro da Central. Depois de autenticar a conta, o Google mostra as pastas para você escolher o destino dos ofícios — inclusive pastas compartilhadas.';
+    $('flowHint').textContent='Escolha a pasta do link salvo. Se escolher outra, a Central pergunta se deve substituir o destino. Permita pop-ups se o Google não aparecer.';
   }
   refresh();
-  waitGoogleReady();
+  waitGoogleReady(Date.now());
 })();
 </script>
 </body>

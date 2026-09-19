@@ -170,7 +170,7 @@ footer{color:var(--suave) !important;}
 
 <script src="pcpr-core.js?v=3.0.0"></script>
 <script src="pcpr-config.js?v=3.0.0"></script>
-<script src="pcpr-drive.js?v=3.0.0"></script>
+<script src="pcpr-drive.js?v=3.0.6"></script>
 
 <script>window.PCPR_DOCNAME_CONFIG={"targetSelector":"#btnOdt","actionSelectors":["#btnOdt","#btnPdf","#btnDrive","#btnZip"],"cloudSelectors":["#btnDrive"]};</script>
 <script src="pcpr-documento.js?v=3.0.0"></script>
@@ -1908,6 +1908,11 @@ async function preparaDestinoDrive(){
   var d=PCPRDrive.normalizeDrive(cfg.drive);
   if(!d.clientId||!d.apiKey)throw new Error("A pasta está cadastrada, mas a integração Google ainda não está completa. Abra Configuração Geral → Google Drive → Configuração técnica e preencha OAuth Client ID e API Key.");
   if(!a.driveFolderAuthorized){
+    if((PCPRDrive.isInsideIframe&&PCPRDrive.isInsideIframe())||(PCPRDrive.isMobileOrStandalone&&PCPRDrive.isMobileOrStandalone())){
+      driveStatus("Abrindo a página de autorização da pasta…");
+      if(PCPRDrive.openStandaloneAuthorization)PCPRDrive.openStandaloneAuthorization(a.nome);
+      throw new Error("A pasta ainda não foi autorizada. Conclua a autorização na página que acabou de abrir e, em seguida, envie o ofício novamente.");
+    }
     driveStatus("Primeiro envio: autorize a pasta no Google para limitar o acesso somente ao destino escolhido.");
     var picked=await PCPRDrive.pickFolder(d,folderId);
     if(picked.id!==folderId&&!confirm("A pasta selecionada no Google é diferente da pasta cadastrada. Deseja substituir o destino de "+a.nome+" pela pasta selecionada?"))throw new Error("Envio cancelado para conferência da pasta.");

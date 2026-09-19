@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-const VERSION='3.0.5';
+const VERSION='3.0.6';
 const SCOPE='https://www.googleapis.com/auth/drive.file';
 let token=null,tokenExp=0,tokenClient=null,tokenClientId='';
 const scriptPromises={};
@@ -34,16 +34,32 @@ function extractFolderId(input){
 }
 function folderUrl(id){id=clean(id);return id?'https://drive.google.com/drive/folders/'+encodeURIComponent(id):''}
 function pickerOrigin(){
-  try{
-    const t=global.top&&global.top.location;
-    if(t&&t.protocol&&t.host)return t.protocol+'//'+t.host;
-  }catch(_){}
   try{return global.location.protocol+'//'+global.location.host}catch(_){return ''}
+}
+function isInsideIframe(){
+  try{return !!(global.top&&global.top!==global);}catch(_){return true;}
 }
 function isMobileOrStandalone(){
   const ua=navigator.userAgent||'';
   return /iPhone|iPad|iPod|Android/i.test(ua) ||
     !!(global.matchMedia&&global.matchMedia('(display-mode: standalone)').matches);
+}
+function withTimeout(promise,ms,message){
+  return new Promise((resolve,reject)=>{
+    const t=setTimeout(()=>reject(new Error(message)),ms);
+    Promise.resolve(promise).then(v=>{clearTimeout(t);resolve(v);},e=>{clearTimeout(t);reject(e);});
+  });
+}
+function standaloneAuthorizationUrl(authorityName){
+  return 'autorizar-google.html?v=3.0.7&authority='+encodeURIComponent(clean(authorityName));
+}
+function openStandaloneAuthorization(authorityName){
+  const url=standaloneAuthorizationUrl(authorityName);
+  try{
+    if(global.top&&global.top!==global){global.top.location.href=url;return url;}
+  }catch(_){}
+  try{global.location.href=url;}catch(_){}
+  return url;
 }
 function normalizeDrive(d){d=(d&&typeof d==='object')?d:{};return {clientId:clean(d.clientId),apiKey:clean(d.apiKey),appId:clean(d.appId),scope:SCOPE}}
 function authorityList(cfg){
@@ -84,21 +100,24 @@ function loadScript(src,key){
   return scriptPromises[key];
 }
 async function ensureGoogleLibraries(withPicker){
-  await loadScript('https://accounts.google.com/gsi/client','gis');
+  await withTimeout(loadScript('https://accounts.google.com/gsi/client','gis'),20000,'O Google Identity não carregou. Verifique a conexão e recarregue a página.');
   if(withPicker){
-    await loadScript('https://apis.google.com/js/api.js','gapi');
-    await new Promise((resolve,reject)=>{try{global.gapi.load('picker',{callback:resolve,onerror:()=>reject(new Error('Não foi possível carregar o Google Picker.'))});}catch(e){reject(e)}});
+    if(global.google&&global.google.picker)return;
+    await withTimeout(loadScript('https://apis.google.com/js/api.js','gapi'),20000,'A biblioteca do Google Picker não carregou. Verifique a conexão e recarregue a página.');
+    if(global.google&&global.google.picker)return;
+    await withTimeout(new Promise((resolve,reject)=>{try{global.gapi.load('picker',{callback:resolve,onerror:()=>reject(new Error('Não foi possível carregar o Google Picker.'))});}catch(e){reject(e)}}),20000,'O Google Picker não terminou de carregar. Recarregue a página e tente novamente.');
   }
 }
 function requestAccessTokenOnce(d,promptValue){
   return new Promise((resolve,reject)=>{
     let settled=false;
-    const finishReject=(err)=>{if(settled)return;settled=true;reject(err instanceof Error?err:new Error(String(err||'Falha na autenticação Google.')))};
+    const timer=setTimeout(()=>finishReject(new Error('A autorização do Google não foi concluída. Feche a janela do Google, permita pop-ups e clique novamente em Autorizar pasta.')),90000);
+    const finishReject=(err)=>{if(settled)return;settled=true;clearTimeout(timer);reject(err instanceof Error?err:new Error(String(err||'Falha na autenticação Google.')))};
     const cb=(resp)=>{
       if(settled)return;
       if(resp&&resp.error){finishReject(new Error(resp.error_description||resp.error));return;}
       if(!resp||!resp.access_token){finishReject(new Error('O Google não retornou um token de acesso.'));return;}
-      settled=true;
+      settled=true;clearTimeout(timer);
       token=resp.access_token;
       tokenExp=Date.now()+((Number(resp.expires_in)||3300)*1000);
       saveStoredToken();
@@ -159,6 +178,11 @@ async function getAccessToken(settings,forcePrompt){
 
 async function pickFolder(settings,startFolderId){
   const d=normalizeDrive(settings);if(!d.clientId)throw new Error('OAuth Client ID do Google Drive não configurado.');if(!d.apiKey)throw new Error('API Key do Google Picker não configurada.');
+  if(isInsideIframe()){
+    const err=new Error('A seleção de pasta não conclui dentro do quadro da Central. Abra Configurações → Google Drive → Autorizar pasta.');
+    err.code='PICKER_NEEDS_TOP_LEVEL';
+    throw err;
+  }
   let accessToken='';
   if(hasLiveToken())accessToken=token;
   else{
@@ -171,32 +195,38 @@ async function pickFolder(settings,startFolderId){
     accessToken=await requestAccessTokenOnce(d,'consent');
   }
   await ensureGoogleLibraries(true);
-  return new Promise((resolve,reject)=>{
+  if(!global.google||!global.google.picker)throw new Error('O Google Picker não ficou disponível. Recarregue a página e tente novamente.');
+  return withTimeout(new Promise((resolve,reject)=>{
     try{
-      const view=new global.google.picker.DocsView(global.google.picker.ViewId.FOLDERS)
-        .setIncludeFolders(true).setSelectFolderEnabled(true).setMode(global.google.picker.DocsViewMode.LIST);
-      const start=extractFolderId(startFolderId);if(start)view.setFileIds(start);
+      const gp=global.google.picker;
+      const view=new gp.DocsView(gp.ViewId.FOLDERS)
+        .setIncludeFolders(true).setSelectFolderEnabled(true).setMode(gp.DocsViewMode.LIST);
+      // Não usar setFileIds/setParent no primeiro acesso: com o escopo drive.file
+      // isso deixa o seletor em carregamento infinito e parece que a Central travou.
+      if(typeof view.setEnableDrives==='function')view.setEnableDrives(true);
       const origin=pickerOrigin();
-      let builder=new global.google.picker.PickerBuilder()
+      let builder=new gp.PickerBuilder()
         .addView(view)
         .setOAuthToken(accessToken)
-        .setDeveloperKey(d.apiKey);
+        .setDeveloperKey(d.apiKey)
+        .setLocale('pt-BR');
       if(origin)builder=builder.setOrigin(origin);
+      if(gp.Feature&&gp.Feature.SUPPORT_DRIVES)builder=builder.enableFeature(gp.Feature.SUPPORT_DRIVES);
       builder=builder.setCallback(data=>{
-        const action=data&&data[global.google.picker.Response.ACTION];
-        if(action===global.google.picker.Action.CANCEL){reject(new Error('Seleção de pasta cancelada.'));return;}
-        if(action!==global.google.picker.Action.PICKED)return;
-        const doc=(data[global.google.picker.Response.DOCUMENTS]||[])[0];if(!doc){reject(new Error('Nenhuma pasta foi selecionada.'));return;}
-        const id=doc[global.google.picker.Document.ID]||'';
-        const name=doc[global.google.picker.Document.NAME]||'Pasta do Google Drive';
-        const mime=doc[global.google.picker.Document.MIME_TYPE]||'';
+        const action=data&&data[gp.Response.ACTION];
+        if(action===gp.Action.CANCEL){reject(new Error('Seleção de pasta cancelada.'));return;}
+        if(action!==gp.Action.PICKED)return;
+        const doc=(data[gp.Response.DOCUMENTS]||[])[0];if(!doc){reject(new Error('Nenhuma pasta foi selecionada.'));return;}
+        const id=doc[gp.Document.ID]||'';
+        const name=doc[gp.Document.NAME]||'Pasta do Google Drive';
+        const mime=doc[gp.Document.MIME_TYPE]||'';
         if(mime&&mime!=='application/vnd.google-apps.folder'){reject(new Error('Selecione uma pasta do Google Drive.'));return;}
-        resolve({id,name,url:folderUrl(id),accessToken});
+        resolve({id,name,url:folderUrl(id),accessToken,expectedId:extractFolderId(startFolderId)});
       });
       if(d.appId)builder=builder.setAppId(d.appId);
       builder.build().setVisible(true);
     }catch(e){reject(e)}
-  });
+  }),180000,'A seleção de pasta no Google não foi concluída. Feche a janela do Google se estiver aberta e clique novamente em Autorizar pasta.');
 }
 
 async function validateConfiguredFolder(settings,folderId,accessToken){
@@ -284,8 +314,11 @@ async function prepareDestination(authorityName,options){
   if(!isMobileOrStandalone()&&!d.apiKey)throw new Error('A integração Google Drive ainda não está completa. Importe novamente o arquivo de integração Google.');
   let accessToken='';
   if(options.forcePicker||!a.driveFolderAuthorized){
-    if(isMobileOrStandalone()){
-      throw new Error('No celular, a Central não abre o seletor de pasta. Abra Configurações → Google Drive → Autorizar pasta para validar o link já configurado.');
+    if(isInsideIframe()||isMobileOrStandalone()){
+      const err=new Error('A pasta ainda não foi autorizada. Abra Configurações → Google Drive → Autorizar pasta para esta autoridade e, depois, envie o ofício novamente.');
+      err.code='NEEDS_FOLDER_AUTHORIZATION';
+      err.authorityName=a.nome;
+      throw err;
     }
     const picked=await pickFolder(d,id);
     cfg=savePickedFolder(cfg,a.nome,picked);
@@ -318,8 +351,8 @@ async function uploadPdfForAuthority(opts){
         clearToken();dest.accessToken=await getAccessToken(dest.drive,true);
         result=await uploadFile(bytes,filename,'application/pdf',dest.folderId,dest.drive,dest.accessToken);
       }else if(e&&(e.status===403||e.status===404)&&!opts.forcePicker){
-        if(isMobileOrStandalone()){
-          throw new Error('A pasta configurada precisa ser reautorizada. No celular, abra Configurações → Google Drive → Autorizar pasta. Se a validação informar que a pasta ainda não está disponível, autorize essa mesma pasta uma vez no computador com a mesma conta institucional da DP.');
+        if(isInsideIframe()||isMobileOrStandalone()){
+          throw new Error('A pasta configurada precisa ser reautorizada. Abra Configurações → Google Drive → Autorizar pasta. Se estiver no celular e a validação informar que a pasta ainda não está disponível, autorize essa mesma pasta uma vez no computador com a mesma conta institucional da DP.');
         }
         const picked=await pickFolder(dest.drive,dest.folderId);
         const cfg=savePickedFolder(dest.cfg,dest.authority.nome,picked);
@@ -375,9 +408,9 @@ async function uploadElementsPdfForAuthority(opts){
 function clearToken(){token=null;tokenExp=0;tokenClient=null;tokenClientId='';clearStoredToken();}
 // Pré-carrega as bibliotecas do Google enquanto o usuário preenche o formulário.
 // Assim, no iOS, o clique em "Autorizar pasta" pode abrir o OAuth imediatamente.
-function warmupGoogle(){ensureGoogleLibraries(true).catch(()=>{});}
+function warmupGoogle(){ensureGoogleLibraries(!(isInsideIframe()||isMobileOrStandalone())).catch(()=>{});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(warmupGoogle,0),{once:true});
 else setTimeout(warmupGoogle,0);
 
-global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,pickerOrigin,isMobileOrStandalone,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,validateConfiguredFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
+global.PCPRDrive={VERSION,SCOPE,extractFolderId,folderUrl,pickerOrigin,isInsideIframe,isMobileOrStandalone,withTimeout,standaloneAuthorizationUrl,openStandaloneAuthorization,normalizeDrive,authorityList,defaultAuthority,findAuthority,getAccessToken,pickFolder,validateConfiguredFolder,uploadFile,getGeneralConfig,prepareDestination,safeFileName,elementsToPdfBlob,uploadPdfForAuthority,uploadElementsPdfForAuthority,clearToken};
 })(window);

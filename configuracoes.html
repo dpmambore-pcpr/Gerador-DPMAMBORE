@@ -134,7 +134,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 <div class="section-body" id="configSectionBody5" hidden>
 <div class="drive-app-status bad" id="driveAppStatus"><div class="drive-state"><span class="drive-state-dot"></span><div><b id="driveAppStatusText">Integração Google não configurada</b><small id="driveAppStatusSub">Importe o arquivo de integração Google fornecido pela Central.</small></div></div><div class="drive-share-actions"><button id="importDriveTechBtn" class="secondary" type="button">IMPORTAR INTEGRAÇÃO GOOGLE</button><input id="importDriveTechFile" type="file" accept="application/json,.json" hidden><button id="requestDriveTechBtn" class="secondary" type="button">SOLICITAR INTEGRAÇÃO GOOGLE</button></div></div>
 <div class="request-note show" id="driveRequestNote"><b>Para solicitar a integração:</b> envie um e-mail para <b>dpmambore@pc.pr.gov.br</b> solicitando o arquivo de integração Google e informe, no corpo da mensagem, <b>qual é o e-mail institucional da própria Delegacia que será utilizado para autorizar o Google Drive</b>. Evite informar contas pessoais de servidores ou APJs.<br><b>Após a solicitação:</b> o responsável pela Central cadastrará o e-mail institucional informado como <b>usuário de teste no Google Cloud</b> e devolverá o arquivo de integração. Depois, nesta tela, use <b>IMPORTAR INTEGRAÇÃO GOOGLE</b> e autorize a pasta com a mesma conta institucional cadastrada.<br><b>Importante:</b> a mesma conta institucional pode ser utilizada em diferentes computadores da unidade; no Google Cloud, a vaga de usuário de teste é contabilizada pela conta/e-mail, e não por dispositivo.</div>
-<div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> informe somente a pasta que receberá os documentos da autoridade. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador e não alteram as pastas das demais unidades.</div>
+<div class="integration" style="margin-bottom:10px"><b>Configuração de cada Delegacia:</b> cole o link da pasta e clique em <b>Autorizar pasta</b>. A Central abre uma página fora deste quadro para o Google não travar. No computador, selecione a pasta no seletor do Google; no celular, a conta é autenticada e o link já cadastrado é validado. Cada DP pode utilizar uma pasta diferente. O link e a autorização ficam salvos neste navegador.</div>
 <div class="drive-grid" id="driveAuthorities"></div>
 <!-- Dados técnicos necessários à integração. Permanecem fora da interface comum. -->
 <input id="driveClientId" type="hidden" autocomplete="off">
@@ -161,7 +161,7 @@ button:disabled{opacity:.45;cursor:not-allowed}.actions{display:flex;gap:8px;fle
 
 <script src="pcpr-core.js?v=3.0.1"></script>
 <script src="pcpr-config.js?v=3.0.1"></script>
-<script src="pcpr-drive.js?v=3.0.5"></script>
+<script src="pcpr-drive.js?v=3.0.6"></script>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), API=window.PCPRConfig, DEF=API.DEFAULT;
@@ -228,7 +228,11 @@ function useStandaloneGoogleAuthorization(){
     (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);
 }
 function openStandaloneGoogleAuthorization(authorityName){
-  const url='autorizar-google.html?v=3.0.6&authority='+encodeURIComponent(authorityName||'');
+  if(window.PCPRDrive&&typeof PCPRDrive.openStandaloneAuthorization==='function'){
+    PCPRDrive.openStandaloneAuthorization(authorityName);
+    return;
+  }
+  const url='autorizar-google.html?v=3.0.7&authority='+encodeURIComponent(authorityName||'');
   try{
     if(window.top&&window.top!==window)window.top.location.href=url;
     else window.location.href=url;

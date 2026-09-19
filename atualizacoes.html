@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.5: Pasta de envio direto de ofícios — seletor do Google não trava mais no quadro da Central -->
 <!-- v3.6.4: Relatório de Viagem — adicionar servidores no mesmo documento -->
 <!-- v3.6.3: Filtro IP — ofício unificado ou um quadro por número de interesse -->
 <!-- v3.6.2: Filtro IP — relatório de correlação com todos os IPs, por número e WhatsApp -->
@@ -65,7 +66,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.4</span>
+      <span class="version">VERSÃO ATUAL · v3.6.5</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -78,8 +79,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.4">
-        <div class="item-head"><span class="item-ver">v3.6.4</span><span class="item-date">19/09/2026</span><span class="tag new">RELATÓRIO DE VIAGEM</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.5">
+        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag fix">GOOGLE DRIVE</span><span class="tag improve">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+        <h3>Configurar a pasta de envio direto de ofícios não trava mais</h3>
+        <ul>
+          <li>O botão <b>Autorizar pasta</b> sai do quadro da Central e abre o Google numa página própria, para a autorização terminar.</li>
+          <li>No computador o seletor de pastas deixa de ficar em carregamento infinito ao usar o link já colado, inclusive em pastas compartilhadas.</li>
+          <li>Se a pasta ainda não estiver autorizada, o envio do ofício encaminha para essa mesma tela em vez de congelar a Central.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.4">
+        <div class="item-head"><span class="item-ver">v3.6.4</span><span class="item-date">19/09/2026</span><span class="tag new">RELATÓRIO DE VIAGEM</span><span class="tag improve">OFÍCIOS</span></div>
         <h3>Relatório de viagem admite vários servidores no mesmo documento</h3>
         <ul>
           <li>O botão <b>Adicionar servidor</b> inclui quem viajou junto, cada um com nome e RG.</li>
