@@ -1,9 +1,10 @@
-const CACHE_VERSION='pcpr-central-v3.0.31';
+const CACHE_VERSION='pcpr-central-v3.0.32';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
   './',
   './analisador-google.html',
+  './analisador-google-hub.html',
   './analisador-google-forense.html',
   './MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt',
   './apple-touch-icon-precomposed.png',
