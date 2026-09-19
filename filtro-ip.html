@@ -80,6 +80,10 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 .arq b{color:var(--azul)}
 .arq small{color:var(--suave)}
 .arq button{min-height:32px;padding:4px 10px}
+.arq-acoes{display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0}
+.arq.off{opacity:.62;background:#f0eee8}
+.arq.off b{text-decoration:line-through;color:var(--suave)}
+th.num-origem{min-width:9.5em}
 .corr{background:#edf4f1;border:1px solid #cfe1d9;border-left:4px solid var(--ok);padding:10px 12px;border-radius:4px;margin-bottom:12px;font-size:12.5px}
 .corr.vazia{background:#fff8e6;border-color:#e8d49a;border-left-color:var(--alerta)}
 .rel-bloco{border:1px solid var(--borda);border-radius:8px;padding:10px 12px;margin-bottom:10px}
@@ -180,12 +184,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.6.5",
+  version: "3.6.6",
   releaseDate: "19/09/2026",
   changes: [
-    "No Filtro de IPs, dá para marcar vários arquivos de uma vez: se escolher 3, os 3 sobem.",
-    "O clique e o botão de acrescentar usam a mesma seleção múltipla da caixa de arquivos.",
-    "Arrastar vários ZIP/PDF/HTML para a área também carrega todos no mesmo inquérito."
+    "No Filtro de IPs, cada arquivo tem Desmarcar e Remover: desmarcar tira da análise sem apagar.",
+    "A tabela de resultados mostra o número que originou cada conexão.",
+    "Dá para ordenar o resultado por número ou por data."
   ]
 });
 </script>
@@ -227,6 +231,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <input type="file" id="file" class="hide" accept=".zip,.pdf,.html,.htm,.txt,.csv" multiple>
   </div>
   <div id="listaArqs" class="arqs"></div>
+  <div id="dicaArqs" class="hide" style="margin-top:8px;font-size:11.5px;color:var(--suave)">Desmarcar tira o arquivo da análise e dos ofícios, mas ele permanece na lista. Remover exclui o documento do inquérito.</div>
 
   <div class="opts">
     <label>Fuso:
@@ -273,6 +278,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <h2>2. Resultado</h2>
   <div class="stats" id="stats"></div>
   <div id="avisoV4"></div>
+  <div class="linha" id="linhaOrdem" style="margin-bottom:10px">
+    <span style="font-size:12.5px;color:var(--suave)">Ordenar:</span>
+    <button type="button" class="sec" id="btnOrdNumero">Ordenar por número</button>
+    <button type="button" id="btnOrdData">Ordenar por data</button>
+  </div>
   <div class="wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
   <div class="linha" style="margin-top:12px">
     <button id="btnCSV">Baixar CSV (Excel)</button>
@@ -280,12 +290,12 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     <button class="sec" id="btnASN">Identificar operadoras (online)</button>
     <label style="font-size:12.5px;color:var(--suave)">Token ipinfo (opcional — não é salvo): <input type="password" id="token" size="16" autocomplete="off" placeholder="deixe vazio p/ modo livre"></label>
   </div>
-  <div style="margin-top:6px;font-size:11.5px;color:var(--suave)">As planilhas trazem o número investigado de cada conexão. IPs coincidentes entre números saem em dourado, com a coluna Coincidência preenchida. A consulta sai pelo navegador e usa a rede/proxy já configurada na máquina. Se um token pessoal for informado, ele é usado somente nesta tela e não é armazenado pela Central.</div>
+  <div style="margin-top:6px;font-size:11.5px;color:var(--suave)">Cada linha traz o número que originou a conexão. Use os botões para ordenar por número ou por data. IPs coincidentes entre números saem em dourado, com a coluna Coincidência preenchida. A consulta sai pelo navegador e usa a rede/proxy já configurada na máquina. Se um token pessoal for informado, ele é usado somente nesta tela e não é armazenado pela Central.</div>
 </div>
 
 <div class="card hide" id="cardRel">
   <h2>3. Relatório por número e correlação</h2>
-  <div class="aviso">Uso interno. Este relatório analisa todos os IPs de todos os documentos, ignora o filtro da tela, separa por número de interesse e por resposta do WhatsApp, e lista cada conexão com o respectivo horário. Nos ofícios, a seção 4 define se os IPs saem unificados ou em um quadro por número.</div>
+  <div class="aviso">Uso interno. Este relatório analisa todos os IPs dos documentos marcados, ignora o filtro da tela, separa por número de interesse e por resposta do WhatsApp, e lista cada conexão com o respectivo horário. Arquivos desmarcados não entram. Nos ofícios, a seção 4 define se os IPs saem unificados ou em um quadro por número.</div>
   <div id="relatorio"></div>
   <div class="linha" style="margin-top:12px">
     <button id="btnRelDocx">Baixar relatório .docx</button>
@@ -472,7 +482,52 @@ var IPV4 = "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\
 var TS   = "(\\d{4}-\\d{2}-\\d{2})[ T]+(\\d{2}:\\d{2}:\\d{2})(?:\\s*(?:UTC|Z))?";
 var SCAN = new RegExp("(" + TS + ")|(" + IPV6 + ")|(" + IPV4 + ")", "g");
 
-var estado = { linhas: [], asn: {}, arquivos: [] };
+var estado = { linhas: [], asn: {}, arquivos: [], desmarcados: {} };
+var ordemResultado = "data";
+
+function chaveArquivo(l){
+  return String((l && (l.arquivoOrigem || l.arquivo)) || "");
+}
+function arquivoAtivo(nome){
+  return !estado.desmarcados[String(nome || "")];
+}
+function linhasAtivas(fonte){
+  return (fonte || estado.linhas || []).filter(function(l){
+    return arquivoAtivo(chaveArquivo(l));
+  });
+}
+function chaveDataHora(l){
+  return String((l && l.data) || "") + String((l && l.hora) || "");
+}
+function comparaPorData(a, b){
+  var ta = chaveDataHora(a), tb = chaveDataHora(b);
+  if(ta !== tb) return ta > tb ? -1 : 1;
+  var na = rotuloNumero(a), nb = rotuloNumero(b);
+  if(na !== nb) return na.localeCompare(nb, "pt-BR", {numeric: true});
+  return String(a.ip || "").localeCompare(String(b.ip || ""));
+}
+function comparaPorNumero(a, b){
+  var na = rotuloNumero(a), nb = rotuloNumero(b);
+  if(na !== nb) return na.localeCompare(nb, "pt-BR", {numeric: true});
+  return comparaPorData(a, b);
+}
+function ordenaResultado(linhas, modo){
+  var ls = (linhas || []).slice();
+  ls.sort((modo || ordemResultado) === "numero" ? comparaPorNumero : comparaPorData);
+  return ls;
+}
+function setOrdemResultado(modo){
+  ordemResultado = modo === "numero" ? "numero" : "data";
+  atualizaBotoesOrdem();
+  if(estado.linhas.length) processa();
+}
+function atualizaBotoesOrdem(){
+  var n = document.getElementById("btnOrdNumero");
+  var d = document.getElementById("btnOrdData");
+  if(!n || !d) return;
+  n.classList.toggle("sec", ordemResultado !== "numero");
+  d.classList.toggle("sec", ordemResultado !== "data");
+}
 
 function unicos(arr){
   var o = {}, out = [];
@@ -544,7 +599,7 @@ function agrupaRespostas(linhas){
   });
 }
 function linhasCompletasRelatorio(){
-  var conv = (estado.linhas || []).map(function(l){
+  var conv = linhasAtivas().map(function(l){
     var f = ajustaFuso(l);
     return {
       servico: l.servico,
@@ -929,7 +984,7 @@ function ajustaFuso(l){
 }
 
 function processa(){
-  var brutas = estado.linhas.slice();
+  var brutas = linhasAtivas();
   var totalBruto = brutas.length;
   var modoIP = document.getElementById("verIP").value;
 
@@ -956,8 +1011,7 @@ function processa(){
     if(vistos[k]) return;
     vistos[k] = 1; fim.push(l);
   });
-  fim.sort(function(a,b){ return (a.data+a.hora) > (b.data+b.hora) ? -1 : 1; });
-
+  fim = ordenaResultado(fim);
   render(fim, totalBruto, {v4semPorta: v4semPorta, v4comPorta: v4comPorta, modoIP: modo, filtro: modoIP});
 }
 
@@ -981,13 +1035,17 @@ function render(linhas, totalBruto, info){
   var ips = {}; linhas.forEach(function(l){ ips[l.ip] = 1; });
   var dias = {}; linhas.forEach(function(l){ dias[l.data] = 1; });
   var nums = unicos(linhas.map(rotuloNumero));
+  var docsAtivos = unicos(linhas.map(chaveArquivo)).length;
+  var docsTotal = unicos(estado.linhas.map(chaveArquivo)).length;
+  var docsOff = docsTotal - docsAtivos;
   document.getElementById("stats").innerHTML =
-      pill("Documentos", unicos(estado.arquivos).length || unicos(linhas.map(function(l){ return l.arquivoOrigem || l.arquivo; })).length)
+      pill("Documentos", docsAtivos + (docsOff > 0 ? " de " + docsTotal : ""))
     + pill("Números/contas", nums.length)
     + pill("Registros lidos", totalBruto)
     + pill("Após filtro", linhas.length)
     + pill("IPs únicos", Object.keys(ips).length)
     + pill("Dias distintos", Object.keys(dias).length)
+    + (docsOff > 0 ? pill("Desmarcados", docsOff) : "")
     + (temPorta ? pill("Com porta lógica", linhas.filter(function(l){ return l.porta; }).length) : "");
 
   var avisos = [];
@@ -1005,7 +1063,7 @@ function render(linhas, totalBruto, info){
   document.getElementById("avisoV4").innerHTML = avisos.map(function(a){
     return '<div class="aviso">' + a + "</div>"; }).join("");
 
-  var thead = "<tr><th>#</th><th>Número investigado</th><th>Serviço</th><th>Endereço IP</th>"
+  var thead = "<tr><th>#</th><th class='num-origem' title='Número que originou a conexão'>Número de origem</th><th>Serviço</th><th>Endereço IP</th>"
     + (temPorta ? "<th>Porta</th>" : "")
     + "<th>Coincidência</th><th>Data</th><th>Hora</th><th>Original (UTC)</th><th>Operadora / ASN</th><th>Cidade</th><th>UF</th></tr>";
   var coinSet = mapaCoincidencias();
@@ -1024,6 +1082,7 @@ function render(linhas, totalBruto, info){
   document.getElementById("tbl").tHead.innerHTML = thead;
   document.getElementById("tbl").tBodies[0].innerHTML = corpo;
 
+  atualizaBotoesOrdem();
   renderListaArqs();
   renderRelatorio();
   renderOps();
@@ -1035,28 +1094,48 @@ function esc(s){ return String(s == null ? "" : s).replace(/[&<>]/g, function(c)
 
 function renderListaArqs(){
   var box = document.getElementById("listaArqs");
+  var dica = document.getElementById("dicaArqs");
   if(!box) return;
   var gruposArq = {};
   estado.linhas.forEach(function(l){
-    var k = l.arquivoOrigem || l.arquivo || "arquivo";
+    var k = chaveArquivo(l) || "arquivo";
     var g = gruposArq[k] || (gruposArq[k] = {nome: k, n: 0, idents: []});
     g.n++;
     if(l.identificador) g.idents.push(l.identificador);
   });
   var nomes = Object.keys(gruposArq);
+  if(dica) dica.classList.toggle("hide", !nomes.length);
   if(!nomes.length){ box.innerHTML = ""; return; }
   box.innerHTML = nomes.map(function(nome){
     var g = gruposArq[nome];
     var idents = unicos(g.idents);
-    return '<div class="arq"><div><b>' + esc(nome) + "</b><br><small>"
+    var off = !arquivoAtivo(nome);
+    var rotuloAcao = off ? "Marcar" : "Desmarcar";
+    return '<div class="arq' + (off ? " off" : "") + '"><div><b>' + esc(nome) + "</b><br><small>"
       + g.n + " registro(s)"
       + (idents.length ? " · " + esc(idents.join(", ")) : "")
-      + '</small></div><button type="button" class="sec" data-remove-arq="' + esc(nome) + '">Remover</button></div>';
+      + (off ? " · fora da análise" : "")
+      + '</small></div><div class="arq-acoes">'
+      + '<button type="button" class="' + (off ? "" : "sec") + '" data-toggle-arq="' + esc(nome) + '">' + rotuloAcao + "</button>"
+      + '<button type="button" class="sec" data-remove-arq="' + esc(nome) + '">Remover</button>'
+      + "</div></div>";
   }).join("");
 }
+function toggleDocumento(nome){
+  nome = String(nome || "");
+  if(!nome) return;
+  if(estado.desmarcados[nome]) delete estado.desmarcados[nome];
+  else estado.desmarcados[nome] = true;
+  if(!estado.linhas.length){
+    renderListaArqs();
+    return;
+  }
+  processa();
+}
 function removeDocumento(nome){
-  estado.linhas = estado.linhas.filter(function(l){ return (l.arquivoOrigem || l.arquivo) !== nome; });
+  estado.linhas = estado.linhas.filter(function(l){ return chaveArquivo(l) !== nome; });
   estado.arquivos = estado.arquivos.filter(function(a){ return a !== nome && String(a).indexOf(nome) !== 0; });
+  delete estado.desmarcados[nome];
   if(!estado.linhas.length){
     atual = [];
     document.getElementById("cardRes").classList.add("hide");
@@ -1136,11 +1215,11 @@ function htmlTabelaConexoes(linhas, opts){
 function renderRelatorio(){
   var card = document.getElementById("cardRel"), box = document.getElementById("relatorio");
   if(!card || !box) return;
-  if(!estado.linhas.length){ card.classList.add("hide"); return; }
+  if(!linhasCompletasRelatorio().length){ card.classList.add("hide"); return; }
   card.classList.remove("hide");
   var rel = relatorioCorrelacao();
   var coinSet = mapaCoincidencias();
-  var html = '<div class="aviso" style="margin-bottom:12px">Análise de <b>todos</b> os IPs dos documentos carregados. O filtro da tela (IPv4/IPv6 e deduplicação) não entra nesta correlação.</div>';
+  var html = '<div class="aviso" style="margin-bottom:12px">Análise de <b>todos</b> os IPs dos documentos marcados. Arquivos desmarcados não entram. O filtro da tela (IPv4/IPv6 e deduplicação) não entra nesta correlação.</div>';
   if(rel.coincidentes.length){
     html += '<div class="corr"><b>' + rel.coincidentes.length + " IP(s) coincidente(s)</b> entre dois ou mais números de interesse.<ul>"
       + rel.coincidentes.map(function(c){
@@ -2030,7 +2109,7 @@ function grupos(){
 }
 function linhasPlan(ls){
   var mapa = mapaCoincidencias();
-  var cab = ["Nº","Número investigado","Serviço","Endereço IP","Coincidência","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF","Arquivo"];
+  var cab = ["Nº","Número de origem","Serviço","Endereço IP","Coincidência","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF","Arquivo"];
   cab.coincidencia = false;
   var corpo = (ls || []).map(function(l, i){
     var a = estado.asn[l.ip] || {};
@@ -2041,7 +2120,7 @@ function linhasPlan(ls){
   return [cab].concat(corpo);
 }
 function linhasPlanCoincidencias(rel){
-  var cab = ["Endereço IP","Número investigado","Resposta WhatsApp","Também em","Data","Hora","Porta","Arquivo"];
+  var cab = ["Endereço IP","Número de origem","Resposta WhatsApp","Também em","Data","Hora","Porta","Arquivo"];
   cab.coincidencia = false;
   var corpo = [];
   ((rel && rel.coincidentes) || []).forEach(function(c){
@@ -3030,8 +3109,9 @@ async function carrega(files){
       var recebido = await processaArquivoEnviado(f);
       var r = parse(recebido.texto, recebido.origem);
       r.forEach(function(l){ l.arquivoOrigem = f.name; if(!l.arquivo) l.arquivo = recebido.origem; });
-      estado.linhas = estado.linhas.filter(function(l){ return (l.arquivoOrigem || l.arquivo) !== f.name; });
+      estado.linhas = estado.linhas.filter(function(l){ return chaveArquivo(l) !== f.name; });
       estado.arquivos = estado.arquivos.filter(function(a){ return a !== f.name && a !== recebido.origem; });
+      delete estado.desmarcados[f.name];
       estado.linhas = estado.linhas.concat(r);
       estado.arquivos.push(recebido.origem);
       if(recebido.zip) zipSucesso++;
@@ -3088,10 +3168,17 @@ document.getElementById("btnProcTexto").onclick = function(){
 document.getElementById("btnColar").onclick = function(){ document.getElementById("areaColar").classList.toggle("hide"); };
 document.getElementById("btnAddDocs").onclick = function(){ inp.click(); };
 document.getElementById("listaArqs").addEventListener("click", function(e){
+  var tog = e.target.closest("[data-toggle-arq]");
+  if(tog){
+    toggleDocumento(tog.getAttribute("data-toggle-arq"));
+    return;
+  }
   var b = e.target.closest("[data-remove-arq]");
   if(!b) return;
   removeDocumento(b.getAttribute("data-remove-arq"));
 });
+document.getElementById("btnOrdNumero").onclick = function(){ setOrdemResultado("numero"); };
+document.getElementById("btnOrdData").onclick = function(){ setOrdemResultado("data"); };
 document.getElementById("btnRelDocx").onclick = baixaRelatorioDocx;
 document.getElementById("btnRelPdf").onclick = baixaRelatorioPdf;
 document.getElementById("btnLimpar").onclick = function(){ location.reload(); };
@@ -3179,6 +3266,14 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     abasXlsx: abasXlsx,
     getAtual: function(){ return atual; },
     getEstado: function(){ return estado; },
+    getOrdemResultado: function(){ return ordemResultado; },
+    chaveArquivo: chaveArquivo,
+    arquivoAtivo: arquivoAtivo,
+    linhasAtivas: linhasAtivas,
+    ordenaResultado: ordenaResultado,
+    setOrdemResultado: setOrdemResultado,
+    toggleDocumento: toggleDocumento,
+    removeDocumento: removeDocumento,
     processa: processa,
     corpoRelatorio: corpoRelatorio,
     renderRelatorio: renderRelatorio,
