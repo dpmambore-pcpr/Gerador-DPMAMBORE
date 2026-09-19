@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.3: Filtro IP — ofício unificado ou um quadro por número de interesse -->
 <!-- v3.6.2: Filtro IP — relatório de correlação com todos os IPs, por número e WhatsApp -->
 <!-- v3.6.1: Kit com envelopes+autos na raiz e observação com letra ajustável -->
 <!-- v3.6.0: Envelope — nº dos autos no alvo e kit com envelopes + autos -->
@@ -63,7 +64,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.2</span>
+      <span class="version">VERSÃO ATUAL · v3.6.3</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -76,8 +77,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.2">
-        <div class="item-head"><span class="item-ver">v3.6.2</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">CORRELAÇÃO</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.3">
+        <div class="item-head"><span class="item-ver">v3.6.3</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">OFÍCIOS</span><span class="badge">ATUAL</span></div>
+        <h3>Ofício da operadora pode unificar os IPs ou separar um quadro por número</h3>
+        <ul>
+          <li>Quando a mesma operadora — Vivo, por exemplo — tem dois ou mais números de interesse, a seção 4 escolhe o formato do ofício.</li>
+          <li><b>Ofício unificado</b> lista somente os IPs, sem indicar de qual número é cada endereço.</li>
+          <li><b>Separar no mesmo ofício</b> gera um quadro de IPs para cada número, com o número escrito em cima, ainda no ofício daquela operadora.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.2">
+        <div class="item-head"><span class="item-ver">v3.6.2</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">CORRELAÇÃO</span></div>
         <h3>Relatório de correlação analisa todos os IPs e separa por número e WhatsApp</h3>
         <ul>
           <li>Com vários documentos, a coincidência usa <b>todos</b> os IPs carregados — o filtro da tela não entra no relatório.</li>

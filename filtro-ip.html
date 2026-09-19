@@ -180,12 +180,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.6.2",
+  version: "3.6.3",
   releaseDate: "19/09/2026",
   changes: [
-    "O relatório de correlação analisa todos os IPs de todos os documentos, sem o filtro da tela.",
-    "IPs coincidentes saem com todas as conexões e horários de cada número de interesse.",
-    "O relatório separa os endereços por número, por resposta do WhatsApp e lista cada conexão."
+    "No ofício da operadora, dá para unificar os IPs ou separar um quadro por número de interesse.",
+    "O ofício unificado continua sem indicar de qual número é cada endereço.",
+    "A opção vale para o mesmo ofício da operadora — Vivo, por exemplo — quando há dois ou mais números."
   ]
 });
 </script>
@@ -285,7 +285,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 <div class="card hide" id="cardRel">
   <h2>3. Relatório por número e correlação</h2>
-  <div class="aviso">Uso interno. O ofício enviado à operadora não indica de qual número é cada IP. Este relatório analisa todos os IPs de todos os documentos, ignora o filtro da tela, separa por número de interesse e por resposta do WhatsApp, e lista cada conexão com o respectivo horário.</div>
+  <div class="aviso">Uso interno. Este relatório analisa todos os IPs de todos os documentos, ignora o filtro da tela, separa por número de interesse e por resposta do WhatsApp, e lista cada conexão com o respectivo horário. Nos ofícios, a seção 4 define se os IPs saem unificados ou em um quadro por número.</div>
   <div id="relatorio"></div>
   <div class="linha" style="margin-top:12px">
     <button id="btnRelDocx">Baixar relatório .docx</button>
@@ -322,6 +322,15 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   </div>
   <div class="aviso" style="margin-top:10px">
     <b>Atenção à fundamentação.</b> Sem decisão judicial o ofício sai apoiado no art. 10, §3º, da Lei nº 12.965/2014 — dispositivo que alcança apenas dados cadastrais. Boa parte das operadoras entende que vincular assinante a IP em data e hora certas é acesso a registro de conexão (art. 15), exigindo ordem judicial, e recusa o atendimento direto. Havendo decisão nos autos, marque a opção acima.
+  </div>
+
+  <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;background:#f8f5ed">
+    <div style="font-size:12.5px;font-weight:700;color:var(--azul);margin-bottom:8px">Quando a mesma operadora tiver mais de um número de interesse</div>
+    <div class="opts" style="margin-top:0;flex-direction:column;align-items:flex-start;gap:8px">
+      <label><input type="radio" name="ofModoTabela" id="ofModoUnificado" value="unificado" checked> Ofício unificado — somente os IPs, sem indicar os números</label>
+      <label><input type="radio" name="ofModoTabela" id="ofModoPorNumero" value="porNumero"> Separar no mesmo ofício — um quadro de IPs para cada número de interesse</label>
+    </div>
+    <div style="margin-top:6px;font-size:11.5px;color:var(--suave);line-height:1.45">Exemplo: os números 9999999 e 888888 usaram IP da Vivo. O ofício da Vivo pode sair só com os endereços, ou com o quadro do 9999999 e, em seguida, o quadro do 888888.</div>
   </div>
 
   <div class="linha" style="margin:12px 0 16px">
@@ -578,15 +587,46 @@ function chaveDedup(l, modo){
   if(modo === "ipporta") return String(l.ip || "").toLowerCase() + "|" + (l.porta || "");
   return [l.ip, l.data, l.hora, l.porta || ""].join("|").toLowerCase();
 }
-function linhasUnicasOficio(ls){
+function linhasUnicasOficio(ls, porNumero){
   var modo = modoDedup(), vistos = {}, fim = [];
   (ls || []).forEach(function(l){
-    var k = chaveDedup(l, modo);
+    var k = (porNumero ? rotuloNumero(l) + "|" : "") + chaveDedup(l, modo);
     if(vistos[k]) return;
     vistos[k] = 1;
-    fim.push({ip: l.ip, dataBR: br(l.data), hora: l.hora, porta: l.porta || ""});
+    fim.push({
+      ip: l.ip,
+      dataBR: br(l.data),
+      hora: l.hora,
+      porta: l.porta || "",
+      identificador: rotuloNumero(l)
+    });
   });
   return fim;
+}
+function modoOficioPorNumero(){
+  var e = document.querySelector('input[name="ofModoTabela"]:checked');
+  return !!(e && e.value === "porNumero");
+}
+function agrupaLinhasOficioPorNumero(ls){
+  var map = {};
+  linhasUnicasOficio(ls, true).forEach(function(l){
+    var k = l.identificador || "sem identificador";
+    (map[k] = map[k] || []).push(l);
+  });
+  return Object.keys(map).sort().map(function(k){
+    return {ident: k, linhas: map[k]};
+  });
+}
+function quadrosOficio(c){
+  if(c && c.separarPorNumero && c.gruposNumero && c.gruposNumero.length > 1){
+    return c.gruposNumero.map(function(g){
+      return {titulo: "Número de interesse " + g.ident, linhas: g.linhas || []};
+    });
+  }
+  return [{titulo: "", linhas: (c && c.linhas) || []}];
+}
+function linhasOficioTodas(c){
+  return quadrosOficio(c).reduce(function(acc, q){ return acc.concat(q.linhas || []); }, []);
 }
 function expandeIPv6(ip){
   if(!ip || String(ip).indexOf(":") === -1) return "";
@@ -1573,7 +1613,9 @@ var NOTA_SEM_PORTA = "Consigno que os endereços IPv4 relacionados não vieram a
 
 // monta os parágrafos do ofício a partir do modelo (compartilhado entre DOCX e PDF)
 function textoOficio(c, temPorta){
-  var semPorta = c.linhas.some(function(l){ return !l.porta && l.ip.indexOf(":") === -1; });
+  var linhasNota = linhasOficioTodas(c);
+  if(temPorta === undefined) temPorta = linhasNota.some(function(l){ return l.porta; });
+  var semPorta = linhasNota.some(function(l){ return !l.porta && l.ip.indexOf(":") === -1; });
   var nota = temPorta ? NOTA_PORTA : (semPorta ? NOTA_SEM_PORTA : NOTA_IPV6);
   var fundamento = c.autos
     ? "em cumprimento à decisão judicial proferida nos autos nº " + c.autos
@@ -1701,7 +1743,8 @@ function NS(tag){
 function corpoOficio(c){
   var hoje = c.data ? new Date(c.data + "T12:00:00") : new Date();
   var dataExt = CFG.cidade + ", " + hoje.getDate() + " de " + MESES[hoje.getMonth()] + " de " + hoje.getFullYear() + ".";
-  var temPorta = c.linhas.some(function(l){ return l.porta; });
+  var linhasNota = linhasOficioTodas(c);
+  var temPorta = linhasNota.some(function(l){ return l.porta; });
   var p = [];
 
   p.push(par("OFÍCIO Nº " + c.numero, {jc:"left", negrito:true}));
@@ -1730,7 +1773,15 @@ function corpoOficio(c){
   p.push(par(c.assinante || CFG.assinante, {jc:"center", negrito:true, espaco:false}));
   p.push(par(c.cargo || CFG.cargo, {jc:"center", espaco:false}));
 
-  return p.map(function(el){ return el.tabela ? tabelaIPs(c.linhas) : el; }).join("");
+  return p.map(function(el){
+    if(!el.tabela) return el;
+    return quadrosOficio(c).map(function(q){
+      var bloco = "";
+      if(q.titulo) bloco += par(q.titulo, {jc:"left", negrito:true});
+      bloco += tabelaIPs(q.linhas);
+      return bloco;
+    }).join(par(" ", {espaco:false}));
+  }).join("");
 }
 
 function corpoRelatorio(rel){
@@ -2093,8 +2144,9 @@ function validaIdentificacaoOficio(){
 function cfgOficio(nome, ls, seq){
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
   var ident = dadosIdentificacaoOficio(seq);
-  var contas = unicos((ls || []).map(function(l){ return l.identificador; }));
+  var contas = unicos((ls || []).map(rotuloNumero));
   var servicos = unicos((ls || []).map(function(l){ return l.servico; }));
+  var separar = modoOficioPorNumero() && contas.length > 1;
   return {
     // 'numero' é o identificador que vai na linha OFÍCIO Nº do documento.
     numero: ident.combinado || "___",
@@ -2106,7 +2158,9 @@ function cfgOficio(nome, ls, seq){
     servico: servicos.join(" / ") || (ls[0] || {}).servico || "",
     identificador: contas.length === 1 ? contas[0] : "",
     emails: emailsSelecionados(),
-    linhas: linhasUnicasOficio(ls)
+    linhas: linhasUnicasOficio(ls, false),
+    separarPorNumero: separar,
+    gruposNumero: separar ? agrupaLinhasOficioPorNumero(ls) : []
   };
 }
 
@@ -2684,7 +2738,8 @@ function pdfOficio(c, cb){
     var d = new PDFDoc();
     d.novaPagina();
     var hoje = c.data ? new Date(c.data + "T12:00:00") : new Date();
-    var temPorta = c.linhas.some(function(l){ return l.porta; });
+    var linhasNota = linhasOficioTodas(c);
+    var temPorta = linhasNota.some(function(l){ return l.porta; });
 
     d.paragrafo("OFÍCIO Nº " + c.numero, {jc:"left", negrito:true});
     if(c.inquerito) d.paragrafo("Inquérito Policial nº " + c.inquerito, {jc:"left", negrito:true});
@@ -2699,14 +2754,18 @@ function pdfOficio(c, cb){
 
     textoOficio(c, temPorta).forEach(function(p){
       if(p === "{TABELA}"){
-        d.espaco(8);
-        var cab = ["Nº","Endereço IP","Data","Hora (UTC-3)"], largs = [32, 226, 78, 82];
-        if(temPorta){ cab.push("Porta"); largs = [28, 216, 72, 82, 58]; }
-        d.tabela(cab, c.linhas.map(function(l, i){
-          var r = [String(i+1), l.ip, l.dataBR, l.hora];
-          if(temPorta) r.push(l.porta || "—");
-          return r;
-        }), largs);
+        quadrosOficio(c).forEach(function(q){
+          d.espaco(8);
+          if(q.titulo) d.paragrafo(q.titulo, {jc:"left", negrito:true});
+          var temPortaQ = q.linhas.some(function(l){ return l.porta; });
+          var cab = ["Nº","Endereço IP","Data","Hora (UTC-3)"], largs = [32, 226, 78, 82];
+          if(temPortaQ){ cab.push("Porta"); largs = [28, 216, 72, 82, 58]; }
+          d.tabela(cab, q.linhas.map(function(l, i){
+            var r = [String(i+1), l.ip, l.dataBR, l.hora];
+            if(temPortaQ) r.push(l.porta || "—");
+            return r;
+          }), largs);
+        });
         d.espaco(12);
       } else d.paragrafo(p, {recuo:true});
     });
@@ -3082,6 +3141,13 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     rotuloNumero: rotuloNumero,
     chaveDedup: chaveDedup,
     linhasUnicasOficio: linhasUnicasOficio,
+    modoOficioPorNumero: modoOficioPorNumero,
+    agrupaLinhasOficioPorNumero: agrupaLinhasOficioPorNumero,
+    quadrosOficio: quadrosOficio,
+    linhasOficioTodas: linhasOficioTodas,
+    grupos: grupos,
+    nomeOperadora: nomeOperadora,
+    corpoOficio: corpoOficio,
     correlaciona: correlaciona,
     relatorioCorrelacao: relatorioCorrelacao,
     linhasCompletasRelatorio: linhasCompletasRelatorio,
