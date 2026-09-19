@@ -84,6 +84,10 @@ footer{text-align:center;font-size:11.5px;color:var(--suave);padding:10px 22px 3
 .corr.vazia{background:#fff8e6;border-color:#e8d49a;border-left-color:var(--alerta)}
 .rel-bloco{border:1px solid var(--borda);border-radius:8px;padding:10px 12px;margin-bottom:10px}
 .rel-bloco h3{margin:0 0 6px;font-size:13px;color:var(--azul)}
+.rel-bloco h4{margin:12px 0 4px;font-size:12px;color:var(--azul);text-transform:uppercase;letter-spacing:.3px}
+.rel-bloco h5{margin:10px 0 4px;font-size:12px;color:var(--suave)}
+.rel-resp{border:1px solid var(--borda);border-left:4px solid var(--azul2);border-radius:6px;padding:8px 10px;margin-top:10px;background:#fbfaf6}
+.rel-resp h4{margin-top:0}
 tbody tr.coin td{background:#f6e7b8!important}
 .coin-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:#c5a253;color:#183a31;font-size:10px;font-weight:800;letter-spacing:.03em}
 
@@ -176,12 +180,12 @@ body.modal-open{overflow:hidden}
 
 <script id="app-info">
 window.APP_INFO = Object.freeze({
-  version: "3.4.4",
-  releaseDate: "18/09/2026",
+  version: "3.6.2",
+  releaseDate: "19/09/2026",
   changes: [
-    "Nas planilhas, cada conexão indica o número investigado de origem.",
-    "IPs coincidentes entre números saem marcados e destacados em dourado.",
-    "CSV, XLSX e o pacote ZIP usam as mesmas colunas e a marcação de coincidência."
+    "O relatório de correlação analisa todos os IPs de todos os documentos, sem o filtro da tela.",
+    "IPs coincidentes saem com todas as conexões e horários de cada número de interesse.",
+    "O relatório separa os endereços por número, por resposta do WhatsApp e lista cada conexão."
   ]
 });
 </script>
@@ -281,7 +285,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 <div class="card hide" id="cardRel">
   <h2>3. Relatório por número e correlação</h2>
-  <div class="aviso">Uso interno. O ofício enviado à operadora não indica de qual número é cada IP. Este relatório separa as conexões por conta e destaca endereços coincidentes.</div>
+  <div class="aviso">Uso interno. O ofício enviado à operadora não indica de qual número é cada IP. Este relatório analisa todos os IPs de todos os documentos, ignora o filtro da tela, separa por número de interesse e por resposta do WhatsApp, e lista cada conexão com o respectivo horário.</div>
   <div id="relatorio"></div>
   <div class="linha" style="margin-top:12px">
     <button id="btnRelDocx">Baixar relatório .docx</button>
@@ -488,6 +492,81 @@ function rotuloNumero(l){
   if(id) return id;
   return String((l && (l.arquivoOrigem || l.arquivo)) || "sem identificador");
 }
+function rotuloServico(l){
+  var s = String((l && l.servico) || "").trim();
+  return s || "sem serviço informado";
+}
+function chaveResposta(l){
+  return rotuloServico(l) + "\n" + String((l && (l.arquivoOrigem || l.arquivo)) || "sem arquivo");
+}
+function agrupaIpsDoGrupo(linhas){
+  var map = {};
+  (linhas || []).forEach(function(l){
+    var k = String(l.ip || "").toLowerCase();
+    var g = map[k] || (map[k] = {ip: l.ip, conexoes: []});
+    g.conexoes.push(l);
+  });
+  return Object.keys(map).sort().map(function(k){
+    var g = map[k];
+    return {ip: g.ip, conexoes: g.conexoes, ocorrencias: g.conexoes.length};
+  });
+}
+function agrupaRespostas(linhas){
+  var map = {};
+  (linhas || []).forEach(function(l){
+    var k = chaveResposta(l);
+    var g = map[k] || (map[k] = {
+      servico: rotuloServico(l),
+      arquivo: String((l.arquivoOrigem || l.arquivo) || "sem arquivo"),
+      linhas: []
+    });
+    g.linhas.push(l);
+  });
+  return Object.keys(map).sort().map(function(k){
+    var g = map[k];
+    var ips = agrupaIpsDoGrupo(g.linhas);
+    return {
+      servico: g.servico,
+      arquivo: g.arquivo,
+      linhas: g.linhas,
+      ipsUnicos: ips.length,
+      ips: ips
+    };
+  });
+}
+function linhasCompletasRelatorio(){
+  var conv = (estado.linhas || []).map(function(l){
+    var f = ajustaFuso(l);
+    return {
+      servico: l.servico,
+      identificador: l.identificador,
+      ip: l.ip,
+      porta: l.porta || "",
+      data: f.data,
+      hora: f.hora,
+      utc: l.data + " " + l.hora,
+      arquivo: l.arquivo,
+      arquivoOrigem: l.arquivoOrigem || l.arquivo
+    };
+  });
+  conv.sort(function(a, b){
+    var na = rotuloNumero(a), nb = rotuloNumero(b);
+    if(na !== nb) return na.localeCompare(nb);
+    var sa = rotuloServico(a), sb = rotuloServico(b);
+    if(sa !== sb) return sa.localeCompare(sb);
+    var aa = String(a.arquivoOrigem || a.arquivo || "");
+    var ab = String(b.arquivoOrigem || b.arquivo || "");
+    if(aa !== ab) return aa.localeCompare(ab);
+    var ta = (a.data || "") + (a.hora || "");
+    var tb = (b.data || "") + (b.hora || "");
+    if(ta !== tb) return ta > tb ? -1 : 1;
+    return String(a.ip || "").localeCompare(String(b.ip || ""));
+  });
+  return conv;
+}
+function relatorioCorrelacao(){
+  return correlaciona(linhasCompletasRelatorio());
+}
 function modoDedup(){
   var e = document.getElementById("dedup");
   return e ? e.value : "ipdia";
@@ -542,7 +621,16 @@ function correlaciona(linhas){
     var ipk = String(l.ip || "").toLowerCase();
     var slot = ipMap[ipk] || (ipMap[ipk] = {ip: l.ip, numeros: {}, ocorrencias: []});
     slot.numeros[ident] = 1;
-    slot.ocorrencias.push({ident: ident, data: l.data, hora: l.hora, porta: l.porta || "", arquivo: l.arquivo || ""});
+    slot.ocorrencias.push({
+      ident: ident,
+      servico: rotuloServico(l),
+      data: l.data,
+      hora: l.hora,
+      utc: l.utc || "",
+      porta: l.porta || "",
+      arquivo: l.arquivo || "",
+      ip: l.ip
+    });
 
     var pref = prefixoIPv6(l.ip);
     if(pref){
@@ -558,7 +646,9 @@ function correlaciona(linhas){
       arquivos: unicos(g.arquivos),
       servicos: unicos(g.servicos),
       linhas: g.linhas,
-      ipsUnicos: Object.keys(g.ips).length
+      ipsUnicos: Object.keys(g.ips).length,
+      ips: agrupaIpsDoGrupo(g.linhas),
+      porResposta: agrupaRespostas(g.linhas)
     };
   });
   var coincidentes = Object.keys(ipMap).map(function(k){ return ipMap[k]; })
@@ -580,7 +670,9 @@ function correlaciona(linhas){
 }
 function mapaCoincidencias(linhas){
   var m = {};
-  correlaciona(linhas && linhas.length ? linhas : atual).coincidentes.forEach(function(c){
+  var fonte = linhasCompletasRelatorio();
+  if(!fonte.length && linhas && linhas.length) fonte = linhas;
+  correlaciona(fonte).coincidentes.forEach(function(c){
     m[String(c.ip).toLowerCase()] = c.numeros;
   });
   return m;
@@ -876,7 +968,7 @@ function render(linhas, totalBruto, info){
   var thead = "<tr><th>#</th><th>Número investigado</th><th>Serviço</th><th>Endereço IP</th>"
     + (temPorta ? "<th>Porta</th>" : "")
     + "<th>Coincidência</th><th>Data</th><th>Hora</th><th>Original (UTC)</th><th>Operadora / ASN</th><th>Cidade</th><th>UF</th></tr>";
-  var coinSet = mapaCoincidencias(atual.length ? atual : linhas);
+  var coinSet = mapaCoincidencias();
   var corpo = linhas.map(function(l, i){
     var a = estado.asn[l.ip] || {};
     var coin = ehCoincidente(l.ip, coinSet);
@@ -936,46 +1028,117 @@ function removeDocumento(nome){
   }
   processa();
 }
+function htmlTabelaSimples(cabs, rows, maxH){
+  var html = "<div class='wrap' style='max-height:" + (maxH || 280) + "px;margin-top:8px'><table><thead><tr>"
+    + cabs.map(function(c){ return "<th>" + esc(c) + "</th>"; }).join("")
+    + "</tr></thead><tbody>";
+  html += (rows || []).map(function(cols){
+    return "<tr>" + cols.map(function(c, i){
+      var cls = (i === 0 || /ip|porta|número/i.test(cabs[i] || "")) ? " class='mono'" : "";
+      return "<td" + cls + ">" + c + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  return html + "</tbody></table></div>";
+}
+function linhaComoConexao(o){
+  return {
+    identificador: o.ident || o.identificador,
+    servico: o.servico,
+    ip: o.ip,
+    porta: o.porta || "",
+    data: o.data,
+    hora: o.hora,
+    utc: o.utc || "",
+    arquivo: o.arquivo
+  };
+}
+function colsConexoes(linhas, opts){
+  opts = opts || {};
+  var ls = linhas || [];
+  var temPorta = ls.some(function(l){ return l.porta; });
+  var cabs = ["Nº"];
+  var largsDoc = [400];
+  var largsPdf = [28];
+  if(opts.comNumero){ cabs.push("Número de interesse"); largsDoc.push(1500); largsPdf.push(100); }
+  if(opts.comServico){ cabs.push("Resposta WhatsApp"); largsDoc.push(1200); largsPdf.push(80); }
+  cabs.push("Endereço IP"); largsDoc.push(opts.comNumero ? 2000 : 2800); largsPdf.push(opts.comNumero ? 140 : 190);
+  if(temPorta){ cabs.push("Porta"); largsDoc.push(700); largsPdf.push(48); }
+  cabs.push("Data"); largsDoc.push(1050); largsPdf.push(70);
+  cabs.push("Hora"); largsDoc.push(1050); largsPdf.push(70);
+  var rows = ls.map(function(l, i){
+    var r = [String(i+1)];
+    if(opts.comNumero) r.push(rotuloNumero(l));
+    if(opts.comServico) r.push(rotuloServico(l));
+    r.push(l.ip || "");
+    if(temPorta) r.push(l.porta || "—");
+    r.push(l.data ? br(l.data) : "");
+    r.push(l.hora || "");
+    return r;
+  });
+  return {cabs: cabs, rows: rows, largsDoc: largsDoc, largsPdf: largsPdf};
+}
+function htmlTabelaIps(ips, coinSet){
+  var cabs = ["Nº","Endereço IP","Conexões","Coincidência"];
+  var rows = (ips || []).map(function(item, i){
+    var coin = ehCoincidente(item.ip, coinSet);
+    var nums = (coinSet || {})[String(item.ip || "").toLowerCase()] || [];
+    var txt = coin ? "SIM — " + nums.join(" · ") : "não";
+    var ipHtml = esc(item.ip) + (coin ? '<span class="coin-tag">COINCIDENTE</span>' : "");
+    return [String(i+1), ipHtml, String(item.ocorrencias || (item.conexoes || []).length), esc(txt)];
+  });
+  return htmlTabelaSimples(cabs, rows, 220);
+}
+function htmlTabelaConexoes(linhas, opts){
+  var t = colsConexoes(linhas, opts);
+  var rows = t.rows.map(function(cols){ return cols.map(function(c){ return esc(c); }); });
+  return htmlTabelaSimples(t.cabs, rows, 320);
+}
 function renderRelatorio(){
   var card = document.getElementById("cardRel"), box = document.getElementById("relatorio");
   if(!card || !box) return;
-  if(!atual.length){ card.classList.add("hide"); return; }
+  if(!estado.linhas.length){ card.classList.add("hide"); return; }
   card.classList.remove("hide");
-  var rel = correlaciona(atual);
-  var html = "";
+  var rel = relatorioCorrelacao();
+  var coinSet = mapaCoincidencias();
+  var html = '<div class="aviso" style="margin-bottom:12px">Análise de <b>todos</b> os IPs dos documentos carregados. O filtro da tela (IPv4/IPv6 e deduplicação) não entra nesta correlação.</div>';
   if(rel.coincidentes.length){
-    html += '<div class="corr"><b>' + rel.coincidentes.length + " IP(s) coincidente(s)</b> entre dois ou mais números.<ul>"
+    html += '<div class="corr"><b>' + rel.coincidentes.length + " IP(s) coincidente(s)</b> entre dois ou mais números de interesse.<ul>"
       + rel.coincidentes.map(function(c){
-          return "<li><span class='mono'>" + esc(c.ip) + "</span> — "
-            + esc(c.numeros.join(" · ")) + " (" + c.ocorrencias.length + " conexão(ões))</li>";
+          var oc = (c.ocorrencias || []).map(function(o){ return linhaComoConexao({ip: c.ip, ident: o.ident, servico: o.servico, data: o.data, hora: o.hora, utc: o.utc, porta: o.porta, arquivo: o.arquivo}); });
+          return "<li><span class='mono'>" + esc(c.ip) + "</span> — números "
+            + esc(c.numeros.join(" · ")) + " (" + oc.length + " conexão(ões))"
+            + htmlTabelaConexoes(oc, {comNumero: true, comServico: true})
+            + "</li>";
         }).join("")
       + "</ul></div>";
   } else {
-    html += '<div class="corr vazia"><b>Nenhum IP coincidente</b> entre os números carregados neste inquérito.</div>';
+    html += '<div class="corr vazia"><b>Nenhum IP coincidente</b> entre os números de interesse carregados neste inquérito.</div>';
   }
   if(rel.prefixos64.length){
     html += '<div class="corr"><b>Redes IPv6 /64 coincidentes</b> (endereços distintos na mesma rede):<ul>'
       + rel.prefixos64.map(function(p){
           return "<li><span class='mono'>" + esc(p.prefixo) + "</span> — "
-            + esc(p.numeros.join(" · ")) + " · " + p.ips.length + " endereço(s)</li>";
+            + esc(p.numeros.join(" · ")) + " · " + p.ips.length + " endereço(s)"
+            + "<div class='mono' style='margin-top:4px'>" + esc(p.ips.join(" · ")) + "</div></li>";
         }).join("")
       + "</ul></div>";
   }
   html += rel.porNumero.map(function(g){
-    var temPorta = g.linhas.some(function(l){ return l.porta; });
-    return '<div class="rel-bloco"><h3>Número/conta ' + esc(g.ident)
+    var bloco = '<div class="rel-bloco"><h3>Número de interesse ' + esc(g.ident)
       + (g.servicos.length ? " · " + esc(g.servicos.join(" / ")) : "")
-      + "</h3><small>" + g.linhas.length + " conexão(ões) · " + g.ipsUnicos + " IP(s) único(s)"
+      + "</h3><small>" + g.linhas.length + " conexão(ões) · " + g.ipsUnicos + " IP(s) único(s) · "
+      + (g.porResposta || []).length + " resposta(s) WhatsApp"
       + (g.arquivos.length ? " · " + esc(g.arquivos.join(", ")) : "")
-      + "</small><div class='wrap' style='max-height:220px;margin-top:8px'><table><thead><tr><th>#</th><th>IP</th>"
-      + (temPorta ? "<th>Porta</th>" : "")
-      + "<th>Data</th><th>Hora</th></tr></thead><tbody>"
-      + g.linhas.map(function(l, i){
-          return "<tr><td>" + (i+1) + "</td><td class='mono'>" + esc(l.ip) + "</td>"
-            + (temPorta ? "<td class='mono'>" + esc(l.porta || "—") + "</td>" : "")
-            + "<td>" + br(l.data) + "</td><td>" + esc(l.hora) + "</td></tr>";
-        }).join("")
-      + "</tbody></table></div></div>";
+      + "</small>";
+    bloco += "<h4>IPs deste número</h4>" + htmlTabelaIps(g.ips, coinSet);
+    bloco += (g.porResposta || []).map(function(r){
+      return '<div class="rel-resp"><h4>Resposta WhatsApp: ' + esc(r.servico) + "</h4>"
+        + "<small>" + esc(r.arquivo) + " · " + r.linhas.length + " conexão(ões) · " + r.ipsUnicos + " IP(s)</small>"
+        + "<h5>IPs nesta resposta</h5>" + htmlTabelaIps(r.ips, coinSet)
+        + "<h5>Todas as conexões e horários</h5>" + htmlTabelaConexoes(r.linhas)
+        + "</div>";
+    }).join("");
+    return bloco + "</div>";
   }).join("");
   box.innerHTML = html;
 }
@@ -1573,28 +1736,26 @@ function corpoOficio(c){
 function corpoRelatorio(rel){
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
   var p = [];
-  p.push(par("RELATÓRIO INTERNO — IPs POR NÚMERO E CORRELAÇÃO", {jc:"left", negrito:true}));
+  p.push(par("RELATÓRIO INTERNO — IPs POR NÚMERO, RESPOSTA WHATSAPP E CORRELAÇÃO", {jc:"left", negrito:true}));
   if(g("ofIP")) p.push(par("Inquérito Policial nº " + g("ofIP"), {jc:"left", negrito:true}));
   p.push(par("Uso interno da autoridade policial. Este documento não deve ser encaminhado à operadora.", {jc:"both"}));
-  p.push(par("Os ofícios às operadoras reúnem os endereços IP de todos os números investigados, sem indicar de qual conta é cada conexão. A correspondência por número fica somente neste relatório.", {jc:"both", recuo:true}));
+  p.push(par("Este relatório analisa todos os endereços IP de todos os documentos carregados, sem aplicar o filtro da tela. Os ofícios às operadoras reúnem os endereços sem indicar de qual conta é cada conexão. A correspondência por número de interesse e por resposta do WhatsApp fica somente neste relatório.", {jc:"both", recuo:true}));
 
   if(rel.coincidentes.length){
-    p.push(par("IPs coincidentes entre números", {jc:"left", negrito:true}));
-    p.push(tabelaDoc(
-      ["Endereço IP","Números/contas","Ocorrências"],
-      rel.coincidentes.map(function(c){
-        return [c.ip, c.numeros.join(" · "), String(c.ocorrencias.length)];
-      }),
-      [2800, 3600, 1500]
-    ));
+    p.push(par("IPs coincidentes entre números de interesse", {jc:"left", negrito:true}));
+    rel.coincidentes.forEach(function(c){
+      p.push(par(c.ip + " — números " + c.numeros.join(" · ") + " (" + c.ocorrencias.length + " conexão(ões))", {jc:"left", negrito:true}));
+      var t = colsConexoes((c.ocorrencias || []).map(function(o){ return linhaComoConexao({ip: c.ip, ident: o.ident, servico: o.servico, data: o.data, hora: o.hora, utc: o.utc, porta: o.porta, arquivo: o.arquivo}); }), {comNumero: true, comServico: true});
+      p.push(tabelaDoc(t.cabs, t.rows, t.largsDoc));
+    });
   } else {
-    p.push(par("Não foram localizados endereços IP coincidentes entre os números carregados.", {jc:"both", recuo:true}));
+    p.push(par("Não foram localizados endereços IP coincidentes entre os números de interesse carregados.", {jc:"both", recuo:true}));
   }
 
   if(rel.prefixos64.length){
     p.push(par("Redes IPv6 /64 coincidentes (endereços distintos na mesma rede)", {jc:"left", negrito:true}));
     p.push(tabelaDoc(
-      ["Prefixo /64","Números/contas","Endereços"],
+      ["Prefixo /64","Números de interesse","Endereços"],
       rel.prefixos64.map(function(x){
         return [x.prefixo, x.numeros.join(" · "), x.ips.join(", ")];
       }),
@@ -1603,18 +1764,33 @@ function corpoRelatorio(rel){
   }
 
   rel.porNumero.forEach(function(grp){
-    var temPorta = grp.linhas.some(function(l){ return l.porta; });
-    p.push(par("Número/conta " + grp.ident + (grp.servicos.length ? " — " + grp.servicos.join(" / ") : ""), {jc:"left", negrito:true}));
-    p.push(par(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s)"
+    p.push(par("Número de interesse " + grp.ident + (grp.servicos.length ? " — " + grp.servicos.join(" / ") : ""), {jc:"left", negrito:true}));
+    p.push(par(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s) · "
+      + (grp.porResposta || []).length + " resposta(s) WhatsApp"
       + (grp.arquivos.length ? " · " + grp.arquivos.join(", ") : "") + ".", {jc:"both"}));
-    var cabs = temPorta ? ["Nº","Endereço IP","Data","Hora (UTC-3)","Porta"] : ["Nº","Endereço IP","Data","Hora (UTC-3)"];
-    var largs = temPorta ? [500, 3000, 1400, 1400, 1100] : [700, 3600, 1600, 1600];
-    var rows = grp.linhas.map(function(l, i){
-      var r = [String(i+1), l.ip, br(l.data), l.hora];
-      if(temPorta) r.push(l.porta || "—");
-      return r;
+    p.push(par("IPs deste número", {jc:"left", negrito:true}));
+    p.push(tabelaDoc(
+      ["Nº","Endereço IP","Conexões"],
+      (grp.ips || []).map(function(item, i){
+        return [String(i+1), item.ip, String(item.ocorrencias || (item.conexoes || []).length)];
+      }),
+      [700, 5000, 2200]
+    ));
+    (grp.porResposta || []).forEach(function(r){
+      p.push(par("Resposta WhatsApp: " + r.servico, {jc:"left", negrito:true}));
+      p.push(par(r.arquivo + " · " + r.linhas.length + " conexão(ões) · " + r.ipsUnicos + " IP(s).", {jc:"both"}));
+      p.push(par("IPs nesta resposta", {jc:"left", negrito:true}));
+      p.push(tabelaDoc(
+        ["Nº","Endereço IP","Conexões"],
+        (r.ips || []).map(function(item, i){
+          return [String(i+1), item.ip, String(item.ocorrencias || (item.conexoes || []).length)];
+        }),
+        [700, 5000, 2200]
+      ));
+      p.push(par("Todas as conexões e horários", {jc:"left", negrito:true}));
+      var t = colsConexoes(r.linhas);
+      p.push(tabelaDoc(t.cabs, t.rows, t.largsDoc));
     });
-    p.push(tabelaDoc(cabs, rows, largs));
   });
   return p.join("");
 }
@@ -1802,7 +1978,7 @@ function grupos(){
   return g;
 }
 function linhasPlan(ls){
-  var mapa = mapaCoincidencias(atual.length ? atual : ls);
+  var mapa = mapaCoincidencias();
   var cab = ["Nº","Número investigado","Serviço","Endereço IP","Coincidência","Data","Hora (UTC-3)","Original (UTC)","Operadora / ASN","Cidade","UF","Arquivo"];
   cab.coincidencia = false;
   var corpo = (ls || []).map(function(l, i){
@@ -1814,13 +1990,13 @@ function linhasPlan(ls){
   return [cab].concat(corpo);
 }
 function linhasPlanCoincidencias(rel){
-  var cab = ["Endereço IP","Número investigado","Também em","Data","Hora","Porta","Arquivo"];
+  var cab = ["Endereço IP","Número investigado","Resposta WhatsApp","Também em","Data","Hora","Porta","Arquivo"];
   cab.coincidencia = false;
   var corpo = [];
   ((rel && rel.coincidentes) || []).forEach(function(c){
     (c.ocorrencias || []).forEach(function(o){
       var outros = (c.numeros || []).filter(function(n){ return n !== o.ident; });
-      var row = [c.ip, o.ident, outros.join(" · "), o.data ? br(o.data) : "", o.hora || "", o.porta || "", o.arquivo || ""];
+      var row = [c.ip, o.ident, o.servico || "", outros.join(" · "), o.data ? br(o.data) : "", o.hora || "", o.porta || "", o.arquivo || ""];
       row.coincidencia = true;
       corpo.push(row);
     });
@@ -1828,9 +2004,9 @@ function linhasPlanCoincidencias(rel){
   return [cab].concat(corpo);
 }
 function abasXlsx(){
-  var g = grupos(), usados = {}, rel = correlaciona(atual);
+  var g = grupos(), usados = {}, relFiltro = correlaciona(atual), rel = relatorioCorrelacao();
   var abas = [{nome: nomeAba("Consolidado", usados), linhas: linhasPlan(atual)}];
-  rel.porNumero.forEach(function(n){
+  relFiltro.porNumero.forEach(function(n){
     abas.push({nome: nomeAba("Num " + n.ident, usados), linhas: linhasPlan(n.linhas)});
   });
   if(rel.coincidentes.length){
@@ -2198,7 +2374,7 @@ async function baixaPacote(){
     arqs.push({name: "oficios/" + nomeArquivoOficio(c, n, "docx"), data: docxOficioComPapel(c, papel.bytes)});
     arqs.push({name: "planilhas/IPs-" + limpaNome(n) + ".csv", data: u8(csvDe(g[n]))});
   });
-  var rel = correlaciona(atual);
+  var rel = relatorioCorrelacao();
   arqs.push({name: "relatorio/Relatorio-correlacao-IPs.docx", data: docxDocumentoComPapel(corpoRelatorio(rel), papel.bytes)});
   arqs.push({name: "IPs-por-operadora.xlsx", data: xlsx(abasXlsx())});
 
@@ -2554,52 +2730,67 @@ function pdfRelatorio(rel, cb){
     var d = new PDFDoc();
     d.novaPagina();
     var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ""; };
-    d.paragrafo("RELATÓRIO INTERNO — IPs POR NÚMERO E CORRELAÇÃO", {jc:"left", negrito:true});
+    d.paragrafo("RELATÓRIO INTERNO — IPs POR NÚMERO, RESPOSTA WHATSAPP E CORRELAÇÃO", {jc:"left", negrito:true});
     if(g("ofIP")) d.paragrafo("Inquérito Policial nº " + g("ofIP"), {jc:"left", negrito:true});
     d.paragrafo("Uso interno da autoridade policial. Este documento não deve ser encaminhado à operadora.", {jc:"left"});
+    d.paragrafo("Análise de todos os IPs dos documentos carregados, sem o filtro da tela. Separação por número de interesse, resposta do WhatsApp, IPs de cada número e todas as conexões com horário.", {jc:"left"});
     d.espaco(8);
     if(rel.coincidentes.length){
-      d.paragrafo("IPs coincidentes entre números", {jc:"left", negrito:true});
-      d.tabela(["Endereço IP","Números/contas","Ocorrências"],
-        rel.coincidentes.map(function(c){ return [c.ip, c.numeros.join(" · "), String(c.ocorrencias.length)]; }),
-        [170, 230, 70]);
-      d.espaco(10);
+      d.paragrafo("IPs coincidentes entre números de interesse", {jc:"left", negrito:true});
+      rel.coincidentes.forEach(function(c){
+        d.paragrafo(c.ip + " — " + c.numeros.join(" · ") + " (" + c.ocorrencias.length + " conexão(ões))", {jc:"left", negrito:true});
+        var t = colsConexoes((c.ocorrencias || []).map(function(o){ return linhaComoConexao({ip: c.ip, ident: o.ident, servico: o.servico, data: o.data, hora: o.hora, utc: o.utc, porta: o.porta, arquivo: o.arquivo}); }), {comNumero: true, comServico: true});
+        d.tabela(t.cabs, t.rows, t.largsPdf);
+        d.espaco(8);
+      });
     } else {
-      d.paragrafo("Não foram localizados endereços IP coincidentes entre os números carregados.", {jc:"left"});
+      d.paragrafo("Não foram localizados endereços IP coincidentes entre os números de interesse carregados.", {jc:"left"});
     }
     if(rel.prefixos64.length){
       d.paragrafo("Redes IPv6 /64 coincidentes", {jc:"left", negrito:true});
-      d.tabela(["Prefixo /64","Números/contas","Endereços"],
+      d.tabela(["Prefixo /64","Números de interesse","Endereços"],
         rel.prefixos64.map(function(x){ return [x.prefixo, x.numeros.join(" · "), x.ips.join(", ")]; }),
         [150, 160, 160]);
       d.espaco(10);
     }
     rel.porNumero.forEach(function(grp){
-      var temPorta = grp.linhas.some(function(l){ return l.porta; });
-      d.paragrafo("Número/conta " + grp.ident, {jc:"left", negrito:true});
-      d.paragrafo(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s).", {jc:"left"});
-      var cab = temPorta ? ["Nº","Endereço IP","Data","Hora","Porta"] : ["Nº","Endereço IP","Data","Hora"];
-      var largs = temPorta ? [28, 216, 72, 82, 58] : [32, 226, 78, 82];
-      d.tabela(cab, grp.linhas.map(function(l, i){
-        var r = [String(i+1), l.ip, br(l.data), l.hora];
-        if(temPorta) r.push(l.porta || "—");
-        return r;
-      }), largs);
-      d.espaco(12);
+      d.paragrafo("Número de interesse " + grp.ident, {jc:"left", negrito:true});
+      d.paragrafo(grp.linhas.length + " conexão(ões) · " + grp.ipsUnicos + " IP(s) único(s) · " + (grp.porResposta || []).length + " resposta(s) WhatsApp.", {jc:"left"});
+      d.paragrafo("IPs deste número", {jc:"left", negrito:true});
+      d.tabela(["Nº","Endereço IP","Conexões"],
+        (grp.ips || []).map(function(item, i){
+          return [String(i+1), item.ip, String(item.ocorrencias || (item.conexoes || []).length)];
+        }),
+        [32, 300, 70]);
+      d.espaco(8);
+      (grp.porResposta || []).forEach(function(r){
+        d.paragrafo("Resposta WhatsApp: " + r.servico, {jc:"left", negrito:true});
+        d.paragrafo(r.arquivo + " · " + r.linhas.length + " conexão(ões) · " + r.ipsUnicos + " IP(s).", {jc:"left"});
+        d.paragrafo("IPs nesta resposta", {jc:"left", negrito:true});
+        d.tabela(["Nº","Endereço IP","Conexões"],
+          (r.ips || []).map(function(item, i){
+            return [String(i+1), item.ip, String(item.ocorrencias || (item.conexoes || []).length)];
+          }),
+          [32, 300, 70]);
+        d.paragrafo("Todas as conexões e horários", {jc:"left", negrito:true});
+        var t = colsConexoes(r.linhas);
+        d.tabela(t.cabs, t.rows, t.largsPdf);
+        d.espaco(12);
+      });
     });
     cb(montaPDF(d.paginas, j));
   });
 }
 
 async function baixaRelatorioDocx(){
-  if(!atual.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
-  var bytes = await docxRelatorio(correlaciona(atual));
+  if(!estado.linhas.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
+  var bytes = await docxRelatorio(relatorioCorrelacao());
   baixaBin(bytes, "Relatorio-correlacao-IPs.docx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 }
 function baixaRelatorioPdf(){
-  if(!atual.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
-  pdfRelatorio(correlaciona(atual), function(bytes){
+  if(!estado.linhas.length){ msg("Carregue os documentos do inquérito antes de gerar o relatório.", "var(--erro)"); return; }
+  pdfRelatorio(relatorioCorrelacao(), function(bytes){
     if(!bytes){ msg("Não foi possível montar o PDF do relatório.", "var(--erro)"); return; }
     baixaBin(bytes, "Relatorio-correlacao-IPs.pdf", "application/pdf");
   });
@@ -2892,6 +3083,10 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     chaveDedup: chaveDedup,
     linhasUnicasOficio: linhasUnicasOficio,
     correlaciona: correlaciona,
+    relatorioCorrelacao: relatorioCorrelacao,
+    linhasCompletasRelatorio: linhasCompletasRelatorio,
+    rotuloServico: rotuloServico,
+    agrupaRespostas: agrupaRespostas,
     expandeIPv6: expandeIPv6,
     prefixoIPv6: prefixoIPv6,
     cfgOficio: cfgOficio,
@@ -2906,7 +3101,10 @@ if(/[?&]test=1(?:&|$)/.test(location.search)){
     abasXlsx: abasXlsx,
     getAtual: function(){ return atual; },
     getEstado: function(){ return estado; },
-    processa: processa
+    processa: processa,
+    corpoRelatorio: corpoRelatorio,
+    renderRelatorio: renderRelatorio,
+    getRelatorioHtml: function(){ var e = document.getElementById("relatorio"); return e ? e.innerHTML : ""; }
   };
 }
 </script>
