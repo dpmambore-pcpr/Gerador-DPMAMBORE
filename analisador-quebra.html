@@ -102,14 +102,19 @@ input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:
 <main>
   <section class="view active" id="view-importar">
     <div class="panel drop" id="drop">
-      <b>Toque para escolher o ZIP principal da quebra Google</b>
-      <p>O analisador abre o ZIP principal e, em seguida, cada ZIP interno, pasta a pasta, até os arquivos finais. O original não é alterado.</p>
-      <button class="btn gold" id="pick" type="button">Selecionar ZIP principal</button>
+      <b>Toque para escolher os arquivos da quebra Google</b>
+      <p>A Google pode mandar vários ZIPs separados (Mail, Photos, Account…). Selecione todos de uma vez ou acrescente depois. Cada ZIP interno continua sendo aberto até os arquivos finais. O original não é alterado.</p>
+      <button class="btn gold" id="pick" type="button">Selecionar arquivos</button>
+      <button class="btn gold" id="addMore" type="button">Acrescentar arquivos</button>
       <button class="btn" id="demo" type="button">Carregar demonstração aninhada</button>
-      <input id="file" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden>
+      <button class="btn" id="clearAll" type="button">Nova análise</button>
+      <input id="file" type="file" multiple accept=".zip,.json,.html,.htm,.txt,.csv,.mbox,.eml,.jpg,.jpeg,.png,.webp,.heic,.gif,.mp4,application/zip" hidden>
       <p id="progress"></p>
     </div>
     <div class="panel">
+      <h3>Arquivos enviados</h3>
+      <p class="notice">Cada ZIP ou arquivo avulso da Google entra na mesma análise. Arquivo com o mesmo SHA-256 não é lido de novo.</p>
+      <div id="importList" class="table-wrap"></div>
       <h3>Árvore da produção</h3>
       <div id="productTree" class="tree"></div>
       <h3>Extensões</h3>
@@ -248,6 +253,6 @@ input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:
 </main>
 <script src="jszip.min.js"></script>
 <script src="leaflet.js"></script>
-<script src="analisador-quebra.js?v=2.0.1"></script>
+<script src="analisador-quebra.js?v=2.1.0"></script>
 </body>
 </html>
