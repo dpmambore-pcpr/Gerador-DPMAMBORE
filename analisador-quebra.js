@@ -43,7 +43,12 @@ function parseDt(v) {
     const d = new Date(n < 1e12 ? n * 1000 : n);
     return isNaN(d) ? null : d;
   }
-  const d = new Date(String(v).replace(' ', 'T'));
+  const s = String(v).trim();
+  if (/[A-Za-z]{3},/.test(s) || /GMT|UTC|[+-]\d{4}/.test(s)) {
+    const rfc = new Date(s);
+    return isNaN(rfc) ? null : rfc;
+  }
+  const d = new Date(s.replace(' ', 'T'));
   return isNaN(d) ? null : d;
 }
 const fmt = v => {
