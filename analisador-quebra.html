@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
+Análise de quebra de sigilo Google LERS no navegador. ZIP processado neste aparelho.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quebra de sigilo Google — PCPR</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#f4f2ec;--ink:#111820;--accent:#183a31;--gold:#c5a253;--line:#d8d3c8;
+  --text:#17202a;--muted:#626b70;--danger:#8f3037;--paper:#fff
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+header{
+  background:linear-gradient(115deg,#111820 0%,#183a31 72%,#20473c 100%);
+  border-bottom:5px solid var(--gold);color:#fff;padding:12px 14px 8px
+}
+.kicker{font-size:10px;font-weight:800;letter-spacing:.9px;color:#f4e7bd}
+h1{margin:4px 0;font-size:18px}
+.sub{font-size:12px;color:#dce4e0;margin:0 0 8px}
+.nav{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 0 6px}
+.nav button{
+  flex:0 0 auto;appearance:none;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);
+  color:#fff;border-radius:8px;min-height:38px;padding:0 11px;font-size:12px;font-weight:800;white-space:nowrap
+}
+.nav button.active{background:var(--gold);color:var(--ink);border-color:#e2cf9d}
+main{padding:12px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.drop{border:2px dashed #baa568;border-radius:12px;padding:18px;text-align:center;background:#fffdf6}
+.drop b{display:block;margin-bottom:6px}
+.btn{appearance:none;border:1px solid #bdb6a7;background:#fff;border-radius:9px;min-height:40px;padding:0 12px;font-weight:800;margin:4px}
+.btn.gold{background:var(--gold);border-color:#aa8a42;color:var(--ink)}
+.btn.green{background:var(--accent);border-color:#0f241f;color:#fff}
+.alert{background:#2a171c;color:#ffb1b9;border:1px solid var(--danger);border-radius:10px;padding:10px;margin:8px 0;font-weight:800}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px;font-size:13px}
+.kv b{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.stat{background:#f8f6f1;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted);font-weight:700}
+.view{display:none}
+.view.active{display:block}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:7px 8px;border-bottom:1px solid #ece7dc;text-align:left;vertical-align:top}
+th{background:#183a31;color:#f4e7bd;position:sticky;top:0}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+input,select{border:1px solid #cfc9bc;border-radius:8px;min-height:38px;padding:0 8px;font:inherit}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.photos figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:11px}
+.photos img{width:100%;height:110px;object-fit:cover;background:#111}
+.photos figcaption{padding:7px}
+#map{height:320px;border-radius:10px;border:1px solid var(--line);margin-bottom:10px}
+.chip{display:inline-block;border:1px solid #d8d3c8;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;margin:2px}
+.chip.warn{border-color:var(--danger);color:var(--danger)}
+.hash{font-size:10px;word-break:break-all;font-family:ui-monospace,Consolas,monospace}
+.notice{font-size:13px;color:#42534d;background:#f4faf6;border:1px solid #cdd9d2;border-radius:8px;padding:10px;margin-bottom:10px}
+@media(max-width:640px){
+  .kv{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:16px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">POLÍCIA CIVIL DO PARANÁ</div>
+  <h1>Análise de quebra de sigilo</h1>
+  <p class="sub">Produção Google LERS neste aparelho — sem enviar arquivos.</p>
+  <nav class="nav" id="nav">
+    <button data-view="importar" class="active" type="button">Importar</button>
+    <button data-view="painel" type="button">Painel</button>
+    <button data-view="dispositivos" type="button">Dispositivos</button>
+    <button data-view="eventos" type="button">Eventos</button>
+    <button data-view="mapa" type="button">Mapa</button>
+    <button data-view="fotos" type="button">Fotos</button>
+    <button data-view="arquivos" type="button">Arquivos</button>
+    <button data-view="gmail" type="button">Gmail</button>
+    <button data-view="pagamentos" type="button">Pagamentos</button>
+    <button data-view="pesquisas" type="button">Pesquisas</button>
+    <button data-view="whatsapp" type="button">WhatsApp</button>
+    <button data-view="correlacao" type="button">Correlação</button>
+    <button data-view="relatorio" type="button">Relatório</button>
+  </nav>
+</header>
+<main>
+  <section class="view active" id="view-importar">
+    <div class="panel drop" id="drop">
+      <b>Toque para escolher o ZIP da quebra Google</b>
+      <p>O arquivo original não é alterado. A extração ocorre só na memória deste aparelho.</p>
+      <button class="btn gold" id="pick" type="button">Selecionar ZIP</button>
+      <button class="btn" id="demo" type="button">Carregar demonstração</button>
+      <input id="file" type="file" accept=".zip,application/zip" hidden>
+      <p id="progress"></p>
+    </div>
+    <div class="panel">
+      <h3>Produtos encontrados</h3>
+      <div id="products"></div>
+      <h3>Custódia</h3>
+      <div id="custody" class="hash"></div>
+    </div>
+  </section>
+  <section class="view" id="view-painel">
+    <div class="filters">
+      <label>DATA DO CRIME <input type="datetime-local" id="crimeDate"></label>
+      <label>Janela (h) <input type="number" id="crimeWindow" value="24" min="1" max="720" style="width:72px"></label>
+    </div>
+    <div id="alerts"></div>
+    <div class="stats" id="stats"></div>
+    <div id="accounts"></div>
+  </section>
+  <section class="view" id="view-dispositivos"><div id="deviceAlerts"></div><div id="deviceTable" class="table-wrap"></div></section>
+  <section class="view" id="view-eventos">
+    <div class="filters"><input type="datetime-local" id="evFrom"><input type="datetime-local" id="evTo"><button class="btn gold" id="evFilter" type="button">Filtrar</button></div>
+    <div id="eventTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-mapa">
+    <label class="notice"><input type="checkbox" id="nearOnly"> Somente próximos da DATA DO CRIME</label>
+    <div id="map"></div>
+    <div id="locTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-fotos">
+    <div class="filters">
+      <label><input type="checkbox" id="photoNear"> Próximas ao crime</label>
+      <label><input type="checkbox" id="photoGps"> Com GPS</label>
+    </div>
+    <div id="photoGrid" class="photos"></div>
+  </section>
+  <section class="view" id="view-arquivos">
+    <div class="filters"><input id="fileQ" type="search" placeholder="PIX CPF BANCO ARMA DROGA NOME TELEFONE VALOR"></div>
+    <div id="kw"></div>
+    <div id="fileTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-gmail">
+    <div class="filters"><input id="mailQ" type="search" placeholder="Buscar e-mail, assunto, IP, ID"></div>
+    <div id="mailTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-pagamentos"><div id="payTable" class="table-wrap"></div></section>
+  <section class="view" id="view-pesquisas"><div id="searchTable" class="table-wrap"></div></section>
+  <section class="view" id="view-whatsapp">
+    <div class="notice"><b>Política forense:</b> só identifica backup no Drive. Não há tentativa de quebra de cifra.</div>
+    <div id="waTable" class="table-wrap"></div>
+  </section>
+  <section class="view" id="view-correlacao"><div id="chain"></div><div id="corrAlerts"></div><div id="corrList"></div></section>
+  <section class="view" id="view-relatorio">
+    <div class="panel">
+      <p>Gera relatório HTML para imprimir ou salvar em PDF pelo navegador.</p>
+      <button class="btn green" id="makeReport" type="button">GERAR RELATÓRIO</button>
+    </div>
+  </section>
+</main>
+<script src="jszip.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="analisador-quebra.js?v=1.0.1"></script>
+</body>
+</html>

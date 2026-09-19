@@ -550,7 +550,7 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
       <button class="module-card" type="button" data-open-module="googleanalise">
         <div class="card-top"><div class="card-icon">GG</div><div class="card-arrow">›</div></div>
         <div class="card-title">Análise Google</div>
-        <div class="card-desc">Respostas de ofício no navegador ou quebra de sigilo LERS: conta, IMEI, mapa, arquivos e relatório policial.</div>
+        <div class="card-desc">Respostas de ofício e quebra de sigilo LERS no próprio aparelho: conta, IMEI, mapa, arquivos e relatório.</div>
         <div class="card-subtags"><span class="card-subtag">OFÍCIO</span><span class="card-subtag">QUEBRA</span><span class="card-subtag">IMEI</span><span class="card-subtag">LERS</span></div>
       </button>
       <button class="module-card update-card" type="button" data-open-module="atualizacoes">
@@ -657,9 +657,9 @@ body:not(.home-mode).nav-collapsed .module-nav #dataComemorativa{display:none!im
   <iframe id="frameEnvelopeBusca" class="module-frame" title="Envelope de Busca" data-src="envelope-busca.html?v=3.6.1"></iframe>
   <iframe id="frameContatoDpPr" class="module-frame" title="Contatos das Delegacias do Paraná" data-src="contato-dp-pr.html?v=3.0.0"></iframe>
   <iframe id="frameContatos" class="module-frame" title="Diretório de Contatos" data-src="contatos.html?v=3.0.1"></iframe>
-  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.7"></iframe>
+  <iframe id="frameAtualizacoes" class="module-frame" title="Sobre as atualizações" data-src="atualizacoes.html?v=3.6.8"></iframe>
   <iframe id="frameHistorico" class="module-frame" title="Histórico de Documentos" data-src="historico-documentos.html?v=3.0.0"></iframe>
-  <iframe id="frameGoogleAnalise" class="module-frame" title="Análise Google" data-src="analisador-google-hub.html?v=1.0.1"></iframe>
+  <iframe id="frameGoogleAnalise" class="module-frame" title="Análise Google" data-src="analisador-google-hub.html?v=1.0.2"></iframe>
   <iframe id="frameTranscritor" class="module-frame" title="Transcritor de Áudio e Vídeo" data-src="transcritor.html?v=1.2.0"></iframe>
 </main>
 
@@ -774,7 +774,7 @@ function fit(key){
   try{
     const d=m.frame.contentDocument;
     const viewport=Math.max(700,window.innerHeight-navHeight);
-    if(key==='erb'){m.frame.style.height=viewport+'px';return}
+    if(key==='erb'||key==='googleanalise'){m.frame.style.height=viewport+'px';return}
     const h=Math.max(d?.documentElement?.scrollHeight||0,d?.body?.scrollHeight||0,m.min);
     m.frame.style.height=(h+10)+'px';
   }catch(e){m.frame.style.height=Math.max(m.min,window.innerHeight-navHeight)+'px'}
@@ -797,7 +797,7 @@ function load(key){
       d?.addEventListener('click',()=>setTimeout(()=>fit(key),80),true);
       d?.addEventListener('change',()=>setTimeout(()=>fit(key),80),true);
     }catch(e){}
-    if(key==='erb'){
+    if(key==='erb'||key==='googleanalise'){
       const pulse=()=>{try{if(typeof m.frame.contentWindow.__pcprErbResize==='function')m.frame.contentWindow.__pcprErbResize();else m.frame.contentWindow.dispatchEvent(new Event('resize'))}catch(e){}};
       setTimeout(pulse,100);setTimeout(pulse,350);setTimeout(pulse,900);
     }
@@ -912,6 +912,11 @@ if(requestedErbProject){
 window.addEventListener('resize',()=>{
   const k=Object.keys(modules).find(k=>modules[k].frame.classList.contains('active'));
   if(k)fit(k);
+});
+window.addEventListener('message',ev=>{
+  if(!ev.data||ev.data.type!=='pcpr-fit')return;
+  const key=(ev.data.module&&modules[ev.data.module])?ev.data.module:Object.keys(modules).find(k=>modules[k].frame.classList.contains('active'));
+  if(key)fit(key);
 });
 })();
 </script>

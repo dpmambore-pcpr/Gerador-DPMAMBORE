@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.8: Quebra Google no navegador (celular) — corrige tela preta -->
 <!-- v3.6.7: Análise Google unifica ofício e quebra de sigilo -->
 <!-- v3.6.6: Analisador Google Forense (LERS Flask) -->
 <!-- v3.6.5: Filtro IP — selecionar vários arquivos de uma vez -->
@@ -68,7 +69,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.7</span>
+      <span class="version">VERSÃO ATUAL · v3.6.8</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -81,8 +82,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.7">
-        <div class="item-head"><span class="item-ver">v3.6.7</span><span class="item-date">19/09/2026</span><span class="tag new">ANÁLISE GOOGLE</span><span class="tag improve">QUEBRA</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.8">
+        <div class="item-head"><span class="item-ver">v3.6.8</span><span class="item-date">19/09/2026</span><span class="tag fix">CELULAR</span><span class="tag new">QUEBRA</span><span class="badge">ATUAL</span></div>
+        <h3>Quebra de sigilo Google abre no celular, sem tela preta</h3>
+        <ul>
+          <li>A análise da quebra deixa de depender do Python em localhost: o ZIP LERS é lido no próprio navegador, inclusive no telefone.</li>
+          <li>Corrigida a altura do iframe que deixava a tela preta ao abrir <b>Quebra de sigilo</b> dentro da Análise Google.</li>
+          <li>Painel, IMEI, mapa, fotos, Drive, Gmail, pagamentos, pesquisas, WhatsApp (só identificação do backup) e relatório HTML continuam nesta mesma tela.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.7">
+        <div class="item-head"><span class="item-ver">v3.6.7</span><span class="item-date">19/09/2026</span><span class="tag new">ANÁLISE GOOGLE</span><span class="tag improve">QUEBRA</span></div>
         <h3>Análise Google reúne resposta de ofício e quebra de sigilo</h3>
         <ul>
           <li>O botão <b>Análise Google</b> abre um hub com duas opções: <b>respostas de ofício</b> e <b>quebra de sigilo</b>.</li>

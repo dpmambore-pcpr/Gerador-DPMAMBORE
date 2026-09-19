@@ -1,139 +1,124 @@
 <!DOCTYPE html>
 <!--
 SEGURANÇA E ARMAZENAMENTO — CENTRAL PCPR
-Hub local da Análise Google. A opção de respostas de ofício roda no navegador.
-A opção de quebra de sigilo (LERS) usa o serviço Flask local na porta 5050.
+Hub da Análise Google. Ofício e quebra rodam no navegador; os arquivos não saem deste aparelho.
 -->
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Análise Google — PCPR</title>
 <style>
 :root{
   --ink:#111820;--accent:#285748;--accent-dark:#183a31;--gold:#c5a253;
-  --bg:#f4f2ec;--line:#d8d3c8;--text:#17202a;--muted:#626b70;--red:#8f3037
+  --bg:#f4f2ec;--line:#d8d3c8;--text:#17202a;--muted:#626b70
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
-.shell{min-height:100%;display:flex;flex-direction:column}
+.wrap{min-height:100%;height:100%;display:flex;flex-direction:column;padding:8px}
 .top{
   background:linear-gradient(115deg,var(--ink) 0%,var(--accent-dark) 72%,#20473c 100%);
-  border-bottom:5px solid var(--gold);color:#fff;padding:12px 16px 10px
+  border-bottom:4px solid var(--gold);color:#fff;padding:10px 12px;border-radius:10px 10px 0 0
 }
-.top-inner{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.brand{width:40px;height:40px;border:1px solid rgba(255,255,255,.3);border-radius:9px;display:grid;place-items:center;font-weight:900;font-size:11px;color:#f0dfa9}
-.titles{min-width:0;flex:1}
-.titles .kicker{font-size:10px;font-weight:800;letter-spacing:1.1px;color:#f4e7bd}
-.titles h1{margin:2px 0 0;font-size:18px}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.kicker{font-size:10px;font-weight:800;letter-spacing:1.1px;color:#f4e7bd}
+h1{margin:3px 0 8px;font-size:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{
   appearance:none;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);
-  color:#fff;border-radius:9px;min-height:40px;padding:0 14px;font-size:13px;font-weight:800;cursor:pointer
+  color:#fff;border-radius:8px;min-height:40px;padding:0 12px;font-size:12px;font-weight:800;cursor:pointer
 }
-.tab:hover{background:rgba(255,255,255,.14)}
 .tab.active{background:var(--gold);border-color:#e2cf9d;color:var(--ink)}
-.stage{flex:1;min-height:0;position:relative}
-.chooser{padding:28px 18px 40px;max-width:1100px;margin:0 auto}
-.chooser h2{margin:0 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:28px;color:var(--ink);text-align:center}
-.chooser p.lead{margin:0 0 22px;text-align:center;color:var(--muted);font-size:14px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chooser{padding:18px 10px 24px;overflow:auto;flex:1}
+.chooser h2{margin:0 0 6px;font-size:22px;text-align:center;color:var(--ink)}
+.lead{margin:0 0 16px;text-align:center;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .card{
-  appearance:none;width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;
-  background:#fff;padding:22px 20px;cursor:pointer;box-shadow:0 4px 16px rgba(16,31,26,.055);
-  min-height:210px
+  appearance:none;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;
+  background:#fff;padding:16px;cursor:pointer;min-height:160px
 }
-.card:hover{transform:translateY(-3px);border-color:#bda76f;box-shadow:0 9px 24px rgba(16,31,26,.11)}
-.card.quebra{background:linear-gradient(145deg,#fff 0%,#f4faf6 100%);border-color:#b9cfbf}
-.icon{
-  width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:900;color:#f4e7bd;
-  background:linear-gradient(145deg,var(--accent-dark),var(--accent));margin-bottom:12px
-}
-.card h3{margin:0 0 8px;font-size:18px}
-.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
-.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
-.tag{border:1px solid #d8d3c8;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800;letter-spacing:.4px;color:#5a655f}
-.note{margin-top:18px;font-size:12px;color:#665425;background:#fffaf0;border:1px solid #d8c8a0;border-left:3px solid #a98639;border-radius:8px;padding:10px 12px}
-iframe.tool{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
-iframe.tool.show{display:block}
+.card:hover{border-color:#bda76f}
+.icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-weight:900;color:#f4e7bd;background:linear-gradient(145deg,var(--accent-dark),var(--accent));margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.4}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{border:1px solid #d8d3c8;border-radius:999px;padding:3px 7px;font-size:9.5px;font-weight:800;color:#5a655f}
+.note{margin-top:14px;font-size:12px;color:#42534d;background:#f4faf6;border:1px solid #cdd9d2;border-left:3px solid var(--accent);border-radius:8px;padding:10px}
+.frame{border:1px solid var(--line);border-radius:0 0 10px 10px;overflow:auto;background:#fff;display:none;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.frame.show{display:flex;flex-direction:column}
+iframe{display:block;width:100%;height:100%;min-height:640px;border:0;background:#fff;flex:1}
 @media(max-width:780px){
   .grid{grid-template-columns:1fr}
-  .chooser{padding:18px 12px 28px}
-  .chooser h2{font-size:22px}
+  .tab{flex:1 1 30%;font-size:11px;padding:0 8px}
+  .frame{overflow:visible}
+  iframe{height:calc(100dvh - 170px);min-height:calc(100dvh - 170px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 }
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="wrap">
   <header class="top">
-    <div class="top-inner">
-      <div class="brand">GG</div>
-      <div class="titles">
-        <div class="kicker">POLÍCIA CIVIL DO PARANÁ</div>
-        <h1>Análise Google</h1>
-      </div>
-    </div>
+    <div class="kicker">POLÍCIA CIVIL DO PARANÁ</div>
+    <h1>Análise Google</h1>
     <div class="tabs">
-      <button class="tab active" data-mode="escolher" type="button">Escolher análise</button>
+      <button class="tab active" data-mode="escolher" type="button">Escolher</button>
       <button class="tab" data-mode="oficio" type="button">Respostas de ofício</button>
       <button class="tab" data-mode="quebra" type="button">Quebra de sigilo</button>
     </div>
   </header>
-
-  <div class="stage">
-    <section class="chooser" id="chooser">
-      <h2>Selecione o tipo de análise</h2>
-      <p class="lead">Um módulo para resposta de ofício no navegador. Outro para produção de quebra de sigilo Google LERS.</p>
-      <div class="grid">
-        <button class="card" data-mode="oficio" type="button">
-          <div class="icon">OF</div>
-          <h3>Análise de respostas de ofício</h3>
-          <p>Lê ZIP, HTML, TXT e PDF da resposta Google ao ofício. Cruza IMEI, Android ID, aparelhos, contas, datas de criação, logins e linha do tempo. Processamento local no navegador.</p>
-          <div class="tags"><span class="tag">OFÍCIO</span><span class="tag">IMEI</span><span class="tag">ANDROID ID</span><span class="tag">CONTAS</span></div>
-        </button>
-        <button class="card quebra" data-mode="quebra" type="button">
-          <div class="icon">QB</div>
-          <h3>Análise de quebra de sigilo</h3>
-          <p>Importa produção LERS em ZIP, extrai conta, IMEI, mapa, fotos, Drive, Gmail, pagamentos e gera relatório policial. Serviço Flask local, originais preservados.</p>
-          <div class="tags"><span class="tag">QUEBRA</span><span class="tag">LERS</span><span class="tag">MAPA</span><span class="tag">RELATÓRIO</span></div>
-        </button>
-      </div>
-      <div class="note"><b>Quebra de sigilo</b> exige o analisador local: <code>cd analisador-google-forense && python3 app.py</code> (porta 5050). Os arquivos da produção não saem deste computador.</div>
-    </section>
-    <iframe class="tool" id="frameOficio" title="Análise de respostas de ofício" data-src="analisador-google.html?v=1.0.0"></iframe>
-    <iframe class="tool" id="frameQuebra" title="Análise de quebra de sigilo" data-src="analisador-google-forense.html?v=1.0.2"></iframe>
-  </div>
+  <section class="chooser" id="chooser">
+    <h2>Selecione o tipo de análise</h2>
+    <p class="lead">As duas opções rodam neste aparelho. Os arquivos da produção não são enviados a servidor.</p>
+    <div class="grid">
+      <button class="card" data-mode="oficio" type="button">
+        <div class="icon">OF</div>
+        <h3>Análise de respostas de ofício</h3>
+        <p>ZIP, HTML, TXT e PDF da resposta ao ofício. IMEI, Android ID, contas e linha do tempo.</p>
+        <div class="tags"><span class="tag">OFÍCIO</span><span class="tag">IMEI</span><span class="tag">CONTAS</span></div>
+      </button>
+      <button class="card" data-mode="quebra" type="button">
+        <div class="icon">QB</div>
+        <h3>Análise de quebra de sigilo</h3>
+        <p>Produção LERS: conta, IMEI, mapa, fotos, Drive, Gmail, pagamentos e relatório. Tudo no navegador, inclusive no celular.</p>
+        <div class="tags"><span class="tag">QUEBRA</span><span class="tag">LERS</span><span class="tag">MAPA</span></div>
+      </button>
+    </div>
+    <div class="note">Toque em um cartão ou use as abas acima. No celular, a análise de quebra abre nesta mesma tela — não depende de computador nem de Python.</div>
+  </section>
+  <div class="frame" id="boxOficio"><iframe id="frameOficio" title="Análise de respostas de ofício" data-src="analisador-google.html?v=1.0.1"></iframe></div>
+  <div class="frame" id="boxQuebra"><iframe id="frameQuebra" title="Análise de quebra de sigilo" data-src="analisador-quebra.html?v=1.0.1"></iframe></div>
 </div>
 <script>
 const CHOOSER=document.getElementById('chooser');
-const FRAMES={
-  oficio:document.getElementById('frameOficio'),
-  quebra:document.getElementById('frameQuebra')
-};
+const BOX={oficio:document.getElementById('boxOficio'),quebra:document.getElementById('boxQuebra')};
+const FRAMES={oficio:document.getElementById('frameOficio'),quebra:document.getElementById('frameQuebra')};
+function ping(){
+  try{parent.postMessage({type:'pcpr-fit',module:'googleanalise'}, '*')}catch(_){}
+}
 function loadFrame(mode){
   const frame=FRAMES[mode];
-  if(!frame) return;
-  if(!frame.dataset.loaded){
+  if(frame && !frame.dataset.loaded){
     frame.src=frame.dataset.src;
     frame.dataset.loaded='1';
+    frame.addEventListener('load', ping);
   }
 }
 function show(mode){
   const valid=['escolher','oficio','quebra'].includes(mode)?mode:'escolher';
   document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active', tab.dataset.mode===valid));
   CHOOSER.style.display=valid==='escolher'?'block':'none';
-  Object.entries(FRAMES).forEach(([key,frame])=>frame.classList.toggle('show', key===valid));
+  Object.entries(BOX).forEach(([key,box])=>box.classList.toggle('show', key===valid));
   if(valid!=='escolher') loadFrame(valid);
   try{history.replaceState(null,'','#'+valid)}catch(_){}
+  setTimeout(ping, 50);
+  setTimeout(ping, 400);
 }
-document.querySelectorAll('[data-mode]').forEach(el=>{
-  el.addEventListener('click',()=>show(el.dataset.mode));
-});
+document.querySelectorAll('[data-mode]').forEach(el=>el.addEventListener('click',()=>show(el.dataset.mode)));
 const initial=(location.hash||'').replace('#','').toLowerCase();
 show(initial==='oficio'||initial==='quebra'?initial:'escolher');
-window.addEventListener('hashchange',()=>{
-  const mode=(location.hash||'').replace('#','').toLowerCase();
-  show(mode);
+window.addEventListener('hashchange',()=>show((location.hash||'').replace('#','').toLowerCase()));
+window.addEventListener('resize', ping);
+window.addEventListener('message', ev=>{
+  if(ev.data&&ev.data.type==='pcpr-fit') ping();
 });
 </script>
 </body>

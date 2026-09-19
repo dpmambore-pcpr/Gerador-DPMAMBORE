@@ -1,4 +1,4 @@
-const CACHE_VERSION='pcpr-central-v3.0.33';
+const CACHE_VERSION='pcpr-central-v3.0.34';
 const STATIC_CACHE=CACHE_VERSION+'-static';
 const CDN_CACHE=CACHE_VERSION+'-cdn';
 const CORE_FILES=[
@@ -6,6 +6,9 @@ const CORE_FILES=[
   './analisador-google.html',
   './analisador-google-hub.html',
   './analisador-google-forense.html',
+  './analisador-quebra.html',
+  './analisador-quebra.js',
+  './jszip.min.js',
   './MODELO_BASE_ORIGINAL_COFFEE_BREAK.odt',
   './apple-touch-icon-precomposed.png',
   './apple-touch-icon.png',
