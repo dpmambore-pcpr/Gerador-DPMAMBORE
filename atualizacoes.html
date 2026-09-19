@@ -43,6 +43,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
 </style>
 </head>
 <body>
+<!-- v3.6.6: Filtro IP — desmarcar arquivo, número de origem e ordenar resultado -->
 <!-- v3.6.5: Filtro IP — selecionar vários arquivos de uma vez -->
 <!-- v3.6.4: Relatório de Viagem — adicionar servidores no mesmo documento -->
 <!-- v3.6.3: Filtro IP — ofício unificado ou um quadro por número de interesse -->
@@ -66,7 +67,7 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
     <h1>Histórico de versões</h1>
     <p>Principais novidades, melhorias e correções implementadas na Central PCPR, organizadas por versão para facilitar a identificação do que mudou.</p>
     <div class="current">
-      <span class="version">VERSÃO ATUAL · v3.6.5</span>
+      <span class="version">VERSÃO ATUAL · v3.6.6</span>
       <span class="note">Última atualização: 19/09/2026 · Delegacia de Polícia Civil de Mamborê/PR</span>
     </div>
   </section>
@@ -79,8 +80,18 @@ h1{margin:7px 0 6px;font-family:Georgia,"Times New Roman",serif;font-size:34px}
   <section class="section" id="historySection">
     <div class="section-title"><h2>Histórico recente</h2></div>
     <div class="timeline" id="timeline">
-      <article class="item latest" data-version="3.6.5">
-        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">ARQUIVOS</span><span class="badge">ATUAL</span></div>
+      <article class="item latest" data-version="3.6.6">
+        <div class="item-head"><span class="item-ver">v3.6.6</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">ARQUIVOS</span><span class="badge">ATUAL</span></div>
+        <h3>Filtro de IPs desmarca arquivo, mostra o número de origem e ordena o resultado</h3>
+        <ul>
+          <li>Cada documento ganhou <b>Desmarcar</b> ao lado de <b>Remover</b>: desmarcar tira o arquivo da análise sem apagá-lo; marcar devolve.</li>
+          <li>A tabela de resultados traz o <b>número que originou a conexão</b> em cada linha.</li>
+          <li>Os botões <b>Ordenar por número</b> e <b>Ordenar por data</b> reorganizam o resultado na hora.</li>
+        </ul>
+      </article>
+
+      <article class="item" data-version="3.6.5">
+        <div class="item-head"><span class="item-ver">v3.6.5</span><span class="item-date">19/09/2026</span><span class="tag improve">FILTRO DE IPS</span><span class="tag new">ARQUIVOS</span></div>
         <h3>Filtro de IPs sobe vários arquivos de uma só seleção</h3>
         <ul>
           <li>Na caixa de arquivos, dá para marcar 3, 4 ou quantos forem: todos sobem no mesmo inquérito.</li>
