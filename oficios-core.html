@@ -258,6 +258,9 @@ footer{color:var(--suave) !important;}
       <label id="forumOutraLabel" class="hide">Destinatário<input id="forumOutra" type="text" placeholder="Juizado Especial Criminal"></label>
       <label>Nº do lacre<input id="forumLacre" type="text" placeholder="0000025555"></label>
     </div>
+    <div class="opts" style="margin-top:12px">
+      <label><input type="checkbox" id="forumPorOrdem"> assinatura <b>por ordem</b> (o agente expede e assina pelo Delegado)</label>
+    </div>
     <div id="forumItens" style="margin-top:12px"></div>
     <button type="button" class="sec" id="forumAdd">Adicionar item</button>
     <p id="forumErros" role="status" aria-live="polite" style="color:var(--erro)"></p>
@@ -2428,7 +2431,7 @@ function dadosForum(validar){
   var itens=Array.from(document.querySelectorAll('#forumItens textarea')).map(function(e){return e.value.trim();});
   if(!itens.length||itens.some(function(v){return !v;}))erros.push('Descreva todos os itens ou remova os campos adicionais vazios.');
   document.getElementById('forumAno').value=forumHoje().slice(0,4);
-  var d={inquerito:ip.numero,ano:ip.ano,sequencia:seq.sequencia,sigla:seq.sigla,anoOficio:forumHoje().slice(0,4),data:forumDataValida(data)?data:forumHoje(),autos:autos,destinatario:destinatario||'___',lacre:lacre||'___',itens:itens.length?itens:['___'],erros:erros};
+  var d={porOrdem:document.getElementById('forumPorOrdem').checked,inquerito:ip.numero,ano:ip.ano,sequencia:seq.sequencia,sigla:seq.sigla,anoOficio:forumHoje().slice(0,4),data:forumDataValida(data)?data:forumHoje(),autos:autos,destinatario:destinatario||'___',lacre:lacre||'___',itens:itens.length?itens:['___'],erros:erros};
   if(validar&&erros.length)throw erros.join(' ');
   return d;
 }
@@ -2449,7 +2452,9 @@ function oficioForum(d){
     linhas.forEach(function(l,j){p((j===0?String(i+1).padStart(2,'0')+' – ':'')+l,'ForumItem',{jc:'left',ind:40,compacto:true});});
   });vazio();
   p('Em tempo, renovo os nossos protestos de profunda estima e consideração.','P20',{jc:'both',recuo:true});vazio();
-  p('Cordialmente,','P20',{jc:'left',recuo:true});vazio();vazio();
+  p('Cordialmente,','P20',{jc:'left',recuo:true});
+  if(d.porOrdem)p('Por ordem','P20',{jc:'left',recuo:true});
+  vazio();vazio();
   p('Anderson Sérgio Romão','P7',{jc:'center',compacto:true});
   p([{x:'Delegado de Polícia',b:true}],'P8',{jc:'center'});vazio();vazio();
   p([{x:'EXCELENTÍSSIMO(A) MAGISTRADO(A)',b:true}],'P2',{jc:'left',compacto:true});

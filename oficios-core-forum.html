@@ -256,8 +256,10 @@ footer{color:var(--suave) !important;}
       <label>Autos nº<input id="forumAutos" type="text" inputmode="numeric" placeholder="00010240720268160107" aria-describedby="forumAutosInfo"><small id="forumAutosInfo">Informe os 20 dígitos, com ou sem pontuação.</small></label>
       <label>Vara / destinatário<select id="forumVara"><option value="Criminal">Criminal</option><option value="Civil">Civil</option><option value="Outra">Outra</option></select></label>
       <label id="forumOutraLabel" class="hide">Destinatário<input id="forumOutra" type="text" placeholder="Juizado Especial Criminal"></label>
-      <label>Forma de expedição<select id="forumPorOrdem"><option value="normal" selected>Normal</option><option value="porOrdem">Por ordem</option></select></label>
       <label>Nº do lacre<input id="forumLacre" type="text" placeholder="0000025555"></label>
+    </div>
+    <div class="opts" style="margin-top:12px">
+      <label><input type="checkbox" id="forumPorOrdem"> assinatura <b>por ordem</b> (o agente expede e assina pelo Delegado)</label>
     </div>
     <div id="forumItens" style="margin-top:12px"></div>
     <button type="button" class="sec" id="forumAdd">Adicionar item</button>
@@ -2429,7 +2431,7 @@ function dadosForum(validar){
   var itens=Array.from(document.querySelectorAll('#forumItens textarea')).map(function(e){return e.value.trim();});
   if(!itens.length||itens.some(function(v){return !v;}))erros.push('Descreva todos os itens ou remova os campos adicionais vazios.');
   document.getElementById('forumAno').value=forumHoje().slice(0,4);
-  var d={porOrdem:val('forumPorOrdem')==='porOrdem',inquerito:ip.numero,ano:ip.ano,sequencia:seq.sequencia,sigla:seq.sigla,anoOficio:forumHoje().slice(0,4),data:forumDataValida(data)?data:forumHoje(),autos:autos,destinatario:destinatario||'___',lacre:lacre||'___',itens:itens.length?itens:['___'],erros:erros};
+  var d={porOrdem:document.getElementById('forumPorOrdem').checked,inquerito:ip.numero,ano:ip.ano,sequencia:seq.sequencia,sigla:seq.sigla,anoOficio:forumHoje().slice(0,4),data:forumDataValida(data)?data:forumHoje(),autos:autos,destinatario:destinatario||'___',lacre:lacre||'___',itens:itens.length?itens:['___'],erros:erros};
   if(validar&&erros.length)throw erros.join(' ');
   return d;
 }
